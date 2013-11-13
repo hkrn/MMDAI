@@ -131,7 +131,7 @@ AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContextRef,
       m_applicationContextRef(applicationContextRef),
       m_sceneRef(scene),
       m_modelRef(model),
-      m_defaultEffect(0),
+      m_defaultEffectRef(0),
       m_overridePass(0),
       m_nvertices(0),
       m_nmeshes(0),
@@ -232,7 +232,7 @@ void AssetRenderEngine::release()
     m_allocatedTextures.releaseAll();
     m_effectEngines.releaseAll();
     m_oseffects.releaseAll();
-    internal::deleteObject(m_defaultEffect);
+    m_defaultEffectRef = 0;
     m_currentEffectEngineRef = 0;
     m_modelRef = 0;
     m_nvertices = 0;
@@ -350,7 +350,7 @@ void AssetRenderEngine::performPostProcess(IEffect *nextPostEffect)
 IEffect *AssetRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 {
     if (type == IEffect::kDefault) {
-        return m_defaultEffect;
+        return m_defaultEffectRef;
     }
     else {
         const PrivateEffectEngine *const *ee = m_effectEngines.find(type);
@@ -426,8 +426,8 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
             /* set default standard effect if effect is null */
             bool wasEffectNull = false;
             if (!effectRef) {
-                m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_applicationContextRef);
-                effectRef = m_defaultEffect;
+                m_defaultEffectRef = m_sceneRef->createDefaultStandardEffectRef(m_applicationContextRef);
+                effectRef = m_defaultEffectRef;
                 wasEffectNull = true;
             }
             m_currentEffectEngineRef = new PrivateEffectEngine(this, resolver);
@@ -435,8 +435,8 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
             m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentEffectEngineRef->scriptOrder() : type, m_currentEffectEngineRef);
             /* set default standard effect as secondary effect */
             if (!wasEffectNull && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
-                m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_applicationContextRef);
-                m_currentEffectEngineRef->setDefaultStandardEffectRef(m_defaultEffect);
+                m_defaultEffectRef = m_sceneRef->createDefaultStandardEffectRef(m_applicationContextRef);
+                m_currentEffectEngineRef->setDefaultStandardEffectRef(m_defaultEffectRef);
             }
         }
     }

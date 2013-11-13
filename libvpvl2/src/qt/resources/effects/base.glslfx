@@ -85,7 +85,7 @@ vec4 outputPosition(const vec4 position) {
 
 } /* outputPosition */
 
-GLSLShader performTransform {
+GLSLShader global performTransform {
 
 #if __VERSION__ < 130
 #define in attribute
@@ -364,7 +364,7 @@ void main() {
 
 } /* GLSLShader mainObjectVS */
 
-GLSLShader noPixelColor {
+GLSLShader global noPixelColor {
 
 const vec4 kZero4 = vec4(0.0);
 

@@ -395,6 +395,7 @@ struct Scene::PrivateContext VPVL2_DECL_FINAL
         : shadowMapRef(0),
           worldRef(0),
           accelerationType(Scene::kSoftwareFallback),
+          defaultEffect(0),
           light(sceneRef),
           camera(sceneRef),
           currentTimeIndex(0),
@@ -408,6 +409,7 @@ struct Scene::PrivateContext VPVL2_DECL_FINAL
         motions.releaseAll();
         engines.releaseAll();
         models.releaseAll();
+        internal::deleteObject(defaultEffect);
         shadowMapRef = 0;
         worldRef = 0;
     }
@@ -633,6 +635,7 @@ struct Scene::PrivateContext VPVL2_DECL_FINAL
     Array<ModelPtr *> models;
     Array<MotionPtr *> motions;
     Array<RenderEnginePtr *> engines;
+    IEffect *defaultEffect;
     Light light;
     Camera camera;
     IKeyframe::TimeIndex currentTimeIndex;
@@ -855,12 +858,16 @@ IEffect *Scene::createEffectFromFile(const IString *path, IApplicationContext *a
     return m_context->createEffectFromFile(path, applicationContextRef);
 }
 
-IEffect *Scene::createDefaultStandardEffect(IApplicationContext *applicationContextRef)
+IEffect *Scene::createDefaultStandardEffectRef(IApplicationContext *applicationContextRef)
 {
-    VPVL2_CHECK(applicationContextRef);
-    IString *source = applicationContextRef->loadShaderSource(IApplicationContext::kModelEffectTechniques, 0);
-    VPVL2_DCHECK(source && source->size() > 0);
-    return m_context->createEffectFromSource(source, applicationContextRef);
+    IEffect *effectRef = m_context->defaultEffect;
+    if (!effectRef) {
+        VPVL2_CHECK(applicationContextRef);
+        IString *source = applicationContextRef->loadShaderSource(IApplicationContext::kModelEffectTechniques, 0);
+        VPVL2_DCHECK(source && source->size() > 0);
+        m_context->defaultEffect = effectRef = m_context->createEffectFromSource(source, applicationContextRef);
+    }
+    return effectRef;
 }
 
 IEffect *Scene::createEffectFromModel(const IModel *model, const IString *dir, IApplicationContext *applicationContextRef)

@@ -173,7 +173,7 @@ private:
     Hash<HashPtr, int> m_numIndices;
     PointerHash<HashPtr, extensions::gl::VertexBundle> m_vbo;
     PointerHash<HashPtr, extensions::gl::VertexBundleLayout> m_vao;
-    IEffect *m_defaultEffect;
+    IEffect *m_defaultEffectRef;
     IEffect::Pass *m_overridePass;
     int m_nvertices;
     int m_nmeshes;

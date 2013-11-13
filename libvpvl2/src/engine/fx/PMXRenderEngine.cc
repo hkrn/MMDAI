@@ -283,7 +283,7 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
       m_dynamicBuffer(0),
       m_indexBuffer(0),
       m_bundle(0),
-      m_defaultEffect(0),
+      m_defaultEffectRef(0),
       m_overridePass(0),
       m_indexType(kGL_UNSIGNED_INT),
       m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
@@ -425,13 +425,13 @@ void PMXRenderEngine::release()
     internal::deleteObject(m_staticBuffer);
     internal::deleteObject(m_dynamicBuffer);
     internal::deleteObject(m_indexBuffer);
-    internal::deleteObject(m_defaultEffect);
     internal::deleteObject(m_transformFeedbackProgram);
 #ifdef VPVL2_ENABLE_OPENCL
     internal::deleteObject(m_accelerator);
 #endif
     m_aabbMin.setZero();
     m_aabbMax.setZero();
+    m_defaultEffectRef = 0;
     m_currentEffectEngineRef = 0;
     m_cullFaceState = false;
     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
@@ -727,7 +727,7 @@ void PMXRenderEngine::performPostProcess(IEffect *nextPostEffect)
 IEffect *PMXRenderEngine::effectRef(IEffect::ScriptOrderType type) const
 {
     if (type == IEffect::kDefault) {
-        return m_defaultEffect;
+        return m_defaultEffectRef;
     }
     else {
         const PrivateEffectEngine *const *ee = m_effectEngines.find(type);
@@ -791,8 +791,7 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
             /* set default standard effect (reference) if effect is null */
             bool wasEffectNull = false;
             if (!effectRef) {
-                m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_applicationContextRef);
-                effectRef = m_defaultEffect;// static_cast<Effect *>(m_defaultEffect);
+                effectRef = m_defaultEffectRef = m_sceneRef->createDefaultStandardEffectRef(m_applicationContextRef);
                 wasEffectNull = true;
             }
             m_currentEffectEngineRef = new PrivateEffectEngine(this, m_applicationContextRef->sharedFunctionResolverInstance());
@@ -800,8 +799,8 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
             m_effectEngines.insert(type == IEffect::kAutoDetection ? m_currentEffectEngineRef->scriptOrder() : type, m_currentEffectEngineRef);
             /* set default standard effect as secondary effect */
             if (!wasEffectNull && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
-                m_defaultEffect = m_sceneRef->createDefaultStandardEffect(m_applicationContextRef);
-                m_currentEffectEngineRef->setDefaultStandardEffectRef(m_defaultEffect);
+                m_defaultEffectRef = m_sceneRef->createDefaultStandardEffectRef(m_applicationContextRef);
+                m_currentEffectEngineRef->setDefaultStandardEffectRef(m_defaultEffectRef);
             }
         }
     }

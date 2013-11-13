@@ -202,7 +202,7 @@ private:
     PointerHash<HashPtr, ITexture> m_allocatedTextures;
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;
     PointerArray<PrivateEffectEngine> m_oseffects;
-    IEffect *m_defaultEffect;
+    IEffect *m_defaultEffectRef;
     IEffect::Pass *m_overridePass;
     extensions::gl::GLenum m_indexType;
     Vector3 m_aabbMin;

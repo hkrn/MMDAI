@@ -507,6 +507,12 @@ void BaseApplicationContext::release()
     m_effectRef2owners.clear();
     m_sharedParameters.clear();
     m_effectPathPtr.reset();
+    std::set<IEffect *> offscreenEffects;
+    const int ntechniques = m_offscreenTechniques.count();
+    for (int i = 0; i < ntechniques; i++) {
+        IEffect::Technique *technique = m_offscreenTechniques[i];
+        offscreenEffects.insert(technique->parentEffectRef());
+    }
     m_effectCaches.releaseAll();
 #endif
     popAnnotationGroup(sharedFunctionResolverInstance());
@@ -1076,7 +1082,8 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
             }
         }
     }
-    destPasses.reserve(int(destPassSet.size()));
+    int destPassSize = int(destPassSet.size());
+    destPasses.reserve(destPassSize);
     for (std::set<IEffect::Pass *>::const_iterator it = destPassSet.begin(); it != destPassSet.end(); it++) {
         destPasses.append(*it);
     }
@@ -1197,7 +1204,6 @@ void BaseApplicationContext::renderOffscreen()
                 for (int k = 0; k < nengines; k++) {
                     IRenderEngine *engine = engines[k];
                     engine->setOverridePass(pass);
-                    engine->renderEdge();
                     engine->renderModel();
                     engine->setOverridePass(0);
                 }
@@ -1314,7 +1320,7 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
         }
     }
     else {
-        effectRef = m_effectCaches.insert(key, m_sceneRef->createDefaultStandardEffect(this));
+        effectRef = m_sceneRef->createDefaultStandardEffectRef(this);
         if (!effectRef) {
             VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)"));
         }

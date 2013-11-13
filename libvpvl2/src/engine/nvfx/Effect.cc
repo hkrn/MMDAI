@@ -74,6 +74,7 @@ static IEffect::Parameter::Type toEffectType(nvFX::IUniform::Type type)
     case nvFX::IUniform::TTexture1D:
         return IEffect::Parameter::kSampler1D;
     case nvFX::IUniform::TTexture2D:
+    case nvFX::IUniform::TTexture:
         return IEffect::Parameter::kSampler2D;
     case nvFX::IUniform::TTexture3D:
         return IEffect::Parameter::kSampler3D;
@@ -437,8 +438,8 @@ struct Effect::NvFXTechnique : IEffect::Technique {
             const nvFX::PassInfo &info = v->info;
             overrideID = info.overrideID;
             rendering = info.renderingMode == nvFX::RENDER_SCENEGRAPH_SHADED;
-            valueRef->setActiveProgramLayer(overrideID);
         }
+        valueRef->setActiveProgramLayer(overrideID);
     }
 
     Effect::NvFXPass *cachePassRef(nvFX::IPass *pass) const {

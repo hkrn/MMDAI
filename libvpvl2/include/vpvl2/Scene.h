@@ -308,7 +308,7 @@ public:
      * @param applicationContextRef
      * @return
      */
-    IEffect *createDefaultStandardEffect(IApplicationContext *applicationContextRef);
+    IEffect *createDefaultStandardEffectRef(IApplicationContext *applicationContextRef);
 
     /**
      * モデルと紐付けられたレンダリングエンジンから Scene の参照を解除します.
