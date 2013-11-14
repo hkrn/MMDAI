@@ -89,7 +89,9 @@ GLSLShader global performTransform {
 
 #if __VERSION__ < 130
 #define in attribute
+#ifndef texture
 #define texture texture2D
+#endif
 #endif
 
 in vec4 vpvl2_inBoneIndices;
@@ -186,7 +188,9 @@ vec4 performEdgeTransform(const vec4 position, const vec4 normal) {
 GLSLShader applyTexture {
 
 #if __VERSION__ < 130
+#ifndef texture
 #define texture(samp, uv) texture2D((samp), (uv))
+#endif
 #endif
 
 vec4 applyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1) {
@@ -221,7 +225,9 @@ vec4 applyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1) {
 GLSLShader applyToon {
 
 #if __VERSION__ < 130
+#ifndef texture
 #define texture(samp, uv) texture2D((samp), (uv))
+#endif
 #endif
 
 const vec2 kToonTexCoord = vec2(0.0, 1.0);
@@ -248,7 +254,9 @@ vec4 applyToon(const vec4 color, const vec3 normal) {
 GLSLShader getShadowFactor {
 
 #if __VERSION__ < 130
+#ifndef texture
 #define texture(samp, uv) texture2D((samp), (uv))
+#endif
 #endif
 
 const float kEpsilonBias = 0.00001;
@@ -275,7 +283,9 @@ GLSLShader applyToonSelfShadow {
 
 #if __VERSION__ < 130
 #define in varying
+#ifndef texture
 #define texture(samp, uv) texture2D((samp), (uv))
+#endif
 #endif
 
 in vec4 vpvl2_outShadowPosition;
@@ -451,6 +461,7 @@ GLSLShader mainEdgeVS {
 
 #if __VERSION__ < 130
 #define in attribute
+#define out varying
 #else
 out gl_PerVertex {
     vec4 gl_Position;
@@ -489,6 +500,7 @@ GLSLShader mainVS {
 
 #if __VERSION__ < 130
 #define in attribute
+#define out varying
 #else
 out gl_PerVertex {
     vec4 gl_Position;
