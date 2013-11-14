@@ -243,18 +243,7 @@ void AssetRenderEngine::release()
 
 void AssetRenderEngine::update()
 {
-    if (m_currentEffectEngineRef) {
-        pushAnnotationGroup(std::string("AssetRenderEngine#update name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-        m_currentEffectEngineRef->useToon.setValue(false);
-        m_currentEffectEngineRef->parthf.setValue(false);
-        m_currentEffectEngineRef->transp.setValue(false);
-        m_currentEffectEngineRef->opadd.setValue(false);
-        m_currentEffectEngineRef->subsetCount.setValue(m_nmeshes);
-        m_currentEffectEngineRef->vertexCount.setValue(m_nvertices);
-        m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
-        m_currentEffectEngineRef->updateSceneParameters();
-        popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
-    }
+    m_currentEffectEngineRef->updateSceneParameters();
 }
 
 void AssetRenderEngine::setUpdateOptions(int /* options */)
@@ -275,7 +264,7 @@ void AssetRenderEngine::renderModel()
         m_currentEffectEngineRef->selfShadow.updateParameter(shadowMap);
         hasShadowMap = true;
     }
-    m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
+    initializeEffectParameters();
     const aiScene *a = m_modelRef->aiScenePtr();
     renderRecurse(a, a->mRootNode, hasShadowMap);
     if (!m_cullFaceState) {
@@ -302,7 +291,7 @@ void AssetRenderEngine::renderZPlot()
         return;
     }
     pushAnnotationGroup(std::string("AssetRenderEngine#renderZPlot name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-    m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
+    initializeEffectParameters();
     const aiScene *a = m_modelRef->aiScenePtr();
     disable(kGL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
@@ -440,6 +429,9 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
             }
         }
     }
+    m_currentEffectEngineRef->parthf.setValue(false);
+    m_currentEffectEngineRef->transp.setValue(false);
+    m_currentEffectEngineRef->opadd.setValue(false);
     popAnnotationGroup(resolver);
 }
 
@@ -576,6 +568,16 @@ bool AssetRenderEngine::uploadRecurse(const aiScene *scene, const aiNode *node, 
     }
     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     return ret;
+}
+
+void AssetRenderEngine::initializeEffectParameters()
+{
+    m_currentEffectEngineRef->useToon.setValue(false);
+    m_currentEffectEngineRef->subsetCount.setValue(m_nmeshes);
+    m_currentEffectEngineRef->vertexCount.setValue(m_nvertices);
+    m_currentEffectEngineRef->boneTransformTexture.setTexture(0);
+    m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
+    m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
 }
 
 void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap)

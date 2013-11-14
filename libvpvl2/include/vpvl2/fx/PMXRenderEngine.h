@@ -162,6 +162,7 @@ private:
 
     bool uploadMaterials(void *userData);
     bool releaseUserData0(void *userData);
+    void initializeEffectParameters(int extraCameraFlags);
     void createVertexBundle(extensions::gl::VertexBundleLayout *layout, IModel::Buffer::StrideType strideType, extensions::gl::GLuint dvbo);
     void unbindVertexBundle();
     void bindDynamicVertexAttributePointers(IModel::Buffer::StrideType type);

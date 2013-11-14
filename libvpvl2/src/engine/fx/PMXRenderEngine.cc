@@ -494,17 +494,8 @@ void PMXRenderEngine::update()
         }
     }
     m_modelRef->setAabb(m_aabbMin, m_aabbMax);
-    m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
     m_currentEffectEngineRef->updateSceneParameters();
     m_updateEvenBuffer = m_updateEvenBuffer ? false :true;
-    if (m_currentEffectEngineRef) {
-        m_currentEffectEngineRef->parthf.setValue(false);
-        m_currentEffectEngineRef->transp.setValue(false);
-        m_currentEffectEngineRef->opadd.setValue(false);
-        m_currentEffectEngineRef->vertexCount.setValue(m_modelRef->count(IModel::kVertex));
-        m_currentEffectEngineRef->subsetCount.setValue(m_modelRef->count(IModel::kMaterial));
-        m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
-    }
     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
@@ -519,7 +510,7 @@ void PMXRenderEngine::renderModel()
         return;
     }
     pushAnnotationGroup(std::string("PMXRenderEngine#renderModel name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-    m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
+    initializeEffectParameters(0);
     const Scalar &modelOpacity = m_modelRef->opacity();
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0f);
     Array<IMaterial *> materials;
@@ -576,7 +567,7 @@ void PMXRenderEngine::renderEdge()
         return;
     }
     pushAnnotationGroup(std::string("PMXRenderEngine#renderEdge name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-    m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
+    initializeEffectParameters(0);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
@@ -615,7 +606,7 @@ void PMXRenderEngine::renderShadow()
         return;
     }
     pushAnnotationGroup(std::string("PMXRenderEngine#renderShadow name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-    m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef, IApplicationContext::kShadowMatrix);
+    initializeEffectParameters(IApplicationContext::kShadowMatrix);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
@@ -654,7 +645,7 @@ void PMXRenderEngine::renderZPlot()
         return;
     }
     pushAnnotationGroup(std::string("PMXRenderEngine#renderZPlot name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-    m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
+    initializeEffectParameters(0);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
@@ -804,6 +795,9 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
             }
         }
     }
+    m_currentEffectEngineRef->parthf.setValue(false);
+    m_currentEffectEngineRef->transp.setValue(false);
+    m_currentEffectEngineRef->opadd.setValue(false);
     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
@@ -946,6 +940,16 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
     }
     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     return true;
+}
+
+void PMXRenderEngine::initializeEffectParameters(int extraCameraFlags)
+{
+    m_currentEffectEngineRef->useToon.setValue(true);
+    m_currentEffectEngineRef->vertexCount.setValue(m_modelRef->count(IModel::kVertex));
+    m_currentEffectEngineRef->subsetCount.setValue(m_modelRef->count(IModel::kMaterial));
+    m_currentEffectEngineRef->boneTransformTexture.setTexture(m_transformFeedbackProgram ? m_transformFeedbackProgram->textureRef() : 0);
+    m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef, extraCameraFlags, 0);
+    m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
 }
 
 void PMXRenderEngine::createVertexBundle(VertexBundleLayout *layout, IModel::Buffer::StrideType strideType, GLuint dvbo)

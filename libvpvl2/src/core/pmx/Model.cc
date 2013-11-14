@@ -294,7 +294,7 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
             vertex->performSkinning(p, n);
             position = p;
             normal = n;
-            edge = position + normal * Scalar(edgeSize);
+            edge = p + n * Scalar(edgeSize);
             setUVA(vertex);
         }
         inline void setUVA(const IVertex *vertex) {
