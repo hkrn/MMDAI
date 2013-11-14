@@ -56,6 +56,21 @@ namespace nvfx
 using namespace extensions::fx;
 using namespace extensions::gl;
 
+template<typename TAttributeBindable>
+static void internalBindAttributes(TAttributeBindable *value)
+{
+    value->bindAttribute("vpvl2_inPosition",    IEffect::kPositionVertexAttribute);
+    value->bindAttribute("vpvl2_inNormal",      IEffect::kNormalVertexAttribute);
+    value->bindAttribute("vpvl2_inTexCoord",    IEffect::kTextureCoordVertexAttribute);
+    value->bindAttribute("vpvl2_inBoneIndices", IEffect::kBoneIndexVertexAttribute);
+    value->bindAttribute("vpvl2_inBoneWeights", IEffect::kBoneWeightVertexAttribute);
+    value->bindAttribute("vpvl2_inUVA1",        IEffect::kUVA1VertexAttribute);
+    value->bindAttribute("vpvl2_inUVA2",        IEffect::kUVA2VertexAttribute);
+    value->bindAttribute("vpvl2_inUVA3",        IEffect::kUVA3VertexAttribute);
+    value->bindAttribute("vpvl2_inUVA4",        IEffect::kUVA4VertexAttribute);
+    value->bindAttributes();
+}
+
 static IEffect::Parameter::Type toEffectType(nvFX::IUniform::Type type)
 {
     switch (type) {
@@ -190,6 +205,7 @@ struct Effect::NvFXPass : IEffect::Pass {
             for (int i = 0; i < numOverridePasses; i++) {
                 nvFX::IPass *passRef = overridePasses[i];
                 passRef->validate();
+                internalBindAttributes(passRef);
             }
         }
         popAnnotationGroup(effectRef->applicationContextRef()->sharedFunctionResolverInstance());
@@ -722,16 +738,7 @@ IEffect::Technique *Effect::cacheTechniqueRef(nvFX::ITechnique *technique) const
         pushAnnotationGroup(std::string("Effect#cacheTechniqueRef name=").append(technique->getName()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         VPVL2_VLOG(2, "Validating a technique: " << technique->getName());
         if (technique->validate()) {
-            technique->bindAttribute("vpvl2_inPosition",    IEffect::kPositionVertexAttribute);
-            technique->bindAttribute("vpvl2_inNormal",      IEffect::kNormalVertexAttribute);
-            technique->bindAttribute("vpvl2_inTexCoord",    IEffect::kTextureCoordVertexAttribute);
-            technique->bindAttribute("vpvl2_inBoneIndices", IEffect::kBoneIndexVertexAttribute);
-            technique->bindAttribute("vpvl2_inBoneWeights", IEffect::kBoneWeightVertexAttribute);
-            technique->bindAttribute("vpvl2_inUVA1",        IEffect::kUVA1VertexAttribute);
-            technique->bindAttribute("vpvl2_inUVA2",        IEffect::kUVA2VertexAttribute);
-            technique->bindAttribute("vpvl2_inUVA3",        IEffect::kUVA3VertexAttribute);
-            technique->bindAttribute("vpvl2_inUVA4",        IEffect::kUVA4VertexAttribute);
-            technique->bindAttributes();
+            internalBindAttributes(technique);
             NvFXTechnique *newTechniquePtr = m_techniques.append(new NvFXTechnique(this, technique));
             m_techniqueRefsHash.insert(technique, newTechniquePtr);
             techniqueRef = newTechniquePtr;
