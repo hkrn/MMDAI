@@ -332,9 +332,15 @@ in vec4 vpvl2_inPosition;
 in vec4 vpvl2_inNormal;
 in vec2 vpvl2_inTexCoord;
 in vec4 vpvl2_inUVA1;
+in vec4 vpvl2_inUVA2;
+in vec4 vpvl2_inUVA3;
+in vec4 vpvl2_inUVA4;
 out vec4 vpvl2_outPosition;
 out vec4 vpvl2_outTexCoord;
 out vec4 vpvl2_outUVA1;
+out vec4 vpvl2_outUVA2;
+out vec4 vpvl2_outUVA3;
+out vec4 vpvl2_outUVA4;
 out vec4 vpvl2_outColor;
 out vec3 vpvl2_outEyeView;
 out vec3 vpvl2_outNormal;
@@ -358,6 +364,9 @@ void main() {
     vpvl2_outPosition    = position;
     vpvl2_outTexCoord.xy = vpvl2_inTexCoord;
     vpvl2_outUVA1        = vpvl2_inUVA1;
+    vpvl2_outUVA2        = vpvl2_inUVA2;
+    vpvl2_outUVA3        = vpvl2_inUVA3;
+    vpvl2_outUVA4        = vpvl2_inUVA4;
     vpvl2_outColor       = vec4(clamp(ambient + dot(vpvl2_inNormal.xyz, -lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
     vpvl2_outEyeView     = cameraPosition.xyz - position.xyz;
     vpvl2_outNormal      = vpvl2_inNormal.xyz;
@@ -378,7 +387,16 @@ GLSLShader global noPixelColor {
 
 const vec4 kZero4 = vec4(0.0);
 
-vec4 outputPixelColor(const vec4 position, const vec3 normal, const vec4 texcoord, const vec4 uva1, const vec3 eyeView, const vec4 color) {
+vec4 outputPixelColor(const vec4 position,
+                      const vec3 normal,
+                      const vec4 texcoord,
+                      const vec4 color,
+                      const vec3 eyeView,
+                      const vec4 uva1,
+                      const vec4 uva2,
+                      const vec4 uva3,
+                      const vec4 uva4)
+{                      
     return kZero4;
 }
 
@@ -392,7 +410,17 @@ vec4 applyToon(const vec4 color, const vec3 normal);
 const vec3 kZero3 = vec3(0.0);
 const vec3 kOne3  = vec3(1.0);
 
-vec4 outputPixelColor(const vec4 position, const vec3 normal, const vec4 texcoord, const vec4 uva1, const vec3 eyeView, const vec4 color) {
+
+vec4 outputPixelColor(const vec4 position,
+                      const vec3 normal,
+                      const vec4 texcoord,
+                      const vec4 color,
+                      const vec3 eyeView,
+                      const vec4 uva1,
+                      const vec4 uva2,
+                      const vec4 uva3,
+                      const vec4 uva4)
+{
     vec4 newColor = applyToon(applyTexture(color, texcoord, uva1), normal);
     vec3 halfVector = normalize(eyeView - lightDirection);
     vec3 specular = clamp(materialSpecular * lightSpecular, kZero3, kOne3);
@@ -407,7 +435,16 @@ vec4 outputPixelColor(const vec4 position, const vec3 normal, const vec4 texcoor
 
 GLSLShader outputEdgeColor {
 
-vec4 outputPixelColor(const vec4 position, const vec3 normal, const vec4 texcoord, const vec4 uva1, const vec3 eyeView, const vec4 color) {
+vec4 outputPixelColor(const vec4 position,
+                      const vec3 normal,
+                      const vec4 texcoord,
+                      const vec4 color,
+                      const vec3 eyeView,
+                      const vec4 uva1,
+                      const vec4 uva2,
+                      const vec4 uva3,
+                      const vec4 uva4)
+{
     return edgeColor;
 }
 
@@ -415,7 +452,17 @@ vec4 outputPixelColor(const vec4 position, const vec3 normal, const vec4 texcoor
 
 GLSLShader outputShadowColor {
 
-vec4 outputPixelColor(const vec4 position, const vec3 normal, const vec4 texcoord, const vec4 uva1, const vec3 eyeView, const vec4 color) {
+
+vec4 outputPixelColor(const vec4 position,
+                      const vec3 normal,
+                      const vec4 texcoord,
+                      const vec4 color,
+                      const vec3 eyeView,
+                      const vec4 uva1,
+                      const vec4 uva2,
+                      const vec4 uva3,
+                      const vec4 uva4)
+{
     return vec4(materialAmbient, materialDiffuse.a);
 }
 
@@ -427,7 +474,16 @@ GLSLShader outputZplot {
 #define in varying
 #endif
 
-vec4 outputPixelColor(const vec4 position, const vec3 normal, const vec4 texcoord, const vec4 uva1, const vec3 eyeView, const vec4 color) {
+vec4 outputPixelColor(const vec4 position,
+                      const vec3 normal,
+                      const vec4 texcoord,
+                      const vec4 color,
+                      const vec3 eyeView,
+                      const vec4 uva1,
+                      const vec4 uva2,
+                      const vec4 uva3,
+                      const vec4 uva4)
+{
     float depth = position.z / position.w;
     return vec4(depth, depth * depth, 0, 1);
 }
@@ -446,13 +502,32 @@ in vec4 vpvl2_outPosition;
 in vec4 vpvl2_outTexCoord;
 in vec4 vpvl2_outColor;
 in vec4 vpvl2_outUVA1;
+in vec4 vpvl2_outUVA2;
+in vec4 vpvl2_outUVA3;
+in vec4 vpvl2_outUVA4;
 in vec3 vpvl2_outEyeView;
 in vec3 vpvl2_outNormal;
 
-vec4 outputPixelColor(const vec4 position, const vec3 normal, const vec4 texcoord, const vec4 uva1, const vec3 eyeView, const vec4 color);
+vec4 outputPixelColor(const vec4 position,
+                      const vec3 normal,
+                      const vec4 texcoord,
+                      const vec4 color,
+                      const vec3 eyeView,
+                      const vec4 uva1,
+                      const vec4 uva2,
+                      const vec4 uva3,
+                      const vec4 uva4);
 
 void main() {
-    vpvl2_outPixelColor = outputPixelColor(vpvl2_outPosition, normalize(vpvl2_outNormal), vpvl2_outTexCoord, vpvl2_outUVA1, normalize(vpvl2_outEyeView), vpvl2_outColor);
+    vpvl2_outPixelColor = outputPixelColor(vpvl2_outPosition,
+                                           normalize(vpvl2_outNormal),
+                                           vpvl2_outTexCoord,
+                                           vpvl2_outColor,
+                                           normalize(vpvl2_outEyeView),
+                                           vpvl2_outUVA1,
+                                           vpvl2_outUVA2,
+                                           vpvl2_outUVA3,
+                                           vpvl2_outUVA4);
 }
 
 } /* GLSLShader mainObjectPS */
@@ -474,6 +549,9 @@ out vec4 vpvl2_outPosition;
 out vec4 vpvl2_outColor;
 out vec4 vpvl2_outTexCoord;
 out vec4 vpvl2_outUVA1;
+out vec4 vpvl2_outUVA2;
+out vec4 vpvl2_outUVA3;
+out vec4 vpvl2_outUVA4;
 out vec3 vpvl2_outNormal;
 out vec3 vpvl2_outEyeView;
 
@@ -489,6 +567,9 @@ void main() {
     vpvl2_outTexCoord = kZero4;
     vpvl2_outColor    = kZero4;
     vpvl2_outUVA1     = kZero4;
+    vpvl2_outUVA2     = kZero4;
+    vpvl2_outUVA3     = kZero4;
+    vpvl2_outUVA4     = kZero4;
     vpvl2_outEyeView  = kZero3;
     vpvl2_outNormal   = vpvl2_inNormal.xyz;
     gl_Position       = newPosition;
@@ -512,6 +593,9 @@ out vec4 vpvl2_outPosition;
 out vec4 vpvl2_outColor;
 out vec4 vpvl2_outTexCoord;
 out vec4 vpvl2_outUVA1;
+out vec4 vpvl2_outUVA2;
+out vec4 vpvl2_outUVA3;
+out vec4 vpvl2_outUVA4;
 out vec3 vpvl2_outNormal;
 out vec3 vpvl2_outEyeView;
 
@@ -527,6 +611,9 @@ void main() {
     vpvl2_outTexCoord = kZero4;
     vpvl2_outColor    = kZero4;
     vpvl2_outUVA1     = kZero4;
+    vpvl2_outUVA2     = kZero4;
+    vpvl2_outUVA3     = kZero4;
+    vpvl2_outUVA4     = kZero4;
     vpvl2_outEyeView  = kZero3;
     vpvl2_outNormal   = kZero3;
     gl_Position       = newPosition;

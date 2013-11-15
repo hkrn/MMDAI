@@ -763,6 +763,10 @@ void AssetRenderEngine::unbindVertexBundle(const aiMesh *mesh)
         effectRef->deactivateVertexAttribute(IEffect::kPositionVertexAttribute);
         effectRef->deactivateVertexAttribute(IEffect::kNormalVertexAttribute);
         effectRef->deactivateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
+        for (int i = IEffect::kUVA1VertexAttribute; i <= int(IEffect::kUVA4VertexAttribute); i++) {
+            IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IModel::DynamicVertexBuffer::kUVA1Stride) + i);
+            effectRef->deactivateVertexAttribute(attribType);
+        }
         VertexBundle *bundle = *m_vbo.find(mesh);
         bundle->unbind(VertexBundle::kVertexBuffer);
         bundle->unbind(VertexBundle::kIndexBuffer);
@@ -783,6 +787,18 @@ void AssetRenderEngine::bindStaticVertexAttributePointers()
     const GLvoid *texcoordPtr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.texcoord) - reinterpret_cast<const uint8 *>(&v.position));
     effectRef->setVertexAttributePointer(IEffect::kTextureCoordVertexAttribute, IEffect::Parameter::kFloat4, sizeof(v), texcoordPtr);
     effectRef->activateVertexAttribute(IEffect::kTextureCoordVertexAttribute);
+    const GLvoid *uva1Ptr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.uva1) - reinterpret_cast<const uint8 *>(&v.position));
+    effectRef->setVertexAttributePointer(IEffect::kUVA1VertexAttribute, IEffect::Parameter::kFloat4, sizeof(v), uva1Ptr);
+    effectRef->activateVertexAttribute(IEffect::kUVA1VertexAttribute);
+    const GLvoid *uva2Ptr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.uva2) - reinterpret_cast<const uint8 *>(&v.position));
+    effectRef->setVertexAttributePointer(IEffect::kUVA2VertexAttribute, IEffect::Parameter::kFloat4, sizeof(v), uva2Ptr);
+    effectRef->activateVertexAttribute(IEffect::kUVA2VertexAttribute);
+    const GLvoid *uva3Ptr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.uva3) - reinterpret_cast<const uint8 *>(&v.position));
+    effectRef->setVertexAttributePointer(IEffect::kUVA3VertexAttribute, IEffect::Parameter::kFloat4, sizeof(v), uva3Ptr);
+    effectRef->activateVertexAttribute(IEffect::kUVA3VertexAttribute);
+    const GLvoid *uva4Ptr = reinterpret_cast<const void *>(reinterpret_cast<const uint8 *>(&v.uva4) - reinterpret_cast<const uint8 *>(&v.position));
+    effectRef->setVertexAttributePointer(IEffect::kUVA4VertexAttribute, IEffect::Parameter::kFloat4, sizeof(v), uva4Ptr);
+    effectRef->activateVertexAttribute(IEffect::kUVA4VertexAttribute);
     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
 

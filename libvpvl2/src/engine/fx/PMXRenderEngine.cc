@@ -51,6 +51,8 @@ namespace fx
 {
 using namespace extensions::gl;
 
+static const int kMaxUVASize = int(IEffect::kUVA4VertexAttribute - IEffect::kUVA1VertexAttribute);
+
 class PMXRenderEngine::PrivateEffectEngine : public EffectEngine {
 public:
     enum DrawType {
@@ -960,9 +962,8 @@ void PMXRenderEngine::createVertexBundle(VertexBundleLayout *layout, IModel::Buf
         m_bundle->bind(VertexBundle::kVertexBuffer, dvbo);
         bindDynamicVertexAttributePointers(strideType);
         IEffect *effectRef = m_currentEffectEngineRef->effect();
-        int maxNumVertexAttributes = IEffect::kUVA1VertexAttribute + m_modelRef->maxUVCount();
-        for (int i = IEffect::kUVA1VertexAttribute; i < maxNumVertexAttributes; i++) {
-            IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IModel::DynamicVertexBuffer::kUVA1Stride) + i);
+        for (int i = 0; i <= kMaxUVASize; i++) {
+            const IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IEffect::kUVA1VertexAttribute) + i);
             effectRef->activateVertexAttribute(attribType);
         }
         m_bundle->bind(VertexBundle::kVertexBuffer, kModelStaticVertexBuffer);
@@ -983,9 +984,8 @@ void PMXRenderEngine::unbindVertexBundle()
         for (int i = 0; i < int(IEffect::kUVA1VertexAttribute); i++) {
             effectRef->deactivateVertexAttribute(static_cast<IEffect::VertexAttributeType>(i));
         }
-        int maxNumVertexAttributes = IEffect::kUVA1VertexAttribute + m_modelRef->maxUVCount();
-        for (int i = IEffect::kUVA1VertexAttribute; i < maxNumVertexAttributes; i++) {
-            IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IModel::DynamicVertexBuffer::kUVA1Stride) + i);
+        for (int i = 0; i <= kMaxUVASize; i++) {
+            IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IEffect::kUVA1VertexAttribute) + i);
             effectRef->deactivateVertexAttribute(attribType);
         }
         m_bundle->unbind(VertexBundle::kVertexBuffer);
@@ -1004,10 +1004,9 @@ void PMXRenderEngine::bindDynamicVertexAttributePointers(IModel::IndexBuffer::St
     offset = m_dynamicBuffer->strideOffset(IModel::DynamicVertexBuffer::kNormalStride);
     effectRef->setVertexAttributePointer(IEffect::kNormalVertexAttribute, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
     effectRef->activateVertexAttribute(IEffect::kNormalVertexAttribute);
-    int maxNumVertexAttributes = IEffect::kUVA1VertexAttribute + m_modelRef->maxUVCount();
-    for (int i = IEffect::kUVA1VertexAttribute; i < maxNumVertexAttributes; i++) {
-        IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IModel::DynamicVertexBuffer::kUVA1Stride) + i);
-        IModel::Buffer::StrideType strideType = static_cast<IModel::Buffer::StrideType>(int(IModel::Buffer::kUVA1Stride) + i);
+    for (int i = 0; i <= kMaxUVASize; i++) {
+        const IEffect::VertexAttributeType attribType = static_cast<IEffect::VertexAttributeType>(int(IEffect::kUVA1VertexAttribute) + i);
+        const IModel::Buffer::StrideType strideType = static_cast<IModel::Buffer::StrideType>(int(IModel::Buffer::kUVA1Stride) + i);
         offset = m_dynamicBuffer->strideOffset(strideType);
         effectRef->setVertexAttributePointer(attribType, IEffect::Parameter::kFloat4, size, reinterpret_cast<const GLvoid *>(offset));
         effectRef->activateVertexAttribute(attribType);

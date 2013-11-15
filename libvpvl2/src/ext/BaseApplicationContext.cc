@@ -1185,8 +1185,12 @@ void BaseApplicationContext::renderOffscreen()
 #if defined(VPVL2_LINK_NVFX)
     if (m_viewportRegionInvalidated) {
         int width = int(m_viewportRegion.z), height = int(m_viewportRegion.w);
-        nvFX::getResourceRepositorySingleton()->validate(0, 0, width, height, 1, 0, 0);
-        nvFX::getFrameBufferObjectsRepositorySingleton()->validate(0, 0, width, height, 1, 0, 0);
+        nvFX::IResourceRepository *resourceRepository = nvFX::getResourceRepositorySingleton();
+        resourceRepository->setParams(0, 0, width, height, 1, 0, 0);
+        resourceRepository->validateAll();
+        nvFX::IFrameBufferObjectsRepository *fboRepository = nvFX::getFrameBufferObjectsRepositorySingleton();
+        fboRepository->setParams(0, 0, width, height, 1, 0, 0);
+        fboRepository->validateAll();
         m_viewportRegionInvalidated = false;
     }
     Array<IEffect::Pass *> passes;

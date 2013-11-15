@@ -139,7 +139,11 @@ private:
               normal(kZeroV3),
               texcoord(kZeroV3),
               tangent(kZeroV3),
-              bitangent(kZeroV3)
+              bitangent(kZeroV3),
+              uva1(kZeroV4),
+              uva2(kZeroV4),
+              uva3(kZeroV4),
+              uva4(kZeroV4)
         {
         }
         vpvl2::Vector3 position;
@@ -147,6 +151,10 @@ private:
         vpvl2::Vector3 texcoord;
         vpvl2::Vector3 tangent;
         vpvl2::Vector3 bitangent;
+        vpvl2::Vector4 uva1;
+        vpvl2::Vector4 uva2;
+        vpvl2::Vector4 uva3;
+        vpvl2::Vector4 uva4;
     };
     typedef Array<Vertex> Vertices;
     typedef Array<int> Indices;
