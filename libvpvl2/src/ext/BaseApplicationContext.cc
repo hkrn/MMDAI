@@ -1097,7 +1097,8 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
                 const int npasses = passes.count();
                 for (int j = 0; j < npasses; j++) {
                     IEffect::Pass *pass = passes[j];
-                    if (fx::Util::isPassEquals(pass->annotationRef("order"), "setup")) {
+                    const IEffect::Annotation *annotationRef = pass->annotationRef("draw");
+                    if (annotationRef && annotationRef->booleanValue()) {
                         pass->setupOverrides(destPasses);
                     }
                 }
@@ -1204,7 +1205,8 @@ void BaseApplicationContext::renderOffscreen()
         for (int j = 0; j < npasses; j++) {
             IEffect::Pass *pass = passes[j];
             pass->setState();
-            if (fx::Util::isPassEquals(pass->annotationRef("order"), "setup")) {
+            const IEffect::Annotation *annotationRef = pass->annotationRef("draw");
+            if (annotationRef && annotationRef->booleanValue()) {
                 for (int k = 0; k < nengines; k++) {
                     IRenderEngine *engine = engines[k];
                     engine->setOverridePass(pass);
