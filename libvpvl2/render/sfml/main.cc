@@ -88,12 +88,11 @@ public:
     }
     ~Application() {
         m_dictionary.releaseAll();
-        /* explicitly release Scene instance to invalidation of Effect correctly before destorying RenderContext */
+        /* release ApplicationContext for deleting OpenGL resources before destroying OpenGL context */
+        m_applicationContext->release();
         m_scene.reset();
         /* explicitly release World instance first to ensure release btRigidBody */
         m_world.reset();
-        /* release ApplicationContext for deleting OpenGL resources before destroying OpenGL context */
-        m_applicationContext->release();
         delete m_window;
     }
 
