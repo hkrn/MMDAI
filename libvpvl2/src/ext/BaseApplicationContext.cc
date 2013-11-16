@@ -1217,6 +1217,9 @@ void BaseApplicationContext::renderOffscreen()
             pass->resetState();
         }
     }
+    if (ntechniques == 0) {
+        clear(kGL_COLOR_BUFFER_BIT | kGL_DEPTH_BUFFER_BIT | kGL_STENCIL_BUFFER_BIT);
+    }
 #elif defined(VPVL2_ENABLE_NVIDIA_CG)
     Array<IRenderEngine *> engines;
     m_sceneRef->getRenderEngineRefs(engines);
