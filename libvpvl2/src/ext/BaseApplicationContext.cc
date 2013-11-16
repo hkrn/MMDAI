@@ -261,7 +261,6 @@ bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key
             texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_S, BaseTexture::kGL_CLAMP_TO_EDGE);
             texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_T, BaseTexture::kGL_CLAMP_TO_EDGE);
         }
-        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_GENERATE_MIPMAP, 1);
         textureRef->unbind();
         bridge.dataRef = textureRef;
         annotateObject(BaseTexture::kGL_TEXTURE, textureRef->data(), String::toStdString("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
@@ -1184,7 +1183,11 @@ void BaseApplicationContext::renderOffscreen()
 {
     pushAnnotationGroup("BaseApplicationContext#renderOffscreen", sharedFunctionResolverInstance());
 #if defined(VPVL2_LINK_NVFX)
-    if (m_viewportRegionInvalidated) {
+    Array<IEffect::Pass *> passes;
+    Array<IRenderEngine *> engines;
+    m_sceneRef->getRenderEngineRefs(engines);
+    const int nengines = engines.count(), ntechniques = m_offscreenTechniques.count();
+    if (ntechniques > 0 && m_viewportRegionInvalidated) {
         int width = int(m_viewportRegion.z), height = int(m_viewportRegion.w);
         nvFX::IResourceRepository *resourceRepository = nvFX::getResourceRepositorySingleton();
         resourceRepository->setParams(0, 0, width, height, 1, 0, 0);
@@ -1194,10 +1197,6 @@ void BaseApplicationContext::renderOffscreen()
         fboRepository->validateAll();
         m_viewportRegionInvalidated = false;
     }
-    Array<IEffect::Pass *> passes;
-    Array<IRenderEngine *> engines;
-    m_sceneRef->getRenderEngineRefs(engines);
-    const int nengines = engines.count(), ntechniques = m_offscreenTechniques.count();
     for (int i = 0; i < ntechniques; i++) {
         IEffect::Technique *technique = m_offscreenTechniques[i];
         technique->getPasses(passes);
@@ -1218,6 +1217,7 @@ void BaseApplicationContext::renderOffscreen()
         }
     }
     if (ntechniques == 0) {
+        viewport(m_viewportRegion.x, m_viewportRegion.y, m_viewportRegion.z, m_viewportRegion.w);
         clear(kGL_COLOR_BUFFER_BIT | kGL_DEPTH_BUFFER_BIT | kGL_STENCIL_BUFFER_BIT);
     }
 #elif defined(VPVL2_ENABLE_NVIDIA_CG)
