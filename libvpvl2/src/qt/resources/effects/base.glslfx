@@ -56,14 +56,10 @@ SamplerState defaultDepthSamplerState
 GLSLShader global performTransform {
 
 #if __VERSION__ < 130
-#define in attribute
 #ifndef texture
 #define texture texture2D
 #endif
 #endif
-
-in vec4 vpvl2_inBoneIndices;
-in vec4 vpvl2_inBoneWeights;
 
 const mat4 kIdenticalMatrix = mat4(1.0);
 const int kBdef1 = 0;
@@ -99,53 +95,53 @@ mat4 boneTransformMatrix(const float index) {
     return matrix;
 }
 
-vec4 performSkinning(const vec3 position3, const float base, const int type) {
+vec4 performSkinning(const vec3 position3, const vec4 boneIndices, const vec4 boneWeights, const float base, const int type) {
     vec4 position = vec4(position3, base);
-    bool bdef4 = any(bvec2(type == kBdef4, type == kQdef));
-    bool bdef2 = any(bvec2(type == kBdef2, type == kSdef));
+    bool bdef4    = any(bvec2(type == kBdef4, type == kQdef));
+    bool bdef2    = any(bvec2(type == kBdef2, type == kSdef));
     if (bdef4) {
-        mat4 matrix1 = boneTransformMatrix(vpvl2_inBoneIndices.x);
-        mat4 matrix2 = boneTransformMatrix(vpvl2_inBoneIndices.y);
-        mat4 matrix3 = boneTransformMatrix(vpvl2_inBoneIndices.z);
-        mat4 matrix4 = boneTransformMatrix(vpvl2_inBoneIndices.w);
-        return vpvl2_inBoneWeights.xxxx * (matrix1 * position)
-             + vpvl2_inBoneWeights.yyyy * (matrix2 * position)
-             + vpvl2_inBoneWeights.zzzz * (matrix3 * position)
-             + vpvl2_inBoneWeights.wwww * (matrix4 * position);
+        mat4 matrix1 = boneTransformMatrix(boneIndices.x);
+        mat4 matrix2 = boneTransformMatrix(boneIndices.y);
+        mat4 matrix3 = boneTransformMatrix(boneIndices.z);
+        mat4 matrix4 = boneTransformMatrix(boneIndices.w);
+        return boneWeights.xxxx * (matrix1 * position)
+             + boneWeights.yyyy * (matrix2 * position)
+             + boneWeights.zzzz * (matrix3 * position)
+             + boneWeights.wwww * (matrix4 * position);
     }
     else if (bdef2) {
-        mat4 matrix1 = boneTransformMatrix(vpvl2_inBoneIndices.x);
-        mat4 matrix2 = boneTransformMatrix(vpvl2_inBoneIndices.y);
+        mat4 matrix1 = boneTransformMatrix(boneIndices.x);
+        mat4 matrix2 = boneTransformMatrix(boneIndices.y);
         vec4 p1 = matrix2 * position;
         vec4 p2 = matrix1 * position;
-        return mix(p1, p2, vpvl2_inBoneWeights.x);
+        return mix(p1, p2, boneWeights.x);
     }
     else if (type == kBdef1) {
-        mat4 matrix = boneTransformMatrix(vpvl2_inBoneIndices.x);
+        mat4 matrix = boneTransformMatrix(boneIndices.x);
         return matrix * position;
     }
     return position;
 }
 
-vec4 performPositionTransform(const vec4 position) {
+vec4 performPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights) {
     if (use_boneTransformTextureVPVL2) {
-        return performSkinning(position.xyz, 1.0, int(position.w));
+        return performSkinning(position.xyz, boneIndices, boneWeights, 1.0, int(position.w));
     }
     return vec4(position.xyz, 1.0);
 }
 
-vec4 performNormalTransform(const vec4 normal, const vec4 position) {
+vec4 performNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights) {
     if (use_boneTransformTextureVPVL2) {
-        return performSkinning(normal.xyz, 0.0, int(position.w));
+        return performSkinning(normal.xyz, boneIndices, boneWeights, 0.0, int(position.w));
     }
     return vec4(normal.xyz, 0.0);
 }
 
-vec4 performEdgeTransform(const vec4 position, const vec4 normal) {
+vec4 performEdgeTransform(const vec4 position, const vec4 normal, const vec4 boneIndices, const vec4 boneWeights) {
     if (use_boneTransformTextureVPVL2) {
         int type         = int(position.w);
-        vec4 newPosition = performSkinning(position.xyz, 1.0, type);
-        vec4 newNormal   = performSkinning(normal.xyz,   0.0, type);
+        vec4 newPosition = performSkinning(position.xyz, boneIndices, boneWeights, 1.0, type);
+        vec4 newNormal   = performSkinning(normal.xyz,   boneIndices, boneWeights, 0.0, type);
         newPosition.xyz += newNormal.xyz * normal.www * vec3(edgeWidth * edgeScaleFactor);
         return newPosition;
     }
@@ -203,10 +199,9 @@ const vec2 kToonTexCoord = vec2(0.0, 1.0);
 const vec3 kWhiteColor = vec3(1.0);
 
 vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
-    vec4 toonColorRGBA = texture(toonSampler, kToonTexCoord);
-    vec3 toonColor = toonColorRGBA.rgb;
+    vec4 toonColor = texture(toonSampler, kToonTexCoord);
     float w = clamp(dot(normal, -lightDirection.xyz) * 16.0 + 0.5, 0.0, 1.0);
-    return vec4(color.rgb * (toonColor + (kWhiteColor - toonColor) * vec3(w)), color.a);
+    return vec4(color.rgb * (toonColor.rgb + (kWhiteColor - toonColor.rgb) * vec3(w)), color.a);
 }
 
 } /* applyToon */
@@ -291,6 +286,8 @@ out gl_PerVertex {
 in vec4 vpvl2_inPosition;
 in vec4 vpvl2_inNormal;
 in vec2 vpvl2_inTexCoord;
+in vec4 vpvl2_inBoneIndices;
+in vec4 vpvl2_inBoneWeights;
 in vec4 vpvl2_inUVA1;
 in vec4 vpvl2_inUVA2;
 in vec4 vpvl2_inUVA3;
@@ -306,8 +303,8 @@ out vec4 vpvl2_outColor;
 out vec3 vpvl2_outEyeView;
 out vec3 vpvl2_outNormal;
 
-vec4 performPositionTransform(const vec4 position);
-vec4 performNormalTransform(const vec4 normal, const vec4 position);
+vec4 performPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
+vec4 performNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 
 const vec2 kHalf2 = vec2(0.5);
 const vec2 kOne2  = vec2(1.0);
@@ -317,8 +314,8 @@ const vec4 kZero4 = vec4(0.0);
 const vec4 kOne4  = vec4(1.0);
 
 void main() {
-    vec4 position           = performPositionTransform(vpvl2_inPosition);
-    vec3 normal             = (normalMatrix * performNormalTransform(vpvl2_inNormal, vpvl2_inPosition)).xyz;
+    vec4 position           = performPositionTransform(vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
+    vec3 normal             = (normalMatrix * performNormalTransform(vpvl2_inNormal, vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights)).xyz;
     vec3 ambient            = clamp(materialAmbient * lightAmbient + materialEmissive, kZero3, kOne3);
     vec4 diffuse            = clamp(materialDiffuse * vec4(lightDiffuse, 1.0), kZero4, kOne4);
     vec4 newPosition        = modelViewProjectionMatrix * position;
@@ -511,6 +508,8 @@ out gl_PerVertex {
 #endif
 in vec4 vpvl2_inPosition;
 in vec4 vpvl2_inNormal;
+in vec4 vpvl2_inBoneIndices;
+in vec4 vpvl2_inBoneWeights;
 
 out vec4 vpvl2_outPosition;
 out vec4 vpvl2_outShadowPosition;
@@ -526,10 +525,10 @@ out vec3 vpvl2_outEyeView;
 const vec4 kZero4 = vec4(0.0);
 const vec3 kZero3 = vec3(0.0);
 
-vec4 performEdgeTransform(const vec4 position, const vec4 normal);
+vec4 performEdgeTransform(const vec4 position, const vec4 normal, const vec4 boneIndices, const vec4 boneWeights);
 
 void main() {
-    vec4 position           = modelViewProjectionMatrix * performEdgeTransform(vpvl2_inPosition, vpvl2_inNormal);
+    vec4 position           = modelViewProjectionMatrix * performEdgeTransform(vpvl2_inPosition, vpvl2_inNormal, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
     vpvl2_outPosition       = position;
     vpvl2_outShadowPosition = kZero4;
     vpvl2_outTexCoord       = kZero4;
@@ -557,6 +556,8 @@ out gl_PerVertex {
 #endif
 in vec4 vpvl2_inPosition;
 in vec4 vpvl2_inNormal;
+in vec4 vpvl2_inBoneIndices;
+in vec4 vpvl2_inBoneWeights;
 
 out vec4 vpvl2_outPosition;
 out vec4 vpvl2_outShadowPosition;
@@ -572,10 +573,10 @@ out vec3 vpvl2_outEyeView;
 const vec4 kZero4 = vec4(0.0);
 const vec3 kZero3 = vec3(0.0);
 
-vec4 performPositionTransform(const vec4 position);
+vec4 performPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 
 void main() {
-    vec4 position           = modelViewProjectionMatrix * performPositionTransform(vpvl2_inPosition);
+    vec4 position           = modelViewProjectionMatrix * performPositionTransform(vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
     vpvl2_outPosition       = position;
     vpvl2_outShadowPosition = kZero4;
     vpvl2_outTexCoord       = kZero4;
@@ -603,6 +604,8 @@ out gl_PerVertex {
 #endif
 in vec4 vpvl2_inPosition;
 in vec4 vpvl2_inNormal;
+in vec4 vpvl2_inBoneIndices;
+in vec4 vpvl2_inBoneWeights;
 
 out vec4 vpvl2_outPosition;
 out vec4 vpvl2_outShadowPosition;
@@ -618,10 +621,10 @@ out vec3 vpvl2_outEyeView;
 const vec4 kZero4 = vec4(0.0);
 const vec3 kZero3 = vec3(0.0);
 
-vec4 performPositionTransform(const vec4 position);
+vec4 performPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 
 void main() {
-    vec4 position           = lightViewProjectionMatrix * performPositionTransform(vpvl2_inPosition);
+    vec4 position           = lightViewProjectionMatrix * performPositionTransform(vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
     vpvl2_outPosition       = position;
     vpvl2_outShadowPosition = kZero4;
     vpvl2_outTexCoord       = kZero4;
