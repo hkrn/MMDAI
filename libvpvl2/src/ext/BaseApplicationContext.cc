@@ -672,7 +672,7 @@ void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int
         if (internal::hasFlagBits(flags, IApplicationContext::kViewMatrix)) {
             m *= m_lightViewMatrix;
         }
-        if (internal::hasFlagBits(flags, IApplicationContext::kWorldMatrix)) {
+        if (model && internal::hasFlagBits(flags, IApplicationContext::kWorldMatrix)) {
             m *= m_lightWorldMatrix;
             m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }

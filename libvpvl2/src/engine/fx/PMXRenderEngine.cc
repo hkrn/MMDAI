@@ -261,7 +261,7 @@ private:
 };
 
 PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
-                                 Scene *scene,
+                                 Scene *sceneRef,
                                  cl::PMXAccelerator *accelerator,
                                  IModel *modelRef)
 
@@ -278,7 +278,7 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
       m_accelerator(accelerator),
       m_applicationContextRef(applicationContextRef),
       m_transformFeedbackProgram(0),
-      m_sceneRef(scene),
+      m_sceneRef(sceneRef),
       m_modelRef(modelRef),
       m_staticBuffer(0),
       m_dynamicBuffer(0),
@@ -292,6 +292,8 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
       m_cullFaceState(true),
       m_updateEvenBuffer(true)
 {
+    VPVL2_DCHECK(modelRef);
+    VPVL2_DCHECK(sceneRef);
     m_modelRef->getIndexBuffer(m_indexBuffer);
     m_modelRef->getStaticVertexBuffer(m_staticBuffer);
     m_modelRef->getDynamicVertexBuffer(m_dynamicBuffer, m_indexBuffer);
@@ -323,7 +325,7 @@ PMXRenderEngine::~PMXRenderEngine()
 
 IModel *PMXRenderEngine::parentModelRef() const
 {
-    return m_modelRef && m_modelRef->parentSceneRef() ? m_modelRef : 0;
+    return m_modelRef->parentSceneRef() ? m_modelRef : 0;
 }
 
 bool PMXRenderEngine::upload(void *userData)
@@ -440,7 +442,11 @@ void PMXRenderEngine::release()
 
 void PMXRenderEngine::update()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef) {
+    if (!m_currentEffectEngineRef) {
+        return;
+    }
+    m_currentEffectEngineRef->updateSceneParameters();
+    if (!m_modelRef->isVisible()) {
         return;
     }
     pushAnnotationGroup(std::string("PMXRenderEngine#update name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
@@ -472,11 +478,9 @@ void PMXRenderEngine::update()
 #else
             m_transformFeedbackProgram->updateBoneTransformTextureData(m_modelRef);
             m_transformFeedbackProgram->updateBoneTransformTexture();
-            if (m_currentEffectEngineRef) {
-                m_currentEffectEngineRef->boneTransformTexture.setTexture(m_transformFeedbackProgram->textureRef());
-                m_currentEffectEngineRef->boneCount.setValue(m_modelRef->count(IModel::kBone));
-                m_currentEffectEngineRef->edgeScaleFactor.setValue(m_modelRef->edgeScaleFactor(m_sceneRef->cameraRef()->position()));
-            }
+            m_currentEffectEngineRef->boneTransformTexture.setTexture(m_transformFeedbackProgram->textureRef());
+            m_currentEffectEngineRef->boneCount.setValue(m_modelRef->count(IModel::kBone));
+            m_currentEffectEngineRef->edgeScaleFactor.setValue(m_modelRef->edgeScaleFactor(m_sceneRef->cameraRef()->position()));
             m_bundle->bind(VertexBundle::kVertexBuffer, vbo);
             if (void *address = m_bundle->map(VertexBundle::kVertexBuffer, 0, m_dynamicBuffer->size())) {
                 m_dynamicBuffer->update(address);
@@ -495,7 +499,6 @@ void PMXRenderEngine::update()
         }
     }
     m_modelRef->setAabb(m_aabbMin, m_aabbMax);
-    m_currentEffectEngineRef->updateSceneParameters();
     m_updateEvenBuffer = m_updateEvenBuffer ? false :true;
     popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
 }
@@ -507,11 +510,11 @@ void PMXRenderEngine::setUpdateOptions(int options)
 
 void PMXRenderEngine::renderModel()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
+    initializeEffectParameters(0);
+    if (!m_modelRef->isVisible() || !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
         return;
     }
     pushAnnotationGroup(std::string("PMXRenderEngine#renderModel name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-    initializeEffectParameters(0);
     const Scalar &modelOpacity = m_modelRef->opacity();
     const bool hasModelTransparent = !btFuzzyZero(modelOpacity - 1.0f);
     Array<IMaterial *> materials;
@@ -563,12 +566,12 @@ void PMXRenderEngine::renderModel()
 
 void PMXRenderEngine::renderEdge()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->edgeWidth())
+    initializeEffectParameters(0);
+    if (!m_modelRef->isVisible() || btFuzzyZero(m_modelRef->edgeWidth())
             || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
     }
     pushAnnotationGroup(std::string("PMXRenderEngine#renderEdge name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-    initializeEffectParameters(0);
     m_currentEffectEngineRef->setZeroGeometryParameters(m_modelRef);
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
@@ -603,7 +606,7 @@ void PMXRenderEngine::renderEdge()
 
 void PMXRenderEngine::renderShadow()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
+    if (!m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
     }
     pushAnnotationGroup(std::string("PMXRenderEngine#renderShadow name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
@@ -642,7 +645,7 @@ void PMXRenderEngine::renderShadow()
 
 void PMXRenderEngine::renderZPlot()
 {
-    if (!m_modelRef || !m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
+    if (!m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
     }
     pushAnnotationGroup(std::string("PMXRenderEngine#renderZPlot name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());

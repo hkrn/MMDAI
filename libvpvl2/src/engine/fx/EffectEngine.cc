@@ -1421,7 +1421,6 @@ EffectEngine::EffectEngine(Scene *sceneRef, IApplicationContext *applicationCont
 
 EffectEngine::~EffectEngine()
 {
-    invalidate();
 #ifdef VPVL2_ENABLE_NVIDIA_CG
     internal::deleteObject(m_rectangleRenderEngine);
 #endif
