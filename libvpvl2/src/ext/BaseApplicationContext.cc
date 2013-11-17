@@ -1209,6 +1209,7 @@ void BaseApplicationContext::renderOffscreen()
                 for (int k = 0; k < nengines; k++) {
                     IRenderEngine *engine = engines[k];
                     engine->setOverridePass(pass);
+                    engine->renderEdge();
                     engine->renderModel();
                     engine->setOverridePass(0);
                 }
