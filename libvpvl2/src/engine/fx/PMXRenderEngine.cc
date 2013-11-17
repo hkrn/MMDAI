@@ -210,7 +210,6 @@ public:
         texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MIN_FILTER, BaseTexture::kGL_NEAREST);
         texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_S, BaseTexture::kGL_CLAMP_TO_EDGE);
         texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_T, BaseTexture::kGL_CLAMP_TO_EDGE);
-        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_GENERATE_MIPMAP, 0);
         m_boneTransformTexture->unbind();
         VPVL2_VLOG(1, "Created bone matrices palette texture: ID=" << m_boneTransformTexture->data());
     }
@@ -227,7 +226,7 @@ public:
             m_boneTransformTextureData[index + 0] = translation[0];
             m_boneTransformTextureData[index + 1] = translation[1];
             m_boneTransformTextureData[index + 2] = translation[2];
-            m_boneTransformTextureData[index + 3] = translation[3];
+            m_boneTransformTextureData[index + 3] = 1.0;
             m_boneTransformTextureData[index + 4] = orientation[0];
             m_boneTransformTextureData[index + 5] = orientation[1];
             m_boneTransformTextureData[index + 6] = orientation[2];
