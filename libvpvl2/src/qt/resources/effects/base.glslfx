@@ -95,8 +95,8 @@ mat4 boneTransformMatrix(const float index) {
     return matrix;
 }
 
-vec4 performSkinning(const vec3 position3, const vec4 boneIndices, const vec4 boneWeights, const float base, const int type) {
-    vec4 position = vec4(position3, base);
+vec4 performSkinning(const vec3 origin3, const vec4 boneIndices, const vec4 boneWeights, const float base, const int type) {
+    vec4 origin = vec4(origin3, base);
     bool bdef4    = any(bvec2(type == kBdef4, type == kQdef));
     bool bdef2    = any(bvec2(type == kBdef2, type == kSdef));
     if (bdef4) {
@@ -104,48 +104,48 @@ vec4 performSkinning(const vec3 position3, const vec4 boneIndices, const vec4 bo
         mat4 matrix2 = boneTransformMatrix(boneIndices.y);
         mat4 matrix3 = boneTransformMatrix(boneIndices.z);
         mat4 matrix4 = boneTransformMatrix(boneIndices.w);
-        return boneWeights.xxxx * (matrix1 * position)
-             + boneWeights.yyyy * (matrix2 * position)
-             + boneWeights.zzzz * (matrix3 * position)
-             + boneWeights.wwww * (matrix4 * position);
+        return boneWeights.xxxx * (matrix1 * origin)
+             + boneWeights.yyyy * (matrix2 * origin)
+             + boneWeights.zzzz * (matrix3 * origin)
+             + boneWeights.wwww * (matrix4 * origin);
     }
     else if (bdef2) {
         mat4 matrix1 = boneTransformMatrix(boneIndices.x);
         mat4 matrix2 = boneTransformMatrix(boneIndices.y);
-        vec4 p1 = matrix2 * position;
-        vec4 p2 = matrix1 * position;
+        vec4 p1 = matrix2 * origin;
+        vec4 p2 = matrix1 * origin;
         return mix(p1, p2, boneWeights.x);
     }
     else if (type == kBdef1) {
         mat4 matrix = boneTransformMatrix(boneIndices.x);
-        return matrix * position;
+        return matrix * origin;
     }
-    return position;
+    return origin;
 }
 
-vec4 performPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights) {
+vec4 performPositionTransform(const vec4 origin, const vec4 boneIndices, const vec4 boneWeights) {
     if (use_boneTransformTextureVPVL2) {
-        return performSkinning(position.xyz, boneIndices, boneWeights, 1.0, int(position.w));
+        return performSkinning(origin.xyz, boneIndices, boneWeights, 1.0, int(origin.w));
     }
-    return vec4(position.xyz, 1.0);
+    return vec4(origin.xyz, 1.0);
 }
 
-vec4 performNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights) {
+vec4 performNormalTransform(const vec4 normal, const vec4 origin, const vec4 boneIndices, const vec4 boneWeights) {
     if (use_boneTransformTextureVPVL2) {
-        return performSkinning(normal.xyz, boneIndices, boneWeights, 0.0, int(position.w));
+        return performSkinning(normal.xyz, boneIndices, boneWeights, 0.0, int(origin.w));
     }
     return vec4(normal.xyz, 0.0);
 }
 
-vec4 performEdgeTransform(const vec4 position, const vec4 normal, const vec4 boneIndices, const vec4 boneWeights) {
+vec4 performEdgeTransform(const vec4 origin, const vec4 normal, const vec4 boneIndices, const vec4 boneWeights) {
     if (use_boneTransformTextureVPVL2) {
-        int type         = int(position.w);
-        vec4 newPosition = performSkinning(position.xyz, boneIndices, boneWeights, 1.0, type);
+        int type         = int(origin.w);
+        vec4 newPosition = performSkinning(origin.xyz, boneIndices, boneWeights, 1.0, type);
         vec4 newNormal   = performSkinning(normal.xyz,   boneIndices, boneWeights, 0.0, type);
         newPosition.xyz += newNormal.xyz * normal.www * vec3(edgeWidth * edgeScaleFactor);
         return newPosition;
     }
-    return vec4(position.xyz, 1.0);
+    return vec4(origin.xyz, 1.0);
 }
 
 } /* performTransform */
@@ -292,6 +292,7 @@ in vec4 vpvl2_inUVA1;
 in vec4 vpvl2_inUVA2;
 in vec4 vpvl2_inUVA3;
 in vec4 vpvl2_inUVA4;
+out vec4 vpvl2_outOrigin;
 out vec4 vpvl2_outPosition;
 out vec4 vpvl2_outShadowPosition;
 out vec4 vpvl2_outTexCoord;
@@ -300,7 +301,6 @@ out vec4 vpvl2_outUVA2;
 out vec4 vpvl2_outUVA3;
 out vec4 vpvl2_outUVA4;
 out vec4 vpvl2_outColor;
-out vec3 vpvl2_outEyeView;
 out vec3 vpvl2_outNormal;
 
 vec4 performPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
@@ -314,20 +314,20 @@ const vec4 kZero4 = vec4(0.0);
 const vec4 kOne4  = vec4(1.0);
 
 void main() {
-    vec4 position           = performPositionTransform(vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
+    vec4 origin             = performPositionTransform(vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
     vec3 normal             = (normalMatrix * performNormalTransform(vpvl2_inNormal, vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights)).xyz;
     vec3 ambient            = clamp(materialAmbient * lightAmbient + materialEmissive, kZero3, kOne3);
     vec4 diffuse            = clamp(materialDiffuse * vec4(lightDiffuse, 1.0), kZero4, kOne4);
-    vec4 newPosition        = modelViewProjectionMatrix * position;
-    vpvl2_outPosition       = newPosition;
-    vpvl2_outShadowPosition = lightViewProjectionMatrix * position;
+    vec4 position           = modelViewProjectionMatrix * origin;
+    vpvl2_outOrigin         = origin;
+    vpvl2_outPosition       = position;
+    vpvl2_outShadowPosition = lightViewProjectionMatrix * origin;
     vpvl2_outTexCoord.xy    = vpvl2_inTexCoord;
     vpvl2_outUVA1           = vpvl2_inUVA1;
     vpvl2_outUVA2           = vpvl2_inUVA2;
     vpvl2_outUVA3           = vpvl2_inUVA3;
     vpvl2_outUVA4           = vpvl2_inUVA4;
     vpvl2_outColor          = vec4(clamp(ambient + dot(vpvl2_inNormal.xyz, -lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
-    vpvl2_outEyeView        = cameraPosition.xyz - position.xyz;
     vpvl2_outNormal         = vpvl2_inNormal.xyz;
     if (use_spheremap) {
         vpvl2_outTexCoord.zw = -normal.xy * kHalf2 + kHalf2;
@@ -335,7 +335,7 @@ void main() {
     else {
         vpvl2_outTexCoord.zw = kOne2 + vec2(dot(lightDirection.xyz, -normal)) * kHalf2;
     }
-    gl_Position = newPosition;
+    gl_Position = position;
 }
 
 } /* GLSLShader mainObjectVS */
@@ -344,11 +344,11 @@ GLSLShader global noPixelColor {
 
 const vec4 kZero4 = vec4(0.0);
 
-vec4 outputPixelColor(const vec4 position,
+vec4 outputPixelColor(const vec4 origin,
+                      const vec4 position,
                       const vec3 normal,
                       const vec4 texcoord,
                       const vec4 color,
-                      const vec3 eyeView,
                       const vec4 shadowPosition,
                       const vec4 uva1,
                       const vec4 uva2,
@@ -368,11 +368,11 @@ vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal);
 const vec3 kZero3 = vec3(0.0);
 const vec3 kOne3  = vec3(1.0);
 
-vec4 outputPixelColor(const vec4 position,
+vec4 outputPixelColor(const vec4 origin,
+                      const vec4 position,
                       const vec3 normal,
                       const vec4 texcoord,
                       const vec4 color,
-                      const vec3 eyeView,
                       const vec4 shadowPosition,
                       const vec4 uva1,
                       const vec4 uva2,
@@ -380,7 +380,7 @@ vec4 outputPixelColor(const vec4 position,
                       const vec4 uva4)
 {
     vec4 newColor = applyToon(applyTexture(color, texcoord, uva1), shadowPosition, normal);
-    vec3 halfVector = normalize(eyeView - lightDirection);
+    vec3 halfVector = normalize((cameraPosition - origin.xyz) - lightDirection);
     vec3 specular = clamp(materialSpecular * lightSpecular, kZero3, kOne3);
     float hdotn = max(dot(halfVector, normal), 0.0);
     newColor.rgb += specular * vec3(pow(hdotn, max(materialShininess, 1.0)));
@@ -393,11 +393,11 @@ vec4 outputPixelColor(const vec4 position,
 
 GLSLShader outputEdgeColor {
 
-vec4 outputPixelColor(const vec4 position,
+vec4 outputPixelColor(const vec4 origin,
+                      const vec4 position,
                       const vec3 normal,
                       const vec4 texcoord,
                       const vec4 color,
-                      const vec3 eyeView,
                       const vec4 shadowPosition,
                       const vec4 uva1,
                       const vec4 uva2,
@@ -412,11 +412,11 @@ vec4 outputPixelColor(const vec4 position,
 GLSLShader outputShadowColor {
 
 
-vec4 outputPixelColor(const vec4 position,
+vec4 outputPixelColor(const vec4 origin,
+                      const vec4 position,
                       const vec3 normal,
                       const vec4 texcoord,
                       const vec4 color,
-                      const vec3 eyeView,
                       const vec4 shadowPosition,
                       const vec4 uva1,
                       const vec4 uva2,
@@ -434,11 +434,11 @@ GLSLShader outputZplot {
 #define in varying
 #endif
 
-vec4 outputPixelColor(const vec4 position,
+vec4 outputPixelColor(const vec4 origin,
+                      const vec4 position,
                       const vec3 normal,
                       const vec4 texcoord,
                       const vec4 color,
-                      const vec3 eyeView,
                       const vec4 shadowPosition,
                       const vec4 uva1,
                       const vec4 uva2,
@@ -459,6 +459,7 @@ GLSLShader mainObjectPS {
 #else
 out vec4 vpvl2_outPixelColor;
 #endif
+in vec4 vpvl2_outOrigin;
 in vec4 vpvl2_outPosition;
 in vec4 vpvl2_outShadowPosition;
 in vec4 vpvl2_outTexCoord;
@@ -467,14 +468,13 @@ in vec4 vpvl2_outUVA1;
 in vec4 vpvl2_outUVA2;
 in vec4 vpvl2_outUVA3;
 in vec4 vpvl2_outUVA4;
-in vec3 vpvl2_outEyeView;
 in vec3 vpvl2_outNormal;
 
-vec4 outputPixelColor(const vec4 position,
+vec4 outputPixelColor(const vec4 origin,
+                      const vec4 position,
                       const vec3 normal,
                       const vec4 texcoord,
                       const vec4 color,
-                      const vec3 eyeView,
                       const vec4 shadowPosition,
                       const vec4 uva1,
                       const vec4 uva2,
@@ -482,11 +482,11 @@ vec4 outputPixelColor(const vec4 position,
                       const vec4 uva4);
 
 void main() {
-    vpvl2_outPixelColor = outputPixelColor(vpvl2_outPosition,
+    vpvl2_outPixelColor = outputPixelColor(vpvl2_outOrigin,
+                                           vpvl2_outPosition,
                                            normalize(vpvl2_outNormal),
                                            vpvl2_outTexCoord,
                                            vpvl2_outColor,
-                                           normalize(vpvl2_outEyeView),
                                            vpvl2_outShadowPosition,
                                            vpvl2_outUVA1,
                                            vpvl2_outUVA2,
@@ -511,6 +511,7 @@ in vec4 vpvl2_inNormal;
 in vec4 vpvl2_inBoneIndices;
 in vec4 vpvl2_inBoneWeights;
 
+out vec4 vpvl2_outOrigin;
 out vec4 vpvl2_outPosition;
 out vec4 vpvl2_outShadowPosition;
 out vec4 vpvl2_outColor;
@@ -528,7 +529,9 @@ const vec3 kZero3 = vec3(0.0);
 vec4 performEdgeTransform(const vec4 position, const vec4 normal, const vec4 boneIndices, const vec4 boneWeights);
 
 void main() {
-    vec4 position           = modelViewProjectionMatrix * performEdgeTransform(vpvl2_inPosition, vpvl2_inNormal, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
+    vec4 origin             = performEdgeTransform(vpvl2_inPosition, vpvl2_inNormal, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
+    vec4 position           = modelViewProjectionMatrix * origin;
+    vpvl2_outOrigin         = origin;
     vpvl2_outPosition       = position;
     vpvl2_outShadowPosition = kZero4;
     vpvl2_outTexCoord       = kZero4;
@@ -559,6 +562,7 @@ in vec4 vpvl2_inNormal;
 in vec4 vpvl2_inBoneIndices;
 in vec4 vpvl2_inBoneWeights;
 
+out vec4 vpvl2_outOrigin;
 out vec4 vpvl2_outPosition;
 out vec4 vpvl2_outShadowPosition;
 out vec4 vpvl2_outColor;
@@ -576,7 +580,9 @@ const vec3 kZero3 = vec3(0.0);
 vec4 performPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 
 void main() {
-    vec4 position           = modelViewProjectionMatrix * performPositionTransform(vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
+    vec4 origin             = performPositionTransform(vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
+    vec4 position           = modelViewProjectionMatrix * origin;
+    vpvl2_outOrigin         = origin;
     vpvl2_outPosition       = position;
     vpvl2_outShadowPosition = kZero4;
     vpvl2_outTexCoord       = kZero4;
@@ -607,6 +613,7 @@ in vec4 vpvl2_inNormal;
 in vec4 vpvl2_inBoneIndices;
 in vec4 vpvl2_inBoneWeights;
 
+out vec4 vpvl2_outOrigin;
 out vec4 vpvl2_outPosition;
 out vec4 vpvl2_outShadowPosition;
 out vec4 vpvl2_outColor;
@@ -624,7 +631,9 @@ const vec3 kZero3 = vec3(0.0);
 vec4 performPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 
 void main() {
-    vec4 position           = lightViewProjectionMatrix * performPositionTransform(vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
+    vec4 origin             = performPositionTransform(vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
+    vec4 position           = lightViewProjectionMatrix * origin;
+    vpvl2_outOrigin         = origin;
     vpvl2_outPosition       = position;
     vpvl2_outShadowPosition = kZero4;
     vpvl2_outTexCoord       = kZero4;
