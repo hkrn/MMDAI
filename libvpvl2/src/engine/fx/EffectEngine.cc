@@ -102,7 +102,6 @@ BaseParameter::BaseParameter()
 
 BaseParameter::~BaseParameter()
 {
-    invalidate();
     m_parameterRef = 0;
 }
 
