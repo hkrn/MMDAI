@@ -240,7 +240,6 @@ MatrixSemantic::MatrixSemantic(const IApplicationContext *applicationContextRef,
 
 MatrixSemantic::~MatrixSemantic()
 {
-    invalidate();
     m_camera = 0;
     m_cameraInversed = 0;
     m_cameraTransposed = 0;
@@ -353,7 +352,6 @@ MaterialSemantic::MaterialSemantic()
 
 MaterialSemantic::~MaterialSemantic()
 {
-    invalidate();
     m_geometry = 0;
     m_light = 0;
 }
@@ -437,7 +435,6 @@ MaterialTextureSemantic::MaterialTextureSemantic()
 
 MaterialTextureSemantic::~MaterialTextureSemantic()
 {
-    invalidate();
 }
 
 bool MaterialTextureSemantic::hasMipmap(const IEffect::Parameter *textureParameterRef, const IEffect::Parameter *samplerParameterRef)
@@ -539,7 +536,6 @@ GeometrySemantic::GeometrySemantic()
 
 GeometrySemantic::~GeometrySemantic()
 {
-    invalidate();
     m_camera = 0;
     m_light = 0;
 }
@@ -595,7 +591,6 @@ TimeSemantic::TimeSemantic(const IApplicationContext *applicationContextRef)
 
 TimeSemantic::~TimeSemantic()
 {
-    invalidate();
     m_syncEnabled = 0;
     m_syncDisabled = 0;
 }
@@ -1046,7 +1041,6 @@ RenderDepthStencilTargetSemantic::RenderDepthStencilTargetSemantic(IApplicationC
 
 RenderDepthStencilTargetSemantic::~RenderDepthStencilTargetSemantic()
 {
-    invalidate();
 }
 
 void RenderDepthStencilTargetSemantic::addFrameBufferObjectParameter(IEffect::Parameter *parameterRef, FrameBufferObject *frameBufferObjectRef)
@@ -1756,7 +1750,7 @@ void EffectEngine::updateModelLightParameters(const Scene *scene, const IModel *
     const ILight *light = scene->lightRef();
     const Vector3 &lc = light->color();
     Color lightColor(lc.x(), lc.y(), lc.z(), 1);
-    if (model && model->type() == IModel::kAssetModel) {
+    if (false) { //model && model->type() == IModel::kAssetModel) {
         const Vector3 &ac = Vector3(0.7f, 0.7f, 0.7f) - lightColor;
         ambient.setLightColor(Color(ac.x(), ac.y(), ac.z(), 1));
         diffuse.setLightColor(Color(1, 1, 1, 1));
@@ -1776,7 +1770,6 @@ void EffectEngine::updateModelLightParameters(const Scene *scene, const IModel *
     const Vector3 &cameraPosition = camera->modelViewTransform().getOrigin();
     position.setCameraValue(cameraPosition);
     direction.setCameraValue((cameraPosition - camera->lookAt()).normalized());
-    controlObject.update(model);
 }
 
 void EffectEngine::updateSceneParameters()
