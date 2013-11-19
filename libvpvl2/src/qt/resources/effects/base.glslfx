@@ -475,7 +475,7 @@ GLSLShader mainObjectPS {
 #define in varying
 #define vpvl2_outPixelColor gl_FragColor
 #else
-out vec4 vpvl2_outPixelColor;
+layout(location=0) out vec4 vpvl2_outPixelColor;
 #endif
 in vec4 vpvl2_outOrigin;
 in vec4 vpvl2_outPosition;
@@ -666,6 +666,49 @@ void main() {
 }
 
 } /* GLSLShader mainZplotVS */
+
+GLSLShader global drawQuadVS {
+
+#if __VERSION__ < 130
+#define in attribute
+#define out varying
+#else
+out gl_PerVertex {
+    vec4 gl_Position;
+};
+#endif
+
+in vec4 Position;
+in vec3 TexCoord;
+out vec3 vpvl2_TexCoord;
+
+void main() {
+    vpvl2_TexCoord = TexCoord;
+    gl_Position    = Position;
+}
+
+} /* drawQuadVS */
+
+GLSLShader global drawQuadPS {
+
+#if __VERSION__ < 130
+#define in varying
+#define vpvl2_outPixelColor gl_FragColor
+#ifndef texture
+#define texture texture2D
+#endif
+#else
+layout(location=0) out vec4 vpvl2_outPixelColor;
+#endif
+
+uniform sampler2D vpvl2_sampler;
+in vec3 vpvl2_TexCoord;
+
+void main() {
+    vpvl2_outPixelColor = texture(vpvl2_sampler, vpvl2_TexCoord.xy);
+}
+
+} /* drawQuadPS */
 
 } /* namespace vpvl2 */
 
