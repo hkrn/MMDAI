@@ -1092,6 +1092,9 @@ void PMXRenderEngine::updateMaterialParameters(const IMaterial *material, const 
     m_currentEffectEngineRef->useTexture.setValue(hasMainTexture);
     m_currentEffectEngineRef->useToon.setValue(context.toonTextureRef > 0);
     m_currentEffectEngineRef->useSpheremap.setValue(hasSphereMap);
+    if (material->index() == 0) {
+        m_currentEffectEngineRef->controlObject.update(m_modelRef);
+    }
 }
 
 void PMXRenderEngine::uploadToonTexture(const IMaterial *material,
