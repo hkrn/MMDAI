@@ -706,7 +706,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
         color.setValue(0, 0, 0, 1);
     }
     m_currentEffectEngineRef->specular.setGeometryColor(color);
-    float shininess, strength;
+    float shininess = 0, strength = 0;
     int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
     int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
     if (ret1 == aiReturn_SUCCESS && ret2 == aiReturn_SUCCESS) {
@@ -718,14 +718,14 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     else {
         m_currentEffectEngineRef->specularPower.setGeometryValue(1);
     }
-    int twoside;
-    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside && !m_cullFaceState) {
-        enable(kGL_CULL_FACE);
-        m_cullFaceState = true;
-    }
-    else if (m_cullFaceState) {
+    int twoside = 0;
+    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside && m_cullFaceState) {
         disable(kGL_CULL_FACE);
         m_cullFaceState = false;
+    }
+    else if (!m_cullFaceState) {
+        enable(kGL_CULL_FACE);
+        m_cullFaceState = true;
     }
 }
 
