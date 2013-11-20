@@ -658,10 +658,10 @@ Vector4 Vertex::uv(int index) const
 Vector4 Vertex::originUV(int index) const
 {
     return internal::checkBound(index, 0, kMaxMorphs - 1) ? m_context->originUVs[index + 1] : kZeroV4;
-    }
+}
 
-    Vector4 Vertex::morphUV(int index) const
-    {
+Vector4 Vertex::morphUV(int index) const
+{
     return internal::checkBound(index, 0, kMaxMorphs - 1) ? m_context->morphUVs[index + 1] : kZeroV4;
 }
 
