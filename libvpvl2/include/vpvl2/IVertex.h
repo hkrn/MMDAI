@@ -72,7 +72,8 @@ public:
         virtual void originWillChange(const Vector3 &value, IVertex *vertex) = 0;
         virtual void normalWillChange(const Vector3 &value, IVertex *vertex) = 0;
         virtual void textureCoordWillChange(const Vector3 &value, IVertex *vertex) = 0;
-        virtual void UVWillChange(int index, const Vector4 &value, IVertex *vertex) = 0;
+        virtual void originUVWillChange(int index, const Vector4 &value, IVertex *vertex) = 0;
+        virtual void morphUVWillChange(int index, const Vector4 &value, IVertex *vertex) = 0;
         virtual void typeWillChange(Type value, IVertex *vertex) = 0;
         virtual void edgeSizeWillChange(const EdgeSizePrecision &value, IVertex *vertex) = 0;
         virtual void weightWillChange(int index, const WeightPrecision &weight, IVertex *vertex) = 0;
@@ -101,6 +102,8 @@ public:
     virtual Vector3 normal() const = 0;
     virtual Vector3 textureCoord() const = 0;
     virtual Vector4 uv(int index) const = 0;
+    virtual Vector4 originUV(int index) const = 0;
+    virtual Vector4 morphUV(int index) const = 0;
     virtual Vector3 delta() const = 0;
     virtual Type type() const = 0;
     virtual EdgeSizePrecision edgeSize() const = 0;
@@ -111,7 +114,8 @@ public:
     virtual void setOrigin(const Vector3 &value) = 0;
     virtual void setNormal(const Vector3 &value) = 0;
     virtual void setTextureCoord(const Vector3 &value) = 0;
-    virtual void setUV(int index, const Vector4 &value) = 0;
+    virtual void setOriginUV(int index, const Vector4 &value) = 0;
+    virtual void setMorphUV(int index, const Vector4 &value) = 0;
     virtual void setType(Type value) = 0;
     virtual void setEdgeSize(const EdgeSizePrecision &value) = 0;
     virtual void setWeight(int index, const WeightPrecision &weight) = 0;

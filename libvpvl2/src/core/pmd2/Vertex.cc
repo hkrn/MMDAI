@@ -287,6 +287,16 @@ Vector4 Vertex::uv(int /* index */) const
     return kZeroV4;
 }
 
+Vector4 Vertex::originUV(int /* index */) const
+{
+    return kZeroV4;
+}
+
+Vector4 Vertex::morphUV(int /* index */) const
+{
+    return kZeroV4;
+}
+
 Vector3 Vertex::delta() const
 {
     return m_context->morphDelta;
@@ -346,7 +356,11 @@ void Vertex::setTextureCoord(const Vector3 &value)
     }
 }
 
-void Vertex::setUV(int /* index */, const Vector4 & /* value */)
+void Vertex::setOriginUV(int /* index */, const Vector4 & /* value */)
+{
+}
+
+void Vertex::setMorphUV(int /* index */, const Vector4 & /* value */)
 {
 }
 

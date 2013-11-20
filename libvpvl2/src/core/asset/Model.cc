@@ -508,6 +508,8 @@ public:
     Vector3 normal() const { return m_normal; }
     Vector3 textureCoord() const { return m_texcoord; }
     Vector4 uv(int /* index */) const { return kZeroV4; }
+    Vector4 originUV(int /* index */) const { return kZeroV4; }
+    Vector4 morphUV(int /* index */) const { return kZeroV4; }
     Vector3 delta() const { return kZeroV3; }
     Type type() const { return IVertex::kBdef1; }
     EdgeSizePrecision edgeSize() const { return 0; }
@@ -518,7 +520,8 @@ public:
     void setOrigin(const Vector3 & /* value */) {}
     void setNormal(const Vector3 & /* value */) {}
     void setTextureCoord(const Vector3 & /* value */) {}
-    void setUV(int /* index */, const Vector4 & /* value */) {}
+    void setOriginUV(int /* index */, const Vector4 & /* value */) {}
+    void setMorphUV(int /* index */, const Vector4 & /* value */) {}
     void setType(Type /* value */) {}
     void setEdgeSize(const EdgeSizePrecision & /* value */) {}
     void setWeight(int /* index */, const WeightPrecision & /* weight */) {}

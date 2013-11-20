@@ -648,7 +648,21 @@ Vector3 Vertex::sdefR1() const
 
 Vector4 Vertex::uv(int index) const
 {
-    return internal::checkBound(index, 0, kMaxMorphs) ? m_context->morphUVs[index] : kZeroV4;
+    if (internal::checkBound(index, 0, kMaxMorphs - 1)) {
+        const Vector4 &origin = m_context->originUVs[index + 1], &morph = m_context->morphUVs[index + 1];
+        return Vector4(origin.x() + morph.x(), origin.y() + morph.y(), origin.z() + morph.z(), origin.w() + morph.w());
+    }
+    return kZeroV4;
+}
+
+Vector4 Vertex::originUV(int index) const
+{
+    return internal::checkBound(index, 0, kMaxMorphs - 1) ? m_context->originUVs[index + 1] : kZeroV4;
+    }
+
+    Vector4 Vertex::morphUV(int index) const
+    {
+    return internal::checkBound(index, 0, kMaxMorphs - 1) ? m_context->morphUVs[index + 1] : kZeroV4;
 }
 
 IVertex::WeightPrecision Vertex::weight(int index) const
@@ -690,11 +704,19 @@ void Vertex::setTextureCoord(const Vector3 &value)
     }
 }
 
-void Vertex::setUV(int index, const Vector4 &value)
+void Vertex::setOriginUV(int index, const Vector4 &value)
 {
-    if (internal::checkBound(index, 0, kMaxBones) && m_context->originUVs[index + 1] != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, UVWillChange(index, value, this));
+    if (internal::checkBound(index, 0, kMaxBones - 1) && m_context->originUVs[index + 1] != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, originUVWillChange(index, value, this));
         m_context->originUVs[index + 1] = value;
+    }
+}
+
+void Vertex::setMorphUV(int index, const Vector4 &value)
+{
+    if (internal::checkBound(index, 0, kMaxBones - 1) && m_context->morphUVs[index + 1] != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, morphUVWillChange(index, value, this));
+        m_context->morphUVs[index + 1] = value;
     }
 }
 
