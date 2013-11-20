@@ -273,28 +273,29 @@ vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
 
 } /* applySelfShadow */
 
-GLSLShader calculateVertexColor {
+GLSLShader handleVertex {
 
 const vec3 kZero3 = vec3(0.0);
 const vec3 kOne3  = vec3(1.0);
 const vec4 kZero4 = vec4(0.0);
 const vec4 kOne4  = vec4(1.0);
 
-vec4 calculateVertexColor(const vec4 origin,
-                          const vec4 position,
-                          const vec3 normal,
-                          const vec4 texcoord,
-                          const vec4 uva1,
-                          const vec4 uva2,
-                          const vec4 uva3,
-                          const vec4 uva4)
+void handleVertex(const vec4 origin,
+                  inout vec4 position,
+                  inout vec3 normal,
+                  inout vec4 texcoord,
+                  inout vec4 color,
+                  inout vec4 uva1,
+                  inout vec4 uva2,
+                  inout vec4 uva3,
+                  inout vec4 uva4)
 {
     vec3 ambient = clamp(materialAmbient * lightAmbient + materialEmissive, kZero3, kOne3);
     vec4 diffuse = clamp(materialDiffuse * vec4(lightDiffuse, 1.0), kZero4, kOne4);
-    return vec4(clamp(ambient + dot(normal, -lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
+    color = vec4(clamp(ambient + dot(normal, -lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
 }
 
-} /* calculateVertexColor */
+} /* handleVertex */
 
 GLSLShader mainObjectVS {
 
@@ -326,34 +327,38 @@ out vec4 vpvl2_outUVA4;
 out vec4 vpvl2_outColor;
 out vec3 vpvl2_outNormal;
 
-vec4 calculateVertexColor(const vec4 origin, const vec4 position, const vec3 normal, const vec4 texcoord, const vec4 uva1, const vec4 uva2, const vec4 uva3, const vec4 uva4);
+void handleVertex(const vec4 origin, inout vec4 position, inout vec3 normal, inout vec4 texcoord, inout vec4 color, inout vec4 uva1, inout vec4 uva2, inout vec4 uva3, inout vec4 uva4);
 vec4 performPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 vec4 performNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 
+const vec4 kBlack = vec4(vec3(0.0), 1.0);
 const vec2 kHalf2 = vec2(0.5);
 const vec2 kOne2  = vec2(1.0);
 
 void main() {
-    vec4 origin             = performPositionTransform(vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
-    vec3 normal             = (normalMatrix * performNormalTransform(vpvl2_inNormal, vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights)).xyz;
-    vec4 position           = modelViewProjectionMatrix * origin;
+    vec4 origin   = performPositionTransform(vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
+    vec3 normal   = (normalMatrix * performNormalTransform(vpvl2_inNormal, vpvl2_inPosition, vpvl2_inBoneIndices, vpvl2_inBoneWeights)).xyz;
+    vec4 position = modelViewProjectionMatrix * origin;
+    vec4 texcoord = vpvl2_inTexCoord.xyxy;
+    vec4 color    = kBlack;
+    vec4 uva1     = vpvl2_inUVA1;
+    vec4 uva2     = vpvl2_inUVA2;
+    vec4 uva3     = vpvl2_inUVA3;
+    vec4 uva4     = vpvl2_inUVA4;
+    texcoord.zw   = (-normal.xy * kHalf2 + kHalf2) * vec2(use_spheremap)
+                  + (kOne2 + vec2(dot(lightDirection.xyz, -normal)) * kHalf2) * vec2(!use_spheremap);
+    handleVertex(origin, position, normal, texcoord, color, uva1, uva2, uva3, uva4);
     vpvl2_outOrigin         = origin;
     vpvl2_outPosition       = position;
     vpvl2_outShadowPosition = lightViewProjectionMatrix * origin;
-    vpvl2_outTexCoord.xy    = vpvl2_inTexCoord;
-    vpvl2_outUVA1           = vpvl2_inUVA1;
-    vpvl2_outUVA2           = vpvl2_inUVA2;
-    vpvl2_outUVA3           = vpvl2_inUVA3;
-    vpvl2_outUVA4           = vpvl2_inUVA4;
-    vpvl2_outNormal         = vpvl2_inNormal.xyz;
-    if (use_spheremap) {
-        vpvl2_outTexCoord.zw = -normal.xy * kHalf2 + kHalf2;
-    }
-    else {
-        vpvl2_outTexCoord.zw = kOne2 + vec2(dot(lightDirection.xyz, -normal)) * kHalf2;
-    }
-    vpvl2_outColor = calculateVertexColor(origin, position, normal, vpvl2_outTexCoord, vpvl2_inUVA1, vpvl2_inUVA2, vpvl2_inUVA3, vpvl2_inUVA4);
-    gl_Position    = position;
+    vpvl2_outTexCoord       = texcoord;
+    vpvl2_outColor          = color;
+    vpvl2_outUVA1           = uva1;
+    vpvl2_outUVA2           = uva2;
+    vpvl2_outUVA3           = uva3;
+    vpvl2_outUVA4           = uva4;
+    vpvl2_outNormal         = normal;
+    gl_Position             = position;
 }
 
 } /* GLSLShader mainObjectVS */
@@ -428,7 +433,6 @@ vec4 outputPixelColor(const vec4 origin,
 } /* outputEdgeColor */
 
 GLSLShader outputShadowColor {
-
 
 vec4 outputPixelColor(const vec4 origin,
                       const vec4 position,
@@ -730,7 +734,7 @@ technique vpvl2_techniques_Object1 < MMDPass = "object"; UseTexture = 1; UseSphe
             vpvl2::applyToon,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -752,7 +756,7 @@ technique vpvl2_techniques_Object2 < MMDPass = "object"; UseTexture = 1; UseSphe
             vpvl2::applyToon,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -774,7 +778,7 @@ technique vpvl2_techniques_Object3 < MMDPass = "object"; UseTexture = 0; UseSphe
             vpvl2::applyToon,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -794,7 +798,7 @@ technique vpvl2_techniques_Object4 < MMDPass = "object"; UseTexture = 0; UseSphe
             vpvl2::applyToon,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -816,7 +820,7 @@ technique vpvl2_techniques_Object5 < MMDPass = "object"; UseTexture = 1; UseSphe
             vpvl2::noApplyToon,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -836,7 +840,7 @@ technique vpvl2_techniques_Object6 < MMDPass = "object"; UseTexture = 1; UseSphe
             vpvl2::noApplyToon,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -856,7 +860,7 @@ technique vpvl2_techniques_Object7 < MMDPass = "object"; UseTexture = 0; UseSphe
             vpvl2::applyToon,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -874,7 +878,7 @@ technique vpvl2_techniques_Object8 < MMDPass = "object"; UseTexture = 0; UseSphe
             vpvl2::noApplyToon,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -901,7 +905,7 @@ technique vpvl2_techniques_ObjectSS1 < MMDPass = "object_ss"; UseTexture = 1; Us
             vpvl2::applyToonSelfShadow,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -926,7 +930,7 @@ technique vpvl2_techniques_ObjectSS2 < MMDPass = "object_ss"; UseTexture = 1; Us
             vpvl2::applyToonSelfShadow,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -951,7 +955,7 @@ technique vpvl2_techniques_ObjectSS3 < MMDPass = "object_ss"; UseTexture = 0; Us
             vpvl2::applyToonSelfShadow,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -974,7 +978,7 @@ technique vpvl2_techniques_ObjectSS4 < MMDPass = "object_ss"; UseTexture = 0; Us
             vpvl2::applyToonSelfShadow,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -999,7 +1003,7 @@ technique vpvl2_techniques_ObjectSS5 < MMDPass = "object_ss"; UseTexture = 1; Us
             vpvl2::applySelfShadow,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -1022,7 +1026,7 @@ technique vpvl2_techniques_ObjectSS6 < MMDPass = "object_ss"; UseTexture = 1; Us
             vpvl2::applySelfShadow,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -1045,7 +1049,7 @@ technique vpvl2_techniques_ObjectSS7 < MMDPass = "object_ss"; UseTexture = 0; Us
             vpvl2::applySelfShadow,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
@@ -1066,7 +1070,7 @@ technique vpvl2_techniques_ObjectSS8 < MMDPass = "object_ss"; UseTexture = 0; Us
             vpvl2::applySelfShadow,
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexColorGroupObject"> = vpvl2::calculateVertexColor;
+        VertexProgram<"vertexGroupObject"> = vpvl2::handleVertex;
         VertexProgram<"transformGroupObject"> = vpvl2::performTransform;
         FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
     }
