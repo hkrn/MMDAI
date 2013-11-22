@@ -4,6 +4,8 @@ uniform bool use_texture;
 uniform bool use_spheremap;
 uniform bool spadd;
 uniform bool spsub;
+uniform float VertexCount;
+uniform float SubsetCount;
 uniform int BoneCountVPVL2;
 uniform bool use_boneTransformTextureVPVL2;
 
@@ -31,22 +33,27 @@ uniform sampler2D sphereSampler        : MATERIALSPHEREMAP;
 uniform sampler2D depthSampler         : TEXUNIT0;
 
 uniform sampler2D boneTransformSampler : BONETRANSFORMTEXTUREVPVL2;
-uniform float edgeScaleFactor : EDGESCALEFACTORVPVL2;
+uniform float edgeScaleFactor          : EDGESCALEFACTORVPVL2;
 
-SamplerState defaultSamplerState
-{
+SamplerState defaultLinearFilterSamplerState {
     TEXTURE_MIN_FILTER = LINEAR;
     TEXTURE_MAG_FILTER = LINEAR;
 }
-SamplerState defaultToonSamplerState
-{
+SamplerState defaultNearestFilterSamplerState {
+    TEXTURE_MIN_FILTER = NEAREST;
+    TEXTURE_MAG_FILTER = NEAREST;
+}
+SamplerState defaultLinearFilterMipmapSamplerState {
+    TEXTURE_MIN_FILTER = LINEAR_MIPMAP_LINEAR;
+    TEXTURE_MAG_FILTER = LINEAR;
+}
+SamplerState defaultToonSamplerState {
     TEXTURE_MIN_FILTER = LINEAR;
     TEXTURE_MAG_FILTER = LINEAR;
     TEXTURE_WRAP_S = CLAMP_TO_EDGE;
     TEXTURE_WRAP_T = CLAMP_TO_EDGE;
 }
-SamplerState defaultDepthSamplerState
-{
+SamplerState defaultDepthSamplerState {
     TEXTURE_MIN_FILTER = NEAREST;
     TEXTURE_MAG_FILTER = NEAREST;
     TEXTURE_WRAP_S = CLAMP_TO_EDGE;
@@ -273,6 +280,22 @@ vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
 
 } /* applySelfShadow */
 
+GLSLShader global applyStandardLight {
+
+const vec3 kZero3 = vec3(0.0);
+const vec3 kOne3  = vec3(1.0);
+
+vec4 applyStandardLight(const vec4 color, const vec4 origin, const vec3 normal) {
+    vec3 halfVector = normalize((vpvl2_NS_cameraPosition - origin.xyz) - vpvl2_NS_lightDirection);
+    vec3 specular = clamp(vpvl2_NS_materialSpecular * vpvl2_NS_lightSpecular, kZero3, kOne3);
+    float hdotn = max(dot(halfVector, normal), 0.0);
+    vec4 newColor = color;
+    newColor.rgb += specular * vec3(pow(hdotn, max(vpvl2_NS_materialShininess, 1.0)));
+    return newColor;
+}
+
+}
+
 GLSLShader transformVertex {
 
 const vec2 kHalf2 = vec2(0.5);
@@ -493,11 +516,9 @@ vec4 outputPixelColor(const vec4 origin,
 
 GLSLShader global outputPixelColor {
 
+vec4 applyStandardLight(const vec4 color, const vec4 origin, const vec3 normal);
 vec4 applyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1);
 vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal);
-
-const vec3 kZero3 = vec3(0.0);
-const vec3 kOne3  = vec3(1.0);
 
 vec4 outputPixelColor(const vec4 origin,
                       const vec4 position,
@@ -510,11 +531,7 @@ vec4 outputPixelColor(const vec4 origin,
                       const vec4 uva3,
                       const vec4 uva4)
 {
-    vec4 newColor = applyToon(applyTexture(color, texcoord, uva1), shadowPosition, normal);
-    vec3 halfVector = normalize((vpvl2_NS_cameraPosition - origin.xyz) - vpvl2_NS_lightDirection);
-    vec3 specular = clamp(vpvl2_NS_materialSpecular * vpvl2_NS_lightSpecular, kZero3, kOne3);
-    float hdotn = max(dot(halfVector, normal), 0.0);
-    newColor.rgb += specular * vec3(pow(hdotn, max(vpvl2_NS_materialShininess, 1.0)));
+    vec4 newColor = applyStandardLight(applyToon(applyTexture(color, texcoord, uva1), shadowPosition, normal), origin, normal);
     // newColor.a *= opacity;
     return newColor;
 }
@@ -673,19 +690,20 @@ void main() {
 
 technique vpvl2_techniques_Object1 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
     pass DrawPass_Object1 {
-        SamplerState(vpvl2_NS_mainSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_sphereSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_toonSampler) = vpvl2::defaultToonSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_mainSampler) = 0;
-        SamplerTexUnit(vpvl2_NS_sphereSampler) = 1;
-        SamplerTexUnit(vpvl2_NS_toonSampler) = 2;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::mainSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::sphereSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::toonSampler) = vpvl2::defaultToonSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::mainSampler) = 0;
+        SamplerTexUnit(vpvl2::sphereSampler) = 1;
+        SamplerTexUnit(vpvl2::toonSampler) = 2;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::applyTexture,
             vpvl2::applyToon,
             vpvl2::mainObjectPS
@@ -697,17 +715,18 @@ technique vpvl2_techniques_Object1 < MMDPass = "object"; UseTexture = 1; UseSphe
 
 technique vpvl2_techniques_Object2 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
     pass DrawPass_Object2 {
-        SamplerState(vpvl2_NS_mainSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_toonSampler) = vpvl2::defaultToonSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_mainSampler) = 0;
-        SamplerTexUnit(vpvl2_NS_toonSampler) = 2;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::mainSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::toonSampler) = vpvl2::defaultToonSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::mainSampler) = 0;
+        SamplerTexUnit(vpvl2::toonSampler) = 2;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::applyTexture,
             vpvl2::applyToon,
             vpvl2::mainObjectPS
@@ -719,17 +738,18 @@ technique vpvl2_techniques_Object2 < MMDPass = "object"; UseTexture = 1; UseSphe
 
 technique vpvl2_techniques_Object3 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
     pass DrawPass_Object3 {
-        SamplerState(vpvl2_NS_sphereSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_toonSampler) = vpvl2::defaultToonSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_sphereSampler) = 1;
-        SamplerTexUnit(vpvl2_NS_toonSampler) = 2;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::sphereSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::toonSampler) = vpvl2::defaultToonSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::sphereSampler) = 1;
+        SamplerTexUnit(vpvl2::toonSampler) = 2;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::applyTexture,
             vpvl2::applyToon,
             vpvl2::mainObjectPS
@@ -741,15 +761,16 @@ technique vpvl2_techniques_Object3 < MMDPass = "object"; UseTexture = 0; UseSphe
 
 technique vpvl2_techniques_Object4 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
     pass DrawPass_Object4 {
-        SamplerState(vpvl2_NS_toonSampler) = vpvl2::defaultToonSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_toonSampler) = 2;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::toonSampler) = vpvl2::defaultToonSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::toonSampler) = 2;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::noApplyTexture,
             vpvl2::applyToon,
             vpvl2::mainObjectPS
@@ -761,17 +782,18 @@ technique vpvl2_techniques_Object4 < MMDPass = "object"; UseTexture = 0; UseSphe
 
 technique vpvl2_techniques_Object5 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 1; UseToon = 0; > {
     pass DrawPass_Object5 {
-        SamplerState(vpvl2_NS_mainSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_sphereSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_mainSampler) = 0;
-        SamplerTexUnit(vpvl2_NS_sphereSampler) = 1;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::mainSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::sphereSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::mainSampler) = 0;
+        SamplerTexUnit(vpvl2::sphereSampler) = 1;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::applyTexture,
             vpvl2::noApplyToon,
             vpvl2::mainObjectPS
@@ -783,15 +805,16 @@ technique vpvl2_techniques_Object5 < MMDPass = "object"; UseTexture = 1; UseSphe
 
 technique vpvl2_techniques_Object6 < MMDPass = "object"; UseTexture = 1; UseSphereMap = 0; UseToon = 0; > {
     pass DrawPass_Object6 {
-        SamplerState(vpvl2_NS_mainSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_mainSampler) = 0;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::mainSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::mainSampler) = 0;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::applyTexture,
             vpvl2::noApplyToon,
             vpvl2::mainObjectPS
@@ -803,15 +826,16 @@ technique vpvl2_techniques_Object6 < MMDPass = "object"; UseTexture = 1; UseSphe
 
 technique vpvl2_techniques_Object7 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 1; UseToon = 0; > {
     pass DrawPass_Object7 {
-        SamplerState(vpvl2_NS_sphereSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_sphereSampler) = 1;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::sphereSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::sphereSampler) = 1;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::applyTexture,
             vpvl2::applyToon,
             vpvl2::mainObjectPS
@@ -823,13 +847,14 @@ technique vpvl2_techniques_Object7 < MMDPass = "object"; UseTexture = 0; UseSphe
 
 technique vpvl2_techniques_Object8 < MMDPass = "object"; UseTexture = 0; UseSphereMap = 0; UseToon = 0; > {
     pass DrawPass_Object8 {
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::noApplyTexture,
             vpvl2::noApplyToon,
             vpvl2::mainObjectPS
@@ -841,21 +866,22 @@ technique vpvl2_techniques_Object8 < MMDPass = "object"; UseTexture = 0; UseSphe
 
 technique vpvl2_techniques_ObjectSS1 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 1; UseToon = 1; > {
     pass DrawPass_ObjectSS1 {
-        SamplerState(vpvl2_NS_mainSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_sphereSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_toonSampler) = vpvl2::defaultToonSamplerState;
-        SamplerState(vpvl2_NS_depthSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_mainSampler) = 0;
-        SamplerTexUnit(vpvl2_NS_sphereSampler) = 1;
-        SamplerTexUnit(vpvl2_NS_toonSampler) = 2;
-        SamplerTexUnit(vpvl2_NS_depthSampler) = 3;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::mainSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::sphereSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::toonSampler) = vpvl2::defaultToonSamplerState;
+        SamplerState(vpvl2::depthSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::mainSampler) = 0;
+        SamplerTexUnit(vpvl2::sphereSampler) = 1;
+        SamplerTexUnit(vpvl2::toonSampler) = 2;
+        SamplerTexUnit(vpvl2::depthSampler) = 3;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = { 
+            vpvl2::applyStandardLight,
             vpvl2::applyTexture,
             vpvl2::getShadowFactor,
             vpvl2::applyToonSelfShadow,
@@ -868,19 +894,20 @@ technique vpvl2_techniques_ObjectSS1 < MMDPass = "object_ss"; UseTexture = 1; Us
 
 technique vpvl2_techniques_ObjectSS2 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 0; UseToon = 1; > {
     pass DrawPass_ObjectSS2 {
-        SamplerState(vpvl2_NS_mainSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_toonSampler) = vpvl2::defaultToonSamplerState;
-        SamplerState(vpvl2_NS_depthSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_mainSampler) = 0;
-        SamplerTexUnit(vpvl2_NS_toonSampler) = 2;
-        SamplerTexUnit(vpvl2_NS_depthSampler) = 3;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::mainSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::toonSampler) = vpvl2::defaultToonSamplerState;
+        SamplerState(vpvl2::depthSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::mainSampler) = 0;
+        SamplerTexUnit(vpvl2::toonSampler) = 2;
+        SamplerTexUnit(vpvl2::depthSampler) = 3;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::applyTexture,
             vpvl2::getShadowFactor,
             vpvl2::applyToonSelfShadow,
@@ -893,19 +920,20 @@ technique vpvl2_techniques_ObjectSS2 < MMDPass = "object_ss"; UseTexture = 1; Us
 
 technique vpvl2_techniques_ObjectSS3 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 1; UseToon = 1; > {
     pass DrawPass_ObjectSS3 {
-        SamplerState(vpvl2_NS_sphereSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_toonSampler) = vpvl2::defaultToonSamplerState;
-        SamplerState(vpvl2_NS_depthSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_sphereSampler) = 1;
-        SamplerTexUnit(vpvl2_NS_toonSampler) = 2;
-        SamplerTexUnit(vpvl2_NS_depthSampler) = 3;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::sphereSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::toonSampler) = vpvl2::defaultToonSamplerState;
+        SamplerState(vpvl2::depthSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::sphereSampler) = 1;
+        SamplerTexUnit(vpvl2::toonSampler) = 2;
+        SamplerTexUnit(vpvl2::depthSampler) = 3;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::applyTexture,
             vpvl2::getShadowFactor,
             vpvl2::applyToonSelfShadow,
@@ -918,17 +946,18 @@ technique vpvl2_techniques_ObjectSS3 < MMDPass = "object_ss"; UseTexture = 0; Us
 
 technique vpvl2_techniques_ObjectSS4 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 0; UseToon = 1; > {
     pass DrawPass_ObjectSS4 {
-        SamplerState(vpvl2_NS_toonSampler) = vpvl2::defaultToonSamplerState;
-        SamplerState(vpvl2_NS_depthSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_toonSampler) = 2;
-        SamplerTexUnit(vpvl2_NS_depthSampler) = 3;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::toonSampler) = vpvl2::defaultToonSamplerState;
+        SamplerState(vpvl2::depthSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::toonSampler) = 2;
+        SamplerTexUnit(vpvl2::depthSampler) = 3;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::noApplyTexture,
             vpvl2::getShadowFactor,
             vpvl2::applyToonSelfShadow,
@@ -941,19 +970,20 @@ technique vpvl2_techniques_ObjectSS4 < MMDPass = "object_ss"; UseTexture = 0; Us
 
 technique vpvl2_techniques_ObjectSS5 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 1; UseToon = 0; > {
     pass DrawPass_ObjectSS5 {
-        SamplerState(vpvl2_NS_mainSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_sphereSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_depthSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_mainSampler) = 0;
-        SamplerTexUnit(vpvl2_NS_sphereSampler) = 1;
-        SamplerTexUnit(vpvl2_NS_depthSampler) = 3;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::mainSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::sphereSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::depthSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::mainSampler) = 0;
+        SamplerTexUnit(vpvl2::sphereSampler) = 1;
+        SamplerTexUnit(vpvl2::depthSampler) = 3;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::applyTexture,
             vpvl2::getShadowFactor,
             vpvl2::applySelfShadow,
@@ -966,17 +996,18 @@ technique vpvl2_techniques_ObjectSS5 < MMDPass = "object_ss"; UseTexture = 1; Us
 
 technique vpvl2_techniques_ObjectSS6 < MMDPass = "object_ss"; UseTexture = 1; UseSphereMap = 0; UseToon = 0; > {
     pass DrawPass_ObjectSS6 {
-        SamplerState(vpvl2_NS_mainSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_depthSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_mainSampler) = 0;
-        SamplerTexUnit(vpvl2_NS_depthSampler) = 3;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::mainSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::depthSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::mainSampler) = 0;
+        SamplerTexUnit(vpvl2::depthSampler) = 3;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::applyTexture,
             vpvl2::getShadowFactor,
             vpvl2::applySelfShadow,
@@ -989,17 +1020,18 @@ technique vpvl2_techniques_ObjectSS6 < MMDPass = "object_ss"; UseTexture = 1; Us
 
 technique vpvl2_techniques_ObjectSS7 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 1; UseToon = 0; > {
     pass DrawPass_ObjectSS7 {
-        SamplerState(vpvl2_NS_sphereSampler) = vpvl2::defaultSamplerState;
-        SamplerState(vpvl2_NS_depthSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_sphereSampler) = 1;
-        SamplerTexUnit(vpvl2_NS_depthSampler) = 3;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::sphereSampler) = vpvl2::defaultLinearFilterSamplerState;
+        SamplerState(vpvl2::depthSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::sphereSampler) = 1;
+        SamplerTexUnit(vpvl2::depthSampler) = 3;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::applyTexture,
             vpvl2::getShadowFactor,
             vpvl2::applySelfShadow,
@@ -1012,15 +1044,16 @@ technique vpvl2_techniques_ObjectSS7 < MMDPass = "object_ss"; UseTexture = 0; Us
 
 technique vpvl2_techniques_ObjectSS8 < MMDPass = "object_ss"; UseTexture = 0; UseSphereMap = 0; UseToon = 0; > {
     pass DrawPass_ObjectSS8 {
-        SamplerState(vpvl2_NS_depthSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_depthSampler) = 3;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::depthSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::depthSampler) = 3;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
         };
         FragmentProgram = {
+            vpvl2::applyStandardLight,
             vpvl2::noApplyTexture,
             vpvl2::getShadowFactor,
             vpvl2::applySelfShadow,
@@ -1033,8 +1066,8 @@ technique vpvl2_techniques_ObjectSS8 < MMDPass = "object_ss"; UseTexture = 0; Us
 
 technique vpvl2_techniques_Edge < MMDPass = "edge"; > {
     pass DrawPass_Edge {
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
@@ -1049,8 +1082,8 @@ technique vpvl2_techniques_Edge < MMDPass = "edge"; > {
 
 technique vpvl2_techniques_Shadow < MMDPass = "shadow"; > {
     pass DrawPass_Shadow {
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
@@ -1065,8 +1098,8 @@ technique vpvl2_techniques_Shadow < MMDPass = "shadow"; > {
 
 technique vpvl2_techniques_Zplot < MMDPass = "zplot"; > {
     pass DrawPass_Zplot {
-        SamplerState(vpvl2_NS_boneTransformSampler) = vpvl2::defaultDepthSamplerState;
-        SamplerTexUnit(vpvl2_NS_boneTransformSampler) = 4;
+        SamplerState(vpvl2::boneTransformSampler) = vpvl2::defaultDepthSamplerState;
+        SamplerTexUnit(vpvl2::boneTransformSampler) = 4;
         VertexProgram = {
             vpvl2::performTransform,
             vpvl2::mainObjectVS
