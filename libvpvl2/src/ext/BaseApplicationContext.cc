@@ -214,13 +214,17 @@ using namespace gl;
 using namespace icu4c;
 
 BaseApplicationContext::ModelContext::ModelContext(BaseApplicationContext *applicationContextRef, vpvl2::extensions::Archive *archiveRef, const IString *directory)
-    : texParameteri(reinterpret_cast<PFNGLTEXPARAMETERIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexParameteri"))),
-      pixelStorei(reinterpret_cast<PFNGLPIXELSTOREIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glPixelStorei"))),
-      texStorage2D(reinterpret_cast<PFNGLTEXSTORAGE2DPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glTexStorage2D"))),
+    : pixelStorei(reinterpret_cast<PFNGLPIXELSTOREIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glPixelStorei"))),
       m_directoryRef(directory),
       m_archiveRef(archiveRef),
-      m_applicationContextRef(applicationContextRef)
+      m_applicationContextRef(applicationContextRef),
+      m_maxAnisotropyValue(0)
 {
+    IApplicationContext::FunctionResolver *resolver = applicationContextRef->sharedFunctionResolverInstance();
+    if (resolver->hasExtension("EXT_texture_filter_anisotropic")) {
+        typedef void (GLAPIENTRY * PFNGLGETFLOATVPROC)(GLenum pname, GLfloat *values);
+        reinterpret_cast<PFNGLGETFLOATVPROC>(resolver->resolveSymbol("glGetFloatv"))(BaseTexture::kGL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &m_maxAnisotropyValue);
+    }
 }
 
 BaseApplicationContext::ModelContext::~ModelContext()
@@ -255,11 +259,14 @@ bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key
     if (textureRef) {
         pushAnnotationGroup("BaseApplicationContext::ModelContext#cacheTexture", m_applicationContextRef->sharedFunctionResolverInstance());
         textureRef->bind();
-        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MAG_FILTER, BaseTexture::kGL_LINEAR);
-        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MIN_FILTER, BaseTexture::kGL_LINEAR);
+        textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAG_FILTER, int(BaseTexture::kGL_LINEAR));
+        textureRef->setParameter(BaseTexture::kGL_TEXTURE_MIN_FILTER, int(BaseTexture::kGL_LINEAR));
         if (internal::hasFlagBits(bridge.flags, IApplicationContext::kToonTexture)) {
-            texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_S, BaseTexture::kGL_CLAMP_TO_EDGE);
-            texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_T, BaseTexture::kGL_CLAMP_TO_EDGE);
+            textureRef->setParameter(BaseTexture::kGL_TEXTURE_WRAP_S, int(BaseTexture::kGL_CLAMP_TO_EDGE));
+            textureRef->setParameter(BaseTexture::kGL_TEXTURE_WRAP_T, int(BaseTexture::kGL_CLAMP_TO_EDGE));
+        }
+        if (m_maxAnisotropyValue > 0) {
+            textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropyValue);
         }
         textureRef->unbind();
         bridge.dataRef = textureRef;
@@ -284,13 +291,8 @@ ITexture *BaseApplicationContext::ModelContext::createTexture(const void *ptr, c
     if (texture) {
         texture->create();
         texture->bind();
-        if (resolver->hasExtension("ARB_texture_storage")) {
-            texStorage2D(format.target, 1, format.internal, GLsizei(size.x()), GLsizei(size.y()));
-            texture->write(ptr);
-        }
-        else {
-            texture->allocate(ptr);
-        }
+        texture->fillPixels(ptr);
+        texture->generateMipmaps();
         texture->unbind();
     }
     popAnnotationGroup(resolver);
@@ -344,8 +346,7 @@ void BaseApplicationContext::ModelContext::optimizeTexture(ITexture *texture)
     FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
     texture->bind();
     if (resolver->hasExtension("APPLE_texture_range")) {
-        const BaseSurface::Format *format = reinterpret_cast<const BaseSurface::Format *>(texture->format());
-        texParameteri(format->target, kGL_TEXTURE_STORAGE_HINT_APPLE, kGL_STORAGE_CACHED_APPLE);
+        texture->setParameter(kGL_TEXTURE_STORAGE_HINT_APPLE, int(kGL_STORAGE_CACHED_APPLE));
     }
     if (resolver->hasExtension("APPLE_client_storage")) {
         pixelStorei(kGL_UNPACK_CLIENT_STORAGE_APPLE, kGL_TRUE);
