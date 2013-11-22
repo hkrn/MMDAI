@@ -117,7 +117,6 @@ class PMXRenderEngine::TransformFeedbackProgram : public ShaderProgram
 public:
     TransformFeedbackProgram(const IApplicationContext::FunctionResolver *resolver)
         : ShaderProgram(resolver),
-          texParameteri(reinterpret_cast<PFNGLTEXPARAMETERIPROC>(resolver->resolveSymbol("glTexParameteri"))),
           m_resolver(resolver),
           m_boneTransformTexture(0),
           m_matrixPaletteUniformLocation(-1),
@@ -206,10 +205,10 @@ public:
         m_boneTransformTexture->create();
         m_boneTransformTexture->bind();
         m_boneTransformTexture->allocate(&m_boneTransformTextureData[0]);
-        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MAG_FILTER, BaseTexture::kGL_NEAREST);
-        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_MIN_FILTER, BaseTexture::kGL_NEAREST);
-        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_S, BaseTexture::kGL_CLAMP_TO_EDGE);
-        texParameteri(Texture2D::kGL_TEXTURE_2D, BaseTexture::kGL_TEXTURE_WRAP_T, BaseTexture::kGL_CLAMP_TO_EDGE);
+        m_boneTransformTexture->setParameter(BaseTexture::kGL_TEXTURE_MAG_FILTER, int(BaseTexture::kGL_NEAREST));
+        m_boneTransformTexture->setParameter(BaseTexture::kGL_TEXTURE_MIN_FILTER, int(BaseTexture::kGL_NEAREST));
+        m_boneTransformTexture->setParameter(BaseTexture::kGL_TEXTURE_WRAP_S, int(BaseTexture::kGL_CLAMP_TO_EDGE));
+        m_boneTransformTexture->setParameter(BaseTexture::kGL_TEXTURE_WRAP_T, int(BaseTexture::kGL_CLAMP_TO_EDGE));
         m_boneTransformTexture->unbind();
         VPVL2_VLOG(1, "Created bone matrices palette texture: ID=" << m_boneTransformTexture->data());
     }
@@ -250,9 +249,6 @@ protected:
     }
 
 private:
-    typedef void (GLAPIENTRY * PFNGLTEXPARAMETERIPROC) (GLenum target, GLenum pname, GLint param);
-    PFNGLTEXPARAMETERIPROC texParameteri;
-
     const IApplicationContext::FunctionResolver *m_resolver;
     extensions::gl::Texture2D *m_boneTransformTexture;
     Array<float32> m_boneTransformTextureData;
