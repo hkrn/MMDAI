@@ -67,9 +67,21 @@ public:
      */
     virtual void bind() = 0;
 
+    virtual void fillPixels(const void *pixels) = 0;
+
     virtual void allocate(const void *pixels) = 0;
 
     virtual void write(const void *pixels) = 0;
+
+    virtual void getParameters(unsigned int key, int *values) const = 0;
+
+    virtual void getParameters(unsigned int key, float *values) const = 0;
+
+    virtual void setParameter(unsigned int key, int value) = 0;
+
+    virtual void setParameter(unsigned int key, float value) = 0;
+
+    virtual void generateMipmaps() = 0;
 
     /**
      * テクスチャの大きさを引数に基づいて変更します.

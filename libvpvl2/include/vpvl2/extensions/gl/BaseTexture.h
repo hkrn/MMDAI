@@ -64,12 +64,18 @@ public:
     static const GLenum kGL_TEXTURE_WRAP_S = 0x2802;
     static const GLenum kGL_TEXTURE_WRAP_T = 0x2803;
     static const GLenum kGL_CLAMP_TO_EDGE = 0x812F;
-    static const GLenum kGL_GENERATE_MIPMAP = 0x8191;
+    static const GLenum kGL_TEXTURE_MAX_ANISOTROPY_EXT = 0x84FE;
+    static const GLenum kGL_MAX_TEXTURE_MAX_ANISOTROPY_EXT = 0x84FF;
 
     BaseTexture(const IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
         : genTextures(reinterpret_cast<PFNGLGENTEXTURESPROC>(resolver->resolveSymbol("glGenTextures"))),
           bindTexture(reinterpret_cast<PFNGLBINDTEXTUREPROC>(resolver->resolveSymbol("glBindTexture"))),
           deleteTextures(reinterpret_cast<PFNGLDELETETEXTURESPROC>(resolver->resolveSymbol("glDeleteTextures"))),
+          generateMipmap(reinterpret_cast<PFNGLGENERATEMIPMAPPROC>(resolver->resolveSymbol("glGenerateMipmap"))),
+          getTexParameterfv(reinterpret_cast<PFNGLGETTEXPARAMETERFVPROC>(resolver->resolveSymbol("glGetTexParameterfv"))),
+          getTexParameteriv(reinterpret_cast<PFNGLGETTEXPARAMETERIVPROC>(resolver->resolveSymbol("glGetTexParameteriv"))),
+          texParameterf(reinterpret_cast<PFNGLTEXPARAMETERFPROC>(resolver->resolveSymbol("glTexParameterf"))),
+          texParameteri(reinterpret_cast<PFNGLTEXPARAMETERIPROC>(resolver->resolveSymbol("glTexParameteri"))),
           VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, sampler)
     {
     }
@@ -107,6 +113,21 @@ public:
             unbind();
         }
     }
+    void generateMipmaps() {
+        generateMipmap(m_format.target);
+    }
+    void getParameters(unsigned int key, float *values) const {
+        getTexParameterfv(m_format.target, key, values);
+    }
+    void getParameters(unsigned int key, int *values) const {
+        getTexParameteriv(m_format.target, key, values);
+    }
+    void setParameter(unsigned int key, float value) {
+        texParameterf(m_format.target, key, value);
+    }
+    void setParameter(unsigned int key, int value) {
+        texParameteri(m_format.target, key, value);
+    }
 
     VPVL2_BASESURFACE_DEFINE_METHODS()
 
@@ -114,9 +135,19 @@ protected:
     typedef void (GLAPIENTRY * PFNGLGENTEXTURESPROC) (GLsizei n, GLuint *textures);
     typedef void (GLAPIENTRY * PFNGLBINDTEXTUREPROC) (GLenum target, GLuint texture);
     typedef void (GLAPIENTRY * PFNGLDELETETEXTURESPROC) (GLsizei n, GLuint *textures);
+    typedef void (GLAPIENTRY * PFNGLGENERATEMIPMAPPROC) (GLenum target);
+    typedef void (GLAPIENTRY * PFNGLGETTEXPARAMETERFVPROC) (GLenum target, GLenum pname, GLfloat *params);
+    typedef void (GLAPIENTRY * PFNGLGETTEXPARAMETERIVPROC) (GLenum target, GLenum pname, GLint *params);
+    typedef void (GLAPIENTRY * PFNGLTEXPARAMETERIPROC) (GLenum target, GLenum pname, GLint param);
+    typedef void (GLAPIENTRY * PFNGLTEXPARAMETERFPROC) (GLenum target, GLenum pname, GLfloat param);
     PFNGLGENTEXTURESPROC genTextures;
     PFNGLBINDTEXTUREPROC bindTexture;
     PFNGLDELETETEXTURESPROC deleteTextures;
+    PFNGLGENERATEMIPMAPPROC generateMipmap;
+    PFNGLGETTEXPARAMETERFVPROC getTexParameterfv;
+    PFNGLGETTEXPARAMETERIVPROC getTexParameteriv;
+    PFNGLTEXPARAMETERFPROC texParameterf;
+    PFNGLTEXPARAMETERIPROC texParameteri;
 
     VPVL2_BASESURFACE_DEFINE_FIELDS()
 };

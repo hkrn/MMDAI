@@ -56,13 +56,24 @@ public:
     Texture3D(const IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLenum sampler)
         : BaseTexture(resolver, format, size, sampler),
           texImage3D(reinterpret_cast<PFNGLTEXIMAGE3DPROC>(resolver->resolveSymbol("glTexImage3D"))),
-          texSubImage3D(reinterpret_cast<PFNGLTEXSUBIMAGE3DPROC>(resolver->resolveSymbol("glTexSubImage3D")))
+          texSubImage3D(reinterpret_cast<PFNGLTEXSUBIMAGE3DPROC>(resolver->resolveSymbol("glTexSubImage3D"))),
+          texStorage3D(reinterpret_cast<PFNGLTEXSTORAGE3DPROC>(resolver->resolveSymbol("glTexStorage3D"))),
+          m_hasTextureStorage(resolver->hasExtension("ARB_texture_storage"))
     {
         m_format.target = kGL_TEXTURE_3D;
     }
     ~Texture3D() {
     }
 
+    void fillPixels(const void *pixels) {
+        if (m_hasTextureStorage) {
+            texStorage3D(m_format.target, 1, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()), GLsizei(m_size.z()));
+            write(pixels);
+        }
+        else {
+            allocate(pixels);
+        }
+    }
     void allocate(const void *pixels) {
         texImage3D(m_format.target, 0, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()), GLsizei(m_size.z()), 0, m_format.external, m_format.type, pixels);
     }
@@ -73,8 +84,11 @@ public:
 private:
     typedef void (GLAPIENTRY * PFNGLTEXIMAGE3DPROC) (GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
     typedef void (GLAPIENTRY * PFNGLTEXSUBIMAGE3DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels);
+    typedef void (GLAPIENTRY * PFNGLTEXSTORAGE3DPROC) (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
     PFNGLTEXIMAGE3DPROC texImage3D;
     PFNGLTEXSUBIMAGE3DPROC texSubImage3D;
+    PFNGLTEXSTORAGE3DPROC texStorage3D;
+    const bool m_hasTextureStorage;
 };
 
 } /* namespace gl */

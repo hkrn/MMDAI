@@ -63,11 +63,17 @@ public:
     /* do nothing */
     void create() {}
     void bind() {}
+    void fillPixels(const void * /* pixels */) {}
     void allocate(const void * /* data */) {}
     void write(const void * /* data */) {}
     void resize(const Vector3 & /* size */) {}
     void unbind() {}
     void release() {}
+    void generateMipmaps() {}
+    void getParameters(unsigned int /* key */, float * /* values */) const {}
+    void getParameters(unsigned int /* key */, int * /* values */) const {}
+    void setParameter(unsigned int /* key */, float /* value */) {}
+    void setParameter(unsigned int /* key */, int /* value */) {}
 
     VPVL2_BASESURFACE_DEFINE_METHODS()
 
