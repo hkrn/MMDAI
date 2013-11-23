@@ -323,9 +323,9 @@ struct Effect::PrivateContext {
         }
         void resetState() {
         }
-        void setupOverrides(const Array<Pass *> & /* passes */) {
+        void setupOverrides(const IEffect * /* effectRef */) {
         }
-        void releaseOverrides(const Array<Pass *> & /* passes */) {
+        void setupOverrides(const Array<Pass *> & /* passes */) {
         }
         intptr_t overrideID() const {
             return 0;

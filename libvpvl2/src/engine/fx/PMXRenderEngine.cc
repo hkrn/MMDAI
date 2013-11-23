@@ -692,7 +692,11 @@ void PMXRenderEngine::preparePostProcess()
 {
     if (m_currentEffectEngineRef) {
         pushAnnotationGroup(std::string("PMXRenderEngine#preparePostProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+#ifdef VPVL2_LINK_NVFX
+        executeOneTechniqueAllPasses("vpvl2_nvfx_script_external");
+#else
         m_currentEffectEngineRef->executeScriptExternal();
+#endif
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
 }
@@ -701,7 +705,11 @@ void PMXRenderEngine::performPreProcess()
 {
     if (m_currentEffectEngineRef) {
         pushAnnotationGroup(std::string("PMXRenderEngine#performPreProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+#ifdef VPVL2_LINK_NVFX
+        executeOneTechniqueAllPasses("vpvl2_nvfx_preprocess");
+#else
         m_currentEffectEngineRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
+#endif
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
 }
@@ -710,7 +718,12 @@ void PMXRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
     if (m_currentEffectEngineRef) {
         pushAnnotationGroup(std::string("PMXRenderEngine#performPostProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+#ifdef VPVL2_LINK_NVFX
+        (void) nextPostEffect;
+        executeOneTechniqueAllPasses("vpvl2_nvfx_postprocess");
+#else
         m_currentEffectEngineRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
+#endif
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
 }
@@ -730,48 +743,7 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
 {
     pushAnnotationGroup(std::string("PMXRenderEngine#setEffect name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     if (type == IEffect::kStandardOffscreen) {
-        const int neffects = m_oseffects.count();
-        bool found = false;
-        PrivateEffectEngine *ee = 0;
-        for (int i = 0; i < neffects; i++) {
-            ee = m_oseffects[i];
-            if (ee->effect() == effectRef) {
-                found = true;
-                break;
-            }
-        }
-        if (found) {
-            m_currentEffectEngineRef = ee;
-        }
-        else if (effectRef) {
-            PrivateEffectEngine *previous = m_currentEffectEngineRef;
-            m_currentEffectEngineRef = new PrivateEffectEngine(this, m_applicationContextRef->sharedFunctionResolverInstance());
-            m_currentEffectEngineRef->setEffect(effectRef, userData, false);
-            if (m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
-                Array<IMaterial *> materials;
-                m_modelRef->getMaterialRefs(materials);
-                const int nmaterials = materials.count();
-                /* copy current material textures/spheres parameters to offscreen effect */
-                for (int i = 0; i < nmaterials; i++) {
-                    const IMaterial *material = materials[i];
-                    const MaterialContext &materialContext = m_materialContexts[i];
-                    if (const ITexture *mainTexture = materialContext.mainTextureRef) {
-                        m_currentEffectEngineRef->materialTexture.setTexture(material, mainTexture);
-                    }
-                    if (const ITexture *toonTexture = materialContext.toonTextureRef) {
-                        m_currentEffectEngineRef->materialToonTexture.setTexture(material, toonTexture);
-                    }
-                    if (const ITexture *sphereTexture = materialContext.sphereTextureRef) {
-                        m_currentEffectEngineRef->materialSphereMap.setTexture(material, sphereTexture);
-                    }
-                }
-                m_oseffects.append(m_currentEffectEngineRef);
-            }
-            else {
-                internal::deleteObject(m_currentEffectEngineRef);
-                m_currentEffectEngineRef = previous;
-            }
-        }
+        setupOffscreenEffect(effectRef, userData);
     }
     else {
         IEffect::ScriptOrderType findType = (type == IEffect::kAutoDetection && effectRef) ? effectRef->scriptOrderType() : type;
@@ -792,6 +764,7 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
             if (!wasEffectNull && m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
                 m_defaultEffectRef = m_sceneRef->createDefaultStandardEffectRef(m_applicationContextRef);
                 m_currentEffectEngineRef->setDefaultStandardEffectRef(m_defaultEffectRef);
+                effectRef->setupOverride(m_defaultEffectRef);
             }
         }
     }
@@ -1123,6 +1096,66 @@ void PMXRenderEngine::uploadToonTexture(const IMaterial *material,
         if (engine) {
             engine->materialToonTexture.setTexture(material, textureRef);
             VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << name << " index=" << index << " shared=" << shared << " ID=" << bridge.dataRef->data());
+        }
+    }
+}
+
+void PMXRenderEngine::setupOffscreenEffect(IEffect *effectRef, void *userData)
+{
+    const int neffects = m_oseffects.count();
+    bool found = false;
+    PrivateEffectEngine *ee = 0;
+    for (int i = 0; i < neffects; i++) {
+        ee = m_oseffects[i];
+        if (ee->effect() == effectRef) {
+            found = true;
+            break;
+        }
+    }
+    if (found) {
+        m_currentEffectEngineRef = ee;
+    }
+    else if (effectRef) {
+        PrivateEffectEngine *previous = m_currentEffectEngineRef;
+        m_currentEffectEngineRef = new PrivateEffectEngine(this, m_applicationContextRef->sharedFunctionResolverInstance());
+        m_currentEffectEngineRef->setEffect(effectRef, userData, false);
+        if (m_currentEffectEngineRef->scriptOrder() == IEffect::kStandard) {
+            Array<IMaterial *> materials;
+            m_modelRef->getMaterialRefs(materials);
+            const int nmaterials = materials.count();
+            /* copy current material textures/spheres parameters to offscreen effect */
+            for (int i = 0; i < nmaterials; i++) {
+                const IMaterial *material = materials[i];
+                const MaterialContext &materialContext = m_materialContexts[i];
+                if (const ITexture *mainTexture = materialContext.mainTextureRef) {
+                    m_currentEffectEngineRef->materialTexture.setTexture(material, mainTexture);
+                }
+                if (const ITexture *toonTexture = materialContext.toonTextureRef) {
+                    m_currentEffectEngineRef->materialToonTexture.setTexture(material, toonTexture);
+                }
+                if (const ITexture *sphereTexture = materialContext.sphereTextureRef) {
+                    m_currentEffectEngineRef->materialSphereMap.setTexture(material, sphereTexture);
+                }
+            }
+            m_oseffects.append(m_currentEffectEngineRef);
+        }
+        else {
+            internal::deleteObject(m_currentEffectEngineRef);
+            m_currentEffectEngineRef = previous;
+        }
+    }
+}
+
+void PMXRenderEngine::executeOneTechniqueAllPasses(const char *name)
+{
+    if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(name, 0, 0, false, false, false)) {
+        Array<IEffect::Pass *> passes;
+        technique->getPasses(passes);
+        const int npasses = passes.count();
+        for (int i = 0; i < npasses; i++) {
+            IEffect::Pass *pass = passes[i];
+            pass->setState();
+            pass->resetState();
         }
     }
 }

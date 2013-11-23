@@ -146,8 +146,8 @@ public:
         virtual const char *name() const = 0;
         virtual void setState() = 0;
         virtual void resetState() = 0;
+        virtual void setupOverrides(const IEffect *effectRef) = 0;
         virtual void setupOverrides(const Array<Pass *> &passes) = 0;
-        virtual void releaseOverrides(const Array<Pass *> &passes) = 0;
     };
     class SamplerState {
     public:
@@ -382,6 +382,8 @@ public:
     virtual void activateVertexAttribute(VertexAttributeType vtype) = 0;
 
     virtual void deactivateVertexAttribute(VertexAttributeType vtype) = 0;
+
+    virtual void setupOverride(const IEffect *effectRef) = 0;
 
     virtual const char *errorString() const = 0;
 };

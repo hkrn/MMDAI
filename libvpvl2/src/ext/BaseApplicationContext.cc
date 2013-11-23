@@ -1059,35 +1059,10 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
 {
     pushAnnotationGroup("BaseApplicationContext#parseOffscreenSemantic", sharedFunctionResolverInstance());
 #if defined(VPVL2_LINK_NVFX)
-    (void) directoryRef;
-    Array<IRenderEngine *> engineRefs;
-    Array<IEffect::Technique *> techniques;
-    Array<IEffect::Pass *> passes, destPasses;
-    std::set<IEffect::Pass *> destPassSet;
-    m_sceneRef->getRenderEngineRefs(engineRefs);
-    const int nengines = engineRefs.count();
-    for (int i = 0; i < nengines; i++) {
-        const IRenderEngine *engineRef = engineRefs[i];
-        if (const IEffect *defaultEffectRef = engineRef->effectRef(IEffect::kDefault)) {
-            defaultEffectRef->getTechniqueRefs(techniques);
-            const int ntechniques = techniques.count();
-            for (int j = 0; j < ntechniques; j++) {
-                const IEffect::Technique *technique = techniques[j];
-                technique->getPasses(passes);
-                const int npasses = passes.count();
-                for (int k = 0; k < npasses; k++) {
-                    IEffect::Pass *pass = passes[k];
-                    destPassSet.insert(pass);
-                }
-            }
-        }
-    }
-    int destPassSize = int(destPassSet.size());
-    destPasses.reserve(destPassSize);
-    for (std::set<IEffect::Pass *>::const_iterator it = destPassSet.begin(); it != destPassSet.end(); it++) {
-        destPasses.append(*it);
-    }
     if (effectRef) {
+        Array<IEffect::Pass *> passes;
+        Array<IEffect::Technique *> techniques;
+        IEffect *defaultEffectRef = m_sceneRef->createDefaultStandardEffectRef(this);
         effectRef->getTechniqueRefs(techniques);
         const int ntechniques = techniques.count();
         for (int i = 0; i < ntechniques; i++) {
@@ -1099,7 +1074,8 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
                     IEffect::Pass *pass = passes[j];
                     const IEffect::Annotation *annotationRef = pass->annotationRef("draw");
                     if (annotationRef && annotationRef->booleanValue()) {
-                        pass->setupOverrides(destPasses);
+                        pass->setupOverrides(defaultEffectRef);
+                        passes.append(pass);
                     }
                 }
                 m_offscreenTechniques.append(technique);

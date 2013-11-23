@@ -170,12 +170,6 @@ struct Effect::NvFXPass : IEffect::Pass {
             destPasses.append(pass->valueRef);
         }
     }
-    void internalReleaseOverrides(const Array<nvFX::IPass *> &passes) {
-        if (passes.count() > 0) {
-            nvFX::IPass *pass = passes[0];
-            pass->releaseOverrides(&pass, passes.count());
-        }
-    }
 
     IEffect::Technique *parentTechniqueRef() const {
         return const_cast<IEffect::Technique *>(techniqueRef);
@@ -195,10 +189,21 @@ struct Effect::NvFXPass : IEffect::Pass {
     void resetState() {
         valueRef->unbindProgram();
     }
+    void setupOverrides(const IEffect *effectRef) {
+        Array<IEffect::Technique *> techniques;
+        Array<IEffect::Pass *> passes;
+        effectRef->getTechniqueRefs(techniques);
+        const int ntechniques = techniques.count();
+        for (int i = 0; i < ntechniques; i++) {
+            IEffect::Technique *technique = techniques[i];
+            technique->getPasses(passes);
+            setupOverrides(passes);
+        }
+    }
     void setupOverrides(const Array<Pass *> &passes) {
         pushAnnotationGroup(std::string("NvFXPass#setupOverrides name=").append(name()).c_str(), effectRef->applicationContextRef()->sharedFunctionResolverInstance());
-        internalReleaseOverrides(overridePasses);
         if (passes.count() > 0) {
+            Array<nvFX::IPass *> overridePasses;
             castPasses(passes, overridePasses);
             const int numOverridePasses = overridePasses.count();
             valueRef->setupOverrides(&overridePasses[0], numOverridePasses);
@@ -222,7 +227,6 @@ struct Effect::NvFXPass : IEffect::Pass {
 
     const Effect *effectRef;
     const IEffect::Technique *techniqueRef;
-    Array<nvFX::IPass *> overridePasses;
     nvFX::IPass *valueRef;
     nvFX::PassInfo info;
 };
@@ -680,6 +684,23 @@ void Effect::activateVertexAttribute(VertexAttributeType vtype)
 void Effect::deactivateVertexAttribute(VertexAttributeType vtype)
 {
     disableVertexAttribArray(vtype);
+}
+
+void Effect::setupOverride(const IEffect *effectRef)
+{
+    Array<IEffect::Technique *> techniques;
+    Array<IEffect::Pass *> passes;
+    effectRef->getTechniqueRefs(techniques);
+    const int ntechniques = techniques.count();
+    for (int i = 0; i < ntechniques; i++) {
+        IEffect::Technique *technique = techniques[i];
+        technique->getPasses(passes);
+        const int npasses = passes.count();
+        for (int j = 0; j < npasses; j++) {
+            IEffect::Pass *pass = passes[j];
+            pass->setupOverrides(this);
+        }
+    }
 }
 
 const char *Effect::errorString() const
