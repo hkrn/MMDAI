@@ -1167,11 +1167,8 @@ void BaseApplicationContext::renderOffscreen()
     if (ntechniques > 0 && m_viewportRegionInvalidated) {
         int width = int(m_viewportRegion.z), height = int(m_viewportRegion.w);
         nvFX::IResourceRepository *resourceRepository = nvFX::getResourceRepositorySingleton();
-        resourceRepository->setParams(0, 0, width, height, 1, 0, 0);
+        resourceRepository->setParams(0, 0, width, height, 1, 0, static_cast<BufferHandle>(0));
         resourceRepository->validateAll();
-        nvFX::IFrameBufferObjectsRepository *fboRepository = nvFX::getFrameBufferObjectsRepositorySingleton();
-        fboRepository->setParams(0, 0, width, height, 1, 0, 0);
-        fboRepository->validateAll();
         m_viewportRegionInvalidated = false;
     }
     for (int i = 0; i < ntechniques; i++) {
