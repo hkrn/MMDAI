@@ -97,10 +97,7 @@ public:
     /**
      * Scene の初期化を行います.
      *
-     * GLEW が有効な場合は内部で glewInit を呼び出して GLEW の初期化を行います。もし失敗した場合は opaque を通じて
-     * glewInit が返したエラー番号を設定します。エラーを無視する場合は opaque を 0 に設定して渡してください。
-     *
-     * GLEW が無効の場合は何もしません。
+     * opaque には IApplication::FunctionResolver のインスタンスを渡す必要があります。
      *
      * @brief initialize
      * @param opaque
@@ -258,7 +255,7 @@ public:
      *
      * エフェクトの作成は時間がかかるので、別途呼び出し用のスレッドを作成して実行してください。
      *
-     * VPVL2_ENABLE_NVIDIA_CG を無効にしてビルドした場合は何もしません。
+     * VPVL2_ENABLE_NVIDIA_CG か VPVL2_LINK_NVFX なしでビルドした場合は何もしません。
      *
      * @brief createEffectFromSource
      * @param source
@@ -272,7 +269,7 @@ public:
      *
      * エフェクトの作成は時間がかかるので、別途呼び出し用のスレッドを作成して実行してください。
      *
-     * VPVL2_ENABLE_NVIDIA_CG を無効にしてビルドした場合は何もしません。
+     * VPVL2_ENABLE_NVIDIA_CG か VPVL2_LINK_NVFX なしでビルドした場合は何もしません。
      *
      * @brief createEffectFromFile
      * @param path
@@ -286,7 +283,7 @@ public:
      *
      * エフェクトの作成は時間がかかるので、別途呼び出し用のスレッドを作成して実行してください。
      *
-     * VPVL2_ENABLE_NVIDIA_CG を無効にしてビルドした場合は何もしません。
+     * VPVL2_ENABLE_NVIDIA_CG か VPVL2_LINK_NVFX なしでビルドした場合は何もしません。
      *
      * @brief createEffectFromModel
      * @param model
@@ -302,7 +299,7 @@ public:
      * 初回時の作成は時間がかかりますが、２回目以降は Scene にキャッシュした結果を返します。
      * そのため、返されるエフェクトは Scene で参照を持っているため、delete で削除してはいけません。
      *
-     * VPVL2_ENABLE_NVIDIA_CG を無効にしてビルドした場合は何もしません。
+     * VPVL2_ENABLE_NVIDIA_CG か VPVL2_LINK_NVFX なしでビルドした場合は何もしません。
      *
      * @brief createDefaultStandardEffectRef
      * @param applicationContextRef
@@ -321,7 +318,7 @@ public:
     void removeModel(IModel *model);
 
     /**
-     * モデルと紐付けられたレンダリングエンジンから Scene の参照を解除したうえで削除します.
+     * モデルと紐付けられたレンダリングエンジンから Scene の参照を解除したうえで実体を削除します.
      *
      * コンストラクタの引数で ownMemory を true にした場合は実体を削除します。
      * 引数が NULL の場合は何もしません。
@@ -342,7 +339,7 @@ public:
     void removeMotion(IMotion *motion);
 
     /**
-     * モーションから Scene の参照を解除したうえで削除します.
+     * モーションから Scene の参照を解除したうえで実体を削除します.
      *
      * コンストラクタの引数で ownMemory を true にした場合は実体を削除します。
      * 引数が NULL の場合は何もしません。
@@ -410,6 +407,10 @@ public:
 
     /**
      * レンダリングエンジンをエフェクトのプロセス毎に分けて取得します.
+     *
+     * この処理は CgFX の場合はエフェクトのプロセスごとに分けて取得されますが、
+     * nvFX が有効になっている場合はテクニックの注釈から種類を判別する仕様上すべて返します。
+     * どちらも無効の場合は nvFX が有効になっている場合と同じ挙動になります。
      *
      * @brief getRenderEnginesByRenderOrder
      * @param enginesForPreProcess

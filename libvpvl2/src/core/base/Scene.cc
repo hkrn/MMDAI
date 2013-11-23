@@ -1033,6 +1033,7 @@ void Scene::getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreP
     const int nengines = engines.count();
     for (int i = 0; i < nengines; i++) {
         IRenderEngine *engine = engines[i]->value;
+#ifdef VPVL2_ENABLE_NVIDIA_CG
         if (engine->effectRef(IEffect::kPreProcess)) {
             enginesForPreProcess.append(engine);
         }
@@ -1042,6 +1043,11 @@ void Scene::getRenderEnginesByRenderOrder(Array<IRenderEngine *> &enginesForPreP
         else {
             enginesForStandard.append(engine);
         }
+#else
+        enginesForPreProcess.append(engine);
+        enginesForPostProcess.append(engine);
+        enginesForStandard.append(engine);
+#endif
     }
     IEffect *nextPostEffectRef = 0;
     nextPostEffects.clear();
