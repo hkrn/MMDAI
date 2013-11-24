@@ -1163,14 +1163,14 @@ void BaseApplicationContext::renderOffscreen()
     Array<IEffect::Pass *> passes;
     Array<IRenderEngine *> engines;
     m_sceneRef->getRenderEngineRefs(engines);
-    const int nengines = engines.count(), ntechniques = m_offscreenTechniques.count();
-    if (ntechniques > 0 && m_viewportRegionInvalidated) {
+    if (m_viewportRegionInvalidated) {
         int width = int(m_viewportRegion.z), height = int(m_viewportRegion.w);
         nvFX::IResourceRepository *resourceRepository = nvFX::getResourceRepositorySingleton();
         resourceRepository->setParams(0, 0, width, height, 1, 0, static_cast<BufferHandle>(0));
         resourceRepository->validateAll();
         m_viewportRegionInvalidated = false;
     }
+    const int nengines = engines.count(), ntechniques = m_offscreenTechniques.count();
     for (int i = 0; i < ntechniques; i++) {
         IEffect::Technique *technique = m_offscreenTechniques[i];
         technique->getPasses(passes);
