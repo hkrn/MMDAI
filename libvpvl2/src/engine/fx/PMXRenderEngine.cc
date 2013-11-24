@@ -874,6 +874,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
             else {
                 VPVL2_LOG(WARNING, "Cannot bind a main texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
+                release();
                 popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
                 return false;
             }
@@ -889,6 +890,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
             else {
                 VPVL2_LOG(WARNING, "Cannot bind a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
+                release();
                 popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
                 return false;
             }
