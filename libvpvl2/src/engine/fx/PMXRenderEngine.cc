@@ -1153,6 +1153,7 @@ void PMXRenderEngine::executeOneTechniqueAllPasses(const char *name)
     if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(name, 0, 0, false, false, false)) {
         Array<IEffect::Pass *> passes;
         technique->getPasses(passes);
+        m_currentEffectEngineRef->controlObject.update(m_modelRef);
         const int npasses = passes.count();
         for (int i = 0; i < npasses; i++) {
             IEffect::Pass *pass = passes[i];
