@@ -1,9 +1,12 @@
 # declaration of function
 include(FindPackageHandleStandardArgs)
 
-set(VPVL2_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
+if(NOT VPVL2_ROOT_DIR)
+  set(VPVL2_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
+endif()
+
 function(__get_source_path output dir)
-  set(${output} "${VPVL2_BASE_DIR}/${dir}" PARENT_SCOPE)
+  set(${output} "${VPVL2_ROOT_DIR}/${dir}" PARENT_SCOPE)
 endfunction()
 
 function(__get_build_directory output)
@@ -348,7 +351,7 @@ function(vpvl2_find_glm)
   __get_source_path(GLM_SOURCE_DIRECTORY "glm-src")
   find_path(GLM_INCLUDE_DIR NAMES glm/glm.hpp PATHS ${GLM_SOURCE_DIRECTORY} NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
   include_directories(${GLM_INCLUDE_DIR})
-  find_package_handle_standard_args(GLM DEFAULT_MSG GLI_INCLUDE_DIR)
+  find_package_handle_standard_args(GLM DEFAULT_MSG GLM_INCLUDE_DIR)
 endfunction()
 
 function(vpvl2_link_glog target)
