@@ -266,8 +266,7 @@ struct Effect::PrivateContext {
                 value.append(const_cast<CFPass *>(it->second));
             }
         }
-        void setOverridePass(Pass * /* pass */, bool &rendering) {
-            rendering = true;
+        void setOverridePass(Pass * /* pass */) {
         }
 
         Effect *parentEffect;
@@ -322,6 +321,9 @@ struct Effect::PrivateContext {
         void setState() {
         }
         void resetState() {
+        }
+        bool isRenderable() const {
+            return true;
         }
         void setupOverrides(const IEffect * /* effectRef */) {
         }

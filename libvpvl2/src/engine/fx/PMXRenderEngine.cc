@@ -531,24 +531,21 @@ void PMXRenderEngine::renderModel()
         const char *const target = hasShadowMap && material->isSelfShadowEnabled() ? "object_ss" : "object";
         const bool hasMainTexture = materialContext.mainTextureRef > 0, hasSphereMap = materialContext.sphereTextureRef > 0 && material->sphereTextureRenderMode() != IMaterial::kNone;
         if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true)) {
-            bool rendering;
-            technique->setOverridePass(m_overridePass, rendering);
-            if (rendering) {
-                updateDrawPrimitivesCommand(material, command);
-                updateMaterialParameters(material, materialContext);
-                if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
-                    disable(kGL_CULL_FACE);
-                    m_cullFaceState = false;
-                }
-                else if (!m_cullFaceState && !material->isCullingDisabled()) {
-                    enable(kGL_CULL_FACE);
-                    m_cullFaceState = true;
-                }
-                annotateMaterial("renderModel", material);
-                pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-                m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-                popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
+            technique->setOverridePass(m_overridePass);
+            updateDrawPrimitivesCommand(material, command);
+            updateMaterialParameters(material, materialContext);
+            if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
+                disable(kGL_CULL_FACE);
+                m_cullFaceState = false;
             }
+            else if (!m_cullFaceState && !material->isCullingDisabled()) {
+                enable(kGL_CULL_FACE);
+                m_cullFaceState = true;
+            }
+            annotateMaterial("renderModel", material);
+            pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+            m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+            popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
         }
         command.offset += command.count;
     }
@@ -581,16 +578,13 @@ void PMXRenderEngine::renderEdge()
         const int nindices = material->indexRange().count;
         if (material->isEdgeEnabled()) {
             if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true)) {
-                bool rendering;
-                technique->setOverridePass(m_overridePass, rendering);
-                if (rendering) {
-                    updateDrawPrimitivesCommand(material, command);
-                    annotateMaterial("renderEdge", material);
-                    m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
-                    pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-                    m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-                    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
-                }
+                technique->setOverridePass(m_overridePass);
+                updateDrawPrimitivesCommand(material, command);
+                annotateMaterial("renderEdge", material);
+                m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
+                pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+                m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+                popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
             }
         }
         command.offset += nindices;
@@ -620,16 +614,13 @@ void PMXRenderEngine::renderShadow()
         const int nindices = material->indexRange().count;
         if (material->hasShadow()) {
             if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true)) {
-                bool rendering;
-                technique->setOverridePass(m_overridePass, rendering);
-                if (rendering) {
-                    updateDrawPrimitivesCommand(material, command);
-                    updateMaterialParameters(material, m_materialContexts[i]);
-                    annotateMaterial("renderShadow", material);
-                    pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-                    m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-                    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
-                }
+                technique->setOverridePass(m_overridePass);
+                updateDrawPrimitivesCommand(material, command);
+                updateMaterialParameters(material, m_materialContexts[i]);
+                annotateMaterial("renderShadow", material);
+                pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+                m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+                popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
             }
         }
         command.offset += nindices;
@@ -659,16 +650,13 @@ void PMXRenderEngine::renderZPlot()
         const int nindices = material->indexRange().count;
         if (material->hasShadowMap()) {
             if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true)) {
-                bool rendering;
-                technique->setOverridePass(m_overridePass, rendering);
-                if (rendering) {
-                    updateDrawPrimitivesCommand(material, command);
-                    updateMaterialParameters(material, m_materialContexts[i]);
-                    annotateMaterial("renderZplot", material);
-                    pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-                    m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-                    popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
-                }
+                technique->setOverridePass(m_overridePass);
+                updateDrawPrimitivesCommand(material, command);
+                updateMaterialParameters(material, m_materialContexts[i]);
+                annotateMaterial("renderZplot", material);
+                pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+                m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+                popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
             }
         }
         command.offset += nindices;
@@ -693,7 +681,8 @@ void PMXRenderEngine::preparePostProcess()
     if (m_currentEffectEngineRef) {
         pushAnnotationGroup(std::string("PMXRenderEngine#preparePostProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
 #ifdef VPVL2_LINK_NVFX
-        executeOneTechniqueAllPasses("vpvl2_nvfx_script_external");
+        Array<IEffect::Pass *> passes;
+        executeOneTechniqueAllPasses("vpvl2_nvfx_script_external", passes);
 #else
         m_currentEffectEngineRef->executeScriptExternal();
 #endif
@@ -706,7 +695,8 @@ void PMXRenderEngine::performPreProcess()
     if (m_currentEffectEngineRef) {
         pushAnnotationGroup(std::string("PMXRenderEngine#performPreProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
 #ifdef VPVL2_LINK_NVFX
-        executeOneTechniqueAllPasses("vpvl2_nvfx_preprocess");
+        Array<IEffect::Pass *> passes;
+        executeOneTechniqueAllPasses("vpvl2_nvfx_preprocess", passes);
 #else
         m_currentEffectEngineRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
 #endif
@@ -720,7 +710,8 @@ void PMXRenderEngine::performPostProcess(IEffect *nextPostEffect)
         pushAnnotationGroup(std::string("PMXRenderEngine#performPostProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
 #ifdef VPVL2_LINK_NVFX
         (void) nextPostEffect;
-        executeOneTechniqueAllPasses("vpvl2_nvfx_postprocess");
+        Array<IEffect::Pass *> passes;
+        executeOneTechniqueAllPasses("vpvl2_nvfx_postprocess", passes);
 #else
         m_currentEffectEngineRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
 #endif
@@ -1148,17 +1139,15 @@ void PMXRenderEngine::setupOffscreenEffect(IEffect *effectRef, void *userData)
     }
 }
 
-void PMXRenderEngine::executeOneTechniqueAllPasses(const char *name)
+void PMXRenderEngine::executeOneTechniqueAllPasses(const char *name, Array<IEffect::Pass *> &passes)
 {
     if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(name, 0, 0, false, false, false)) {
-        Array<IEffect::Pass *> passes;
         technique->getPasses(passes);
         m_currentEffectEngineRef->controlObject.update(m_modelRef);
         const int npasses = passes.count();
         for (int i = 0; i < npasses; i++) {
             IEffect::Pass *pass = passes[i];
             pass->setState();
-            pass->resetState();
         }
     }
 }

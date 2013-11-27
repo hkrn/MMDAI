@@ -271,6 +271,8 @@ public:
 
     IModel *currentModelRef() const;
     void setCurrentModelRef(IModel *value);
+    int samplesMSAA() const;
+    void setSamplesMSAA(int value);
     Scene *sceneRef() const;
     void getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const;
     void setCameraMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection);
@@ -352,7 +354,7 @@ protected:
     SharedTextureParameterMap m_sharedParameters;
     Array<vpvl2::IEffect::Technique *> m_offscreenTechniques;
     mutable icu4c::StringSmartPtr m_effectPathPtr;
-    int m_msaaSamples;
+    int m_samplesMSAA;
     bool m_viewportRegionInvalidated;
 #endif
 

@@ -452,7 +452,7 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
       m_aspectRatio(1)
     #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     ,
-      m_msaaSamples(0),
+      m_samplesMSAA(0),
       m_viewportRegionInvalidated(false)
     #endif /* VPVL2_ENABLE_NVIDIA_CG */
 {
@@ -478,7 +478,7 @@ void BaseApplicationContext::initialize(bool enableDebug)
         reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKARBPROC>(resolver->resolveSymbol("glDebugMessageCallbackARB"))(reinterpret_cast<GLDEBUGPROCARB>(&BaseApplicationContext::debugMessageCallback), this);
     }
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
-    getIntegerv(kGL_MAX_SAMPLES, &m_msaaSamples);
+    getIntegerv(kGL_MAX_SAMPLES, &m_samplesMSAA);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
     popAnnotationGroup(resolver);
 }
@@ -488,8 +488,8 @@ BaseApplicationContext::~BaseApplicationContext()
     m_encodingRef = 0;
     FreeImage_DeInitialise();
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
-    /* m_msaaSamples must not set zero at #release(), it causes multiple post effect will be lost */
-    m_msaaSamples = 0;
+    /* m_samplesMSAA must not set zero at #release(), it causes multiple post effect will be lost */
+    m_samplesMSAA = 0;
 #endif
 }
 
@@ -936,7 +936,7 @@ UnicodeString BaseApplicationContext::effectOwnerName(const IEffect *effect) con
 
 FrameBufferObject *BaseApplicationContext::createFrameBufferObject()
 {
-    return new FrameBufferObject(sharedFunctionResolverInstance(), m_renderColorFormat, m_msaaSamples);
+    return new FrameBufferObject(sharedFunctionResolverInstance(), m_renderColorFormat, m_samplesMSAA);
 }
 
 void BaseApplicationContext::getEffectCompilerArguments(Array<IString *> &arguments) const
@@ -1026,7 +1026,7 @@ FrameBufferObject *BaseApplicationContext::findFrameBufferObjectByRenderTarget(c
             buffer = *value;
         }
         else {
-            int nsamples = enableAA ? m_msaaSamples : 0;
+            int nsamples = enableAA ? m_samplesMSAA : 0;
             buffer = m_renderTargets.insert(textureRef, new FrameBufferObject(sharedFunctionResolverInstance(), m_renderColorFormat, nsamples));
         }
     }
@@ -1072,11 +1072,8 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
                 const int npasses = passes.count();
                 for (int j = 0; j < npasses; j++) {
                     IEffect::Pass *pass = passes[j];
-                    const IEffect::Annotation *annotationRef = pass->annotationRef("draw");
-                    if (annotationRef && annotationRef->booleanValue()) {
-                        pass->setupOverrides(defaultEffectRef);
-                        passes.append(pass);
-                    }
+                    pass->setupOverrides(defaultEffectRef);
+                    passes.append(pass);
                 }
                 m_offscreenTechniques.append(technique);
             }
@@ -1166,7 +1163,7 @@ void BaseApplicationContext::renderOffscreen()
     if (m_viewportRegionInvalidated) {
         int width = int(m_viewportRegion.z), height = int(m_viewportRegion.w);
         nvFX::IResourceRepository *resourceRepository = nvFX::getResourceRepositorySingleton();
-        resourceRepository->setParams(0, 0, width, height, 1, 0, static_cast<BufferHandle>(0));
+        resourceRepository->setParams(0, 0, width, height, m_samplesMSAA, 0, static_cast<BufferHandle>(0));
         resourceRepository->validateAll();
         m_viewportRegionInvalidated = false;
     }
@@ -1178,8 +1175,7 @@ void BaseApplicationContext::renderOffscreen()
         for (int j = 0; j < npasses; j++) {
             IEffect::Pass *pass = passes[j];
             pass->setState();
-            const IEffect::Annotation *annotationRef = pass->annotationRef("draw");
-            if (annotationRef && annotationRef->booleanValue()) {
+            if (pass->isRenderable()) {
                 for (int k = 0; k < nengines; k++) {
                     IRenderEngine *engine = engines[k];
                     engine->setOverridePass(pass);
@@ -1187,8 +1183,8 @@ void BaseApplicationContext::renderOffscreen()
                     engine->renderModel();
                     engine->setOverridePass(0);
                 }
+                pass->resetState();
             }
-            pass->resetState();
         }
     }
     if (ntechniques == 0) {
@@ -1335,6 +1331,16 @@ IModel *BaseApplicationContext::currentModelRef() const
 void BaseApplicationContext::setCurrentModelRef(IModel *value)
 {
     m_currentModelRef = value;
+}
+
+int BaseApplicationContext::samplesMSAA() const
+{
+    return m_samplesMSAA;
+}
+
+void BaseApplicationContext::setSamplesMSAA(int value)
+{
+    m_samplesMSAA = value;
 }
 
 Scene *BaseApplicationContext::sceneRef() const

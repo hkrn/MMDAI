@@ -189,6 +189,9 @@ struct Effect::NvFXPass : IEffect::Pass {
     void resetState() {
         valueRef->unbindProgram();
     }
+    bool isRenderable() const {
+        return info.renderingMode == nvFX::RENDER_SCENEGRAPH_SHADED;
+    }
     void setupOverrides(const IEffect *effectRef) {
         Array<IEffect::Technique *> techniques;
         Array<IEffect::Pass *> passes;
@@ -450,13 +453,11 @@ struct Effect::NvFXTechnique : IEffect::Technique {
             }
         }
     }
-    void setOverridePass(Pass *pass, bool &rendering) {
-        rendering = true;
+    void setOverridePass(Pass *pass) {
         int overrideID = 0;
         if (const NvFXPass *v = static_cast<const NvFXPass *>(pass)) {
             const nvFX::PassInfo &info = v->info;
             overrideID = info.overrideID;
-            rendering = info.renderingMode == nvFX::RENDER_SCENEGRAPH_SHADED;
         }
         valueRef->setActiveProgramLayer(overrideID);
     }

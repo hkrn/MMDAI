@@ -593,18 +593,15 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
         vsize nindices = *m_numIndices.find(mesh);
         if (technique) {
-            bool rendering;
-            technique->setOverridePass(m_overridePass, rendering);
-            if (rendering) {
-                bindVertexBundle(mesh);
-                command.count = nindices;
-                setDrawCommandMode(command, mesh);
-                annotate("renderModel: model=%s mesh=%d", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), i);
-                pushAnnotationGroup("AssetRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
-                m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-                popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
-                unbindVertexBundle(mesh);
-            }
+            technique->setOverridePass(m_overridePass);
+            bindVertexBundle(mesh);
+            command.count = nindices;
+            setDrawCommandMode(command, mesh);
+            annotate("renderModel: model=%s mesh=%d", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), i);
+            pushAnnotationGroup("AssetRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
+            m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+            popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
+            unbindVertexBundle(mesh);
         }
     }
     const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
@@ -630,17 +627,14 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         bindVertexBundle(mesh);
         IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false);
         if (technique) {
-            bool rendering;
-            technique->setOverridePass(m_overridePass, rendering);
-            if (rendering) {
-                vsize nindices = *m_numIndices.find(mesh);
-                command.count = nindices;
-                setDrawCommandMode(command, mesh);
-                annotate("renderZplot: model=%s mesh=%d", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), i);
-                pushAnnotationGroup("AssetRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
-                m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-                popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
-            }
+            technique->setOverridePass(m_overridePass);
+            vsize nindices = *m_numIndices.find(mesh);
+            command.count = nindices;
+            setDrawCommandMode(command, mesh);
+            annotate("renderZplot: model=%s mesh=%d", m_modelRef->name(IEncoding::kDefaultLanguage)->toByteArray(), i);
+            pushAnnotationGroup("AssetRenderEngine::PrivateEffectEngine#executeTechniquePasses", m_applicationContextRef->sharedFunctionResolverInstance());
+            m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+            popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
         }
         unbindVertexBundle(mesh);
     }
