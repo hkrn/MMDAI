@@ -531,9 +531,6 @@ void PMXRenderEngine::renderModel()
         const char *const target = hasShadowMap && material->isSelfShadowEnabled() ? "object_ss" : "object";
         const bool hasMainTexture = materialContext.mainTextureRef > 0, hasSphereMap = materialContext.sphereTextureRef > 0 && material->sphereTextureRenderMode() != IMaterial::kNone;
         if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true)) {
-            technique->setOverridePass(m_overridePass);
-            updateDrawPrimitivesCommand(material, command);
-            updateMaterialParameters(material, materialContext);
             if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
                 disable(kGL_CULL_FACE);
                 m_cullFaceState = false;
@@ -542,10 +539,15 @@ void PMXRenderEngine::renderModel()
                 enable(kGL_CULL_FACE);
                 m_cullFaceState = true;
             }
-            annotateMaterial("renderModel", material);
-            pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-            m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-            popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
+            updateDrawPrimitivesCommand(material, command);
+            if (!btFuzzyZero(material->diffuse().w())) {
+                technique->setOverridePass(m_overridePass);
+                updateMaterialParameters(material, materialContext);
+                annotateMaterial("renderModel", material);
+                pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+                m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+                popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
+            }
         }
         command.offset += command.count;
     }
@@ -1052,7 +1054,7 @@ void PMXRenderEngine::updateMaterialParameters(const IMaterial *material, const 
     m_currentEffectEngineRef->spadd.setValue(renderMode == IMaterial::kAddTexture);
     m_currentEffectEngineRef->spsub.setValue(renderMode == IMaterial::kSubTexture);
     m_currentEffectEngineRef->useTexture.setValue(hasMainTexture);
-    m_currentEffectEngineRef->useToon.setValue(context.toonTextureRef > 0);
+    m_currentEffectEngineRef->useToon.setValue(context.toonTextureRef);
     m_currentEffectEngineRef->useSpheremap.setValue(hasSphereMap);
     if (material->index() == 0) {
         m_currentEffectEngineRef->controlObject.update(m_modelRef);
