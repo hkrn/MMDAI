@@ -36,7 +36,7 @@
 */
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/gl/Global.h>
+#include <vpvl2/extensions/gl/Texture2D.h>
 #include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/extensions/XMLProject.h>
 
@@ -243,12 +243,14 @@ public:
         return g_functionResolverInstance;
     }
 
+    gl::BaseSurface::Format defaultTextureFormat() const {
+        return gl::BaseSurface::Format(gl::kGL_BGRA, gl::kGL_RGBA8, gl::kGL_UNSIGNED_INT_8_8_8_8_REV, gl::Texture2D::kGL_TEXTURE_2D);
+    }
     bool uploadTextureQt(const QImage &image, const UnicodeString &key, ModelContext *modelContext, TextureDataBridge &bridge) {
         /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
-        gl::BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
         const Vector3 size(image.width(), image.height(), 1);
         if (!image.isNull()) {
-            ITexture *texturePtr = modelContext->createTexture(image.constBits(), format, size, (bridge.flags & kGenerateTextureMipmap) != 0);
+            ITexture *texturePtr = modelContext->createTexture(image.constBits(), defaultTextureFormat(), size, (bridge.flags & kGenerateTextureMipmap) != 0);
             return modelContext->cacheTexture(key, texturePtr, bridge);
         }
         return true;
@@ -692,13 +694,7 @@ public:
             QVarLengthArray<QVector3D> vertices, colors;
             vertices.reserve(reserve);
             colors.reserve(reserve);
-            if (m_currentModelRef) {
-                disconnect(value, &ModelProxy::targetBonesDidCommitTransform, this, &ModelDrawer::updateModel);
-                foreach (const BoneRefObject *bone, m_currentModelRef->allBoneRefs()) {
-                    disconnect(bone, &BoneRefObject::localTranslationChanged, this, &ModelDrawer::updateModel);
-                    disconnect(bone, &BoneRefObject::localOrientationChanged, this, &ModelDrawer::updateModel);
-                }
-            }
+            removeModelRef(m_currentModelRef);
             connect(value, &ModelProxy::targetBonesDidCommitTransform, this, &ModelDrawer::updateModel);
             foreach (const BoneRefObject *bone, allBones) {
                 const IBone *boneRef = bone->data();
@@ -774,6 +770,18 @@ public:
         m_program->setUniformValue("modelViewProjectionMatrix", m_modelViewProjectionMatrix);
         glDrawArrays(GL_LINES, 0, m_nvertices);
         releaseProgram();
+    }
+    void removeModelRef(const ModelProxy *modelProxyRef) {
+        if (modelProxyRef) {
+            disconnect(modelProxyRef, &ModelProxy::targetBonesDidCommitTransform, this, &ModelDrawer::updateModel);
+            foreach (const BoneRefObject *bone, modelProxyRef->allBoneRefs()) {
+                disconnect(bone, &BoneRefObject::localTranslationChanged, this, &ModelDrawer::updateModel);
+                disconnect(bone, &BoneRefObject::localOrientationChanged, this, &ModelDrawer::updateModel);
+            }
+            if (modelProxyRef == m_currentModelRef) {
+                m_currentModelRef = 0;
+            }
+        }
     }
 
 public slots:
@@ -1780,8 +1788,8 @@ void RenderTarget::enqueueDeletingModel(ModelProxy *model)
     Q_ASSERT(m_applicationContext);
     if (model) {
         VPVL2_VLOG(1, "The model " << model->uuid().toString().toStdString() << " a.k.a " << model->name().toStdString() << " will be released from RenderTarget");
-        if (m_modelDrawer && model == m_modelDrawer->currentModelProxyRef()) {
-            m_modelDrawer->setModelProxyRef(0);
+        if (m_modelDrawer) {
+            m_modelDrawer->removeModelRef(model);
         }
         m_applicationContext->enqueueDeletingModelProxy(model);
     }
