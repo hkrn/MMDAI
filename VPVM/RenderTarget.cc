@@ -73,38 +73,66 @@ namespace {
 
 struct Resolver : IApplicationContext::FunctionResolver {
     bool hasExtension(const char *name) const {
-        QSet<QByteArray> extensionSet;
-        if (extensionSet.isEmpty()) {
-            QString extensions(reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS)));
-            foreach (const QString extension, extensions.split(' ')) {
-                extensionSet.insert(extension.toUtf8());
-            }
+        if (const bool *ptr = supportedExtensionsCache.find(name)) {
+            return *ptr;
         }
-        return extensionSet.contains(name);
+        else if (coreProfile) {
+            GLint nextensions;
+            glGetIntegerv(kGL_NUM_EXTENSIONS, &nextensions);
+            const std::string &needle = std::string("GL_") + name;
+            for (int i = 0; i < nextensions; i++) {
+                if (needle == reinterpret_cast<const char *>(getStringi(GL_EXTENSIONS, i))) {
+                    supportedExtensionsCache.insert(name, true);
+                    return true;
+                }
+            }
+            supportedExtensionsCache.insert(name, false);
+            return false;
+        }
+        else if (const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS))) {
+            bool found = strstr(extensions, name) != NULL;
+            supportedExtensionsCache.insert(name, found);
+            return found;
+        }
+        else {
+            supportedExtensionsCache.insert(name, false);
+            return false;
+        }
     }
     void *resolveSymbol(const char *name) const {
-        if (void *address = reinterpret_cast<void *>(QOpenGLContext::currentContext()->getProcAddress(name))) {
-            return address;
+        if (void *const *ptr = addressesCache.find(name)) {
+            return *ptr;
         }
+        else {
 #ifdef Q_OS_WIN32
-        else if (void *address = reinterpret_cast<void *>(m_library.resolve(name))) {
+            void *address = reinterpret_cast<void *>(m_library.resolve(name));
+#else
+            void *address = reinterpret_cast<void *>(QOpenGLContext::currentContext()->getProcAddress(name));
+#endif
+            addressesCache.insert(name, address);
             return address;
         }
-#else
-        return 0;
-#endif
     }
     int query(QueryType type) const {
         switch (type) {
         case kQueryVersion: {
             return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_VERSION)));
         }
+        case kQueryShaderVersion: {
+            return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
+        }
+        case kQueryCoreProfile: {
+            return coreProfile;
+        }
         default:
             return 0;
         }
     }
+
 #ifdef Q_OS_WIN32
-    Resolver() {
+    Resolver()
+        : coreProfile(false)
+    {
 #ifdef QT_NO_DEBUG
         m_library.setFileName("libGLESv2");
 #else
@@ -113,9 +141,20 @@ struct Resolver : IApplicationContext::FunctionResolver {
         m_library.load();
         Q_ASSERT(m_library.isLoaded());
     }
-    ~Resolver() {}
     mutable QLibrary m_library;
+#else
+    Resolver()
+        : coreProfile(false)
+    {
+    }
 #endif
+    ~Resolver() {}
+    static const GLenum kGL_NUM_EXTENSIONS = 0x821D;
+    typedef const GLubyte * (GLAPIENTRY * PFNGLGETSTRINGIPROC) (gl::GLenum pname, gl::GLuint index);
+    PFNGLGETSTRINGIPROC getStringi;
+    mutable Hash<HashString, bool> supportedExtensionsCache;
+    mutable Hash<HashString, void *> addressesCache;
+    bool coreProfile;
 };
 Q_GLOBAL_STATIC(Resolver, g_functionResolverInstance)
 
@@ -208,8 +247,11 @@ public:
         /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
         gl::BaseSurface::Format format(GL_BGRA, GL_RGBA8, GL_UNSIGNED_INT_8_8_8_8_REV, GL_TEXTURE_2D);
         const Vector3 size(image.width(), image.height(), 1);
-        ITexture *texturePtr = modelContext->createTexture(image.constBits(), format, size, (bridge.flags & kGenerateTextureMipmap) != 0);
-        return modelContext->cacheTexture(key, texturePtr, bridge);
+        if (!image.isNull()) {
+            ITexture *texturePtr = modelContext->createTexture(image.constBits(), format, size, (bridge.flags & kGenerateTextureMipmap) != 0);
+            return modelContext->cacheTexture(key, texturePtr, bridge);
+        }
+        return true;
     }
     QList<ModelProxyPair> uploadEnqueuedModelProxies(ProjectProxy *projectProxy) {
         QList<ModelProxyPair> uploadedModelProxies;
