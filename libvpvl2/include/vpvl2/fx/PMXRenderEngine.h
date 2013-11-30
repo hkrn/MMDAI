@@ -180,7 +180,7 @@ private:
                            bool shared,
                            void *userData);
     void setupOffscreenEffect(IEffect *effectRef, void *userData);
-    void executeOneTechniqueAllPasses(const char *name);
+    void executeOneTechniqueAllPasses(const char *name, Array<IEffect::Pass *> &passes);
     void labelVertexArray(const extensions::gl::VertexBundleLayout *layout, const char *name);
     void labelVertexBuffer(extensions::gl::GLenum key, const char *name);
     void annotateMaterial(const char *name, const IMaterial *material);
