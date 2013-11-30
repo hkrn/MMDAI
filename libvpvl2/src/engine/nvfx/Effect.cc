@@ -155,6 +155,7 @@ struct Effect::NvFXPass : IEffect::Pass {
           techniqueRef(t),
           valueRef(a)
     {
+        internal::zerofill(&info, sizeof(info));
     }
     ~NvFXPass() {
         effectRef = 0;
