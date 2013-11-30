@@ -82,6 +82,20 @@ static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationCo
     }
 }
 
+static void handleErrorCallback(const char *message)
+{
+    VPVL2_LOG(WARNING, message);
+}
+
+static void handleMessageCallback(const char *message)
+{
+    VPVL2_LOG(INFO, message);
+}
+
+static void discardsMessageCallback(const char * /* message */)
+{
+}
+
 struct FunctionResolverProxy : nvFX::FunctionResolver {
     FunctionResolverProxy(const IApplicationContext::FunctionResolver *resolver)
         : m_resolver(resolver)
@@ -110,16 +124,6 @@ namespace vpvl2
 namespace nvfx
 {
 
-static void handleErrorCallback(const char *message)
-{
-    VPVL2_LOG(WARNING, message);
-}
-
-static void handleMessageCallback(const char *message)
-{
-    VPVL2_LOG(INFO, message);
-}
-
 bool EffectContext::initializeGLEW(const IApplicationContext::FunctionResolver *resolver)
 {
     if (!g_initialized) {
@@ -130,10 +134,21 @@ bool EffectContext::initializeGLEW(const IApplicationContext::FunctionResolver *
     return g_initialized;
 }
 
-EffectContext::EffectContext()
+void EffectContext::enableMessageCallback()
 {
     nvFX::setErrorCallback(handleErrorCallback);
     nvFX::setMessageCallback(handleMessageCallback);
+}
+
+void EffectContext::disableMessageCallback()
+{
+    nvFX::setErrorCallback(discardsMessageCallback);
+    nvFX::setMessageCallback(discardsMessageCallback);
+}
+
+EffectContext::EffectContext()
+{
+    enableMessageCallback();
 }
 
 EffectContext::~EffectContext()

@@ -55,6 +55,8 @@ class VPVL2_API EffectContext VPVL2_DECL_FINAL
 {
 public:
     static bool initializeGLEW(const vpvl2::IApplicationContext::FunctionResolver *resolver);
+    static void enableMessageCallback();
+    static void disableMessageCallback();
 
     EffectContext();
     ~EffectContext();
