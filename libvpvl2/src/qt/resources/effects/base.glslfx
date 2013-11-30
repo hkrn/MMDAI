@@ -2,6 +2,7 @@
 
 uniform bool use_texture;
 uniform bool use_spheremap;
+uniform bool use_toon;
 uniform bool spadd;
 uniform bool spsub;
 uniform float VertexCount;
@@ -206,9 +207,11 @@ const vec2 kToonTexCoord = vec2(0.0, 1.0);
 const vec3 kWhiteColor = vec3(1.0);
 
 vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
-    vec4 toonColor = texture(vpvl2_NS_toonSampler, kToonTexCoord);
-    float w = clamp(dot(normal, -vpvl2_NS_lightDirection.xyz) * 16.0 + 0.5, 0.0, 1.0);
-    return vec4(color.rgb * (toonColor.rgb + (kWhiteColor - toonColor.rgb) * vec3(w)), color.a);
+    vec4 toonColor = mix(vec4(1.0), texture(vpvl2_NS_toonSampler, kToonTexCoord), float(use_toon));
+    float w = clamp(dot(normal, -vpvl2_NS_lightDirection) * 16.0 + 0.5, 0.0, 1.0);
+    vec4 newColor = color;
+    newColor.rgb *= toonColor.rgb + (kWhiteColor - toonColor.rgb) * vec3(w);
+    return newColor;
 }
 
 } /* applyToon */
@@ -262,7 +265,7 @@ const vec2 kToonTexCoord = vec2(0.0, 1.0);
 float getShadowFactor(const vec4 position);
 
 vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
-    vec4 toonColor   = texture(vpvl2_NS_toonSampler, kToonTexCoord);
+    vec4 toonColor   = mix(vec4(1.0), texture(vpvl2_NS_toonSampler, kToonTexCoord), float(use_toon));
     vec3 shadowColor = color.rgb * toonColor.rgb;
     return vec4(shadowColor + (color.rgb - shadowColor) * vec3(1.0 - getShadowFactor(shadowPosition)), color.a);
 }
@@ -325,9 +328,10 @@ void transformVertex(inout vec4 origin,
     origin       = performPositionTransform(origin, boneIndices, boneWeights);
     position     = vpvl2_NS_worldViewProjectionMatrix * origin;
     normal       = vec4(performNormalTransform(normal, position, boneIndices, boneWeights).xyz, 0.0);
-    color        = vec4(clamp(ambient + dot(normal.xyz, -vpvl2_NS_lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
-    texcoord.zw  = (-normal.xy * kHalf2 + kHalf2) * vec2(use_spheremap)
-                 + (kOne2 + vec2(dot(vpvl2_NS_lightDirection.xyz, -normal.xyz)) * kHalf2) * vec2(!use_spheremap);
+    vec4 normal2 = vpvl2_NS_worldViewMatrix * normal;
+    color        = vec4(clamp(ambient + dot(normal2.xyz, -vpvl2_NS_lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
+    texcoord.zw  = (-normal2.xy * kHalf2 + kHalf2) * vec2(use_spheremap)
+                 + (kOne2 + vec2(dot(vpvl2_NS_lightDirection, -normal2.xyz)) * kHalf2) * vec2(!use_spheremap);
 }
 
 } /* transformVertex */
