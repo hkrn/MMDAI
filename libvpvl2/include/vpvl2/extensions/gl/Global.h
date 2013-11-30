@@ -94,6 +94,7 @@ static const GLenum kGL_RGB = 0x1907;
 static const GLenum kGL_RGBA = 0x1908;
 static const GLenum kGL_RGB8 = 0x8051;
 static const GLenum kGL_RGBA8 = 0x8058;
+static const GLenum kGL_BGRA = 0x80E1;
 static const GLenum kGL_FLOAT = 0x1406;
 static const GLenum kGL_UNSIGNED_INT_8_8_8_8_REV = 0x8367;
 
