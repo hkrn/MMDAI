@@ -11,9 +11,9 @@ uniform bool use_boneTransformTextureVPVL2;
 
 namespace vpvl2 {
 
-uniform mat4 modelViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Camera"; >;
+uniform mat4 worldViewMatrix           : WORLDVIEW < Object = "Camera"; >;
+uniform mat4 worldViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Camera"; >;
 uniform mat4 lightViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Light"; >;
-uniform mat4 normalMatrix              : WORLD;
 uniform vec3 materialAmbient           : AMBIENT < Object = "Geometry"; >;
 uniform vec4 materialDiffuse           : DIFFUSE < Object = "Geometry"; >;
 uniform vec3 materialEmissive          : EMISSIVE < Object = "Geometry"; >;
@@ -323,8 +323,8 @@ void transformVertex(inout vec4 origin,
     vec3 ambient = clamp(vpvl2_NS_materialAmbient * vpvl2_NS_lightAmbient + vpvl2_NS_materialEmissive, kZero3, kOne3);
     vec4 diffuse = clamp(vpvl2_NS_materialDiffuse * vec4(vpvl2_NS_lightDiffuse, 1.0), kZero4, kOne4);
     origin       = performPositionTransform(origin, boneIndices, boneWeights);
-    position     = vpvl2_NS_modelViewProjectionMatrix * origin;
-    normal       = vec4((vpvl2_NS_normalMatrix * performNormalTransform(normal, position, boneIndices, boneWeights)).xyz, 0);
+    position     = vpvl2_NS_worldViewProjectionMatrix * origin;
+    normal       = vec4(performNormalTransform(normal, position, boneIndices, boneWeights).xyz, 0.0);
     color        = vec4(clamp(ambient + dot(normal.xyz, -vpvl2_NS_lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
     texcoord.zw  = (-normal.xy * kHalf2 + kHalf2) * vec2(use_spheremap)
                  + (kOne2 + vec2(dot(vpvl2_NS_lightDirection.xyz, -normal.xyz)) * kHalf2) * vec2(!use_spheremap);
@@ -350,9 +350,9 @@ void transformVertex(inout vec4 origin,
                      const vec4 boneWeights)
 {
     vec4 preserve = normal;
-    normal        = vec4((vpvl2_NS_normalMatrix * performNormalTransform(normal, position, boneIndices, boneWeights)).xyz, 0);
+    normal        = vec4(performNormalTransform(normal, position, boneIndices, boneWeights).xyz, 0);
     origin        = performEdgeTransform(origin, preserve, boneIndices, boneWeights);
-    position      = vpvl2_NS_modelViewProjectionMatrix * origin;
+    position      = vpvl2_NS_worldViewProjectionMatrix * origin;
 }
 
 } /* transformEdgeVertex */
@@ -374,9 +374,9 @@ void transformVertex(inout vec4 origin,
                      const vec4 boneIndices,
                      const vec4 boneWeights)
 {
-    normal   = vec4((vpvl2_NS_normalMatrix * performNormalTransform(normal, position, boneIndices, boneWeights)).xyz, 0);
+    normal   = vec4(performNormalTransform(normal, position, boneIndices, boneWeights).xyz, 0);
     origin   = performPositionTransform(origin, boneIndices, boneWeights);
-    position = vpvl2_NS_modelViewProjectionMatrix * origin;
+    position = vpvl2_NS_worldViewProjectionMatrix * origin;
 }
 
 } /* transformShadowVertex */
@@ -398,7 +398,7 @@ void transformVertex(inout vec4 origin,
                      const vec4 boneIndices,
                      const vec4 boneWeights)
 {
-    normal   = vec4((vpvl2_NS_normalMatrix * performNormalTransform(normal, position, boneIndices, boneWeights)).xyz, 0);
+    normal   = vec4(performNormalTransform(normal, position, boneIndices, boneWeights).xyz, 0);
     origin   = performPositionTransform(position, boneIndices, boneWeights);
     position = vpvl2_NS_lightViewProjectionMatrix * origin;
 }
@@ -570,7 +570,7 @@ vec4 outputPixelColor(const vec4 origin,
                       const vec4 uva3,
                       const vec4 uva4)
 {
-    return vec4(vpvl2_NS_materialAmbient, vpvl2_NS_materialDiffuse.a);
+    return vec4(vec3(0.0), vpvl2_NS_materialDiffuse.a);
 }
 
 } /* outputShadowColor */
