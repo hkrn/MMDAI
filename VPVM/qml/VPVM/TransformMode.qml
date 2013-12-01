@@ -35,7 +35,7 @@
 
 */
 
-import QtQuick 2.1
+import QtQuick 2.2
 import com.github.mmdai.VPVM 1.0
 
 Text {

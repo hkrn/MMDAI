@@ -35,7 +35,7 @@
 
 */
 
-import QtQuick 2.1
+import QtQuick 2.2
 
 Column {
     id: infoPanel
