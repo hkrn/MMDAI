@@ -793,7 +793,14 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IString
 #endif
             if (mapFile(defaultEffectPath, &buffer)) {
                 uint8 *address = buffer.address;
+#if defined(VPVL2_LINK_NVFX)
+                if (sharedFunctionResolverInstance()->hasExtension("ARB_separate_shader_objects")) {
+                    bytes.append("#extension GL_ARB_separate_shader_objects : enable\n");
+                }
+                bytes.append(address, address + buffer.size);
+#else
                 bytes.assign(address, address + buffer.size);
+#endif
             }
         }
         return toIStringFromUtf8(bytes);
