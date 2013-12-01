@@ -99,7 +99,8 @@ public:
     MOCK_METHOD2(originWillChange, void(const Vector3 &value, IVertex *vertex));
     MOCK_METHOD2(normalWillChange, void(const Vector3 &value, IVertex *vertex));
     MOCK_METHOD2(textureCoordWillChange, void(const Vector3 &value, IVertex *vertex));
-    MOCK_METHOD3(UVWillChange, void(int index, const Vector4 &value, IVertex *vertex));
+    MOCK_METHOD3(originUVWillChange, void(int index, const Vector4 &value, IVertex *vertex));
+    MOCK_METHOD3(morphUVWillChange, void(int index, const Vector4 &value, IVertex *vertex));
     MOCK_METHOD2(typeWillChange, void(IVertex::Type value, IVertex *vertex));
     MOCK_METHOD2(edgeSizeWillChange, void(const IVertex::EdgeSizePrecision &value, IVertex *vertex));
     MOCK_METHOD3(weightWillChange, void(int index, const IVertex::WeightPrecision &weight, IVertex *vertex));

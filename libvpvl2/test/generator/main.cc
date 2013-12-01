@@ -74,10 +74,10 @@ void CreateModel(IModel *model, const char *filename)
     {
         vertex = model->createVertex();
         AssignVertex(vertex, IVertex::kBdef1);
-        vertex->setUV(0, Vector4(1.0, 1.1, 1.2, 1.3));
-        vertex->setUV(1, Vector4(1.4, 1.5, 1.6, 1.7));
-        vertex->setUV(2, Vector4(1.8, 1.9, 2.0, 2.1));
-        vertex->setUV(3, Vector4(2.2, 2.3, 2.4, 2.5));
+        vertex->setOriginUV(0, Vector4(1.0, 1.1, 1.2, 1.3));
+        vertex->setOriginUV(1, Vector4(1.4, 1.5, 1.6, 1.7));
+        vertex->setOriginUV(2, Vector4(1.8, 1.9, 2.0, 2.1));
+        vertex->setOriginUV(3, Vector4(2.2, 2.3, 2.4, 2.5));
         vertex->setWeight(0, 1.0);
         model->addVertex(vertex);
         IVertex *bdef2 = model->createVertex();

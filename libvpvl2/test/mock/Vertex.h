@@ -22,6 +22,10 @@ class MockIVertex : public IVertex {
       Vector3());
   MOCK_CONST_METHOD1(uv,
       Vector4(int index));
+  MOCK_CONST_METHOD1(originUV,
+      Vector4(int index));
+  MOCK_CONST_METHOD1(morphUV,
+      Vector4(int index));
   MOCK_CONST_METHOD0(delta,
       Vector3());
   MOCK_CONST_METHOD0(type,
@@ -42,7 +46,9 @@ class MockIVertex : public IVertex {
       void(const Vector3 &value));
   MOCK_METHOD1(setTextureCoord,
       void(const Vector3 &value));
-  MOCK_METHOD2(setUV,
+  MOCK_METHOD2(setOriginUV,
+      void(int index, const Vector4 &value));
+  MOCK_METHOD2(setMorphUV,
       void(int index, const Vector4 &value));
   MOCK_METHOD1(setType,
       void(Type value));

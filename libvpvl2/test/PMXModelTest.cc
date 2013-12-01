@@ -36,7 +36,7 @@ static void SetVertex(Vertex &vertex, Vertex::Type type, const Array<Bone *> &bo
     vertex.setOrigin(Vector3(0.01, 0.02, 0.03));
     vertex.setNormal(Vector3(0.11, 0.12, 0.13));
     vertex.setTextureCoord(Vector3(0.21, 0.22, 0.0));
-    vertex.setUV(0, Vector4(0.31, 0.32, 0.33, 0.34));
+    vertex.setOriginUV(0, Vector4(0.31, 0.32, 0.33, 0.34));
     vertex.setType(type);
     vertex.setEdgeSize(0.1);
     const int nbones = bones.count();
@@ -390,7 +390,8 @@ TEST(PMXPropertyEventListener, HandleVertexPropertyEvents)
     EXPECT_CALL(listener, originWillChange(origin, &vertex)).WillOnce(Return());
     EXPECT_CALL(listener, textureCoordWillChange(texcoord, &vertex)).WillOnce(Return());
     EXPECT_CALL(listener, typeWillChange(type, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, UVWillChange(0, uv, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, originUVWillChange(0, uv, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, morphUVWillChange(0, uv, &vertex)).WillOnce(Return());
     EXPECT_CALL(listener, weightWillChange(0, weightSize, &vertex)).WillOnce(Return());
     vertex.addEventListenerRef(&listener);
     vertex.setBoneRef(0, &bone);
@@ -407,8 +408,10 @@ TEST(PMXPropertyEventListener, HandleVertexPropertyEvents)
     vertex.setTextureCoord(texcoord);
     vertex.setType(type);
     vertex.setType(type);
-    vertex.setUV(0, uv);
-    vertex.setUV(0, uv);
+    vertex.setOriginUV(0, uv);
+    vertex.setOriginUV(0, uv);
+    vertex.setMorphUV(0, uv);
+    vertex.setMorphUV(0, uv);
     vertex.setWeight(0, weightSize);
     vertex.setWeight(0, weightSize);
 }
@@ -1097,8 +1100,8 @@ TEST(PMXVertexTest, Boundary)
 {
     Vertex vertex(0);
     QScopedPointer<Bone> bone(new Bone(0));
-    vertex.setUV(-1, Vector4(1, 1, 1, 1));
-    vertex.setUV( 4, Vector4(1, 1, 1, 1));
+    vertex.setOriginUV(-1, Vector4(1, 1, 1, 1));
+    vertex.setOriginUV(4, Vector4(1, 1, 1, 1));
     vertex.setWeight(-1, 0.1);
     vertex.setWeight(Vertex::kMaxBones, 0.1);
     vertex.setBoneRef(-1, bone.data());

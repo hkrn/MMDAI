@@ -472,8 +472,8 @@ TEST(PMDPropertyEventListener, HandleVertexPropertyEvents)
     vertex.setTextureCoord(texcoord);
     vertex.setType(type);
     vertex.setType(type);
-    vertex.setUV(0, uv);
-    vertex.setUV(0, uv);
+    vertex.setOriginUV(0, uv);
+    vertex.setOriginUV(0, uv);
     vertex.setWeight(0, weightSize);
     vertex.setWeight(0, weightSize);
 }
