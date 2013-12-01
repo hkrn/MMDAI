@@ -75,7 +75,7 @@ const int kBdef4 = 2;
 const int kSdef  = 3;
 const int kQdef  = 4;
 
-mat4 boneTransformMatrix(const float index) {
+mat4 vpvl2FXGetBoneTransformMatrix(const float index) {
     float newIndex = index / float(BoneCountVPVL2);
     mat4 matrix = kIdenticalMatrix;
     vec4 p = texture(vpvl2_NS_boneTransformSampler, vec2(0.0,  newIndex));
@@ -102,53 +102,53 @@ mat4 boneTransformMatrix(const float index) {
     return matrix;
 }
 
-vec4 performSkinning(const vec3 origin3, const vec4 boneIndices, const vec4 boneWeights, const float base, const int type) {
+vec4 vpvl2FXPerformSkinning(const vec3 origin3, const vec4 boneIndices, const vec4 boneWeights, const float base, const int type) {
     vec4 origin = vec4(origin3, base);
     bool bdef4  = any(bvec2(type == kBdef4, type == kQdef));
     bool bdef2  = any(bvec2(type == kBdef2, type == kSdef));
-    if (bdef4) {
-        mat4 matrix1 = boneTransformMatrix(boneIndices.x);
-        mat4 matrix2 = boneTransformMatrix(boneIndices.y);
-        mat4 matrix3 = boneTransformMatrix(boneIndices.z);
-        mat4 matrix4 = boneTransformMatrix(boneIndices.w);
+    if (type == kBdef1) {
+        mat4 matrix = vpvl2FXGetBoneTransformMatrix(boneIndices.x);
+        return matrix * origin;
+    }
+    else if (bdef2) {
+        mat4 matrix1 = vpvl2FXGetBoneTransformMatrix(boneIndices.x);
+        mat4 matrix2 = vpvl2FXGetBoneTransformMatrix(boneIndices.y);
+        vec4 p1 = matrix2 * origin;
+        vec4 p2 = matrix1 * origin;
+        return mix(p1, p2, boneWeights.x);
+    }
+    else if (bdef4) {
+        mat4 matrix1 = vpvl2FXGetBoneTransformMatrix(boneIndices.x);
+        mat4 matrix2 = vpvl2FXGetBoneTransformMatrix(boneIndices.y);
+        mat4 matrix3 = vpvl2FXGetBoneTransformMatrix(boneIndices.z);
+        mat4 matrix4 = vpvl2FXGetBoneTransformMatrix(boneIndices.w);
         return boneWeights.xxxx * (matrix1 * origin)
              + boneWeights.yyyy * (matrix2 * origin)
              + boneWeights.zzzz * (matrix3 * origin)
              + boneWeights.wwww * (matrix4 * origin);
     }
-    else if (bdef2) {
-        mat4 matrix1 = boneTransformMatrix(boneIndices.x);
-        mat4 matrix2 = boneTransformMatrix(boneIndices.y);
-        vec4 p1 = matrix2 * origin;
-        vec4 p2 = matrix1 * origin;
-        return mix(p1, p2, boneWeights.x);
-    }
-    else if (type == kBdef1) {
-        mat4 matrix = boneTransformMatrix(boneIndices.x);
-        return matrix * origin;
-    }
     return origin;
 }
 
-vec4 performPositionTransform(const vec4 origin, const vec4 boneIndices, const vec4 boneWeights) {
+vec4 vpvl2FXPerformPositionTransform(const vec4 origin, const vec4 boneIndices, const vec4 boneWeights) {
     if (use_boneTransformTextureVPVL2) {
-        return performSkinning(origin.xyz, boneIndices, boneWeights, 1.0, int(origin.w));
+        return vpvl2FXPerformSkinning(origin.xyz, boneIndices, boneWeights, 1.0, int(origin.w));
     }
     return vec4(origin.xyz, 1.0);
 }
 
-vec4 performNormalTransform(const vec4 normal, const vec4 origin, const vec4 boneIndices, const vec4 boneWeights) {
+vec4 vpvl2FXPerformNormalTransform(const vec4 normal, const vec4 origin, const vec4 boneIndices, const vec4 boneWeights) {
     if (use_boneTransformTextureVPVL2) {
-        return performSkinning(normal.xyz, boneIndices, boneWeights, 0.0, int(origin.w));
+        return vpvl2FXPerformSkinning(normal.xyz, boneIndices, boneWeights, 0.0, int(origin.w));
     }
     return vec4(normal.xyz, 0.0);
 }
 
-vec4 performEdgeTransform(const vec4 origin, const vec4 normal, const vec4 boneIndices, const vec4 boneWeights) {
+vec4 vpvl2FXPerformEdgeTransform(const vec4 origin, const vec4 normal, const vec4 boneIndices, const vec4 boneWeights) {
     if (use_boneTransformTextureVPVL2) {
         int type         = int(origin.w);
-        vec4 newPosition = performSkinning(origin.xyz, boneIndices, boneWeights, 1.0, type);
-        vec4 newNormal   = performSkinning(normal.xyz,   boneIndices, boneWeights, 0.0, type);
+        vec4 newPosition = vpvl2FXPerformSkinning(origin.xyz, boneIndices, boneWeights, 1.0, type);
+        vec4 newNormal   = vpvl2FXPerformSkinning(normal.xyz, boneIndices, boneWeights, 0.0, type);
         newPosition.xyz += newNormal.xyz * normal.www * vec3(vpvl2_NS_edgeWidth * vpvl2_NS_edgeScaleFactor);
         return newPosition;
     }
@@ -165,7 +165,7 @@ GLSLShader global applyTexture {
 #endif
 #endif
 
-vec4 applyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1) {
+vec4 vpvl2FXApplyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1) {
     vec4 newColor = color;
     if (use_texture) {
         newColor *= texture(vpvl2_NS_mainTextureSampler, texcoord.xy);
@@ -188,7 +188,7 @@ vec4 applyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1) {
 
 GLSLShader global noApplyTexture {
 
-vec4 applyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1) {
+vec4 vpvl2FXApplyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1) {
      return color;
 }
 
@@ -205,7 +205,7 @@ GLSLShader global applyToon {
 const vec2 kToonTexCoord = vec2(0.0, 1.0);
 const vec3 kWhiteColor = vec3(1.0);
 
-vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
+vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
     vec4 toonColor = mix(vec4(1.0), texture(vpvl2_NS_toonTextureSampler, kToonTexCoord), float(use_toon));
     float w = clamp(dot(normal, -vpvl2_NS_lightDirection) * 16.0 + 0.5, 0.0, 1.0);
     vec4 newColor = color;
@@ -217,7 +217,7 @@ vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
 
 GLSLShader global noApplyToon {
 
-vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
+vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
      return color;
 }
 
@@ -233,7 +233,7 @@ GLSLShader global getShadowFactor {
 
 const float kEpsilonBias = 0.00001;
 
-float getShadowFactor(const vec4 position) {
+float vpvl2FXGetShadowFactor(const vec4 position) {
     vec4 shadowPosition = position / position.w;
     vec2 shadowCoord = vec2((shadowPosition.xy * 0.5) + 0.5);
 #if 0 /* VSM */
@@ -261,23 +261,23 @@ GLSLShader global applyToonSelfShadow {
 
 const vec2 kToonTexCoord = vec2(0.0, 1.0);
 
-float getShadowFactor(const vec4 position);
+float vpvl2FXGetShadowFactor(const vec4 position);
 
-vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
+vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
     vec4 toonColor   = mix(vec4(1.0), texture(vpvl2_NS_toonTextureSampler, kToonTexCoord), float(use_toon));
     vec3 shadowColor = color.rgb * toonColor.rgb;
-    return vec4(shadowColor + (color.rgb - shadowColor) * vec3(1.0 - getShadowFactor(shadowPosition)), color.a);
+    return vec4(shadowColor + (color.rgb - shadowColor) * vec3(1.0 - vpvl2FXGetShadowFactor(shadowPosition)), color.a);
 }
 
 } /* applyToonSelfShadow */
 
 GLSLShader global applySelfShadow {
 
-float getShadowFactor(const vec4 position);
+float vpvl2FXGetShadowFactor(const vec4 position);
 
-vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
+vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
     vec3 shadowColor = color.rgb * vpvl2_NS_materialAmbient;
-    return vec4(shadowColor + (color.rgb - shadowColor) * vec3(1.0 - getShadowFactor(shadowPosition)), color.a);
+    return vec4(shadowColor + (color.rgb - shadowColor) * vec3(1.0 - vpvl2FXGetShadowFactor(shadowPosition)), color.a);
 }
 
 } /* applySelfShadow */
@@ -287,7 +287,7 @@ GLSLShader global applyStandardLight {
 const vec3 kZero3 = vec3(0.0);
 const vec3 kOne3  = vec3(1.0);
 
-vec4 applyStandardLight(const vec4 color, const vec4 origin, const vec3 normal) {
+vec4 vpvl2FXApplyStandardLight(const vec4 color, const vec4 origin, const vec3 normal) {
     vec3 halfVector = normalize((vpvl2_NS_cameraPosition - origin.xyz) - vpvl2_NS_lightDirection);
     vec3 specular = clamp(vpvl2_NS_materialSpecular * vpvl2_NS_lightSpecular, kZero3, kOne3);
     float hdotn = max(dot(halfVector, normal), 0.0);
@@ -307,26 +307,26 @@ const vec3 kOne3  = vec3(1.0);
 const vec4 kZero4 = vec4(0.0);
 const vec4 kOne4  = vec4(1.0);
 
-vec4 performPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
-vec4 performNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
+vec4 vpvl2FXPerformPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
+vec4 vpvl2FXPerformNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 
-void transformVertex(inout vec4 origin,
-                     inout vec4 position,
-                     inout vec4 normal,
-                     inout vec4 texcoord,
-                     inout vec4 color,
-                     inout vec4 uva1,
-                     inout vec4 uva2,
-                     inout vec4 uva3,
-                     inout vec4 uva4,
-                     const vec4 boneIndices,
-                     const vec4 boneWeights)
+void vpvl2FXTransformVertex(inout vec4 origin,
+                            inout vec4 position,
+                            inout vec4 normal,
+                            inout vec4 texcoord,
+                            inout vec4 color,
+                            inout vec4 uva1,
+                            inout vec4 uva2,
+                            inout vec4 uva3,
+                            inout vec4 uva4,
+                            const vec4 boneIndices,
+                            const vec4 boneWeights)
 {
     vec3 ambient = clamp(vpvl2_NS_materialAmbient * vpvl2_NS_lightAmbient + vpvl2_NS_materialEmissive, kZero3, kOne3);
     vec4 diffuse = clamp(vpvl2_NS_materialDiffuse * vec4(vpvl2_NS_lightDiffuse, 1.0), kZero4, kOne4);
-    origin       = performPositionTransform(origin, boneIndices, boneWeights);
+    origin       = vpvl2FXPerformPositionTransform(origin, boneIndices, boneWeights);
     position     = vpvl2_NS_worldViewProjectionMatrix * origin;
-    normal       = performNormalTransform(normal, position, boneIndices, boneWeights);
+    normal       = vpvl2FXPerformNormalTransform(normal, position, boneIndices, boneWeights);
     vec4 normal2 = vpvl2_NS_worldViewMatrix * normal;
     color        = vec4(clamp(ambient + dot(normal2.xyz, -vpvl2_NS_lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
     texcoord.zw  = (-normal2.xy * kHalf2 + kHalf2) * vec2(use_spheremap)
@@ -335,97 +335,96 @@ void transformVertex(inout vec4 origin,
 
 } /* transformVertex */
 
-GLSLShader transformEdgeVertex {
+GLSLShader transformVertexEdge {
 
-vec4 performEdgeTransform(const vec4 origin, const vec4 normal, const vec4 boneIndices, const vec4 boneWeights);
-vec4 performNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
+vec4 vpvl2FXPerformEdgeTransform(const vec4 origin, const vec4 normal, const vec4 boneIndices, const vec4 boneWeights);
+vec4 vpvl2FXPerformNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 
-void transformVertex(inout vec4 origin,
-                     inout vec4 position,
-                     inout vec4 normal,
-                     inout vec4 texcoord,
-                     inout vec4 color,
-                     inout vec4 uva1,
-                     inout vec4 uva2,
-                     inout vec4 uva3,
-                     inout vec4 uva4,
-                     const vec4 boneIndices,
-                     const vec4 boneWeights)
+void vpvl2FXTransformVertex(inout vec4 origin,
+                            inout vec4 position,
+                            inout vec4 normal,
+                            inout vec4 texcoord,
+                            inout vec4 color,
+                            inout vec4 uva1,
+                            inout vec4 uva2,
+                            inout vec4 uva3,
+                            inout vec4 uva4,
+                            const vec4 boneIndices,
+                            const vec4 boneWeights)
 {
-    vec4 preserve = normal;
-    normal        = vec4(performNormalTransform(normal, position, boneIndices, boneWeights).xyz, 0);
-    origin        = performEdgeTransform(origin, preserve, boneIndices, boneWeights);
-    position      = vpvl2_NS_worldViewProjectionMatrix * origin;
-}
-
-} /* transformEdgeVertex */
-
-GLSLShader transformShadowVertex {
-
-vec4 performPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
-vec4 performNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
-
-void transformVertex(inout vec4 origin,
-                     inout vec4 position,
-                     inout vec4 normal,
-                     inout vec4 texcoord,
-                     inout vec4 color,
-                     inout vec4 uva1,
-                     inout vec4 uva2,
-                     inout vec4 uva3,
-                     inout vec4 uva4,
-                     const vec4 boneIndices,
-                     const vec4 boneWeights)
-{
-    normal   = vec4(performNormalTransform(normal, position, boneIndices, boneWeights).xyz, 0);
-    origin   = performPositionTransform(origin, boneIndices, boneWeights);
+    origin   = vpvl2FXPerformEdgeTransform(origin, normal, boneIndices, boneWeights);
+    normal   = vpvl2FXPerformNormalTransform(normal, position, boneIndices, boneWeights);
     position = vpvl2_NS_worldViewProjectionMatrix * origin;
 }
 
-} /* transformShadowVertex */
+} /* transformVertexEdge */
 
-GLSLShader transformZplotVertex {
+GLSLShader transformVertexShadow {
 
-vec4 performPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
-vec4 performNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
+vec4 vpvl2FXPerformPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
+vec4 vpvl2FXPerformNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 
-void transformVertex(inout vec4 origin,
-                     inout vec4 position,
-                     inout vec4 normal,
-                     inout vec4 texcoord,
-                     inout vec4 color,
-                     inout vec4 uva1,
-                     inout vec4 uva2,
-                     inout vec4 uva3,
-                     inout vec4 uva4,
-                     const vec4 boneIndices,
-                     const vec4 boneWeights)
+void vpvl2FXTransformVertex(inout vec4 origin,
+                            inout vec4 position,
+                            inout vec4 normal,
+                            inout vec4 texcoord,
+                            inout vec4 color,
+                            inout vec4 uva1,
+                            inout vec4 uva2,
+                            inout vec4 uva3,
+                            inout vec4 uva4,
+                            const vec4 boneIndices,
+                            const vec4 boneWeights)
 {
-    normal   = vec4(performNormalTransform(normal, position, boneIndices, boneWeights).xyz, 0);
-    origin   = performPositionTransform(position, boneIndices, boneWeights);
+    normal   = vpvl2FXPerformNormalTransform(normal, position, boneIndices, boneWeights);
+    origin   = vpvl2FXPerformPositionTransform(origin, boneIndices, boneWeights);
+    position = vpvl2_NS_worldViewProjectionMatrix * origin;
+}
+
+} /* transformVertexShadow */
+
+GLSLShader transformVertexZplot {
+
+vec4 vpvl2FXPerformPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
+vec4 vpvl2FXPerformNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
+
+void vpvl2FXTransformVertex(inout vec4 origin,
+                            inout vec4 position,
+                            inout vec4 normal,
+                            inout vec4 texcoord,
+                            inout vec4 color,
+                            inout vec4 uva1,
+                            inout vec4 uva2,
+                            inout vec4 uva3,
+                            inout vec4 uva4,
+                            const vec4 boneIndices,
+                            const vec4 boneWeights)
+{
+    normal   = vpvl2FXPerformNormalTransform(normal, position, boneIndices, boneWeights);
+    origin   = vpvl2FXPerformPositionTransform(position, boneIndices, boneWeights);
     position = vpvl2_NS_lightViewProjectionMatrix * origin;
 }
 
-} /* transformZplotVertex */
+} /* transformVertexZplot */
 
 GLSLShader global discardVertex {
 
-void transformVertex(inout vec4 origin,
-                     inout vec4 position,
-                     inout vec4 normal,
-                     inout vec4 texcoord,
-                     inout vec4 color,
-                     inout vec4 uva1,
-                     inout vec4 uva2,
-                     inout vec4 uva3,
-                     inout vec4 uva4,
-                     const vec4 boneIndices,
-                     const vec4 boneWeights)
+void vpvl2FXTransformVertex(inout vec4 origin,
+                            inout vec4 position,
+                            inout vec4 normal,
+                            inout vec4 texcoord,
+                            inout vec4 color,
+                            inout vec4 uva1,
+                            inout vec4 uva2,
+                            inout vec4 uva3,
+                            inout vec4 uva4,
+                            const vec4 boneIndices,
+                            const vec4 boneWeights)
 {
     origin = position = normal = vec4(0.0);
 }
 
-} /* transformZplotVertex */
+} /* transformVertexZplot */
 
 GLSLShader mainObjectVS {
 
@@ -457,17 +456,17 @@ out vec4 vpvl2_outUVA3;
 out vec4 vpvl2_outUVA4;
 out vec4 vpvl2_outColor;
 
-void transformVertex(inout vec4 origin,
-                     inout vec4 position,
-                     inout vec4 normal,
-                     inout vec4 texcoord,
-                     inout vec4 color,
-                     inout vec4 uva1,
-                     inout vec4 uva2,
-                     inout vec4 uva3,
-                     inout vec4 uva4,
-                     const vec4 boneIndices,
-                     const vec4 boneWeights);
+void vpvl2FXTransformVertex(inout vec4 origin,
+                            inout vec4 position,
+                            inout vec4 normal,
+                            inout vec4 texcoord,
+                            inout vec4 color,
+                            inout vec4 uva1,
+                            inout vec4 uva2,
+                            inout vec4 uva3,
+                            inout vec4 uva4,
+                            const vec4 boneIndices,
+                            const vec4 boneWeights);
 
 const vec4 kBlack = vec4(vec3(0.0), 1.0);
 
@@ -481,7 +480,7 @@ void main() {
     vec4 uva2     = vpvl2_inUVA2;
     vec4 uva3     = vpvl2_inUVA3;
     vec4 uva4     = vpvl2_inUVA4;
-    transformVertex(origin, position, normal, texcoord, color, uva1, uva2, uva3, uva4, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
+    vpvl2FXTransformVertex(origin, position, normal, texcoord, color, uva1, uva2, uva3, uva4, vpvl2_inBoneIndices, vpvl2_inBoneWeights);
     vpvl2_outOrigin         = origin;
     vpvl2_outPosition       = position;
     vpvl2_outShadowPosition = vpvl2_NS_lightViewProjectionMatrix * origin;
@@ -497,109 +496,109 @@ void main() {
 
 } /* GLSLShader mainObjectVS */
 
-GLSLShader global noPixelColor {
+GLSLShader global passThroughFragment {
 
 const vec4 kZero4 = vec4(0.0);
 
-vec4 outputPixelColor(const vec4 origin,
-                      const vec4 position,
-                      const vec3 normal,
-                      const vec4 texcoord,
-                      const vec4 color,
-                      const vec4 shadowPosition,
-                      const vec4 uva1,
-                      const vec4 uva2,
-                      const vec4 uva3,
-                      const vec4 uva4)
+vec4 vpvl2FXTransformFragment(const vec4 origin,
+                              const vec4 position,
+                              const vec3 normal,
+                              const vec4 texcoord,
+                              const vec4 color,
+                              const vec4 shadowPosition,
+                              const vec4 uva1,
+                              const vec4 uva2,
+                              const vec4 uva3,
+                              const vec4 uva4)
 {                      
     return kZero4;
 }
 
-} /* noPixelColor */
+} /* passThroughFragment */
 
-GLSLShader global outputPixelColor {
+GLSLShader global transformFragment {
 
-vec4 applyStandardLight(const vec4 color, const vec4 origin, const vec3 normal);
-vec4 applyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1);
-vec4 applyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal);
+vec4 vpvl2FXApplyStandardLight(const vec4 color, const vec4 origin, const vec3 normal);
+vec4 vpvl2FXApplyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1);
+vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal);
 
-vec4 outputPixelColor(const vec4 origin,
-                      const vec4 position,
-                      const vec3 normal,
-                      const vec4 texcoord,
-                      const vec4 color,
-                      const vec4 shadowPosition,
-                      const vec4 uva1,
-                      const vec4 uva2,
-                      const vec4 uva3,
-                      const vec4 uva4)
+vec4 vpvl2FXTransformFragment(const vec4 origin,
+                              const vec4 position,
+                              const vec3 normal,
+                              const vec4 texcoord,
+                              const vec4 color,
+                              const vec4 shadowPosition,
+                              const vec4 uva1,
+                              const vec4 uva2,
+                              const vec4 uva3,
+                              const vec4 uva4)
 {
-    vec4 newColor = applyStandardLight(applyToon(applyTexture(color, texcoord, uva1), shadowPosition, normal), origin, normal);
+    vec4 newColor = vpvl2FXApplyStandardLight(vpvl2FXApplyToon(vpvl2FXApplyTexture(color, texcoord, uva1), shadowPosition, normal), origin, normal);
     // newColor.a *= opacity;
     return newColor;
 }
 
-} /* outputPixelColor */
+} /* transformFragment */
 
 
-GLSLShader global outputEdgeColor {
+GLSLShader global transformFragmentEdge {
 
-vec4 outputPixelColor(const vec4 origin,
-                      const vec4 position,
-                      const vec3 normal,
-                      const vec4 texcoord,
-                      const vec4 color,
-                      const vec4 shadowPosition,
-                      const vec4 uva1,
-                      const vec4 uva2,
-                      const vec4 uva3,
-                      const vec4 uva4)
+vec4 vpvl2FXTransformFragment(const vec4 origin,
+                              const vec4 position,
+                              const vec3 normal,
+                              const vec4 texcoord,
+                              const vec4 color,
+                              const vec4 shadowPosition,
+                              const vec4 uva1,
+                              const vec4 uva2,
+                              const vec4 uva3,
+                              const vec4 uva4)
 {
     return vpvl2_NS_edgeColor;
 }
 
-} /* outputEdgeColor */
+} /* transformFragmentEdge */
 
-GLSLShader global outputShadowColor {
+GLSLShader global transformFragmentShadow {
 
-vec4 outputPixelColor(const vec4 origin,
-                      const vec4 position,
-                      const vec3 normal,
-                      const vec4 texcoord,
-                      const vec4 color,
-                      const vec4 shadowPosition,
-                      const vec4 uva1,
-                      const vec4 uva2,
-                      const vec4 uva3,
-                      const vec4 uva4)
+vec4 vpvl2FXTransformFragment(const vec4 origin,
+                              const vec4 position,
+                              const vec3 normal,
+                              const vec4 texcoord,
+                              const vec4 color,
+                              const vec4 shadowPosition,
+                              const vec4 uva1,
+                              const vec4 uva2,
+                              const vec4 uva3,
+                              const vec4 uva4)
 {
     return vec4(vec3(0.0), vpvl2_NS_materialDiffuse.a);
 }
 
-} /* outputShadowColor */
+} /* transformFragmentShadow */
 
-GLSLShader global outputZplot {
+GLSLShader global transformFragmentZplot {
 
 #if __VERSION__ < 130
 #define in varying
 #endif
 
-vec4 outputPixelColor(const vec4 origin,
-                      const vec4 position,
-                      const vec3 normal,
-                      const vec4 texcoord,
-                      const vec4 color,
-                      const vec4 shadowPosition,
-                      const vec4 uva1,
-                      const vec4 uva2,
-                      const vec4 uva3,
-                      const vec4 uva4)
+vec4 vpvl2FXTransformFragment(const vec4 origin,
+                              const vec4 position,
+                              const vec3 normal,
+                              const vec4 texcoord,
+                              const vec4 color,
+                              const vec4 shadowPosition,
+                              const vec4 uva1,
+                              const vec4 uva2,
+                              const vec4 uva3,
+                              const vec4 uva4)
 {
     float depth = position.z / position.w;
     return vec4(depth, depth * depth, 0, 1);
 }
 
-} /* outputZplot */
+} /* transformFragmentZplot */
 
 GLSLShader mainObjectPS {
 
@@ -620,28 +619,28 @@ in vec4 vpvl2_outUVA3;
 in vec4 vpvl2_outUVA4;
 in vec3 vpvl2_outNormal;
 
-vec4 outputPixelColor(const vec4 origin,
-                      const vec4 position,
-                      const vec3 normal,
-                      const vec4 texcoord,
-                      const vec4 color,
-                      const vec4 shadowPosition,
-                      const vec4 uva1,
-                      const vec4 uva2,
-                      const vec4 uva3,
-                      const vec4 uva4);
+vec4 vpvl2FXTransformFragment(const vec4 origin,
+                              const vec4 position,
+                              const vec3 normal,
+                              const vec4 texcoord,
+                              const vec4 color,
+                              const vec4 shadowPosition,
+                              const vec4 uva1,
+                              const vec4 uva2,
+                              const vec4 uva3,
+                              const vec4 uva4);
 
 void main() {
-    vpvl2_outPixelColor = outputPixelColor(vpvl2_outOrigin,
-                                           vpvl2_outPosition,
-                                           normalize(vpvl2_outNormal),
-                                           vpvl2_outTexCoord,
-                                           vpvl2_outColor,
-                                           vpvl2_outShadowPosition,
-                                           vpvl2_outUVA1,
-                                           vpvl2_outUVA2,
-                                           vpvl2_outUVA3,
-                                           vpvl2_outUVA4);
+    vpvl2_outPixelColor = vpvl2FXTransformFragment(vpvl2_outOrigin,
+                                                   vpvl2_outPosition,
+                                                   normalize(vpvl2_outNormal),
+                                                   vpvl2_outTexCoord,
+                                                   vpvl2_outColor,
+                                                   vpvl2_outShadowPosition,
+                                                   vpvl2_outUVA1,
+                                                   vpvl2_outUVA2,
+                                                   vpvl2_outUVA3,
+                                                   vpvl2_outUVA4);
 }
 
 } /* GLSLShader mainObjectPS */
@@ -680,11 +679,11 @@ GLSLShader global drawQuadPS {
 layout(location=0) out vec4 vpvl2_outPixelColor;
 #endif
 
-uniform sampler2D vpvl2_textureSampler;
+uniform sampler2D vpvl2_drawQuadTextureSampler;
 in vec3 vpvl2_drawQuadTexCoord;
 
 void main() {
-    vpvl2_outPixelColor = texture(vpvl2_textureSampler, vpvl2_drawQuadTexCoord.xy);
+    vpvl2_outPixelColor = texture(vpvl2_drawQuadTextureSampler, vpvl2_drawQuadTexCoord.xy);
 }
 
 } /* drawQuadPS */
@@ -712,7 +711,7 @@ technique vpvl2_techniques_Object1 < MMDPass = "object"; UseTexture = 1; UseSphe
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -735,7 +734,7 @@ technique vpvl2_techniques_Object2 < MMDPass = "object"; UseTexture = 1; UseSphe
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -758,7 +757,7 @@ technique vpvl2_techniques_Object3 < MMDPass = "object"; UseTexture = 0; UseSphe
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -779,7 +778,7 @@ technique vpvl2_techniques_Object4 < MMDPass = "object"; UseTexture = 0; UseSphe
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -802,7 +801,7 @@ technique vpvl2_techniques_Object5 < MMDPass = "object"; UseTexture = 1; UseSphe
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -823,7 +822,7 @@ technique vpvl2_techniques_Object6 < MMDPass = "object"; UseTexture = 1; UseSphe
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -844,7 +843,7 @@ technique vpvl2_techniques_Object7 < MMDPass = "object"; UseTexture = 0; UseSphe
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -863,7 +862,7 @@ technique vpvl2_techniques_Object8 < MMDPass = "object"; UseTexture = 0; UseSphe
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -891,7 +890,7 @@ technique vpvl2_techniques_ObjectSS1 < MMDPass = "object_ss"; UseTexture = 1; Us
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -917,7 +916,7 @@ technique vpvl2_techniques_ObjectSS2 < MMDPass = "object_ss"; UseTexture = 1; Us
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -943,7 +942,7 @@ technique vpvl2_techniques_ObjectSS3 < MMDPass = "object_ss"; UseTexture = 0; Us
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -967,7 +966,7 @@ technique vpvl2_techniques_ObjectSS4 < MMDPass = "object_ss"; UseTexture = 0; Us
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -993,7 +992,7 @@ technique vpvl2_techniques_ObjectSS5 < MMDPass = "object_ss"; UseTexture = 1; Us
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -1017,7 +1016,7 @@ technique vpvl2_techniques_ObjectSS6 < MMDPass = "object_ss"; UseTexture = 1; Us
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -1041,7 +1040,7 @@ technique vpvl2_techniques_ObjectSS7 < MMDPass = "object_ss"; UseTexture = 0; Us
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -1063,7 +1062,7 @@ technique vpvl2_techniques_ObjectSS8 < MMDPass = "object_ss"; UseTexture = 0; Us
             vpvl2::mainObjectPS
         };
         VertexProgram<"vertexGroupObject"> = vpvl2::transformVertex;
-        FragmentProgram<"fragmentGroupObject"> = vpvl2::outputPixelColor;
+        FragmentProgram<"fragmentGroupObject"> = vpvl2::transformFragment;
     }
 }
 
@@ -1078,8 +1077,8 @@ technique vpvl2_techniques_Edge < MMDPass = "edge"; > {
         FragmentProgram = {
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexGroupEdge"> = vpvl2::transformEdgeVertex;
-        FragmentProgram<"fragmentGroupEdge"> = vpvl2::outputEdgeColor;
+        VertexProgram<"vertexGroupEdge"> = vpvl2::transformVertexEdge;
+        FragmentProgram<"fragmentGroupEdge"> = vpvl2::transformFragmentEdge;
     }
 }
 
@@ -1094,8 +1093,8 @@ technique vpvl2_techniques_Shadow < MMDPass = "shadow"; > {
         FragmentProgram = {
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexGroupShadow"> = vpvl2::transformShadowVertex;
-        FragmentProgram<"fragmentGroupShadow"> = vpvl2::outputShadowColor;
+        VertexProgram<"vertexGroupShadow"> = vpvl2::transformVertexShadow;
+        FragmentProgram<"fragmentGroupShadow"> = vpvl2::transformFragmentShadow;
     }
 }
 
@@ -1110,8 +1109,8 @@ technique vpvl2_techniques_Zplot < MMDPass = "zplot"; > {
         FragmentProgram = {
             vpvl2::mainObjectPS
         };
-        VertexProgram<"vertexGroupZplot"> = vpvl2::transformZplotVertex;
-        FragmentProgram<"fragmentGroupZplot"> = vpvl2::outputZplot;
+        VertexProgram<"vertexGroupZplot"> = vpvl2::transformVertexZplot;
+        FragmentProgram<"fragmentGroupZplot"> = vpvl2::transformFragmentZplot;
     }
 }
 
