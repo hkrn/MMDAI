@@ -424,7 +424,7 @@ void vpvl2FXTransformVertex(inout vec4 origin,
     origin = position = normal = vec4(0.0);
 }
 
-} /* transformVertexZplot */
+} /* discardVertex */
 
 GLSLShader mainObjectVS {
 
@@ -595,7 +595,7 @@ vec4 vpvl2FXTransformFragment(const vec4 origin,
                               const vec4 uva4)
 {
     float depth = position.z / position.w;
-    return vec4(depth, depth * depth, 0, 1);
+    return vec4(depth, 0, 0, 1);
 }
 
 } /* transformFragmentZplot */

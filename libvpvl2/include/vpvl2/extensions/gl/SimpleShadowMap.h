@@ -71,7 +71,7 @@ public:
           m_colorTexture(0),
           m_distance(7.5f)
     {
-        m_colorTexture = new Texture2D(resolver, BaseSurface::Format(kGL_RGBA, kGL_RGBA32F, kGL_FLOAT, 0), m_size, 0);
+        m_colorTexture = new Texture2D(resolver, BaseSurface::Format(kGL_RED, kGL_R32F, kGL_FLOAT, 0), m_size, 0);
     }
     ~SimpleShadowMap() {
         release();
