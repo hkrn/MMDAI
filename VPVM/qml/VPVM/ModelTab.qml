@@ -190,6 +190,7 @@ Tab {
                             currentIndex = index
                         }
                         model: parentBindingModelListModel
+                        editable: true
                         textRole: "name"
                         onCurrentIndexChanged: {
                             var currentModel = scene.currentModel
@@ -218,6 +219,7 @@ Tab {
                         }
                         enabled: parentBindingModelComboBox.currentIndex > 0
                         model: parentBindingBoneListModel
+                        editable: true
                         textRole: "name"
                         onCurrentIndexChanged: {
                             var currentModel = scene.currentModel
@@ -427,6 +429,7 @@ Tab {
                             }
                             ComboBox {
                                 id: morphList
+                                editable: true
                                 textRole: "name"
                                 onCurrentIndexChanged: {
                                     var currentModel = scene.currentModel

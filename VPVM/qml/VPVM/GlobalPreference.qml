@@ -110,6 +110,7 @@ ApplicationWindow {
                         Label { text: qsTr("Font Family") }
                         ComboBox {
                             Layout.fillWidth: true
+                            editable: true
                             model: Qt.fontFamilies()
                             currentIndex: Qt.fontFamilies().indexOf(applicationPreference.fontFamily)
                             onCurrentTextChanged: applicationPreference.fontFamily = currentText
