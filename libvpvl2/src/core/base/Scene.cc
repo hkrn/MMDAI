@@ -680,7 +680,6 @@ void Scene::setRequiredOpenGLState() VPVL2_DECL_NOEXCEPT
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
     glDepthMask(GL_TRUE);
-    glEnable(GL_STENCIL_TEST);
 #endif /* VPVL2_ENABLE_OPENGL */
 }
 
