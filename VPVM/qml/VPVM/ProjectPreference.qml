@@ -161,6 +161,9 @@ ApplicationWindow {
                                             if (current === parallelAcceleration) {
                                                 scene.project.accelerationType = VPVM.Project.ParallelAcceleration
                                             }
+                                            else if (current === vertexShaderAcceleration) {
+                                                scene.project.accelerationType = VPVM.Project.VertexShaderAcceleration
+                                            }
                                             else if (current === openclCPUAcceleration) {
                                                 scene.project.accelerationType = VPVM.Project.OpenCLCPUAcceleration
                                             }
@@ -174,13 +177,18 @@ ApplicationWindow {
                                     }
                                     RadioButton {
                                         id: noAcceleration
-                                        text: qsTr("No Acceleration")
+                                        text: qsTr("No Acceleration (CPU)")
                                         exclusiveGroup: accelerationTypeExclusiveGroup
                                     }
                                     RadioButton {
                                         id: parallelAcceleration
-                                        text: qsTr("Parallel")
+                                        text: qsTr("Parallel (CPU)")
                                         checked: true
+                                        exclusiveGroup: accelerationTypeExclusiveGroup
+                                    }
+                                    RadioButton {
+                                        id: vertexShaderAcceleration
+                                        text: qsTr("Vertex Shader (GPU)")
                                         exclusiveGroup: accelerationTypeExclusiveGroup
                                     }
                                     RadioButton {
