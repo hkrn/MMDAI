@@ -18,7 +18,7 @@ class Gmock < Thor
 
 protected
   def get_uri
-    "http://googlemock.googlecode.com/svn/tags/release-1.6.0"
+    "http://googlemock.googlecode.com/svn/tags/release-1.7.0"
   end
 
   def get_directory_name

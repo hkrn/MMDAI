@@ -18,7 +18,7 @@ class Gtest < Thor
 
 protected
   def get_uri
-    "http://googletest.googlecode.com/svn/tags/release-1.6.0"
+    "http://googletest.googlecode.com/svn/tags/release-1.7.0"
   end
 
   def get_directory_name
