@@ -66,6 +66,11 @@ module Mmdai
           add_cc_flags " -F/Library/Frameworks -mmacosx-version-min=10.5", build_options
           build_options[:cmake_osx_architectures] = "i386;x86_64"
         end
+        [ "ANDROID_NATIVE_API_LEVEL", "ANDROID_NDK", "ANDROID_TOOLCHAIN_NAME", "CMAKE_TOOLCHAIN_FILE" ].each do |key|
+          if ENV.key? key then
+            build_options[key.downcase.to_sym] = ENV[key]
+          end
+        end
         return serialize_build_options cmake, build_options, extra_options.key?(:printable)
       end
 
