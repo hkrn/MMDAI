@@ -64,7 +64,6 @@ namespace ui {
 
 static void drawScreen(const Scene &scene)
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
     Hash<HashPtr, IEffect *> nextPostEffects;
     scene.getRenderEnginesByRenderOrder(enginesForPreProcess,
@@ -192,11 +191,12 @@ static void loadAllModels(const icu4c::StringMap &settings,
                 &modelPath = settings.value(prefix + "/path", UnicodeString());
         archive.reset();
         model.reset();
+        VPVL2_VLOG(2, "Loading a model from " << icu4c::String::toStdString(modelPath));
+        int flags = settings.value(prefix + "/enable.effects", true) ? Scene::kEffectCapable : 0;
+        int indexOf = modelPath.lastIndexOf("/");
+        icu4c::String dir(modelPath.tempSubString(0, indexOf));
         if (loadModel(modelPath, applicationContextRef, factoryRef, encodingRef, archive, model)) {
-            int indexOf = modelPath.lastIndexOf("/");
-            icu4c::String dir(modelPath.tempSubString(0, indexOf));
             BaseApplicationContext::ModelContext modelContext(applicationContextRef, archive.get(), &dir);
-            int flags = settings.value(prefix + "/enable.effects", true) ? Scene::kEffectCapable : 0;
             IRenderEngineSmartPtr engine(sceneRef->createRenderEngine(applicationContextRef, model.get(), flags));
             IEffect *effectRef = 0;
             /*
@@ -206,18 +206,18 @@ static void loadAllModels(const icu4c::StringMap &settings,
              */
             applicationContextRef->addModelPath(model.get(), modelPath);
             if ((flags & Scene::kEffectCapable) != 0) {
-                effectRef = applicationContextRef->createEffectRef(model.get(), &dir);
-                if (effectRef) {
-                    effectRef->createFrameBufferObject();
-                    engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
-                }
+                //effectRef = applicationContextRef->createEffectRef(model.get(), &dir);
+                //if (effectRef) {
+                //    effectRef->createFrameBufferObject();
+                engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
+                //}
+                effectRef = engine->effectRef(IEffect::kDefault);
             }
             if (engine->upload(&modelContext)) {
                 engine->setUpdateOptions(parallel ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone);
                 model->setEdgeWidth(settings.value(prefix + "/edge.width", 1.0f));
                 model->setPhysicsEnable(settings.value(prefix + "/enable.physics", true));
                 sceneRef->addModel(model.get(), engine.release(), i);
-                applicationContextRef->parseOffscreenSemantic(effectRef, &dir);
                 BaseApplicationContext::MapBuffer motionBuffer(applicationContextRef);
                 const UnicodeString &modelMotionPath = settings.value(prefix + "/motion", UnicodeString());
                 if (applicationContextRef->mapFile(!modelMotionPath.isEmpty() ? modelMotionPath : globalMotionPath, &motionBuffer)) {
@@ -228,6 +228,20 @@ static void loadAllModels(const icu4c::StringMap &settings,
                 }
                 applicationContextRef->setCurrentModelRef(model.get());
                 model.release();
+            }
+        }
+        else {
+            icu4c::String s(settings.value(prefix + "/effect", UnicodeString()));
+            if (!s.value().isEmpty()) {
+                if (IEffect *effectRef = applicationContextRef->createEffectRef(&s)) {
+                    applicationContextRef->parseOffscreenSemantic(effectRef, 0);
+                    model.reset(factoryRef->newModel(IModel::kPMXModel));
+                    model->setVisible(false);
+                    IRenderEngineSmartPtr engine(sceneRef->createRenderEngine(applicationContextRef, model.get(), flags));
+                    BaseApplicationContext::ModelContext modelContext(applicationContextRef, 0, &dir);
+                    engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
+                    sceneRef->addModel(model.release(), engine.release(), i);
+                }
             }
         }
     }
