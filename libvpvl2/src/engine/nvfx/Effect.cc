@@ -424,6 +424,7 @@ struct Effect::NvFXTechnique : IEffect::Technique {
     }
     ~NvFXTechnique() {
         m_passes.releaseAll();
+        m_overrideUniforms.releaseAll();
         effectRef = 0;
         valueRef = 0;
     }
@@ -483,16 +484,14 @@ struct Effect::NvFXTechnique : IEffect::Technique {
         }
         popAnnotationGroup(effectRef->applicationContextRef()->sharedFunctionResolverInstance());
     }
-    void setProgramUniforms(nvFX::IProgram *program, nvFX::IContainer *container, bool pipeline) {
+    void setProgramUniforms(nvFX::IProgram *program, nvFX::IContainer *container, bool isPipeline) {
         int index = 0;
         const IApplicationContext::FunctionResolver *resolver = effectRef->applicationContextRef()->sharedFunctionResolverInstance();
-        typedef GLint (GLAPIENTRY * PFNGLGETUNIFORMLOCATIONPROC) (GLuint program, const GLchar* name);
-        PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = reinterpret_cast<PFNGLGETUNIFORMLOCATIONPROC>(resolver->resolveSymbol("glGetUniformLocation"));
         nvFX::IProgramEx *programEx = program->getExInterface();
+        const int programID = programEx->getProgram();
         programEx->bind(container);
         while (nvFX::IUniform *uniform = container->findUniform(index++)) {
-            const char *name = uniform->getName();
-            const int programID = programEx->getProgram(), location = glGetUniformLocation(programID, name);
+            GLint location = findOverrideUniformLocation(uniform, programID);
             if (location < 0) {
                 continue;
             }
@@ -505,103 +504,16 @@ struct Effect::NvFXTechnique : IEffect::Technique {
                 float v[4] = { 0, 0, 0, 0 };
                 int count = (type - nvFX::TFloat) + 1;
                 uniform->getValuefv(v, count);
-                switch (count) {
-                case 1:
-                    if (pipeline) {
-                        typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM1FVPROC) (GLuint program, GLint location, GLsizei count, const GLfloat* value);
-                        reinterpret_cast<PFNGLPROGRAMUNIFORM1FVPROC>(resolver->resolveSymbol("glProgramUniform1fv"))(programID, location, 1, v);
-                    }
-                    else {
-                        typedef void (GLAPIENTRY * PFNGLUNIFORM1FVPROC) (GLint location, GLsizei count, const GLfloat* value);
-                        reinterpret_cast<PFNGLUNIFORM1FVPROC>(resolver->resolveSymbol("glUniform1fv"))(location, 1, v);
-                    }
-                    break;
-                case 2:
-                    if (pipeline) {
-                        typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM2FVPROC) (GLuint program, GLint location, GLsizei count, const GLfloat* value);
-                        reinterpret_cast<PFNGLPROGRAMUNIFORM2FVPROC>(resolver->resolveSymbol("glProgramUniform2fv"))(programID, location, 1, v);
-                    }
-                    else {
-                        typedef void (GLAPIENTRY * PFNGLUNIFORM2FVPROC) (GLint location, GLsizei count, const GLfloat* value);
-                        reinterpret_cast<PFNGLUNIFORM2FVPROC>(resolver->resolveSymbol("glUniform2fv"))(location, 1, v);
-                    }
-                    break;
-                case 3:
-                    if (pipeline) {
-                        typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM3FVPROC) (GLuint program, GLint location, GLsizei count, const GLfloat* value);
-                        reinterpret_cast<PFNGLPROGRAMUNIFORM3FVPROC>(resolver->resolveSymbol("glProgramUniform3fv"))(programID, location, 1, v);
-                    }
-                    else {
-                        typedef void (GLAPIENTRY * PFNGLUNIFORM3FVPROC) (GLint location, GLsizei count, const GLfloat* value);
-                        reinterpret_cast<PFNGLUNIFORM3FVPROC>(resolver->resolveSymbol("glUniform3fv"))(location, 1, v);
-                    }
-                    break;
-                case 4:
-                    if (pipeline) {
-                        typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM4FVPROC) (GLuint program, GLint location, GLsizei count, const GLfloat* value);
-                        reinterpret_cast<PFNGLPROGRAMUNIFORM4FVPROC>(resolver->resolveSymbol("glProgramUniform4fv"))(programID, location, 1, v);
-                    }
-                    else {
-                        typedef void (GLAPIENTRY * PFNGLUNIFORM4FVPROC) (GLint location, GLsizei count, const GLfloat* value);
-                        reinterpret_cast<PFNGLUNIFORM4FVPROC>(resolver->resolveSymbol("glUniform4fv"))(location, 1, v);
-                    }
-                    break;
-                default:
-                    break;
-                }
+                setUniformFloat(v, resolver, programID, location, count, isPipeline);
                 break;
             }
             case nvFX::TInt:
             case nvFX::TInt2:
             case nvFX::TInt3:
             case nvFX::TInt4: {
-                int v[4] = { 0, 0, 0, 0 };
-                int count = (type - nvFX::TInt) + 1;
+                int v[4] = { 0, 0, 0, 0 }, count = (type - nvFX::TInt) + 1;
                 uniform->getValueiv(v, count);
-                switch (count) {
-                case 1:
-                    if (pipeline) {
-                        typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM1IVPROC) (GLuint program, GLint location, GLsizei count, const GLint* value);
-                        reinterpret_cast<PFNGLPROGRAMUNIFORM1IVPROC>(resolver->resolveSymbol("glProgramUniform1iv"))(programID, location, 1, v);
-                    }
-                    else {
-                        typedef void (GLAPIENTRY * PFNGLUNIFORM1IVPROC) (GLint location, GLsizei count, const GLint* value);
-                        reinterpret_cast<PFNGLUNIFORM1IVPROC>(resolver->resolveSymbol("glUniform1iv"))(location, 1, v);
-                    }
-                    break;
-                case 2:
-                    if (pipeline) {
-                        typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM2IVPROC) (GLuint program, GLint location, GLsizei count, const GLint* value);
-                        reinterpret_cast<PFNGLPROGRAMUNIFORM2IVPROC>(resolver->resolveSymbol("glProgramUniform2iv"))(programID, location, 1, v);
-                    }
-                    else {
-                        typedef void (GLAPIENTRY * PFNGLUNIFORM2IVPROC) (GLint location, GLsizei count, const GLint* value);
-                        reinterpret_cast<PFNGLUNIFORM2IVPROC>(resolver->resolveSymbol("glUniform2iv"))(location, 1, v);
-                    }
-                    break;
-                case 3:
-                    if (pipeline) {
-                        typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM3IVPROC) (GLuint program, GLint location, GLsizei count, const GLint* value);
-                        reinterpret_cast<PFNGLPROGRAMUNIFORM3IVPROC>(resolver->resolveSymbol("glProgramUniform3iv"))(programID, location, 1, v);
-                    }
-                    else {
-                        typedef void (GLAPIENTRY * PFNGLUNIFORM3IVPROC) (GLint location, GLsizei count, const GLint* value);
-                        reinterpret_cast<PFNGLUNIFORM3IVPROC>(resolver->resolveSymbol("glUniform3iv"))(location, 1, v);
-                    }
-                    break;
-                case 4:
-                    if (pipeline) {
-                        typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM4IVPROC) (GLuint program, GLint location, GLsizei count, const GLint* value);
-                        reinterpret_cast<PFNGLPROGRAMUNIFORM4IVPROC>(resolver->resolveSymbol("glProgramUniform4iv"))(programID, location, 1, v);
-                    }
-                    else {
-                        typedef void (GLAPIENTRY * PFNGLUNIFORM4IVPROC) (GLint location, GLsizei count, const GLint* value);
-                        reinterpret_cast<PFNGLUNIFORM4IVPROC>(resolver->resolveSymbol("glUniform4iv"))(location, 1, v);
-                    }
-                    break;
-                default:
-                    break;
-                }
+                setUniformInt(v, resolver, programID, location, count, isPipeline);
                 break;
             }
             default:
@@ -609,6 +521,117 @@ struct Effect::NvFXTechnique : IEffect::Technique {
             }
         }
         programEx->unbind(container);
+    }
+    static void setUniformFloat(const float *v, const IApplicationContext::FunctionResolver *resolver, GLint programID, GLint location, int count, bool isPipeline) {
+        switch (count) {
+        case 1:
+            if (isPipeline) {
+                typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM1FVPROC) (GLuint program, GLint location, GLsizei count, const GLfloat* value);
+                reinterpret_cast<PFNGLPROGRAMUNIFORM1FVPROC>(resolver->resolveSymbol("glProgramUniform1fv"))(programID, location, 1, v);
+            }
+            else {
+                typedef void (GLAPIENTRY * PFNGLUNIFORM1FVPROC) (GLint location, GLsizei count, const GLfloat* value);
+                reinterpret_cast<PFNGLUNIFORM1FVPROC>(resolver->resolveSymbol("glUniform1fv"))(location, 1, v);
+            }
+            break;
+        case 2:
+            if (isPipeline) {
+                typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM2FVPROC) (GLuint program, GLint location, GLsizei count, const GLfloat* value);
+                reinterpret_cast<PFNGLPROGRAMUNIFORM2FVPROC>(resolver->resolveSymbol("glProgramUniform2fv"))(programID, location, 1, v);
+            }
+            else {
+                typedef void (GLAPIENTRY * PFNGLUNIFORM2FVPROC) (GLint location, GLsizei count, const GLfloat* value);
+                reinterpret_cast<PFNGLUNIFORM2FVPROC>(resolver->resolveSymbol("glUniform2fv"))(location, 1, v);
+            }
+            break;
+        case 3:
+            if (isPipeline) {
+                typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM3FVPROC) (GLuint program, GLint location, GLsizei count, const GLfloat* value);
+                reinterpret_cast<PFNGLPROGRAMUNIFORM3FVPROC>(resolver->resolveSymbol("glProgramUniform3fv"))(programID, location, 1, v);
+            }
+            else {
+                typedef void (GLAPIENTRY * PFNGLUNIFORM3FVPROC) (GLint location, GLsizei count, const GLfloat* value);
+                reinterpret_cast<PFNGLUNIFORM3FVPROC>(resolver->resolveSymbol("glUniform3fv"))(location, 1, v);
+            }
+            break;
+        case 4:
+            if (isPipeline) {
+                typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM4FVPROC) (GLuint program, GLint location, GLsizei count, const GLfloat* value);
+                reinterpret_cast<PFNGLPROGRAMUNIFORM4FVPROC>(resolver->resolveSymbol("glProgramUniform4fv"))(programID, location, 1, v);
+            }
+            else {
+                typedef void (GLAPIENTRY * PFNGLUNIFORM4FVPROC) (GLint location, GLsizei count, const GLfloat* value);
+                reinterpret_cast<PFNGLUNIFORM4FVPROC>(resolver->resolveSymbol("glUniform4fv"))(location, 1, v);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    static void setUniformInt(const int *v, const IApplicationContext::FunctionResolver *resolver, GLint programID, GLint location, int count, bool isPipeline) {
+        switch (count) {
+        case 1:
+            if (isPipeline) {
+                typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM1IVPROC) (GLuint program, GLint location, GLsizei count, const GLint* value);
+                reinterpret_cast<PFNGLPROGRAMUNIFORM1IVPROC>(resolver->resolveSymbol("glProgramUniform1iv"))(programID, location, 1, v);
+            }
+            else {
+                typedef void (GLAPIENTRY * PFNGLUNIFORM1IVPROC) (GLint location, GLsizei count, const GLint* value);
+                reinterpret_cast<PFNGLUNIFORM1IVPROC>(resolver->resolveSymbol("glUniform1iv"))(location, 1, v);
+            }
+            break;
+        case 2:
+            if (isPipeline) {
+                typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM2IVPROC) (GLuint program, GLint location, GLsizei count, const GLint* value);
+                reinterpret_cast<PFNGLPROGRAMUNIFORM2IVPROC>(resolver->resolveSymbol("glProgramUniform2iv"))(programID, location, 1, v);
+            }
+            else {
+                typedef void (GLAPIENTRY * PFNGLUNIFORM2IVPROC) (GLint location, GLsizei count, const GLint* value);
+                reinterpret_cast<PFNGLUNIFORM2IVPROC>(resolver->resolveSymbol("glUniform2iv"))(location, 1, v);
+            }
+            break;
+        case 3:
+            if (isPipeline) {
+                typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM3IVPROC) (GLuint program, GLint location, GLsizei count, const GLint* value);
+                reinterpret_cast<PFNGLPROGRAMUNIFORM3IVPROC>(resolver->resolveSymbol("glProgramUniform3iv"))(programID, location, 1, v);
+            }
+            else {
+                typedef void (GLAPIENTRY * PFNGLUNIFORM3IVPROC) (GLint location, GLsizei count, const GLint* value);
+                reinterpret_cast<PFNGLUNIFORM3IVPROC>(resolver->resolveSymbol("glUniform3iv"))(location, 1, v);
+            }
+            break;
+        case 4:
+            if (isPipeline) {
+                typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORM4IVPROC) (GLuint program, GLint location, GLsizei count, const GLint* value);
+                reinterpret_cast<PFNGLPROGRAMUNIFORM4IVPROC>(resolver->resolveSymbol("glProgramUniform4iv"))(programID, location, 1, v);
+            }
+            else {
+                typedef void (GLAPIENTRY * PFNGLUNIFORM4IVPROC) (GLint location, GLsizei count, const GLint* value);
+                reinterpret_cast<PFNGLUNIFORM4IVPROC>(resolver->resolveSymbol("glUniform4iv"))(location, 1, v);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    GLint findOverrideUniformLocation(nvFX::IUniform *uniform, int programID) {
+        UniformLocation *uniformLocation = 0;
+        if (UniformLocation *const *uniformLocationPtr = m_overrideUniforms.find(programID)) {
+            const char *name = uniform->getName();
+            uniformLocation = *uniformLocationPtr;
+            if (const GLint *location = uniformLocation->find(name)) {
+                return *location;
+            }
+        }
+        else {
+            uniformLocation = m_overrideUniforms.insert(programID, new UniformLocation());
+        }
+        const IApplicationContext::FunctionResolver *resolver = effectRef->applicationContextRef()->sharedFunctionResolverInstance();
+        const char *name = uniform->getName();
+        typedef GLint (GLAPIENTRY * PFNGLGETUNIFORMLOCATIONPROC) (GLuint program, const GLchar* name);
+        GLint location = reinterpret_cast<PFNGLGETUNIFORMLOCATIONPROC>(resolver->resolveSymbol("glGetUniformLocation"))(programID, name);
+        uniformLocation->insert(name, location);
+        return location;
     }
 
     Effect::NvFXPass *cachePassRef(nvFX::IPass *pass) const {
@@ -630,6 +653,9 @@ struct Effect::NvFXTechnique : IEffect::Technique {
 
     mutable PointerArray<Effect::NvFXPass> m_passes;
     mutable Hash<HashString, Effect::NvFXPass *> m_passRefsHash;
+    Hash<HashString, GLuint> m_uniformLocationsCache;
+    typedef Hash<HashString, int> UniformLocation;
+    PointerHash<HashInt, UniformLocation> m_overrideUniforms;
     const Effect *effectRef;
     nvFX::ITechnique *valueRef;
 };
