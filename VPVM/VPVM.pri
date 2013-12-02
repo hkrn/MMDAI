@@ -31,12 +31,14 @@ LIBS += -L$${MMDAI_ROOT_PATH}/bullet-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/libvpvl2/build-$${BUILD_TYPE}/lib \
         -lvpvl2 -lBulletDynamics -lBulletSoftBody -lBulletCollision -lLinearMath -lgizmo
 
-LIBS += -lFxParser -lFxLibGL -lFxLib
 CONFIG(debug, debug|release):LIBS += -lassimpD
 CONFIG(release, debug|release):LIBS += -lassimp
 
-#CONFIG(debug, debug|release):LIBS += -lFxParser64D -lFxLibGL64D -lFxLib64D -lassimpD
-#CONFIG(release, debug|release):LIBS += -lFxParser64 -lFxLibGL64 -lFxLib64 -lassimp
+#CONFIG(debug, debug|release):LIBS += -lFxParserD -lFxLibGLD -lFxLibD
+#CONFIG(release, debug|release):LIBS += -lFxParser -lFxLibGL -lFxLib
+
+CONFIG(debug, debug|release):LIBS += -lFxParser64D -lFxLibGL64D -lFxLib64D
+CONFIG(release, debug|release):LIBS += -lFxParser64 -lFxLibGL64 -lFxLib64
 
 win32 {
   QMAKE_CFLAGS   += /wd4068 /wd4819
