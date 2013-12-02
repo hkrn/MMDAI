@@ -4,7 +4,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <QtCore>
-#include <tr1/tuple>
 #include <vpvl2/Common.h>
 
 #define ASSERT_OR_RETURN(expr) do { AssertionResult r = (expr); if (!r) { return r; } } while (0)
