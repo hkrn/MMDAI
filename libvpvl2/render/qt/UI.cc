@@ -526,7 +526,8 @@ void UI::initializeGL()
     setMinimumSize(640, 480);
     m_applicationContext.reset(new ApplicationContext(m_scene.data(), m_encoding.data(), &m_stringMapRef));
     m_applicationContext->initialize(m_settings->value("enable.debug", false).toBool());
-    m_applicationContext->updateCameraMatrices(glm::vec2(width(), height()));
+    m_applicationContext->setViewportRegion(glm::vec4(0, 0, width(), height()));
+    m_applicationContext->updateCameraMatrices();
 #ifdef VPVL2_LINK_ATB
     bool enableCoreProfile = m_settings->value("opengl.enable.core", false).toBool();
     extensions::ui::AntTweakBar::initialize(enableCoreProfile);
@@ -581,7 +582,8 @@ void UI::timerEvent(QTimerEvent * /* event */)
         m_timeHolder.saveElapsed(qRound64(offset + latency));
         seekScene(m_timeHolder.timeIndex(), m_timeHolder.delta());
     }
-    m_applicationContext->updateCameraMatrices(glm::vec2(width(), height()));
+    m_applicationContext->setViewportRegion(glm::vec4(0, 0, width(), height()));
+    m_applicationContext->updateCameraMatrices();
     m_scene->update(Scene::kUpdateAll);
     setWindowTitle(kWindowTitle.arg(m_counter.value()));
     updateGL();
@@ -724,12 +726,11 @@ void UI::paintGL()
     if (m_applicationContext) {
         m_applicationContext->renderShadowMap();
         m_applicationContext->renderOffscreen();
-        m_applicationContext->updateCameraMatrices(glm::vec2(width(), height()));
+        m_applicationContext->setViewportRegion(glm::vec4(0, 0, width(), height()));
+        m_applicationContext->updateCameraMatrices();
         renderWindow();
         if (IShadowMap *shadowMap = m_scene->shadowMapRef()) {
-            if (const gl::GLuint *bufferRef = static_cast<const gl::GLuint *>(shadowMap->textureRef())) {
-                m_helper->draw(QRectF(0, 0, 256, 256), *bufferRef);
-            }
+            m_helper->draw(QRectF(0, 0, 256, 256), shadowMap->textureRef()->data());
         }
         m_drawer->drawWorld(m_world.data(), m_debugFlags);
         if (m_audioSource->isRunning()) {
