@@ -53,25 +53,25 @@ ApplicationWindow {
     minimumHeight: 620
     id: applicationWindow
     title:  "%1 - %2".arg(Qt.application.name).arg(scene.project.title)
-    onClosing: {
-        close.accepted = confirmSaving()
-        applicationPreference.sync()
-    }
 
-    function confirmSaving() {
-        if (scene.project.dirty) {
-            var response = VPVM.UIAuxHelper.confirmSaving()
-            switch (response) {
-            case VPVM.UIAuxHelper.Save:
-                saveProjectAction.trigger()
-                return true
-            case VPVM.UIAuxHelper.Discard:
-                return true
-            case VPVM.UIAuxHelper.Cancel:
-                return false
-            }
+    MessageDialog {
+        id: confirmSavingProjectBeforeClosingDialog
+        title: qsTr("The project has been modified.")
+        text: qsTr("Do you want to save your changes of %1?").arg(scene.project.title)
+        icon: StandardIcon.Question
+        standardButtons: StandardButton.Save | StandardButton.Discard | StandardButton.Cancel
+        onAccepted: {
+            saveProjectAction.trigger()
+            applicationPreference.sync()
+            Qt.quit()
         }
-        return true
+        onDiscard: Qt.quit()
+    }
+    onClosing: {
+        if (scene.project.dirty) {
+            close.accepted = false
+            confirmSavingProjectBeforeClosingDialog.open()
+        }
     }
 
     ApplicationWindow {
@@ -117,13 +117,28 @@ ApplicationWindow {
     WindowLoader { id: aboutWindowLoader; loaderSource: Qt.resolvedUrl("AboutWindow.qml") }
     FontLoader { id: fontAwesome; source: "FontAwesome.%1".arg(isOSX ? "otf" : "ttf") }
 
+    MessageDialog {
+        id: confirmSavingProjectBeforeNewProjectDialog
+        title: qsTr("The project has been modified.")
+        text: qsTr("Do you want to save your changes of %1?").arg(scene.project.title)
+        icon: StandardIcon.Question
+        standardButtons: StandardButton.Save | StandardButton.Discard | StandardButton.Cancel
+        onAccepted: {
+            saveProjectAction.trigger()
+            scene.project.createAsync()
+        }
+        onDiscard: scene.project.createAsync()
+    }
     Action {
         id: newProjectAction
         text: qsTr("New Project")
         shortcut: "Ctrl+N"
         tooltip: qsTr("Create a new project. If the project exists, it will be deleted and undone.")
         onTriggered: {
-            if (confirmSaving()) {
+            if (scene.project.dirty) {
+                confirmSavingProjectBeforeNewProjectDialog.open()
+            }
+            else {
                 scene.project.createAsync()
             }
         }
@@ -148,13 +163,28 @@ ApplicationWindow {
             progressWindow.hide()
         }
     }
+    MessageDialog {
+        id: confirmSavingProjectBeforeLoadingProjectDialog
+        title: qsTr("The project has been modified.")
+        text: qsTr("Do you want to save your changes of %1?").arg(scene.project.title)
+        icon: StandardIcon.Question
+        standardButtons: StandardButton.Save | StandardButton.Discard | StandardButton.Cancel
+        onAccepted: {
+            saveProjectAction.trigger()
+            loadProjectDialog.open()
+        }
+        onDiscard: loadProjectDialog.open()
+    }
     Action {
         id: loadProjectAction
         text: qsTr("Load Project")
         tooltip: qsTr("Load a project from file. If the project exists, it will be deleted and undone.")
         shortcut: "Ctrl+O"
         onTriggered: {
-            if (confirmSaving()) {
+            if (scene.project.dirty) {
+                confirmSavingProjectBeforeLoadingProjectDialog.open()
+            }
+            else {
                 loadProjectDialog.open()
             }
         }
@@ -723,7 +753,14 @@ ApplicationWindow {
         text: qsTr("&Exit")
         tooltip: qsTr("Exit this application.")
         shortcut: "Ctrl+Q"
-        onTriggered: Qt.quit()
+        onTriggered: {
+            if (scene.project.dirty) {
+                confirmSavingProjectBeforeClosingDialog.open()
+            }
+            else {
+                Qt.quit()
+            }
+        }
     }
 
     SystemPalette { id: systemPalette }

@@ -50,24 +50,6 @@ UIAuxHelper::~UIAuxHelper()
 {
 }
 
-UIAuxHelper::ConfirmResponseType UIAuxHelper::confirmSaving()
-{
-    QMessageBox dialog;
-    dialog.setText(tr("The project has been modified."));
-    dialog.setInformativeText(tr("Do you want to save your changes?"));
-    dialog.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-    dialog.setDefaultButton(QMessageBox::Save);
-    switch (dialog.exec()) {
-    case QMessageBox::Save:
-        return Save;
-    case QMessageBox::Cancel:
-        return Cancel;
-    case QMessageBox::Discard:
-    default:
-        return Discard;
-    }
-}
-
 QUrl UIAuxHelper::openSaveDialog(const QString &title,
                                  const QString &suffix,
                                  const QStringList &nameFilters)
