@@ -116,6 +116,12 @@ ApplicationWindow {
                             onCurrentTextChanged: applicationPreference.fontFamily = currentText
                         }
                     }
+                    CheckBox {
+                        id: enableEffect
+                        text: qsTr("Enable Effect (Experimental Option)")
+                        checked: applicationPreference.effectEnabled
+                        onCheckedChanged: applicationPreference.effectEnabled = checked
+                    }
                     GroupBox {
                         Layout.fillWidth: true
                         title: qsTr("Settings that is required restarting %1 to affect").arg(Qt.application.name)
@@ -147,6 +153,11 @@ ApplicationWindow {
                                 Item { Layout.fillWidth: true }
                             }
                         }
+                    }
+                    Button {
+                        Layout.alignment: Qt.AlignCenter
+                        text: qsTr("Reset Application Preference")
+                        onClicked: applicationPreference.clear()
                     }
                     Item {
                         Layout.fillHeight: true

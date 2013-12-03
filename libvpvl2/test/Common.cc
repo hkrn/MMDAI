@@ -7,7 +7,6 @@
 #include "vpvl2/pmx/Vertex.h"
 
 using namespace ::testing;
-using namespace std::tr1;
 using namespace vpvl2;
 using namespace vpvl2::pmx;
 

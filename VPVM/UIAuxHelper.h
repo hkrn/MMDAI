@@ -44,18 +44,11 @@
 class UIAuxHelper : public QObject
 {
     Q_OBJECT
-    Q_ENUMS(ConfirmResponseType)
 
 public:
-    enum ConfirmResponseType {
-        Save,
-        Discard,
-        Cancel
-    };
     explicit UIAuxHelper(QObject *parent = 0);
     ~UIAuxHelper();
 
-    Q_INVOKABLE ConfirmResponseType confirmSaving();
     Q_INVOKABLE QUrl openSaveDialog(const QString &title,
                                        const QString &suffix,
                                        const QStringList &nameFilters);

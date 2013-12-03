@@ -60,6 +60,15 @@ void Preference::sync()
 void Preference::clear()
 {
     m_settings.clear();
+    emit windowRectChanged();
+    emit fontFamilyChanged();
+    emit baseLoggingDirectoryChanged();
+    emit loggingDirectorySuffixChanged();
+    emit verboseLogLevelChanged();
+    emit samplesChanged();
+    emit fontFamilyToGUISharedChanged();
+    emit transparentWindowEnabledChanged();
+    emit effectEnabledChanged();
 }
 
 QString Preference::initializeLoggingDirectory()
@@ -197,5 +206,18 @@ void Preference::setTransparentWindowEnabled(bool value)
     if (value != isTransparentWindowEnabled()) {
         m_settings.setValue("transparentWindow", value);
         emit transparentWindowEnabledChanged();
+    }
+}
+
+bool Preference::isEffectEnabled() const
+{
+    return m_settings.value("effectEnabled", false).toBool();
+}
+
+void Preference::setEffectEnabled(bool value)
+{
+    if (value != isEffectEnabled()) {
+        m_settings.setValue("effectEnabled", value);
+        emit effectEnabledChanged();
     }
 }
