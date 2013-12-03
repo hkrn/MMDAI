@@ -66,7 +66,7 @@ macx {
   QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.9
 }
 
-RESOURCES += $${MMDAI_ROOT_PATH}/libvpvl2/src/qt/resources/libvpvl2qtcommon.qrc \
+RESOURCES += $${MMDAI_ROOT_PATH}/libvpvl2/src/resources/resources.qrc \
              $${VPVM_ROOT_PATH}/licenses/licenses.qrc
 
 !win32 {
