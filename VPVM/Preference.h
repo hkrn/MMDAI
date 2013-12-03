@@ -52,8 +52,9 @@ class Preference : public QObject
     Q_PROPERTY(QString loggingDirectorySuffix READ loggingDirectorySuffix WRITE setLoggingDirectorySuffix NOTIFY loggingDirectorySuffixChanged FINAL)
     Q_PROPERTY(int verboseLogLevel READ verboseLogLevel WRITE setVerboseLogLevel NOTIFY verboseLogLevelChanged FINAL)
     Q_PROPERTY(int samples READ samples WRITE setSamples NOTIFY samplesChanged FINAL)
-    Q_PROPERTY(bool fontFamilyToGUIShared READ isFontFamilyToGUIShared WRITE setFontFamilyToGUIShared NOTIFY fontFamilyToGUISharedChanged)
-    Q_PROPERTY(bool transparentWindowEnabled READ isTransparentWindowEnabled WRITE setTransparentWindowEnabled NOTIFY transparentWindowEnabledChanged)
+    Q_PROPERTY(bool fontFamilyToGUIShared READ isFontFamilyToGUIShared WRITE setFontFamilyToGUIShared NOTIFY fontFamilyToGUISharedChanged FINAL)
+    Q_PROPERTY(bool transparentWindowEnabled READ isTransparentWindowEnabled WRITE setTransparentWindowEnabled NOTIFY transparentWindowEnabledChanged FINAL)
+    Q_PROPERTY(bool effectEnabled READ isEffectEnabled WRITE setEffectEnabled NOTIFY effectEnabledChanged FINAL)
 
 public:
     explicit Preference(QObject *parent = 0);
@@ -79,6 +80,8 @@ public:
     void setFontFamilyToGUIShared(bool value);
     bool isTransparentWindowEnabled() const;
     void setTransparentWindowEnabled(bool value);
+    bool isEffectEnabled() const;
+    void setEffectEnabled(bool value);
 
 signals:
     void windowRectChanged();
@@ -89,6 +92,7 @@ signals:
     void samplesChanged();
     void fontFamilyToGUISharedChanged();
     void transparentWindowEnabledChanged();
+    void effectEnabledChanged();
 
 private:
     QSettings m_settings;
