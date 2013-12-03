@@ -262,7 +262,7 @@ endif()
 
 # link against Qt
 if(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT)
-  vpvl2_add_qt_helpers()
+  vpvl2_add_qt()
   vpvl2_add_sdl_renderer()
   vpvl2_add_sfml_renderer()
   vpvl2_add_glfw_renderer()

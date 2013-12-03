@@ -1,20 +1,31 @@
 #include "Common.h"
 #include "vpvl2/extensions/Archive.h"
 #include "vpvl2/extensions/icu4c/Encoding.h"
-#include "vpvl2/qt/Util.h"
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
-using namespace vpvl2::qt;
+using namespace vpvl2::extensions::icu4c;
 
 namespace {
+
+UnicodeString fromQString(const QString &value)
+{
+    const UChar *v = reinterpret_cast<const UChar *>(value.utf16());
+    return UnicodeString(v, value.size());
+}
+
+QString toQString(const UnicodeString &value)
+{
+    const ushort *v = reinterpret_cast<const ushort *>(value.getBuffer());
+    return QString::fromUtf16(v, value.length());
+}
 
 QStringList UIToStringList(const Archive::EntryNames &value)
 {
     QStringList ret;
     Archive::EntryNames::const_iterator it = value.begin();
     while (it != value.end()) {
-        ret << Util::toQString(*it);
+        ret << toQString(*it);
         ++it;
     }
     return ret;
@@ -46,7 +57,7 @@ bool UICompareEntries(const QStringList &entries, const Archive &archive)
     const QSet<QString> &set = entries.toSet();
     Archive::EntryNames::const_iterator it = e.begin();
     while (it != e.end()) {
-        if (!set.contains(Util::toQString(*it))) {
+        if (!set.contains(toQString(*it))) {
             return false;
         }
         ++it;
@@ -60,7 +71,7 @@ static void UncompressArchive(Archive &archive, Archive::EntryNames &entries)
     QScopedPointer<QTemporaryFile> temp(QTemporaryFile::createLocalFile(file));
     ASSERT_TRUE(temp);
     temp->setAutoRemove(true);
-    String path(Util::fromQString(temp->fileName()));
+    String path(fromQString(temp->fileName()));
     ASSERT_TRUE(archive.open(&path, entries));
 }
 

@@ -36,12 +36,16 @@
 */
 
 #include "../helper.h"
-#include <vpvl2/extensions/egl/RenderContext.h>
+#include <vpvl2/extensions/egl/ApplicationContext.h>
 
 #if defined(VPVL2_PLATFORM_RASPBERRY_PI)
 #include <bcm_host.h>
 #else
 #include <GL/glx.h>
+#endif
+
+#ifndef VPVL2_PLATFORM_RASPBERRY_PI
+#define bcm_host_init()
 #endif
 
 using namespace vpvl2::extensions::egl;
@@ -123,9 +127,7 @@ int main(int /* argc */, char **argv)
     tbb::task_scheduler_init initializer; (void) initializer;
     BaseApplicationContext::initializeOnce(argv[0], 0, 2);
 
-#if defined(VPVL2_PLATFORM_RASPBERRY_PI)
     bcm_host_init();
-#endif
     StringMap settings;
     ::ui::loadSettings("config.ini", settings);
     size_t width = settings.value("window.width", 640),
@@ -137,12 +139,9 @@ int main(int /* argc */, char **argv)
             depthSize = settings.value("opengl.size.depth", 24),
             stencilSize = settings.value("opengl.size.stencil", 8),
             samplesSize = settings.value("opengl.size.samples", 0);
+    bool enableGLES = settings.value("opengl.enable.gles", false);
 
-#ifdef VPVL2_ENABLE_GLES2
-    eglBindAPI(EGL_OPENGL_ES_API);
-#else
-    eglBindAPI(EGL_OPENGL_API);
-#endif
+    eglBindAPI(enableGLES ? EGL_OPENGL_ES_API : EGL_OPENGL_API);
 
     EGLNativeDisplayType nativeDisplay;
     EGLNativeWindowType nativeWindow;
@@ -157,20 +156,33 @@ int main(int /* argc */, char **argv)
         return EXIT_FAILURE;
     }
 
-    EGLint attrs[] = {
-        EGL_RED_SIZE, redSize,
-        EGL_GREEN_SIZE, greenSize,
-        EGL_BLUE_SIZE, blueSize,
-        EGL_ALPHA_SIZE, alphaSize,
-        EGL_DEPTH_SIZE, depthSize,
-        EGL_STENCIL_SIZE, stencilSize,
-        EGL_SAMPLE_BUFFERS, samplesSize,
-        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-        EGL_NONE
-    };
+    Array<EGLint> attrs;
+    attrs.append(EGL_RED_SIZE);
+    attrs.append(redSize);
+    attrs.append(EGL_GREEN_SIZE);
+    attrs.append(greenSize);
+    attrs.append(EGL_BLUE_SIZE);
+    attrs.append(blueSize);
+    attrs.append(EGL_ALPHA_SIZE);
+    attrs.append(alphaSize);
+    attrs.append(EGL_DEPTH_SIZE);
+    attrs.append(depthSize);
+    attrs.append(EGL_STENCIL_SIZE);
+    attrs.append(stencilSize);
+    attrs.append(EGL_SURFACE_TYPE);
+    attrs.append(EGL_WINDOW_BIT);
+    attrs.append(EGL_RENDERABLE_TYPE);
+    attrs.append(enableGLES ? EGL_OPENGL_ES_BIT : EGL_OPENGL_BIT);
+    if (samplesSize > 0) {
+        attrs.append(EGL_SAMPLES);
+        attrs.append(1);
+        attrs.append(EGL_SAMPLE_BUFFERS);
+        attrs.append(samplesSize);
+    }
+    attrs.append(EGL_NONE);
     EGLConfig configs;
     EGLint nconfigs;
-    if (!eglChooseConfig(display, attrs, &configs, 1, &nconfigs)) {
+    if (!eglChooseConfig(display, &attrs[0], &configs, 1, &nconfigs)) {
         std::cerr << "Cannot choose EGL configuration: " << eglGetError() << std::endl;
         UITerminateEGLSession(display, 0, 0);
         return EXIT_FAILURE;
@@ -184,13 +196,13 @@ int main(int /* argc */, char **argv)
         UITerminateEGLSession(display, surface, 0);
         return EXIT_FAILURE;
     }
-    EGLint contextAttribs[] = {
-    #ifdef VPVL2_ENABLE_GLES2
-        EGL_CONTEXT_CLIENT_VERSION, 2,
-    #endif
-        EGL_NONE
-    };
-    EGLContext context = eglCreateContext(display, configs, EGL_NO_CONTEXT, contextAttribs);
+    Array<EGLint> contextAttribs;
+    if (enableGLES) {
+        contextAttribs.append(EGL_CONTEXT_CLIENT_VERSION);
+        contextAttribs.append(3);
+    }
+    contextAttribs.append(EGL_NONE);
+    EGLContext context = eglCreateContext(display, configs, EGL_NO_CONTEXT, &contextAttribs[0]);
     if (context == EGL_NO_CONTEXT) {
         std::cerr << "Cannot create EGL context: " << eglGetError() << std::endl;
         UITerminateEGLSession(display, surface, context);
@@ -210,6 +222,7 @@ int main(int /* argc */, char **argv)
     std::cerr << "GL_VERSION: " << glGetString(GL_VERSION) << std::endl;
     std::cerr << "GL_VENDOR: " << glGetString(GL_VENDOR) << std::endl;
     std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
+    std::cerr << "GL_EXTENSIONS: " << glGetString(GL_EXTENSIONS) << std::endl;
 
     if (!Scene::initialize(ApplicationContext::staticSharedFunctionResolverInstance())) {
         UITerminateEGLSession(display, surface, context);
@@ -221,24 +234,34 @@ int main(int /* argc */, char **argv)
     Encoding encoding(&dictionary);
     Factory factory(&encoding);
     Scene scene(true);
-    ApplicationContext applicationContext(&scene, &encoding, &settings);
+    ApplicationContext applicationContext(&scene, &encoding, &settings, enableGLES);
     World world;
     applicationContext.initialize(false);
-    applicationContext.updateCameraMatrices(glm::vec2(width, height));
+    applicationContext.setViewportRegion(glm::vec4(0, 0, width, height));
     ::ui::initializeDictionary(settings, dictionary);
     ::ui::loadAllModels(settings, &applicationContext, &scene, &factory, &encoding);
+    scene.setWorldRef(world.dynamicWorldRef());
 
-    Scene::setRequiredOpenGLState();
     scene.seek(0, Scene::kUpdateAll);
     scene.update(Scene::kUpdateAll | Scene::kResetMotionState);
 
-    while (true) {
-        ::ui::drawScreen(scene, width, height);
+    bool active = true;
+    int nframes = 0;
+    glClearColor(0, 0, 1, 1);
+    while (active) {
+        ::ui::drawScreen(scene);
         scene.advance(0, Scene::kUpdateAll);
         world.stepSimulation(0);
         scene.update(Scene::kUpdateAll);
         eglSwapBuffers(display, surface);
+        if (nframes++ > 60) {
+            active = false;
+        }
     }
+
+    scene.setWorldRef(0);
+    scene.reset();
+    applicationContext.release();
     UITerminateEGLSession(display, surface, context);
 
     return EXIT_SUCCESS;
