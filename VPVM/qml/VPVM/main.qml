@@ -44,16 +44,27 @@ import com.github.mmdai.VPVM 1.0 as VPVM
 import "FontAwesome.js" as FontAwesome
 
 ApplicationWindow {
+    id: applicationWindow
     readonly property bool isOSX: Qt.platform.os === "osx"
-    x: applicationPreference.windowRect.x
-    y: applicationPreference.windowRect.y
-    width: applicationPreference.windowRect.width
-    height: applicationPreference.windowRect.height
     minimumWidth: 960
     minimumHeight: 620
-    id: applicationWindow
-    title:  "%1 - %2".arg(Qt.application.name).arg(scene.project.title)
+    title: "%1 - %2".arg(Qt.application.name).arg(scene.project.title)
 
+    function updateWindowRect() {
+        x = applicationPreference.windowRect.x
+        y = applicationPreference.windowRect.y
+        width = applicationPreference.windowRect.width
+        height = applicationPreference.windowRect.height
+    }
+    function exitApplication() {
+        applicationPreference.windowRectChanged.disconnect(updateWindowRect)
+        applicationPreference.windowRect.x = x
+        applicationPreference.windowRect.y = y
+        applicationPreference.windowRect.width = width
+        applicationPreference.windowRect.height = height
+        applicationPreference.sync()
+        Qt.quit()
+    }
     MessageDialog {
         id: confirmSavingProjectBeforeClosingDialog
         title: qsTr("The project has been modified.")
@@ -62,16 +73,19 @@ ApplicationWindow {
         standardButtons: StandardButton.Save | StandardButton.Discard | StandardButton.Cancel
         onAccepted: {
             saveProjectAction.trigger()
-            applicationPreference.sync()
-            Qt.quit()
+            exitApplication()
         }
-        onDiscard: Qt.quit()
+        onDiscard: exitApplication()
     }
     onClosing: {
         if (scene.project.dirty) {
             close.accepted = false
             confirmSavingProjectBeforeClosingDialog.open()
         }
+    }
+    Component.onCompleted: {
+        updateWindowRect()
+        applicationPreference.windowRectChanged.connect(updateWindowRect)
     }
 
     ApplicationWindow {
@@ -758,7 +772,7 @@ ApplicationWindow {
                 confirmSavingProjectBeforeClosingDialog.open()
             }
             else {
-                Qt.quit()
+                exitApplication()
             }
         }
     }
