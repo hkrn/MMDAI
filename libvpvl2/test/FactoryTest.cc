@@ -18,6 +18,8 @@
 #include "mock/Model.h"
 #include "mock/Morph.h"
 
+#include <tuple>
+
 #ifdef VPVL2_LINK_VPVL
 #include "vpvl2/pmd/Model.h"
 #else
@@ -25,7 +27,7 @@
 #endif
 
 using namespace ::testing;
-using namespace std::tr1;
+using namespace std;
 using namespace vpvl2;
 using namespace vpvl2::extensions::icu4c;
 
@@ -129,6 +131,7 @@ TEST_P(FactoryModelTest, StopInfiniteParentModelLoop)
     ASSERT_EQ(model1.data(), model2->parentModelRef());
     ASSERT_EQ(0, model1->parentModelRef());
 }
+
 
 class MotionConversionTest : public TestWithParam< tuple<QString, IMotion::Type > > {};
 

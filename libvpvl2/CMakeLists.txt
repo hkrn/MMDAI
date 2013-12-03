@@ -279,7 +279,7 @@ endif()
 
 # activate c++11 flag
 if(VPVL2_ENABLE_CXX11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+  target_compile_options(${VPVL2_PROJECT_NAME} PRIVATE -std=c++11)
 endif()
 
 # install configuration
