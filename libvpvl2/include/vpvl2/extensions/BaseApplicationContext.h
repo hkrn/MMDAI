@@ -162,11 +162,11 @@ public:
     public:
         ModelContext(BaseApplicationContext *applicationContextRef, Archive *archiveRef, const IString *directory);
         ~ModelContext();
-        void addTextureCache(const UnicodeString &path, ITexture *textureRef);
-        bool findTextureCache(const UnicodeString &path, TextureDataBridge &bridge) const;
-        bool uploadTexture(const UnicodeString &path, TextureDataBridge &bridge);
-        bool uploadTexture(const uint8 *data, vsize size, const UnicodeString &key, TextureDataBridge &bridge);
-        bool cacheTexture(const UnicodeString &key, ITexture *textureRef, TextureDataBridge &bridge);
+        void addTextureCache(const std::string &path, ITexture *textureRef);
+        bool findTextureCache(const std::string &path, TextureDataBridge &bridge) const;
+        bool uploadTexture(const std::string &path, TextureDataBridge &bridge);
+        bool uploadTexture(const uint8 *data, vsize size, const std::string &key, TextureDataBridge &bridge);
+        bool cacheTexture(const std::string &key, ITexture *textureRef, TextureDataBridge &bridge);
         void optimizeTexture(ITexture *texture);
         int countCachedTextures() const;
         ITexture *createTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap) const;
@@ -179,7 +179,7 @@ public:
         static const extensions::gl::GLenum kGL_STORAGE_CACHED_APPLE = 0x85BE;
         typedef void (GLAPIENTRY * PFNGLPIXELSTOREIPROC) (extensions::gl:: GLenum pname, extensions::gl::GLint param);
         PFNGLPIXELSTOREIPROC pixelStorei;
-        typedef std::map<UnicodeString, ITexture *, icu4c::String::Less> TextureCacheMap;
+        typedef std::map<std::string, ITexture *> TextureCacheMap;
         const IString *m_directoryRef;
         Archive *m_archiveRef;
         BaseApplicationContext *m_applicationContextRef;
@@ -245,16 +245,16 @@ public:
     IModel *findModel(const IString *name) const;
     IModel *effectOwner(const IEffect *effect) const;
     void setEffectOwner(const IEffect *effectRef, IModel *model);
-    void addModelPath(IModel *model, const UnicodeString &path);
-    UnicodeString effectOwnerName(const IEffect *effect) const;
+    void addModelPath(IModel *model, const std::string &path);
+    std::string effectOwnerName(const IEffect *effect) const;
     extensions::gl::FrameBufferObject *createFrameBufferObject();
     void getEffectCompilerArguments(Array<IString *> &arguments) const;
     const IString *effectFilePath(const IModel *model, const IString *dir) const;
     void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter);
     bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const;
     void setMousePosition(const glm::vec2 &value, bool pressed, MousePositionType type);
-    UnicodeString findModelPath(const IModel *modelRef) const;
-    UnicodeString findModelBasename(const IModel *modelRef) const;
+    std::string findModelPath(const IModel *modelRef) const;
+    std::string findModelBasename(const IModel *modelRef) const;
     extensions::gl::FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
     void bindOffscreenRenderTarget(OffscreenTexture *textureRef, bool enableAA);
     void releaseOffscreenRenderTarget(const OffscreenTexture *textureRef, bool enableAA);
@@ -263,7 +263,7 @@ public:
     IEffect *createEffectRef(const IString *path);
     IEffect *createEffectRef(IModel *modelRef, const IString *directoryRef);
 #else
-    void addModelPath(IModel * /* model */, const UnicodeString & /* path */) {}
+    void addModelPath(IModel * /* model */, const std::string & /* path */) {}
     void parseOffscreenSemantic(IEffect * /* effect */, const IString * /* dir */) {}
     void renderOffscreen() {}
     IEffect *createEffectRef(IModel * /* model */, const IString * /* dir */) { return 0; }
@@ -285,9 +285,9 @@ public:
     void releaseShadowMap();
     void renderShadowMap();
 
-    virtual bool mapFile(const UnicodeString &path, MapBuffer *bufferRef) const = 0;
+    virtual bool mapFile(const std::string &path, MapBuffer *bufferRef) const = 0;
     virtual bool unmapFile(MapBuffer *bufferRef) const = 0;
-    virtual bool existsFile(const UnicodeString &path) const = 0;
+    virtual bool existsFile(const std::string &path) const = 0;
 
 protected:
     typedef void (GLAPIENTRY * PFNGLGETINTEGERVPROC) (extensions::gl::GLenum pname, extensions::gl::GLint *params);
@@ -301,17 +301,17 @@ protected:
     PFNGLCLEARCOLORPROC clearColor;
     PFNGLCLEARDEPTHPROC clearDepth;
 
-    static const UnicodeString createPath(const IString *directoryRef, const UnicodeString &name);
-    static const UnicodeString createPath(const IString *directoryRef, const IString *name);
-    bool uploadSystemToonTexture(const UnicodeString &name, TextureDataBridge &bridge, ModelContext *context);
-    bool internalUploadTexture(const UnicodeString &name, const UnicodeString &path, TextureDataBridge &bridge, ModelContext *context);
-    UnicodeString toonDirectory() const;
-    UnicodeString shaderDirectory() const;
-    UnicodeString effectDirectory() const;
-    UnicodeString kernelDirectory() const;
+    static std::string createPath(const IString *directoryRef, const std::string &name);
+    static std::string createPath(const IString *directoryRef, const IString *name);
+    bool uploadSystemToonTexture(const std::string &name, TextureDataBridge &bridge, ModelContext *context);
+    bool internalUploadTexture(const std::string &name, const std::string &path, TextureDataBridge &bridge, ModelContext *context);
+    std::string toonDirectory() const;
+    std::string shaderDirectory() const;
+    std::string effectDirectory() const;
+    std::string kernelDirectory() const;
 
-    virtual bool uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge);
-    virtual bool uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge);
+    virtual bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge);
+    virtual bool uploadTextureOpaque(const std::string &path, ModelContext *context, TextureDataBridge &bridge);
     virtual gl::BaseSurface::Format defaultTextureFormat() const;
 
     const icu4c::StringMap *m_configRef;
@@ -331,10 +331,10 @@ protected:
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     typedef PointerHash<HashPtr, extensions::gl::FrameBufferObject> RenderTargetMap;
     typedef PointerHash<HashString, IEffect> Path2EffectMap;
-    typedef Hash<HashPtr, UnicodeString> ModelRef2PathMap;
-    typedef Hash<HashPtr, UnicodeString> ModelRef2BasenameMap;
+    typedef Hash<HashPtr, std::string> ModelRef2PathMap;
+    typedef Hash<HashPtr, std::string> ModelRef2BasenameMap;
     typedef Hash<HashPtr, IModel *> EffectRef2ModelRefMap;
-    typedef Hash<HashPtr, UnicodeString> EffectRef2OwnerNameMap;
+    typedef Hash<HashPtr, std::string> EffectRef2OwnerNameMap;
     typedef Hash<HashString, IModel *> Name2ModelRefMap;
     typedef PointerArray<OffscreenTexture> OffscreenTextureList;
     typedef std::pair<const IEffect::Parameter *, const char *> SharedTextureParameterKey;

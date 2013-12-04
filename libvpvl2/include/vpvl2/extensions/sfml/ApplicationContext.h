@@ -69,10 +69,10 @@ namespace sfml
 
 class ApplicationContext : public BaseApplicationContext {
 public:
-    static bool mapFileDescriptor(const UnicodeString &path, uint8 *&address, vsize &size, intptr_t &fd) {
+    static bool mapFileDescriptor(const std::string &path, uint8 *&address, vsize &size, intptr_t &fd) {
 #ifdef VPVL2_OS_WINDOWS
         FILE *fp = 0;
-        errno_t err = ::fopen_s(&fp, icu4c::String::toStdString(path).c_str(), "rb");
+        errno_t err = ::fopen_s(&fp, path.c_str(), "rb");
         if (err != 0) {
             return false;
         }
@@ -94,7 +94,7 @@ public:
             return false;
         }
 #else
-        fd = ::open(icu4c::String::toStdString(path).c_str(), O_RDONLY);
+        fd = ::open(path.c_str(), O_RDONLY);
         if (fd == -1) {
             return false;
         }
@@ -136,37 +136,37 @@ public:
     ~ApplicationContext() {
     }
 
-    bool mapFile(const UnicodeString &path, MapBuffer *buffer) const {
+    bool mapFile(const std::string &path, MapBuffer *buffer) const {
         return mapFileDescriptor(path, buffer->address, buffer->size, buffer->opaque);
     }
     bool unmapFile(MapBuffer *buffer) const {
         return unmapFileDescriptor(buffer->address, buffer->size, buffer->opaque);
     }
-    bool existsFile(const UnicodeString &path) const {
+    bool existsFile(const std::string &path) const {
 #ifdef VPVL2_OS_WINDOWS
         FILE *fp = 0;
-        bool exists = ::fopen_s(&fp, icu4c::String::toStdString(path).c_str(), "r") == 0;
+        bool exists = ::fopen_s(&fp, path.c_str(), "r") == 0;
         fclose(fp);
         return exists;
 #else
-        return ::access(icu4c::String::toStdString(path).c_str(), R_OK) == 0;
+        return ::access(path.c_str(), R_OK) == 0;
 #endif
     }
-    bool uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
         sf::Image image;
         if (image.loadFromMemory(data, size)) {
             return uploadTextureSFML(image, key, context, bridge);
         }
         return context->uploadTexture(data, size, key, bridge);
     }
-    bool uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureOpaque(const std::string &path, ModelContext *context, TextureDataBridge &bridge) {
         sf::Image image;
-        if (image.loadFromFile(icu4c::String::toStdString(path))) {
+        if (image.loadFromFile(path)) {
             return uploadTextureSFML(image, path, context, bridge);
         }
         return context->uploadTexture(path, bridge);
     }
-    bool uploadTextureSFML(const sf::Image &image, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureSFML(const sf::Image &image, const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
         const Vector3 size(image.getSize().x, image.getSize().y, 1);
         ITexture *texturePtr = context->createTexture(image.getPixelsPtr(), defaultTextureFormat(), size, (bridge.flags & IApplicationContext::kGenerateTextureMipmap) != 0);
         return context->cacheTexture(key, texturePtr, bridge);
@@ -272,7 +272,7 @@ public:
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     void getToonColor(const IString *name, Color &value, void *userData) {
         ModelContext *modelContext = static_cast<ModelContext *>(userData);
-        const UnicodeString &path = createPath(modelContext->directoryRef(), name);
+        const std::string &path = createPath(modelContext->directoryRef(), name);
         /* TODO: implement this */
         (void) path;
         value.setValue(1, 1, 1, 1);

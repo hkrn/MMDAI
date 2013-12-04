@@ -14,18 +14,12 @@ UnicodeString fromQString(const QString &value)
     return UnicodeString(v, value.size());
 }
 
-QString toQString(const UnicodeString &value)
-{
-    const ushort *v = reinterpret_cast<const ushort *>(value.getBuffer());
-    return QString::fromUtf16(v, value.length());
-}
-
 QStringList UIToStringList(const Archive::EntryNames &value)
 {
     QStringList ret;
     Archive::EntryNames::const_iterator it = value.begin();
     while (it != value.end()) {
-        ret << toQString(*it);
+        ret << QString::fromStdString(*it);
         ++it;
     }
     return ret;
@@ -45,7 +39,7 @@ Archive::EntrySet UIToSet(const Archive::EntryNames &value)
     Archive::EntrySet ret;
     Archive::EntryNames::const_iterator it = value.begin();
     while (it != value.end()) {
-        ret.insert(String::toStdString(*it));
+        ret.insert(*it);
         ++it;
     }
     return ret;
@@ -57,7 +51,7 @@ bool UICompareEntries(const QStringList &entries, const Archive &archive)
     const QSet<QString> &set = entries.toSet();
     Archive::EntryNames::const_iterator it = e.begin();
     while (it != e.end()) {
-        if (!set.contains(toQString(*it))) {
+        if (!set.contains(QString::fromStdString(*it))) {
             return false;
         }
         ++it;
@@ -94,7 +88,7 @@ TEST(ArchiveTest, GetEntries)
 {
     Encoding encoding(0);
     Archive archive(&encoding);
-    std::vector<UnicodeString> entries;
+    std::vector<std::string> entries;
     UncompressArchive(archive, entries);
     QStringList actual = UIToStringList(entries);
     actual.sort();

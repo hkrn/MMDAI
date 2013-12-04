@@ -59,7 +59,7 @@ struct MemoryMappedFile {
     }
     ~MemoryMappedFile() {
     }
-    bool open(const UnicodeString &path) {
+    bool open(const std::string &path) {
         return ApplicationContext::mapFileDescriptor(path, address, size, opaque);
     }
     void close() {

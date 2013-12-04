@@ -234,16 +234,16 @@ BaseApplicationContext::ModelContext::~ModelContext()
     m_directoryRef = 0;
 }
 
-void BaseApplicationContext::ModelContext::addTextureCache(const UnicodeString &path, ITexture *textureRef)
+void BaseApplicationContext::ModelContext::addTextureCache(const std::string &path, ITexture *textureRef)
 {
     if (textureRef) {
         m_textureRefCache.insert(std::make_pair(path, textureRef));
     }
 }
 
-bool BaseApplicationContext::ModelContext::findTextureCache(const UnicodeString &path, TextureDataBridge &bridge) const
+bool BaseApplicationContext::ModelContext::findTextureCache(const std::string &path, TextureDataBridge &bridge) const
 {
-    VPVL2_DCHECK(!path.isEmpty());
+    VPVL2_DCHECK(!path.empty());
     TextureCacheMap::const_iterator it = m_textureRefCache.find(path);
     if (it != m_textureRefCache.end()) {
         bridge.dataRef = it->second;
@@ -252,9 +252,9 @@ bool BaseApplicationContext::ModelContext::findTextureCache(const UnicodeString 
     return false;
 }
 
-bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key, ITexture *textureRef, TextureDataBridge &bridge)
+bool BaseApplicationContext::ModelContext::cacheTexture(const std::string &key, ITexture *textureRef, TextureDataBridge &bridge)
 {
-    VPVL2_DCHECK(!key.isEmpty());
+    VPVL2_DCHECK(!key.empty());
     bool ok = textureRef != 0;
     if (textureRef) {
         pushAnnotationGroup("BaseApplicationContext::ModelContext#cacheTexture", m_applicationContextRef->sharedFunctionResolverInstance());
@@ -270,7 +270,7 @@ bool BaseApplicationContext::ModelContext::cacheTexture(const UnicodeString &key
         }
         textureRef->unbind();
         bridge.dataRef = textureRef;
-        annotateObject(BaseTexture::kGL_TEXTURE, textureRef->data(), String::toStdString("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+        annotateObject(BaseTexture::kGL_TEXTURE, textureRef->data(), ("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         addTextureCache(key, textureRef);
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
@@ -364,15 +364,15 @@ const IString *BaseApplicationContext::ModelContext::directoryRef() const
     return m_directoryRef;
 }
 
-bool BaseApplicationContext::ModelContext::uploadTexture(const UnicodeString &path, TextureDataBridge &bridge)
+bool BaseApplicationContext::ModelContext::uploadTexture(const std::string &path, TextureDataBridge &bridge)
 {
-    VPVL2_DCHECK(!path.isEmpty());
+    VPVL2_DCHECK(!path.empty());
     if (path[path.length() - 1] == '/') {
-        VPVL2_VLOG(2, String::toStdString(path) << " is the directory, skipped.");
+        VPVL2_VLOG(2, path << " is the directory, skipped.");
         return true;
     }
     else if (findTextureCache(path, bridge)) {
-        VPVL2_VLOG(2, String::toStdString(path) << " is already cached, skipped.");
+        VPVL2_VLOG(2, path << " is already cached, skipped.");
         return true;
     }
     ITexture *texturePtr = 0;
@@ -381,23 +381,23 @@ bool BaseApplicationContext::ModelContext::uploadTexture(const UnicodeString &pa
     if (m_applicationContextRef->mapFile(path, &buffer)) {
         texturePtr = createTexture(buffer.address, buffer.size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
         if (!texturePtr) {
-            VPVL2_LOG(WARNING, "Cannot load texture from " << String::toStdString(path) << ": " << stbi_failure_reason());
+            VPVL2_LOG(WARNING, "Cannot load texture from " << path << ": " << stbi_failure_reason());
             return false;
         }
     }
     return cacheTexture(path, texturePtr, bridge);
 }
 
-bool BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsize size, const UnicodeString &key, TextureDataBridge &bridge)
+bool BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsize size, const std::string &key, TextureDataBridge &bridge)
 {
     VPVL2_DCHECK(data && size > 0);
     if (findTextureCache(key, bridge)) {
-        VPVL2_VLOG(2, String::toStdString(key) << " is already cached, skipped.");
+        VPVL2_VLOG(2, key << " is already cached, skipped.");
         return true;
     }
     ITexture *texturePtr = createTexture(data, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
     if (!texturePtr) {
-        VPVL2_LOG(WARNING, "Cannot load texture with key " << String::toStdString(key) << ": " << stbi_failure_reason());
+        VPVL2_LOG(WARNING, "Cannot load texture with key " << key << ": " << stbi_failure_reason());
         return false;
     }
     return cacheTexture(key, texturePtr, bridge);
@@ -523,83 +523,81 @@ bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridg
     bool ret = false;
     bridge.dataRef = 0;
     ModelContext *context = static_cast<ModelContext *>(userData);
-    const UnicodeString &name2 = static_cast<const String *>(name)->value();
+    const std::string &name2 = String::toStdString(static_cast<const String *>(name)->value());
     if (internal::hasFlagBits(bridge.flags, IApplicationContext::kToonTexture)) {
         if (!internal::hasFlagBits(bridge.flags, IApplicationContext::kSystemToonTexture)) {
             /* name2.isEmpty() = directory */
-            if (name2.isEmpty()) {
-                String d(toonDirectory());
-                const UnicodeString &newToonPath = createPath(&d, UnicodeString::fromUTF8("toon0.bmp"));
+            if (name2.empty()) {
+                const std::string &newToonPath = toonDirectory() + "/toon0.bmp";
                 if (!context->findTextureCache(newToonPath, bridge)) {
                     /* uses default system texture loader */
-                    VPVL2_VLOG(2, "Try loading a system default toon texture from archive: " << String::toStdString(newToonPath));
+                    VPVL2_VLOG(2, "Try loading a system default toon texture from archive: " << newToonPath);
                     ret = context->uploadTexture(newToonPath, bridge);
                 }
             }
             else if (context->archiveRef()) {
-                VPVL2_VLOG(2, "Try loading a model toon texture from archive: " << String::toStdString(name2));
-                ret = internalUploadTexture(name2, UnicodeString(), bridge, context);
+                VPVL2_VLOG(2, "Try loading a model toon texture from archive: " << name2);
+                ret = internalUploadTexture(name2, std::string(), bridge, context);
             }
             else if (const IString *directoryRef = context->directoryRef()) {
-                const UnicodeString &path = createPath(directoryRef, name);
-                VPVL2_VLOG(2, "Try loading a model toon texture: " << String::toStdString(path));
+                const std::string &path = createPath(directoryRef, name);
+                VPVL2_VLOG(2, "Try loading a model toon texture: " << path);
                 ret = internalUploadTexture(name2, path, bridge, context);
             }
         }
         if (!ret) {
             bridge.flags |= IApplicationContext::kSystemToonTexture;
-            VPVL2_VLOG(2, "Loading a system default toon texture: " << String::toStdString(name2));
+            VPVL2_VLOG(2, "Loading a system default toon texture: " << name2);
             ret = uploadSystemToonTexture(name2, bridge, context);
         }
     }
     else if (const IString *directoryRef = context->directoryRef()) {
-        const UnicodeString &path = createPath(directoryRef, name);
-        VPVL2_VLOG(2, "Loading a model texture: " << String::toStdString(path));
+        const std::string &path = createPath(directoryRef, name);
+        VPVL2_VLOG(2, "Loading a model texture: " << path);
         ret = internalUploadTexture(name2, path, bridge, context);
     }
     return ret;
 }
 
-bool BaseApplicationContext::uploadSystemToonTexture(const UnicodeString &name, TextureDataBridge &bridge, ModelContext *context)
+bool BaseApplicationContext::uploadSystemToonTexture(const std::string &name, TextureDataBridge &bridge, ModelContext *context)
 {
     MapBuffer buffer(this);
-    String s(toonDirectory());
-    const UnicodeString &path = createPath(&s, name);
+    const std::string &path = toonDirectory() + "/" + name;
     /* open a (system) toon texture from library resource */
     return mapFile(path, &buffer) ? context->uploadTexture(buffer.address, buffer.size, path, bridge) : false;
 }
 
-bool BaseApplicationContext::internalUploadTexture(const UnicodeString &name, const UnicodeString &path, TextureDataBridge &bridge, ModelContext *context)
+bool BaseApplicationContext::internalUploadTexture(const std::string &name, const std::string &path, TextureDataBridge &bridge, ModelContext *context)
 {
     if (!internal::hasFlagBits(bridge.flags, IApplicationContext::kSystemToonTexture)) {
         if (Archive *archiveRef = context->archiveRef()) {
             archiveRef->uncompressEntry(name);
-            VPVL2_LOG(INFO, String::toStdString(name));
+            VPVL2_LOG(INFO, name);
             if (const std::string *bytesRef = archiveRef->dataRef(name)) {
                 const uint8 *ptr = reinterpret_cast<const uint8 *>(bytesRef->data());
                 vsize size = bytesRef->size();
                 return uploadTextureOpaque(ptr, size, name, context, bridge);
             }
-            VPVL2_LOG(WARNING, "Cannot load a bridge from archive: " << String::toStdString(name));
+            VPVL2_LOG(WARNING, "Cannot load a bridge from archive: " << name);
             /* force true to continue loading texture if path is directory */
             return false;
         }
         else if (!existsFile(path)) {
-            VPVL2_LOG(WARNING, "Cannot load inexist " << String::toStdString(path));
+            VPVL2_LOG(WARNING, "Cannot load inexist " << path);
             return true; /* skip */
         }
     }
     return uploadTextureOpaque(path, context, bridge);
 }
 
-bool BaseApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge)
+bool BaseApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge)
 {
     /* fallback to default texture loader */
     VPVL2_VLOG(2, "Using default texture loader (stbi_image) instead of inherited class texture loader.");
     return context->uploadTexture(data, size, key, bridge);
 }
 
-bool BaseApplicationContext::uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge)
+bool BaseApplicationContext::uploadTextureOpaque(const std::string &path, ModelContext *context, TextureDataBridge &bridge)
 {
     /* fallback to default texture loader */
     VPVL2_VLOG(2, "Using default texture loader (stbi_image) instead of inherited class texture loader.");
@@ -754,7 +752,7 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel 
     default:
         break;
     }
-    const UnicodeString &path = shaderDirectory() + UnicodeString::fromUTF8(file.c_str());
+    const std::string &path = shaderDirectory() + "/" + file;
     MapBuffer buffer(this);
     if (mapFile(path, &buffer)) {
         std::string bytes(buffer.address, buffer.address + buffer.size);
@@ -780,12 +778,12 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IString
     if (type == kModelEffectTechniques) {
         std::string bytes;
         MapBuffer buffer(this);
-        if (path && mapFile(static_cast<const String *>(path)->value(), &buffer)) {
+        if (path && mapFile(String::toStdString(static_cast<const String *>(path)->value()), &buffer)) {
             uint8 *address = buffer.address;
             bytes.assign(address, address + buffer.size);
         }
         else {
-            UnicodeString defaultEffectPath = effectDirectory();
+            std::string defaultEffectPath = effectDirectory();
 #if defined(VPVL2_LINK_NVFX)
             defaultEffectPath.append("/base.glslfx");
 #elif defined(VPVL2_ENABLE_NVIDIA_CG)
@@ -822,10 +820,8 @@ IString *BaseApplicationContext::loadKernelSource(KernelType type, void * /* use
     default:
         break;
     }
-    UnicodeString path = kernelDirectory();
-    path.append("/");
-    path.append(UnicodeString::fromUTF8(file));
     MapBuffer buffer(this);
+    const std::string &path = kernelDirectory() + "/" + file;
     if (mapFile(path, &buffer)) {
         std::string bytes(buffer.address, buffer.address + buffer.size);
         return new(std::nothrow) String(UnicodeString::fromUTF8(bytes));
@@ -903,42 +899,42 @@ IModel *BaseApplicationContext::effectOwner(const IEffect *effect) const
 void BaseApplicationContext::setEffectOwner(const IEffect *effectRef, IModel *model)
 {
     const IString *name = model->name(IEncoding::kDefaultLanguage);
-    m_effectRef2owners.insert(effectRef, static_cast<const String *>(name)->value());
+    m_effectRef2owners.insert(effectRef, String::toStdString(static_cast<const String *>(name)->value()));
     m_effectRef2modelRefs.insert(effectRef, model);
 }
 
-void BaseApplicationContext::addModelPath(IModel *model, const UnicodeString &path)
+void BaseApplicationContext::addModelPath(IModel *model, const std::string &path)
 {
     if (model) {
         UErrorCode status = U_ZERO_ERROR;
         RegexMatcher filenameMatcher(".+/((.+)\\.\\w+)$", 0, status);
-        filenameMatcher.reset(path);
+        filenameMatcher.reset(UnicodeString::fromUTF8(path));
         if (filenameMatcher.find()) {
-            const UnicodeString &basename = filenameMatcher.group(1, status);
+            const std::string &basename = String::toStdString(filenameMatcher.group(1, status));
             if (!model->name(IEncoding::kDefaultLanguage)) {
                 String s(filenameMatcher.group(2, status));
                 model->setName(&s, IEncoding::kDefaultLanguage);
             }
-            m_basename2modelRefs.insert(String::toStdString(basename).c_str(), model);
+            m_basename2modelRefs.insert(basename.c_str(), model);
             m_modelRef2Basenames.insert(model, basename);
         }
         else {
             if (!model->name(IEncoding::kDefaultLanguage)) {
-                String s(path);
+                String s(UnicodeString::fromUTF8(path));
                 model->setName(&s, IEncoding::kDefaultLanguage);
             }
-            m_basename2modelRefs.insert(String::toStdString(path).c_str(), model);
+            m_basename2modelRefs.insert(path.c_str(), model);
         }
         m_modelRef2Paths.insert(model, path);
     }
 }
 
-UnicodeString BaseApplicationContext::effectOwnerName(const IEffect *effect) const
+std::string BaseApplicationContext::effectOwnerName(const IEffect *effect) const
 {
-    if (const UnicodeString *value = m_effectRef2owners.find(effect)) {
+    if (const std::string *value = m_effectRef2owners.find(effect)) {
         return *value;
     }
-    return UnicodeString();
+    return std::string();
 }
 
 FrameBufferObject *BaseApplicationContext::createFrameBufferObject()
@@ -953,21 +949,22 @@ void BaseApplicationContext::getEffectCompilerArguments(Array<IString *> &argume
 
 const IString *BaseApplicationContext::effectFilePath(const IModel *model, const IString *dir) const
 {
-    const UnicodeString &path = findModelPath(model);
-    if (!path.isEmpty()) {
+    const std::string &path = findModelPath(model);
+    if (!path.empty()) {
         UErrorCode status = U_ZERO_ERROR;
         RegexMatcher filenameMatcher("^.+/(.+)\\.\\w+$", 0, status);
-        filenameMatcher.reset(path);
-        const UnicodeString &s = filenameMatcher.find() ? filenameMatcher.group(1, status) : path;
+        const UnicodeString &unicodePath = UnicodeString::fromUTF8(path);
+        filenameMatcher.reset(unicodePath);
+        const UnicodeString &s = filenameMatcher.find() ? filenameMatcher.group(1, status) : unicodePath;
         RegexMatcher extractMatcher("^.+\\[(.+)(?:\\.(?:cg)?fx)?\\]$", 0, status);
         extractMatcher.reset(s);
         const UnicodeString &cgfx = extractMatcher.find()
                 ? extractMatcher.replaceAll("$1.cgfx", status) : s + ".cgfx";
-        const UnicodeString &newEffectPath = createPath(dir, cgfx);
-        m_effectPathPtr.reset(existsFile(newEffectPath) ? new String(newEffectPath) : 0);
+        const std::string &newEffectPath = createPath(dir, String::toStdString(cgfx));
+        m_effectPathPtr.reset(existsFile(newEffectPath) ? new String(UnicodeString::fromUTF8(newEffectPath)) : 0);
     }
     if (!m_effectPathPtr.get()) {
-        m_effectPathPtr.reset(new String(createPath(dir, UnicodeString::fromUTF8("default.cgfx"))));
+        m_effectPathPtr.reset(new String(UnicodeString::fromUTF8(createPath(dir, "default.cgfx"))));
     }
     return m_effectPathPtr.get();
 }
@@ -1009,20 +1006,20 @@ void BaseApplicationContext::setMousePosition(const glm::vec2 &value, bool press
     }
 }
 
-UnicodeString BaseApplicationContext::findModelPath(const IModel *modelRef) const
+std::string BaseApplicationContext::findModelPath(const IModel *modelRef) const
 {
-    if (const UnicodeString *value = m_modelRef2Paths.find(modelRef)) {
+    if (const std::string *value = m_modelRef2Paths.find(modelRef)) {
         return *value;
     }
-    return UnicodeString();
+    return std::string();
 }
 
-UnicodeString BaseApplicationContext::findModelBasename(const IModel *modelRef) const
+std::string BaseApplicationContext::findModelBasename(const IModel *modelRef) const
 {
-    if (const UnicodeString *value = m_modelRef2Basenames.find(modelRef)) {
+    if (const std::string *value = m_modelRef2Basenames.find(modelRef)) {
         return *value;
     }
-    return UnicodeString();
+    return std::string();
 }
 
 FrameBufferObject *BaseApplicationContext::findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA)
@@ -1294,7 +1291,7 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
     if (IEffect *const *value = m_effectCaches.find(key)) {
         effectRef = *value;
     }
-    else if (existsFile(static_cast<const String *>(path)->value())) {
+    else if (existsFile(String::toStdString(static_cast<const String *>(path)->value()))) {
         IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
         if (!effectPtr.get() || !effectPtr->internalPointer()) {
             VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << effectRef->errorString());
@@ -1458,37 +1455,37 @@ void BaseApplicationContext::renderShadowMap()
     }
 }
 
-const UnicodeString BaseApplicationContext::createPath(const IString *directoryRef, const UnicodeString &name)
+std::string BaseApplicationContext::createPath(const IString *directoryRef, const std::string &name)
 {
-    UnicodeString n = name;
-    return static_cast<const String *>(directoryRef)->value() + "/" + n.findAndReplace('\\', '/');
+    UnicodeString n = UnicodeString::fromUTF8(name);
+    return String::toStdString(static_cast<const String *>(directoryRef)->value() + "/" + n.findAndReplace('\\', '/'));
 }
 
-const UnicodeString BaseApplicationContext::createPath(const IString *directoryRef, const IString *name)
+std::string BaseApplicationContext::createPath(const IString *directoryRef, const IString *name)
 {
     const UnicodeString &d = static_cast<const String *>(directoryRef)->value();
     UnicodeString n = static_cast<const String *>(name)->value();
-    return d + "/" + n.findAndReplace('\\', '/');
+    return String::toStdString(d + "/" + n.findAndReplace('\\', '/'));
 }
 
-UnicodeString BaseApplicationContext::toonDirectory() const
+std::string BaseApplicationContext::toonDirectory() const
 {
-    return m_configRef->value("dir.system.toon", UnicodeString(":textures"));
+    return String::toStdString(m_configRef->value("dir.system.toon", UnicodeString(":textures")));
 }
 
-UnicodeString BaseApplicationContext::shaderDirectory() const
+std::string BaseApplicationContext::shaderDirectory() const
 {
-    return m_configRef->value("dir.system.shaders", UnicodeString(":shaders"));
+    return String::toStdString(m_configRef->value("dir.system.shaders", UnicodeString(":shaders")));
 }
 
-UnicodeString BaseApplicationContext::effectDirectory() const
+std::string BaseApplicationContext::effectDirectory() const
 {
-    return m_configRef->value("dir.system.effects", UnicodeString(":effects"));
+    return String::toStdString(m_configRef->value("dir.system.effects", UnicodeString(":effects")));
 }
 
-UnicodeString BaseApplicationContext::kernelDirectory() const
+std::string BaseApplicationContext::kernelDirectory() const
 {
-    return m_configRef->value("dir.system.kernels", UnicodeString(":kernels"));
+    return String::toStdString(m_configRef->value("dir.system.kernels", UnicodeString(":kernels")));
 }
 
 void BaseApplicationContext::debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei /* length */, const GLchar *message, GLvoid * /* userData */)

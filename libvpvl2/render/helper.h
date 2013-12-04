@@ -147,20 +147,20 @@ static bool loadModel(const UnicodeString &path,
         icu4c::String s(path);
         if (archive->open(&s, entries)) {
             for (Archive::EntryNames::const_iterator it = entries.begin(); it != entries.end(); it++) {
-                const UnicodeString &filename = *it;
+                const UnicodeString &filename = UnicodeString::fromUTF8(*it);
                 if (filename.endsWith(kPMDExtension) || filename.endsWith(kPMXExtension)) {
-                    archive->uncompressEntry(filename);
+                    archive->uncompressEntry(*it);
                     int offset = filename.lastIndexOf('/');
-                    const std::string *bytes = archive->dataRef(filename);
+                    const std::string *bytes = archive->dataRef(*it);
                     const uint8 *data = reinterpret_cast<const uint8 *>(bytes->data());
-                    archive->setBasePath(filename.tempSubString(0, offset));
+                    archive->setBasePath(icu4c::String::toStdString(filename.tempSubString(0, offset)));
                     model.reset(factoryRef->createModel(data, bytes->size(), ok));
                     break;
                 }
             }
         }
     }
-    else if (applicationContextRef->mapFile(path, &buffer)) {
+    else if (applicationContextRef->mapFile(icu4c::String::toStdString(path), &buffer)) {
         model.reset(factoryRef->createModel(buffer.address, buffer.size, ok));
     }
     return ok && model.get() != 0;
@@ -172,7 +172,7 @@ static void loadAllModels(const icu4c::StringMap &settings,
                           Factory *factoryRef,
                           IEncoding *encodingRef)
 {
-    const UnicodeString &globalMotionPath = settings.value("file.motion", UnicodeString());
+    const std::string &globalMotionPath = icu4c::String::toStdString(settings.value("file.motion", UnicodeString()));
     int nmodels = settings.value("models/size", 0);
     bool parallel = settings.value("enable.parallel", true), ok = false;
     ArchiveSmartPtr archive;
@@ -204,7 +204,7 @@ static void loadAllModels(const icu4c::StringMap &settings,
              * because BaseRenderContext#createEffectRef() depends on BaseRenderContext#addModelPath() result
              * by BaseRenderContext#findModelPath() via BaseRenderContext#effectFilePath()
              */
-            applicationContextRef->addModelPath(model.get(), modelPath);
+            applicationContextRef->addModelPath(model.get(), icu4c::String::toStdString(modelPath));
             if ((flags & Scene::kEffectCapable) != 0) {
                 //effectRef = applicationContextRef->createEffectRef(model.get(), &dir);
                 //if (effectRef) {
@@ -219,8 +219,8 @@ static void loadAllModels(const icu4c::StringMap &settings,
                 model->setPhysicsEnable(settings.value(prefix + "/enable.physics", true));
                 sceneRef->addModel(model.get(), engine.release(), i);
                 BaseApplicationContext::MapBuffer motionBuffer(applicationContextRef);
-                const UnicodeString &modelMotionPath = settings.value(prefix + "/motion", UnicodeString());
-                if (applicationContextRef->mapFile(!modelMotionPath.isEmpty() ? modelMotionPath : globalMotionPath, &motionBuffer)) {
+                const std::string &modelMotionPath = icu4c::String::toStdString(settings.value(prefix + "/motion", UnicodeString()));
+                if (applicationContextRef->mapFile(!modelMotionPath.empty() ? modelMotionPath : globalMotionPath, &motionBuffer)) {
                     IMotionSmartPtr motion(factoryRef->createMotion(motionBuffer.address,
                                                                     motionBuffer.size,
                                                                     model.get(), ok));

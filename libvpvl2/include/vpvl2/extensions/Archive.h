@@ -44,8 +44,6 @@
 #include <set>
 #include <vector>
 
-#include <unicode/unistr.h>
-
 namespace vpvl2
 {
 namespace extensions
@@ -54,7 +52,7 @@ namespace extensions
 class VPVL2_API Archive VPVL2_DECL_FINAL
 {
 public:
-    typedef std::vector<UnicodeString> EntryNames;
+    typedef std::vector<std::string> EntryNames;
     typedef std::set<std::string> EntrySet;
     enum ErrorType {
         kNone,
@@ -73,11 +71,11 @@ public:
     bool open(const IString *filename, EntryNames &entries);
     bool close();
     bool uncompress(const EntrySet &entries);
-    bool uncompressEntry(const UnicodeString &name);
-    void setBasePath(const UnicodeString &value);
+    bool uncompressEntry(const std::string &name);
+    void setBasePath(const std::string &value);
     Archive::ErrorType error() const;
     const EntryNames entryNames() const;
-    const std::string *dataRef(const UnicodeString &name) const;
+    const std::string *dataRef(const std::string &name) const;
 
 private:
     struct PrivateContext;

@@ -60,10 +60,10 @@ namespace glfw
 
 class ApplicationContext : public BaseApplicationContext {
 public:
-    static bool mapFileDescriptor(const UnicodeString &path, uint8 *&address, vsize &size, intptr_t &fd) {
+    static bool mapFileDescriptor(const std::string &path, uint8 *&address, vsize &size, intptr_t &fd) {
 #ifdef _WIN32
         FILE *fp = 0;
-        errno_t err = ::fopen_s(&fp, icu4c::String::toStdString(path).c_str(), "rb");
+        errno_t err = ::fopen_s(&fp, path.c_str(), "rb");
         if (err != 0) {
             return false;
         }
@@ -85,7 +85,7 @@ public:
             return false;
         }
 #else
-        fd = ::open(icu4c::String::toStdString(path).c_str(), O_RDONLY);
+        fd = ::open(path.c_str(), O_RDONLY);
         if (fd == -1) {
             return false;
         }
@@ -132,30 +132,30 @@ public:
         m_baseTicks = 0;
     }
 
-    bool mapFile(const UnicodeString &path, MapBuffer *buffer) const {
+    bool mapFile(const std::string &path, MapBuffer *buffer) const {
         return mapFileDescriptor(path, buffer->address, buffer->size, buffer->opaque);
     }
     bool unmapFile(MapBuffer *buffer) const {
         return unmapFileDescriptor(buffer->address, buffer->size, buffer->opaque);
     }
-    bool existsFile(const UnicodeString &path) const {
+    bool existsFile(const std::string &path) const {
 #ifdef _WIN32
         FILE *fp = 0;
-        bool exists = ::fopen_s(&fp, icu4c::String::toStdString(path).c_str(), "r") == 0;
+        bool exists = ::fopen_s(&fp, path.c_str(), "r") == 0;
         fclose(fp);
         return exists;
 #else
-        return ::access(icu4c::String::toStdString(path).c_str(), R_OK) == 0;
+        return ::access(path.c_str(), R_OK) == 0;
 #endif
     }
-    bool uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
         if (context->uploadTexture(data, size, key, bridge)) {
             // context->optimizeTexture(bridge.dataRef);
             return true;
         }
         return false;
     }
-    bool uploadTextureOpaque(const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureOpaque(const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
         if (context->uploadTexture(key, bridge)) {
             // context->optimizeTexture(bridge.dataRef);
             return true;
@@ -194,7 +194,7 @@ public:
                 return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
             }
             case kQueryCoreProfile: {
-                return false; //gl::isContextCoreProfile(this);
+                return true; //gl::isContextCoreProfile(this);
             }
             default:
                 return 0;
@@ -211,13 +211,13 @@ public:
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     void getToonColor(const IString *name, Color &value, void *userData) {
         ModelContext *modelContext = static_cast<ModelContext *>(userData);
-        const UnicodeString &path = createPath(modelContext->directoryRef(), name);
+        const std::string &path = createPath(modelContext->directoryRef(), name);
         /* TODO: implement this */
         (void) path;
         value.setValue(1, 1, 1, 1);
     }
     void getTime(float32 &value, bool sync) const {
-        value = sync ? 0 : float32(glfwGetTime() - m_baseTicks) / 1000.0f;
+        value = sync ? 0 : float32(glfwGetTime() - m_baseTicks);
     }
     void getElapsed(float32 &value, bool sync) const {
         double currentTicks = glfwGetTime();

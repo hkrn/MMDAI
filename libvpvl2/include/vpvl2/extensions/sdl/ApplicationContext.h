@@ -58,8 +58,8 @@ namespace sdl
 
 class ApplicationContext : public BaseApplicationContext {
 public:
-    static bool mapFileDescriptor(const UnicodeString &path, uint8 *&address, vsize &size, intptr_t &fd) {
-        SDL_RWops *ops = SDL_RWFromFile(icu4c::String::toStdString(path).c_str(), "rb");
+    static bool mapFileDescriptor(const std::string &path, uint8 *&address, vsize &size, intptr_t &fd) {
+        SDL_RWops *ops = SDL_RWFromFile(path.c_str(), "rb");
         if (!ops) {
             return false;
         }
@@ -100,28 +100,28 @@ public:
         m_baseTicks = 0;
     }
 
-    bool mapFile(const UnicodeString &path, MapBuffer *buffer) const {
+    bool mapFile(const std::string &path, MapBuffer *buffer) const {
         return mapFileDescriptor(path, buffer->address, buffer->size, buffer->opaque);
     }
     bool unmapFile(MapBuffer *buffer) const {
         return unmapFileDescriptor(buffer->address, buffer->size, buffer->opaque);
     }
-    bool existsFile(const UnicodeString &path) const {
+    bool existsFile(const std::string &path) const {
         bool exists = false;
-        if (SDL_RWops *handle = SDL_RWFromFile(icu4c::String::toStdString(path).c_str(), "rb")) {
+        if (SDL_RWops *handle = SDL_RWFromFile(path.c_str(), "rb")) {
             exists = true;
             SDL_RWclose(handle);
         }
         return exists;
     }
-    bool uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
         if (context->uploadTexture(data, size, key, bridge)) {
             // context->optimizeTexture(bridge.dataRef);
             return true;
         }
         return false;
     }
-    bool uploadTextureOpaque(const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureOpaque(const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
         if (context->uploadTexture(key, bridge)) {
             // context->optimizeTexture(bridge.dataRef);
             return true;
@@ -211,7 +211,7 @@ public:
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     void getToonColor(const IString *name, Color &value, void *userData) {
         ModelContext *modelContext = static_cast<ModelContext *>(userData);
-        const UnicodeString &path = createPath(modelContext->directoryRef(), name);
+        const std::string &path = createPath(modelContext->directoryRef(), name);
         SDL_Surface *surface = createSurface(path);
         if (!surface) {
             value.setValue(1, 1, 1, 1);
@@ -240,14 +240,14 @@ public:
 #endif
 
 private:
-    SDL_Surface *createSurface(const UnicodeString &path) const {
+    SDL_Surface *createSurface(const std::string &path) const {
         MapBuffer buffer(this);
         if (!mapFile(path, &buffer)) {
             return 0;
         }
         SDL_Surface *surface = 0;
         SDL_RWops *source = SDL_RWFromConstMem(buffer.address, buffer.size);
-        const UnicodeString &lowerPath = path.tempSubString().toLower();
+        const UnicodeString &lowerPath = UnicodeString::fromUTF8(path).tempSubString().toLower();
 #if 0
         char extension[4] = { 0 };
         if (lowerPath.endsWith(".sph") || lowerPath.endsWith(".spa")) {

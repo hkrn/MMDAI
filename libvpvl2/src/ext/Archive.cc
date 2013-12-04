@@ -53,12 +53,6 @@ namespace extensions
 using namespace icu4c;
 
 struct Archive::PrivateContext {
-    struct CaseLess {
-        bool operator()(const UnicodeString &left, const UnicodeString &right) const {
-            return left.caseCompare(right, 0) == -1;
-        }
-    };
-
     PrivateContext(IEncoding *encodingRef)
         : file(0),
           error(kNone),
@@ -76,44 +70,44 @@ struct Archive::PrivateContext {
         file = 0;
         return ret == Z_OK;
     }
-    bool uncompressEntry(const UnicodeString &entry, const unz_file_info &finfo) {
+    bool uncompressEntry(const std::string &entry, const unz_file_info &finfo) {
         std::string &bytes = originalEntries[entry];
         uint32 size(finfo.uncompressed_size);
         bytes.resize(size);
-        VPVL2_VLOG(1, "filename=" << String::toStdString(entry) << " size=" << size);
+        VPVL2_VLOG(1, "filename=" << entry << " size=" << size);
         int err = unzOpenCurrentFile(file);
         if (err != Z_OK) {
-            VPVL2_LOG(WARNING, "Cannot open the file " << String::toStdString(entry) << " in zip: " << err);
+            VPVL2_LOG(WARNING, "Cannot open the file " << entry << " in zip: " << err);
             error = kOpenCurrentFileError;
             return false;
         }
         err = unzReadCurrentFile(file, &bytes[0], size);
         if (err < 0) {
-            VPVL2_LOG(WARNING, "Cannot read the file " << String::toStdString(entry) << " in zip: " << err);
+            VPVL2_LOG(WARNING, "Cannot read the file " << entry << " in zip: " << err);
             error = kReadCurrentFileError;
             return false;
         }
         err = unzCloseCurrentFile(file);
         if (err != Z_OK) {
-            VPVL2_LOG(WARNING, "Cannot close the file " << String::toStdString(entry) << " in zip: " << err);
+            VPVL2_LOG(WARNING, "Cannot close the file " << entry << " in zip: " << err);
             error = kCloseCurrentFileError;
             return false;
         }
         return true;
     }
-    UnicodeString resolvePath(const UnicodeString &value) const {
-        return basePath.isEmpty() ? value : basePath + '/' + value;
+    std::string resolvePath(const std::string &value) const {
+        return basePath.empty() ? value : basePath + "/" + value;
     }
 
-    typedef std::map<UnicodeString, std::string, CaseLess> EntryDataMap;
-    typedef std::map<UnicodeString, std::string, CaseLess> UnicodePath2RawPathMap;
+    typedef std::map<std::string, std::string> EntryDataMap;
+    typedef std::map<std::string, std::string> UnicodePath2RawPathMap;
     unzFile file;
     unz_global_info header;
     Archive::ErrorType error;
     const IEncoding *encodingRef;
     EntryDataMap originalEntries;
     UnicodePath2RawPathMap unicodePath2RawPath;
-    UnicodeString basePath;
+    std::string basePath;
 };
 
 Archive::Archive(IEncoding *encodingRef)
@@ -143,7 +137,7 @@ bool Archive::open(const IString *filename, EntryNames &entries)
                     if (err == UNZ_OK) {
                         const uint8 *ptr = reinterpret_cast<const uint8 *>(path.data());
                         IString *s = m_context->encodingRef->toString(ptr, path.size(), IString::kShiftJIS);
-                        UnicodeString value = static_cast<const String *>(s)->value();
+                        const std::string &value = String::toStdString(static_cast<const String *>(s)->value());
                         entries.push_back(value);
                         m_context->unicodePath2RawPath.insert(std::make_pair(value, path));
                         internal::deleteObject(s);
@@ -207,7 +201,7 @@ bool Archive::uncompress(const EntrySet &entries)
                     entry.assign(String::toStdString(static_cast<const String *>(name)->value().toLower()));
                     internal::deleteObject(name);
                 }
-                if (entries.find(entry) != entries.end() && !m_context->uncompressEntry(UnicodeString::fromUTF8(entry), info)) {
+                if (entries.find(entry) != entries.end() && !m_context->uncompressEntry(entry, info)) {
                     return false;
                 }
             }
@@ -239,9 +233,9 @@ bool Archive::uncompress(const EntrySet &entries)
     return err == Z_OK;
 }
 
-bool Archive::uncompressEntry(const UnicodeString &name)
+bool Archive::uncompressEntry(const std::string &name)
 {
-    const UnicodeString &key = m_context->resolvePath(name);
+    const std::string &key = m_context->resolvePath(name);
     PrivateContext::UnicodePath2RawPathMap::const_iterator it = m_context->unicodePath2RawPath.find(key);
     bool ok = false;
     if (it != m_context->unicodePath2RawPath.end()) {
@@ -253,13 +247,13 @@ bool Archive::uncompressEntry(const UnicodeString &name)
             unzGoToFirstFile(m_context->file);
         }
         else {
-            VPVL2_LOG(WARNING, "Cannot locate to the file << " << String::toStdString(name) << " in zip: " << err);
+            VPVL2_LOG(WARNING, "Cannot locate to the file << " << name << " in zip: " << err);
         }
     }
     return ok;
 }
 
-void Archive::setBasePath(const UnicodeString &value)
+void Archive::setBasePath(const std::string &value)
 {
     m_context->basePath = value;
 }
@@ -280,9 +274,11 @@ const Archive::EntryNames Archive::entryNames() const
     return names;
 }
 
-const std::string *Archive::dataRef(const UnicodeString &name) const
+const std::string *Archive::dataRef(const std::string &name) const
 {
-    PrivateContext::EntryDataMap::const_iterator it = m_context->originalEntries.find(m_context->resolvePath(name));
+    std::string ln = name;
+    std::transform(ln.begin(), ln.end(), ln.begin(), ::tolower);
+    PrivateContext::EntryDataMap::const_iterator it = m_context->originalEntries.find(m_context->resolvePath(ln));
     return it != m_context->originalEntries.end() ? &it->second : 0;
 }
 
