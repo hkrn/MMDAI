@@ -238,6 +238,7 @@ int main(int /* argc */, char **argv)
     World world;
     applicationContext.initialize(false);
     applicationContext.setViewportRegion(glm::vec4(0, 0, width, height));
+    applicationContext.updateCameraMatrices();
     ::ui::initializeDictionary(settings, dictionary);
     ::ui::loadAllModels(settings, &applicationContext, &scene, &factory, &encoding);
     scene.setWorldRef(world.dynamicWorldRef());
