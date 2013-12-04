@@ -144,9 +144,8 @@ public:
         (void) value;
         (void) sync;
     }
-    bool mapFile(const UnicodeString &path, MapBuffer *buffer) const {
-        const std::string &s = icu4c::String::toStdString(path);
-        if (FILE *fp = fopen(s.c_str(), "rb")) {
+    bool mapFile(const std::string &path, MapBuffer *buffer) const {
+        if (FILE *fp = fopen(path.c_str(), "rb")) {
             fseek(fp, 0, SEEK_END);
             vsize size = ftell(fp);
             fseek(fp, 0, SEEK_SET);
@@ -169,9 +168,8 @@ public:
         }
         return false;
     }
-    bool existsFile(const UnicodeString &path) const {
-        const std::string &s = icu4c::String::toStdString(path);
-        if (FILE *fp = fopen(s.c_str(), "rb")) {
+    bool existsFile(const std::string &path) const {
+        if (FILE *fp = fopen(path.c_str(), "rb")) {
             fclose(fp);
             return true;
         }
