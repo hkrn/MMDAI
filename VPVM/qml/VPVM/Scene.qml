@@ -35,8 +35,8 @@
 
 */
 
-import QtQuick 2.1
-import QtQuick.Controls 1.0
+import QtQuick 2.2
+import QtQuick.Controls 1.1
 import com.github.mmdai.VPVM 1.0 as VPVM
 import "FontAwesome.js" as FontAwesome
 
@@ -128,12 +128,11 @@ Item {
         asynchronous: true
         visible: status === Loader.Ready
         function __handleAccept() {
-            progressBar.indeterminate = true
-            progressBar.visible = true
+            buzyIndicator.running = true
             renderTarget.forceActiveFocus()
         }
         function __handleReject() {
-            progressBar.visible = false
+            buzyIndicator.running = false
             renderTarget.forceActiveFocus()
         }
         onLoaded: {
@@ -285,17 +284,12 @@ Item {
             __constructing = false
         }
         function __handleWillLoad(numEstimated) {
-            progressBar.visible = true
-            progressBar.maximumValue = numEstimated
+            buzyIndicator.running = true
         }
         function __handleBeLoading(numLoaded, numEstimated) {
-            progressBar.value = numLoaded
-            progressBar.maximumValue = numEstimated
         }
         function __handleDidLoad(numLoaded, numEstimated) {
-            progressBar.value = numLoaded
-            progressBar.maximumValue = numEstimated
-            progressBar.visible = false
+            buzyIndicator.running = false
         }
         camera.seekable: playing || currentMotion === camera.motion
         onProjectWillCreate: __stopProject()
@@ -418,8 +412,7 @@ Item {
             if (model.availableBones.length > 0) {
                 model.selectOpaqueObject(model.availableBones[0])
             }
-            progressBar.visible = false
-            progressBar.indeterminate = false
+            buzyIndicator.running = false
             scene.modelDidUpload(model, isProject)
         }
         onErrorDidHappen: notificationDidPost(message)
@@ -430,9 +423,9 @@ Item {
             scene.state = "stop"
             scene.encodeDidFinish(isNormalExit)
         }
-        ProgressBar {
-            id: progressBar
-            visible: false
+        BusyIndicator {
+            id: buzyIndicator
+            running: false
             anchors.centerIn: parent
         }
         Timer {
@@ -464,6 +457,17 @@ Item {
             var closure = __keycode2closures[event.key]
             if (closure) {
                 closure(event)
+            }
+        }
+        DropArea {
+            anchors.fill: parent
+            onDropped: {
+                if (drop.hasUrls) {
+                    for (var i in drop.urls) {
+                        var url = drop.urls[i]
+                        project.loadModel(url)
+                    }
+                }
             }
         }
     }

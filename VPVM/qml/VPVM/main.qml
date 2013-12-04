@@ -1188,6 +1188,15 @@ ApplicationWindow {
                                     model.selectOpaqueObject(opaque)
                                 }
                             }
+                            DropArea {
+                                anchors.fill: parent
+                                onDropped: {
+                                    if (drop.hasUrls) {
+                                        var url = drop.urls[0]
+                                        scene.project.loadMotion(url, scene.currentModel, VPVM.Project.ModelMotion)
+                                    }
+                                }
+                            }
                         }
                         Rectangle {
                             id: coverTimeline
