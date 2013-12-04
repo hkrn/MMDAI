@@ -155,51 +155,35 @@ ApplicationWindow {
                         ColumnLayout {
                             ColumnLayout {
                                 RowLayout {
-                                    ExclusiveGroup {
-                                        id: accelerationTypeExclusiveGroup
-                                        onCurrentChanged: {
-                                            if (current === parallelAcceleration) {
-                                                scene.project.accelerationType = VPVM.Project.ParallelAcceleration
-                                            }
-                                            else if (current === vertexShaderAcceleration) {
-                                                scene.project.accelerationType = VPVM.Project.VertexShaderAcceleration
-                                            }
-                                            else if (current === openclCPUAcceleration) {
-                                                scene.project.accelerationType = VPVM.Project.OpenCLCPUAcceleration
-                                            }
-                                            else if (current === openclGPUAcceleration) {
-                                                scene.project.accelerationType = VPVM.Project.OpenCLGPUAcceleration
-                                            }
-                                            else {
+                                    ComboBox {
+                                        Layout.fillWidth: true
+                                        model: [
+                                            qsTr("No Acceleration (CPU)"),
+                                            qsTr("Parallel (CPU)"),
+                                            qsTr("Vertex Shader (GPU)"),
+                                            qsTr("OpenCL (GPU)"),
+                                            qsTr("OpenCL (CPU)")
+                                        ]
+                                        onCurrentIndexChanged: {
+                                            switch (currentIndex) {
+                                            case 0:
+                                            default:
                                                 scene.project.accelerationType = VPVM.Project.NoAcceleration
+                                                break;
+                                            case 1:
+                                                scene.project.accelerationType = VPVM.Project.ParallelAcceleration
+                                                break;
+                                            case 2:
+                                                scene.project.accelerationType = VPVM.Project.VertexShaderAcceleration
+                                                break;
+                                            case 3:
+                                                scene.project.accelerationType = VPVM.Project.OpenCLCPUAcceleration
+                                                break;
+                                            case 4:
+                                                scene.project.accelerationType = VPVM.Project.OpenCLGPUAcceleration
+                                                break;
                                             }
                                         }
-                                    }
-                                    RadioButton {
-                                        id: noAcceleration
-                                        text: qsTr("No Acceleration (CPU)")
-                                        exclusiveGroup: accelerationTypeExclusiveGroup
-                                    }
-                                    RadioButton {
-                                        id: parallelAcceleration
-                                        text: qsTr("Parallel (CPU)")
-                                        checked: true
-                                        exclusiveGroup: accelerationTypeExclusiveGroup
-                                    }
-                                    RadioButton {
-                                        id: vertexShaderAcceleration
-                                        text: qsTr("Vertex Shader (GPU)")
-                                        exclusiveGroup: accelerationTypeExclusiveGroup
-                                    }
-                                    RadioButton {
-                                        id: openclGPUAcceleration
-                                        text: qsTr("OpenCL (GPU)")
-                                        exclusiveGroup: accelerationTypeExclusiveGroup
-                                    }
-                                    RadioButton {
-                                        id: openclCPUAcceleration
-                                        text: qsTr("OpenCL (CPU)")
-                                        exclusiveGroup: accelerationTypeExclusiveGroup
                                     }
                                 }
                                 Label {
