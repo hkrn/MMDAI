@@ -125,7 +125,7 @@ Item {
 
     Loader {
         id: confirmWindowLoader
-        asynchronous: true
+        // asynchronous: true
         visible: status === Loader.Ready
         function __handleAccept() {
             buzyIndicator.running = true

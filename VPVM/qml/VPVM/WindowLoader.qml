@@ -40,7 +40,7 @@ import QtQuick 2.2
 Loader {
     id: windowLoader
     property url loaderSource
-    asynchronous: true
+    // asynchronous: true
     visible: status === Loader.Ready
     onLoaded: item.show()
     function open(properties) {
