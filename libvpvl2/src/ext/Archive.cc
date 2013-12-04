@@ -40,6 +40,7 @@
 #include <vpvl2/extensions/icu4c/String.h>
 #include <vpvl2/internal/util.h>
 
+#include <algorithm>
 #include <map>
 #include <unicode/regex.h>
 
