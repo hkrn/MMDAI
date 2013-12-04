@@ -192,8 +192,8 @@ public:
     }
     void uploadAnimatedTexture(float32 /* offset */, float32 /* speed */, float32 /* seek */, void * /* texture */) {
     }
-    bool mapFile(const UnicodeString &path, MapBuffer *buffer) const {
-        QScopedPointer<QFile> file(new QFile(Util::toQString(path)));
+    bool mapFile(const std::string &path, MapBuffer *buffer) const {
+        QScopedPointer<QFile> file(new QFile(QString::fromStdString(path)));
         if (file->open(QFile::ReadOnly | QFile::Unbuffered)) {
             bool ok = true;
             size_t size = 0;
@@ -227,16 +227,16 @@ public:
         }
         return false;
     }
-    bool existsFile(const UnicodeString &path) const {
-        return QFile::exists(Util::toQString(path));
+    bool existsFile(const std::string &path) const {
+        return QFile::exists(QString::fromStdString(path));
     }
-    bool uploadTextureOpaque(const uint8 *data, vsize size, const UnicodeString &key, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
         QImage image;
         image.loadFromData(data, size);
         return uploadTextureQt(image, key, context, bridge);
     }
-    bool uploadTextureOpaque(const UnicodeString &path, ModelContext *context, TextureDataBridge &bridge) {
-        QImage image(Util::toQString(path));
+    bool uploadTextureOpaque(const std::string &path, ModelContext *context, TextureDataBridge &bridge) {
+        QImage image(QString::fromStdString(path));
         return uploadTextureQt(image, path, context, bridge);
     }
     FunctionResolver *sharedFunctionResolverInstance() const {
@@ -246,7 +246,7 @@ public:
     gl::BaseSurface::Format defaultTextureFormat() const {
         return gl::BaseSurface::Format(gl::kGL_BGRA, gl::kGL_RGBA8, gl::kGL_UNSIGNED_INT_8_8_8_8_REV, gl::Texture2D::kGL_TEXTURE_2D);
     }
-    bool uploadTextureQt(const QImage &image, const UnicodeString &key, ModelContext *modelContext, TextureDataBridge &bridge) {
+    bool uploadTextureQt(const QImage &image, const std::string &key, ModelContext *modelContext, TextureDataBridge &bridge) {
         /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
         const Vector3 size(image.width(), image.height(), 1);
         if (!image.isNull()) {
@@ -281,7 +281,7 @@ public:
                 if (!pair.second) {
                     projectProxy->setModelSetting(modelProxy, "selected", false);
                 }
-                addModelPath(modelRef, Util::fromQString(fileInfo.absoluteFilePath()));
+                addModelPath(modelRef, fileInfo.absoluteFilePath().toStdString());
                 setEffectOwner(effectRef, modelRef);
                 uploadedModelProxies.append(pair);
             }
