@@ -80,6 +80,8 @@ struct Resolver : IApplicationContext::FunctionResolver {
             GLint nextensions;
             glGetIntegerv(kGL_NUM_EXTENSIONS, &nextensions);
             const std::string &needle = std::string("GL_") + name;
+            typedef const GLubyte * (GLAPIENTRY * PFNGLGETSTRINGIPROC) (gl::GLenum pname, gl::GLuint index);
+            PFNGLGETSTRINGIPROC getStringi = reinterpret_cast<PFNGLGETSTRINGIPROC>(resolveSymbol("glGetStringi"));
             for (int i = 0; i < nextensions; i++) {
                 if (needle == reinterpret_cast<const char *>(getStringi(GL_EXTENSIONS, i))) {
                     supportedExtensionsCache.insert(name, true);
@@ -150,8 +152,6 @@ struct Resolver : IApplicationContext::FunctionResolver {
 #endif
     ~Resolver() {}
     static const GLenum kGL_NUM_EXTENSIONS = 0x821D;
-    typedef const GLubyte * (GLAPIENTRY * PFNGLGETSTRINGIPROC) (gl::GLenum pname, gl::GLuint index);
-    PFNGLGETSTRINGIPROC getStringi;
     mutable Hash<HashString, bool> supportedExtensionsCache;
     mutable Hash<HashString, void *> addressesCache;
     bool coreProfile;
@@ -1743,6 +1743,8 @@ void RenderTarget::initialize()
     Q_ASSERT(window());
     QQuickWindow *win = window();
     if (!Scene::isInitialized()) {
+        bool isCoreProfile = win->format().profile() == QSurfaceFormat::CoreProfile;
+        g_functionResolverInstance->coreProfile = isCoreProfile;
         Scene::initialize(g_functionResolverInstance);
         m_graphicsDevice.reset(new GraphicsDevice());
         m_graphicsDevice->initialize();
