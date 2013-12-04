@@ -523,7 +523,7 @@ bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridg
     bool ret = false;
     bridge.dataRef = 0;
     ModelContext *context = static_cast<ModelContext *>(userData);
-    const std::string &name2 = String::toStdString(static_cast<const String *>(name)->value());
+    const std::string &name2 = static_cast<const String *>(name)->toStdString();
     if (internal::hasFlagBits(bridge.flags, IApplicationContext::kToonTexture)) {
         if (!internal::hasFlagBits(bridge.flags, IApplicationContext::kSystemToonTexture)) {
             /* name2.isEmpty() = directory */
@@ -778,7 +778,7 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IString
     if (type == kModelEffectTechniques) {
         std::string bytes;
         MapBuffer buffer(this);
-        if (path && mapFile(String::toStdString(static_cast<const String *>(path)->value()), &buffer)) {
+        if (path && mapFile(static_cast<const String *>(path)->toStdString(), &buffer)) {
             uint8 *address = buffer.address;
             bytes.assign(address, address + buffer.size);
         }
@@ -899,7 +899,7 @@ IModel *BaseApplicationContext::effectOwner(const IEffect *effect) const
 void BaseApplicationContext::setEffectOwner(const IEffect *effectRef, IModel *model)
 {
     const IString *name = model->name(IEncoding::kDefaultLanguage);
-    m_effectRef2owners.insert(effectRef, String::toStdString(static_cast<const String *>(name)->value()));
+    m_effectRef2owners.insert(effectRef, static_cast<const String *>(name)->toStdString());
     m_effectRef2modelRefs.insert(effectRef, model);
 }
 
@@ -1291,7 +1291,7 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
     if (IEffect *const *value = m_effectCaches.find(key)) {
         effectRef = *value;
     }
-    else if (existsFile(String::toStdString(static_cast<const String *>(path)->value()))) {
+    else if (existsFile(static_cast<const String *>(path)->toStdString())) {
         IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
         if (!effectPtr.get() || !effectPtr->internalPointer()) {
             VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << effectRef->errorString());
@@ -1458,7 +1458,7 @@ void BaseApplicationContext::renderShadowMap()
 std::string BaseApplicationContext::createPath(const IString *directoryRef, const std::string &name)
 {
     UnicodeString n = UnicodeString::fromUTF8(name);
-    return String::toStdString(static_cast<const String *>(directoryRef)->value() + "/" + n.findAndReplace('\\', '/'));
+    return static_cast<const String *>(directoryRef)->toStdString() + "/" + String::toStdString(n.findAndReplace('\\', '/'));
 }
 
 std::string BaseApplicationContext::createPath(const IString *directoryRef, const IString *name)

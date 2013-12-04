@@ -87,7 +87,7 @@ public:
         }
     };
 
-    static const std::string toStdString(const UnicodeString &value);
+    static std::string toStdString(const UnicodeString &value);
     static bool toBoolean(const UnicodeString &value);
     static int toInt(const UnicodeString &value, int def = 0);
     static double toDouble(const UnicodeString &value, double def = 0.0);
@@ -104,6 +104,7 @@ public:
     const HashString toHashString() const;
     bool equals(const IString *value) const;
     UnicodeString value() const;
+    std::string toStdString() const;
     const uint8 *toByteArray() const;
     vsize size() const;
     vsize length(Codec codec) const;

@@ -45,7 +45,7 @@ namespace extensions
 namespace icu4c
 {
 
-const std::string String::toStdString(const UnicodeString &value)
+std::string String::toStdString(const UnicodeString &value)
 {
     std::string str;
     UErrorCode status = U_ZERO_ERROR;
@@ -174,6 +174,11 @@ bool String::equals(const IString *value) const
 UnicodeString String::value() const
 {
     return m_value;
+}
+
+std::string String::toStdString() const
+{
+    return toStdString(m_value);
 }
 
 const uint8 *String::toByteArray() const
