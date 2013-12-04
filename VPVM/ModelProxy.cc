@@ -49,6 +49,7 @@
 #include "MotionProxy.h"
 #include "ProjectProxy.h"
 #include "Util.h"
+#include "WorldProxy.h"
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
@@ -350,6 +351,7 @@ void ModelProxy::release()
 {
     if (!m_parentProjectRef->resolveModelProxy(data())) {
         VPVL2_VLOG(1, uuid().toString().toStdString() << " a.k.a " << name().toStdString() << " is scheduled to be delete from ModelProxy and will be deleted");
+        m_parentProjectRef->world()->leaveWorld(this);
         deleteLater();
     }
 }
