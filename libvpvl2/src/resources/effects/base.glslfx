@@ -326,11 +326,10 @@ void vpvl2FXTransformVertex(inout vec4 origin,
     vec4 diffuse = clamp(vpvl2_NS_materialDiffuse * vec4(vpvl2_NS_lightDiffuse, 1.0), kZero4, kOne4);
     origin       = vpvl2FXPerformPositionTransform(origin, boneIndices, boneWeights);
     position     = vpvl2_NS_worldViewProjectionMatrix * origin;
-    normal       = vpvl2FXPerformNormalTransform(normal, position, boneIndices, boneWeights);
-    vec4 normal2 = vpvl2_NS_worldViewMatrix * normal;
-    color        = vec4(clamp(ambient + dot(normal2.xyz, -vpvl2_NS_lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
-    texcoord.zw  = (-normal2.xy * kHalf2 + kHalf2) * vec2(use_spheremap)
-                 + (kOne2 + vec2(dot(vpvl2_NS_lightDirection, -normal2.xyz)) * kHalf2) * vec2(!use_spheremap);
+    normal       = vpvl2_NS_worldViewMatrix * vpvl2FXPerformNormalTransform(normal, position, boneIndices, boneWeights);
+    color        = vec4(clamp(ambient + dot(normal.xyz, -vpvl2_NS_lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
+    texcoord.zw  = (-normal.xy * kHalf2 + kHalf2) * vec2(use_spheremap)
+                 + (kOne2 + vec2(dot(vpvl2_NS_lightDirection, -normal.xyz)) * kHalf2) * vec2(!use_spheremap);
 }
 
 } /* transformVertex */
