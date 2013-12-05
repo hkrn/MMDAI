@@ -1241,9 +1241,9 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::projectDidCreate, this, &RenderTarget::prepareUploadingModelsInProject);
     connect(value, &ProjectProxy::projectWillLoad, this, &RenderTarget::initializeProject);
     connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::prepareUploadingModelsInProject);
-    connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::syncExplicit);
+    connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::synchronizeExplicitly);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmo);
-    connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::syncExplicit);
+    connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::synchronizeExplicitly);
     connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::currentTimeIndexChanged, this, &RenderTarget::seekMediaFromProject);
     connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::resetCurrentTimeIndex);
@@ -1448,7 +1448,7 @@ void RenderTarget::handleWindowChange(QQuickWindow *window)
 {
     if (window) {
         connect(window, &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initialize, Qt::DirectConnection);
-        connect(window, &QQuickWindow::afterRendering, this, &RenderTarget::syncImplicit, Qt::DirectConnection);
+        connect(window, &QQuickWindow::frameSwapped, this, &RenderTarget::synchronizeImplicitly, Qt::DirectConnection);
         window->setClearBeforeRendering(false);
     }
 }
@@ -1462,7 +1462,7 @@ void RenderTarget::update()
 void RenderTarget::render()
 {
     Q_ASSERT(window());
-    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncExplicit, Qt::DirectConnection);
+    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::synchronizeExplicitly, Qt::DirectConnection);
 }
 
 void RenderTarget::exportImage(const QUrl &fileUrl, const QSize &size)
@@ -1595,8 +1595,6 @@ void RenderTarget::draw()
     Q_ASSERT(m_applicationContext);
     if (m_projectProxyRef) {
         emit renderWillPerform();
-        window()->resetOpenGLState();
-        Scene::setRequiredOpenGLState();
         drawShadowMap();
         updateViewport();
         clearScene();
@@ -1702,7 +1700,7 @@ void RenderTarget::launchEncodingTask()
 void RenderTarget::prepareSyncMotionState()
 {
     Q_ASSERT(window());
-    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncMotionState, Qt::DirectConnection);
+    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::synchronizeMotionState, Qt::DirectConnection);
 }
 
 void RenderTarget::prepareUpdatingLight()
@@ -1712,30 +1710,33 @@ void RenderTarget::prepareUpdatingLight()
     }
 }
 
-void RenderTarget::syncExplicit()
+void RenderTarget::synchronizeExplicitly()
 {
     Q_ASSERT(window());
-    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncExplicit);
+    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::synchronizeExplicitly);
     if (m_projectProxyRef) {
         m_projectProxyRef->update(Scene::kUpdateAll | Scene::kForceUpdateAllMorphs);
     }
     draw();
 }
 
-void RenderTarget::syncMotionState()
+void RenderTarget::synchronizeMotionState()
 {
     Q_ASSERT(window() && m_projectProxyRef);
-    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::syncMotionState);
+    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::synchronizeMotionState);
     m_projectProxyRef->update(Scene::kUpdateAll | Scene::kForceUpdateAllMorphs | Scene::kResetMotionState);
     draw();
 }
 
-void RenderTarget::syncImplicit()
+void RenderTarget::synchronizeImplicitly()
 {
+    Q_ASSERT(window());
     if (m_projectProxyRef) {
         int flags = m_playing ? Scene::kUpdateAll : (Scene::kUpdateCamera | Scene::kUpdateRenderEngines);
         m_projectProxyRef->update(flags);
     }
+    window()->resetOpenGLState();
+    Scene::setRequiredOpenGLState();
 }
 
 void RenderTarget::initialize()
