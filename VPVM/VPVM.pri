@@ -93,5 +93,5 @@ linux {
 CONFIG(release, debug|release) { RESOURCES += $${VPVM_ROOT_PATH}/qml/VPVM.qrc }
 
 VER_MAJ = 0
-VER_MIN = 31
+VER_MIN = 33
 VER_PAT = 0
