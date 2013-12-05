@@ -121,7 +121,6 @@ namespace icu4c {
 class Encoding;
 class StringMap;
 VPVL2_MAKE_SMARTPTR(Encoding);
-VPVL2_MAKE_SMARTPTR(String);
 }
 
 VPVL2_MAKE_SMARTPTR(Archive);
@@ -129,6 +128,7 @@ VPVL2_MAKE_SMARTPTR(Factory);
 VPVL2_MAKE_SMARTPTR2(IModel, Scene::Deleter);
 VPVL2_MAKE_SMARTPTR2(IMotion, Scene::Deleter);
 VPVL2_MAKE_SMARTPTR2(IRenderEngine, Scene::Deleter);
+VPVL2_MAKE_SMARTPTR(IString);
 VPVL2_MAKE_SMARTPTR(Scene);
 VPVL2_MAKE_SMARTPTR(World);
 
@@ -353,7 +353,7 @@ protected:
     OffscreenTextureList m_offscreenTextures;
     SharedTextureParameterMap m_sharedParameters;
     Array<vpvl2::IEffect::Technique *> m_offscreenTechniques;
-    mutable icu4c::StringSmartPtr m_effectPathPtr;
+    mutable IStringSmartPtr m_effectPathPtr;
     int m_samplesMSAA;
     bool m_viewportRegionInvalidated;
 #endif

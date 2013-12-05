@@ -45,6 +45,11 @@ namespace extensions
 namespace icu4c
 {
 
+IString *String::create(const std::string &value, const Converter *converterRef)
+{
+    return new String(UnicodeString::fromUTF8(value), converterRef);
+}
+
 std::string String::toStdString(const UnicodeString &value)
 {
     std::string str;

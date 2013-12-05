@@ -961,10 +961,10 @@ const IString *BaseApplicationContext::effectFilePath(const IModel *model, const
         const UnicodeString &cgfx = extractMatcher.find()
                 ? extractMatcher.replaceAll("$1.cgfx", status) : s + ".cgfx";
         const std::string &newEffectPath = createPath(dir, String::toStdString(cgfx));
-        m_effectPathPtr.reset(existsFile(newEffectPath) ? new String(UnicodeString::fromUTF8(newEffectPath)) : 0);
+        m_effectPathPtr.reset(existsFile(newEffectPath) ? String::create(newEffectPath) : 0);
     }
     if (!m_effectPathPtr.get()) {
-        m_effectPathPtr.reset(new String(UnicodeString::fromUTF8(createPath(dir, "default.cgfx"))));
+        m_effectPathPtr.reset(String::create(createPath(dir, "default.cgfx")));
     }
     return m_effectPathPtr.get();
 }
