@@ -162,8 +162,6 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("applicationPreference", &applicationPreference);
 #ifdef QT_NO_DEBUG
-    engine.setImportPathList(QStringList() << Util::resourcePath("qml"));
-    engine.setPluginPathList(QStringList() << Util::resourcePath("qml/plugins"));
     engine.load(QUrl("qrc:///qml/VPVM/main.qml"));
 #else
     engine.load(Util::resourcePath("qml/VPVM/main.qml"));
