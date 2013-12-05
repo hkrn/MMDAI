@@ -208,9 +208,9 @@ private slots:
     void launchEncodingTask();
     void prepareSyncMotionState();
     void prepareUpdatingLight();
-    void syncExplicit();
-    void syncMotionState();
-    void syncImplicit();
+    void synchronizeExplicitly();
+    void synchronizeMotionState();
+    void synchronizeImplicitly();
     void initialize();
     void release();
     void enqueueUploadingModel(ModelProxy *model, bool isProject);
