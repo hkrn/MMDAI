@@ -306,7 +306,3 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2" DESTINATION "${CMA
         PATTERN "gl2" EXCLUDE
         PATTERN "qt" EXCLUDE)
 
-if(VPVL2_LINK_QT)
-  install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/qt"
-          DESTINATION "${CMAKE_INSTALL_PREFIX}/include/vpvl2")
-endif()
