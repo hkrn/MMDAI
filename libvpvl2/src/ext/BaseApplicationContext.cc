@@ -824,7 +824,7 @@ IString *BaseApplicationContext::loadKernelSource(KernelType type, void * /* use
     const std::string &path = kernelDirectory() + "/" + file;
     if (mapFile(path, &buffer)) {
         std::string bytes(buffer.address, buffer.address + buffer.size);
-        return new(std::nothrow) String(UnicodeString::fromUTF8(bytes));
+        return String::create(bytes);
     }
     else {
         return 0;
@@ -1315,12 +1315,11 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
 
 IEffect *BaseApplicationContext::createEffectRef(IModel *modelRef, const IString *directoryRef)
 {
-    const UnicodeString &pathForKey = static_cast<const String *>(effectFilePath(modelRef, directoryRef))->value();
-    const String s(pathForKey);
-    IEffect *effectRef = createEffectRef(&s);
+    const IString *s = effectFilePath(modelRef, directoryRef);
+    IEffect *effectRef = createEffectRef(s);
     if (effectRef) {
         setEffectOwner(effectRef, modelRef);
-        VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(modelRef->name(IEncoding::kDefaultLanguage), "(null)") << " path=" << internal::cstr(&s, ""));
+        VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(modelRef->name(IEncoding::kDefaultLanguage), "(null)") << " path=" << internal::cstr(s, ""));
     }
     return effectRef;
 }
