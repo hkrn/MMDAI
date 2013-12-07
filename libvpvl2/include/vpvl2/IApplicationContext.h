@@ -88,6 +88,7 @@ public:
         kMouseLeftPressPosition,
         kMouseMiddlePressPosition,
         kMouseRightPressPosition,
+        kMouseWheelPosition,
         kMaxMousePositionType
     };
     enum MatrixTypeFlags {
