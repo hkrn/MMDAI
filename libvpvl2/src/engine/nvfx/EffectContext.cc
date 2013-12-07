@@ -62,7 +62,7 @@ static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationCo
 {
     if (resolver->query(IApplicationContext::FunctionResolver::kQueryCoreProfile) != 0) {
         int i = 0;
-        while (nvFX::IShader *shader = container->findShader(i)) {
+        while (nvFX::IShader *shader = container->findShader(i++)) {
             nvFX::TargetType type = shader->getType();
             const char *name = shader->getName();
             if (*name == '\0' && type == nvFX::TGLSL) {
@@ -81,12 +81,11 @@ static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationCo
                 internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, resolver->query(IApplicationContext::FunctionResolver::kQueryShaderVersion));
                 shader->getExInterface()->addHeaderCode(appendingHeader);
             }
-            shader = container->findShader(++i);
         }
     }
     else {
         int i = 0;
-        while (nvFX::IShader *shader = container->findShader(i)) {
+        while (nvFX::IShader *shader = container->findShader(i++)) {
             nvFX::TargetType type = shader->getType();
             const char *name = shader->getName();
             if (*name == '\0' && type == nvFX::TGLSL) {
