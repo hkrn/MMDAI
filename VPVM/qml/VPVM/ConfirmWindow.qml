@@ -56,6 +56,18 @@ ApplicationWindow {
         close.accepted = true
         reject()
     }
+    function makeLink(comment) {
+        var newComment = comment
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/&/g, "&amp;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;")
+            .replace(/\r\n/g, "<br>")
+            .replace(/\n/g, "<br>")
+            .replace(/@(\w+)/g, "<a href='https://twitter.com/$1'>@$1</a>")
+        return newComment
+    }
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 10
@@ -75,8 +87,10 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
             font.family: applicationPreference.fontFamily
-            text: modelSource ? modelSource.comment : ""
+            text: modelSource ? makeLink(modelSource.comment) : ""
+            textFormat: TextEdit.RichText
             readOnly: true
+            onLinkActivated: Qt.openUrlExternally(link)
         }
         RowLayout {
             anchors.horizontalCenter: parent.horizontalCenter

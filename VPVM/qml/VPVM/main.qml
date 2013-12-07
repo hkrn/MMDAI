@@ -252,6 +252,22 @@ ApplicationWindow {
         onTriggered: addModelDialog.open()
     }
     FileDialog {
+        id: addEffectDialog
+        nameFilters: [
+            qsTr("Effect File (*.glslfx)")
+        ]
+        selectExisting: true
+        onAccepted: scene.project.loadEffect(addEffectDialog.fileUrl)
+        onRejected: motionCreateablesList.currentIndex = 0
+    }
+    Action {
+        id: addEffectAction
+        enabled: applicationPreference.effectEnabled
+        text: qsTr("Add Effect")
+        tooltip: qsTr("Load a effect from file.")
+        onTriggered: addEffectDialog.open()
+    }
+    FileDialog {
         id: setModelMotionDialog
         nameFilters: [
             qsTr("Motion File (*.vmd *.mvd)"),
@@ -794,6 +810,7 @@ ApplicationWindow {
             MenuSeparator {}
             MenuItem { action: loadProjectAction }
             MenuItem { action: addModelAction }
+            MenuItem { action: addEffectAction }
             MenuItem { action: setModelMotionAction }
             MenuItem { action: setCameraMotionAction }
             MenuItem { action: loadPoseAction }
@@ -1149,7 +1166,6 @@ ApplicationWindow {
                             enabled: scene.currentMotion
                             enableInputEvent: scene.isHUDAvailable
                             anchors.fill: parent
-                            fontFamily: applicationPreference.fontFamily
                             backgroundFillColor: systemPalette.window
                             selectedLabelFillColor: systemPalette.highlight
                             onTimeSecondsChanged: if (!scene.playing) scene.seek(timeline.timeIndex)

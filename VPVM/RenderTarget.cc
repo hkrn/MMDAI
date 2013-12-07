@@ -258,7 +258,7 @@ public:
     QList<ModelProxyPair> uploadEnqueuedModelProxies(ProjectProxy *projectProxy) {
         QList<ModelProxyPair> uploadedModelProxies;
         XMLProject *projectRef = projectProxy->projectInstanceRef();
-        while (!m_uploadingModels.empty()) {
+        while (!m_uploadingModels.isEmpty()) {
             const ModelProxyPair &pair = m_uploadingModels.dequeue();
             ModelProxy *modelProxy = pair.first;
             const QFileInfo fileInfo(modelProxy->fileUrl().toLocalFile());
@@ -288,10 +288,36 @@ public:
         }
         return uploadedModelProxies;
     }
+    QList<ModelProxy *> uploadEnqueuedEffects(ProjectProxy *projectProxy) {
+        QList<ModelProxy *> uploadedEffects;
+        XMLProject *projectRef = projectProxy->projectInstanceRef();
+        while (!m_uploadingEffects.isEmpty()) {
+            ModelProxy *modelProxy = m_uploadingEffects.dequeue();
+            const QFileInfo fileInfo(modelProxy->fileUrl().toLocalFile());
+            const String filePath(Util::fromQString(fileInfo.absoluteFilePath()));
+            if (IEffect *effectRef = createEffectRef(&filePath)) {
+                const String dir(Util::fromQString(fileInfo.absoluteDir().absolutePath()));
+                ModelContext context(this, 0, &dir);
+                IModel *modelRef = modelProxy->data();
+                IRenderEngineSmartPtr engine(projectRef->createRenderEngine(this, modelRef, Scene::kEffectCapable));
+                engine->setEffect(effectRef, IEffect::kAutoDetection, &context);
+                modelRef->setName(effectRef->name(), IEncoding::kDefaultLanguage);
+                parseOffscreenSemantic(effectRef, &dir);
+                createEffectParameterUIWidgets(effectRef);
+                const XMLProject::UUID &uuid = modelProxy->uuid().toString().toStdString();
+                /* remove model reference from project first to add model/engine correctly after loading project */
+                projectRef->removeModel(modelRef);
+                projectRef->addModel(modelRef, engine.release(), uuid, m_orderIndex++);
+                addModelPath(modelRef, fileInfo.absoluteFilePath().toStdString());
+                uploadedEffects.append(modelProxy);
+            }
+        }
+        return uploadedEffects;
+    }
     QList<ModelProxy *> deleteEnqueuedModelProxies(ProjectProxy *projectProxy) {
         QList<ModelProxy *> deletedModelProxies;
         XMLProject *projectRef = projectProxy->projectInstanceRef();
-        while (!m_deletingModels.empty()) {
+        while (!m_deletingModels.isEmpty()) {
             ModelProxy *modelProxy = m_deletingModels.dequeue();
             IModel *modelRef = modelProxy->data();
             IRenderEngine *engine = projectRef->findRenderEngine(modelRef);
@@ -304,6 +330,9 @@ public:
     }
     void enqueueUploadingModel(ModelProxy *model, bool isProject) {
         m_uploadingModels.enqueue(ModelProxyPair(model, isProject));
+    }
+    void enqueueUploadingEffect(ModelProxy *model) {
+        m_uploadingEffects.enqueue(model);
     }
     void enqueueDeletingModelProxy(ModelProxy *model) {
         m_deletingModels.enqueue(model);
@@ -321,6 +350,7 @@ public:
 
 private:
     QQueue<ModelProxyPair> m_uploadingModels;
+    QQueue<ModelProxy *> m_uploadingEffects;
     QQueue<ModelProxy *> m_deletingModels;
     int m_orderIndex;
 };
@@ -1094,7 +1124,11 @@ RenderTarget::~RenderTarget()
 
 bool RenderTarget::handleMousePress(int x, int y)
 {
-    if (m_currentGizmoRef) {
+    bool handled;
+    glm::vec4 v(x, y, 1, 0);
+    m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
+    m_pressingMouse = true;
+    if (!handled && m_currentGizmoRef) {
         m_grabbingGizmo = m_currentGizmoRef->OnMouseDown(x, y);
         if (m_grabbingGizmo) {
             ModelProxy *modelProxy = m_projectProxyRef->currentModel();
@@ -1118,7 +1152,10 @@ bool RenderTarget::handleMousePress(int x, int y)
 
 void RenderTarget::handleMouseMove(int x, int y)
 {
-    if (m_currentGizmoRef) {
+    bool handled;
+    glm::vec4 v(x, y, m_pressingMouse, 0);
+    m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
+    if (!handled && m_currentGizmoRef) {
         m_currentGizmoRef->OnMouseMove(x, y);
         if (m_grabbingGizmo) {
             const ModelProxy *modelProxy = m_projectProxyRef->currentModel();
@@ -1140,6 +1177,9 @@ void RenderTarget::handleMouseMove(int x, int y)
 
 void RenderTarget::handleMouseRelease(int x, int y)
 {
+    bool handled;
+    glm::vec4 v(x, y, 0, 0);
+    m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
     if (m_currentGizmoRef) {
         m_currentGizmoRef->OnMouseUp(x, y);
         if (m_grabbingGizmo) {
@@ -1234,6 +1274,8 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::modelDidCommitUploading, this, &RenderTarget::commitUploadingModels);
     connect(value, &ProjectProxy::modelDidRemove, this, &RenderTarget::enqueueDeletingModel);
     connect(value, &ProjectProxy::modelDidCommitDeleting, this, &RenderTarget::commitDeletingModels);
+    connect(value, &ProjectProxy::effectDidAdd, this, &RenderTarget::enqueueUploadingEffect);
+    connect(value, &ProjectProxy::effectDidCommitUploading, this, &RenderTarget::commitUploadingEffects);
     connect(value, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
     connect(value, &ProjectProxy::currentModelChanged, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::projectDidRelease, this, &RenderTarget::commitDeletingModels);
@@ -1607,6 +1649,7 @@ void RenderTarget::draw()
         drawDebug();
         drawModelBones();
         drawCurrentGizmo();
+        m_applicationContext->renderEffectParameterUIWidgets();
         bool flushed = false;
         m_counter.update(m_renderTimer.elapsed(), flushed);
         if (flushed) {
@@ -1753,6 +1796,7 @@ void RenderTarget::initialize()
         m_applicationContext.reset(new ApplicationContext(m_projectProxyRef, &m_config));
         m_applicationContext->initialize(false);
         m_grid->load(m_applicationContext->sharedFunctionResolverInstance());
+        m_applicationContext->setViewportRegion(glm::ivec4(0, 0, win->width(), win->height()));
         QOpenGLContext *contextRef = win->openglContext();
         connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, m_projectProxyRef, &ProjectProxy::reset, Qt::DirectConnection);
         connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, this, &RenderTarget::release, Qt::DirectConnection);
@@ -1786,6 +1830,14 @@ void RenderTarget::enqueueUploadingModel(ModelProxy *model, bool isProject)
     m_applicationContext->enqueueUploadingModel(model, isProject);
 }
 
+void RenderTarget::enqueueUploadingEffect(ModelProxy *model)
+{
+    Q_ASSERT(window() && model && m_applicationContext);
+    const QUuid &uuid = model->uuid();
+    VPVL2_VLOG(1, "Enqueued uploading the effect " << uuid.toString().toStdString());
+    m_applicationContext->enqueueUploadingEffect(model);
+}
+
 void RenderTarget::enqueueDeletingModel(ModelProxy *model)
 {
     Q_ASSERT(m_applicationContext);
@@ -1802,6 +1854,12 @@ void RenderTarget::commitUploadingModels()
 {
     Q_ASSERT(window());
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedModels, Qt::DirectConnection);
+}
+
+void RenderTarget::commitUploadingEffects()
+{
+    Q_ASSERT(window());
+    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedEffects, Qt::DirectConnection);
 }
 
 void RenderTarget::commitDeletingModels()
@@ -1827,6 +1885,18 @@ void RenderTarget::performUploadingEnqueuedModels()
         emit modelDidUpload(modelProxy, pair.second);
     }
     emit enqueuedModelsDidUpload();
+}
+
+void RenderTarget::performUploadingEnqueuedEffects()
+{
+    Q_ASSERT(window() && m_applicationContext);
+    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedEffects);
+    const QList<ModelProxy *> &uploadedEffects = m_applicationContext->uploadEnqueuedEffects(m_projectProxyRef);
+    foreach (ModelProxy *modelProxy, uploadedEffects) {
+        VPVL2_VLOG(1, "The effect " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded.");
+        emit effectDidUpload(modelProxy);
+    }
+    emit enqueuedEffectsDidUpload();
 }
 
 void RenderTarget::performDeletingEnqueuedModels()
@@ -1958,6 +2028,7 @@ void RenderTarget::clearScene()
 void RenderTarget::drawShadowMap()
 {
     m_applicationContext->renderShadowMap();
+    m_applicationContext->renderOffscreen();
 }
 
 void RenderTarget::drawScene()
@@ -1970,6 +2041,14 @@ void RenderTarget::drawScene()
                                          enginesForPostProcess,
                                          nextPostEffects);
     const bool isProjectiveShadow = m_projectProxyRef->light()->shadowType() == LightRefObject::ProjectiveShadow;
+    for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
+        IRenderEngine *engine = enginesForPostProcess[i];
+        engine->preparePostProcess();
+    }
+    for (int i = 0, nengines = enginesForPreProcess.count(); i < nengines; i++) {
+        IRenderEngine *engine = enginesForPreProcess[i];
+        engine->performPreProcess();
+    }
     for (int i = 0, nengines = enginesForStandard.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForStandard[i];
         engine->renderModel();
@@ -1977,6 +2056,11 @@ void RenderTarget::drawScene()
         if (isProjectiveShadow) {
             engine->renderShadow();
         }
+    }
+    for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
+        IRenderEngine *engine = enginesForPostProcess[i];
+        IEffect *const *nextPostEffect = nextPostEffects[engine];
+        engine->performPostProcess(*nextPostEffect);
     }
 }
 
@@ -2058,7 +2142,7 @@ void RenderTarget::updateViewport()
     int w = m_viewport.width(), h = m_viewport.height();
     if (isDirty()) {
         glm::mat4 cameraWorld, cameraView, cameraProjection;
-        m_applicationContext->setViewportRegion(glm::vec4(0, 0, w, h));
+        m_applicationContext->setViewportRegion(glm::ivec4(m_viewport.x(), m_viewport.y(), w, h));
         m_applicationContext->updateCameraMatrices();
         m_applicationContext->getCameraMatrices(cameraWorld, cameraView, cameraProjection);
         m_viewMatrix = cameraView;

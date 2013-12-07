@@ -878,6 +878,15 @@ ModelProxy *ProjectProxy::loadModel(const QUrl &fileUrl, const QUuid &uuid, bool
     return modelProxy;
 }
 
+bool ProjectProxy::loadEffect(const QUrl &fileUrl)
+{
+    ModelProxy *modelProxy = new ModelProxy(this, m_factory->newModel(IModel::kPMXModel), QUuid::createUuid(), fileUrl, QUrl());
+    internalAddModel(modelProxy, false, false);
+    emit effectDidAdd(modelProxy);
+    emit effectDidCommitUploading();
+    return true;
+}
+
 ModelProxy *ProjectProxy::createModelProxy(IModel *model, const QUuid &uuid, const QUrl &fileUrl, bool skipConfirm)
 {
     QUrl faviconUrl;

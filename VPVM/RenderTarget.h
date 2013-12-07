@@ -187,7 +187,9 @@ signals:
     void graphicsDeviceChanged();
     void errorDidHappen(const QString &message);
     void modelDidUpload(ModelProxy *model, bool isProject);
+    void effectDidUpload(ModelProxy *model);
     void enqueuedModelsDidUpload();
+    void enqueuedEffectsDidUpload();
     void enqueuedModelsDidDelete();
     void renderWillPerform();
     void renderDidPerform();
@@ -214,10 +216,13 @@ private slots:
     void initialize();
     void release();
     void enqueueUploadingModel(ModelProxy *model, bool isProject);
+    void enqueueUploadingEffect(ModelProxy *model);
     void enqueueDeletingModel(ModelProxy *model);
     void commitUploadingModels();
+    void commitUploadingEffects();
     void commitDeletingModels();
     void performUploadingEnqueuedModels();
+    void performUploadingEnqueuedEffects();
     void performDeletingEnqueuedModels();
     void performUpdatingLight();
     void initializeProject();
@@ -279,6 +284,7 @@ private:
     QVector3D m_snapStepSize;
     VisibleGizmoMasks m_visibleGizmoMasks;
     bool m_grabbingGizmo;
+    bool m_pressingMouse;
     bool m_playing;
     bool m_dirty;
 };

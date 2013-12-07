@@ -214,6 +214,7 @@ public slots:
     Q_INVOKABLE ModelProxy *findModel(const QUuid &uuid);
     Q_INVOKABLE MotionProxy *findMotion(const QUuid &uuid);
     Q_INVOKABLE bool loadModel(const QUrl &fileUrl);
+    Q_INVOKABLE bool loadEffect(const QUrl &fileUrl);
     Q_INVOKABLE void addModel(ModelProxy *value);
     Q_INVOKABLE void deleteModel(ModelProxy *value);
     Q_INVOKABLE bool loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, MotionType type);
@@ -247,8 +248,10 @@ signals:
     void motionWillLoad(MotionProxy *motion);
     void motionDidLoad(MotionProxy *motion);
     void motionWillDelete(MotionProxy *motion);
+    void effectDidAdd(ModelProxy *model);
     void poseDidLoad(ModelProxy *model);
     void modelBoneDidPick(BoneRefObject *bone);
+    void effectDidCommitUploading();
     void modelDidCommitUploading();
     void modelDidCommitDeleting();
     void enqueuedModelsDidDelete();
