@@ -65,7 +65,8 @@
 #define TwMouseMotion(mouseX, mouseY) 0
 #define TwMouseWheel(pos) 0
 #define TwKeyPressed(key, modifiers) 0
-static const int TW_OPENGL_CORE = 0;
+static const int TW_OPENGL = 0;
+static const int TW_OPENGL_CORE = 1;
 static const int TW_MOUSE_PRESSED = 1;
 static const int TW_MOUSE_RELEASED = 2;
 static const int TW_TYPE_BOOLCPP = 1;
@@ -558,7 +559,7 @@ void BaseApplicationContext::initialize(bool enableDebug)
         reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKARBPROC>(resolver->resolveSymbol("glDebugMessageCallbackARB"))(reinterpret_cast<GLDEBUGPROCARB>(&BaseApplicationContext::debugMessageCallback), this);
     }
     getIntegerv(kGL_MAX_SAMPLES, &m_samplesMSAA);
-    TwInit(TW_OPENGL_CORE, 0);
+    TwInit(resolver->query(FunctionResolver::kQueryCoreProfile) != 0 ? TW_OPENGL_CORE : TW_OPENGL, 0);
     popAnnotationGroup(resolver);
 }
 
@@ -665,6 +666,13 @@ bool BaseApplicationContext::internalUploadTexture(const std::string &name, cons
         }
     }
     return uploadTextureOpaque(path, context, bridge);
+}
+
+void BaseApplicationContext::validateEffectResources()
+{
+    nvFX::IResourceRepository *resourceRepository = nvFX::getResourceRepositorySingleton();
+    resourceRepository->setParams(m_viewportRegion.x, m_viewportRegion.y, m_viewportRegion.z, m_viewportRegion.w, m_samplesMSAA, 0, static_cast<BufferHandle>(0));
+    resourceRepository->validateAll();
 }
 
 bool BaseApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge)
@@ -1245,10 +1253,7 @@ void BaseApplicationContext::renderOffscreen()
     Array<IRenderEngine *> engines;
     m_sceneRef->getRenderEngineRefs(engines);
     if (m_viewportRegionInvalidated) {
-        int width = int(m_viewportRegion.z), height = int(m_viewportRegion.w);
-        nvFX::IResourceRepository *resourceRepository = nvFX::getResourceRepositorySingleton();
-        resourceRepository->setParams(0, 0, width, height, m_samplesMSAA, 0, static_cast<BufferHandle>(0));
-        resourceRepository->validateAll();
+        validateEffectResources();
         m_viewportRegionInvalidated = false;
     }
     const int nengines = engines.count(), ntechniques = m_offscreenTechniques.count();
@@ -1426,7 +1431,6 @@ void BaseApplicationContext::createEffectParameterUIWidgets(IEffect *effectRef)
         default:
             break;
         }
-        VPVL2_VLOG(1, "UIParameter=" << parameterRef->name());
     }
 }
 
@@ -1455,6 +1459,7 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
             IStringSmartPtr namePtr(String::create(name));
             effectRef = m_effectCaches.insert(key, effectPtr.release());
             effectRef->setName(namePtr.get());
+            validateEffectResources();
             VPVL2_LOG(INFO, "Created a effect: " << internal::cstr(path, "(null)"));
         }
         else {
@@ -1545,16 +1550,17 @@ void BaseApplicationContext::updateCameraMatrices()
     setCameraMatrices(world, view, projection);
 }
 
-glm::vec4 BaseApplicationContext::viewportRegion() const
+glm::ivec4 BaseApplicationContext::viewportRegion() const
 {
     return m_viewportRegion;
 }
 
-void BaseApplicationContext::setViewportRegion(const glm::vec4 &viewport)
+void BaseApplicationContext::setViewportRegion(const glm::ivec4 &viewport)
 {
     if (m_viewportRegion != viewport) {
+        const glm::mediump_float &width = glm::mediump_float(viewport.z), &height = glm::mediump_float(viewport.w);
+        m_aspectRatio = glm::max(width, height) / glm::min(width, height);
         m_viewportRegion = viewport;
-        m_aspectRatio = glm::max(viewport.z, viewport.w) / glm::min(viewport.z, viewport.w);
         m_viewportRegionInvalidated = true;
         TwWindowSize(viewport.z, viewport.w);
         updateCameraMatrices();

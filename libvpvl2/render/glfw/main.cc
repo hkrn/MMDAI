@@ -261,7 +261,7 @@ public:
             const glm::mat4 &projection = glm::infinitePerspective(45.0f, sw / float(sh), 0.1f);
             m_applicationContext->setLightMatrices(glm::mat4(), view, projection);
         }
-        m_applicationContext->setViewportRegion(glm::vec4(0, 0, m_width, m_height));
+        m_applicationContext->setViewportRegion(glm::ivec4(0, 0, m_width, m_height));
         ::ui::initializeDictionary(m_config, m_dictionary);
         ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
         m_debugDrawer->setDebugMode(//btIDebugDraw::DBG_DrawAabb |
@@ -459,7 +459,7 @@ private:
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
         context->m_width = width;
         context->m_height = height;
-        context->m_applicationContext->setViewportRegion(glm::vec4(0, 0, width, height));
+        context->m_applicationContext->setViewportRegion(glm::ivec4(0, 0, width, height));
         glViewport(0, 0, width, height);
     }
 

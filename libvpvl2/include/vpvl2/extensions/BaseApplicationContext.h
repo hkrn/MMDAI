@@ -281,8 +281,8 @@ public:
     void getLightMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const;
     void setLightMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection);
     void updateCameraMatrices();
-    glm::vec4 viewportRegion() const;
-    void setViewportRegion(const glm::vec4 &value);
+    glm::ivec4 viewportRegion() const;
+    void setViewportRegion(const glm::ivec4 &value);
     void createShadowMap(const Vector3 &size);
     void releaseShadowMap();
     void renderShadowMap();
@@ -305,6 +305,7 @@ protected:
 
     bool uploadSystemToonTexture(const std::string &name, TextureDataBridge &bridge, ModelContext *context);
     bool internalUploadTexture(const std::string &name, const std::string &path, TextureDataBridge &bridge, ModelContext *context);
+    void validateEffectResources();
     std::string toonDirectory() const;
     std::string shaderDirectory() const;
     std::string effectDirectory() const;
@@ -326,7 +327,7 @@ protected:
     glm::mat4x4 m_cameraWorldMatrix;
     glm::mat4x4 m_cameraViewMatrix;
     glm::mat4x4 m_cameraProjectionMatrix;
-    glm::vec4 m_viewportRegion;
+    glm::ivec4 m_viewportRegion;
     glm::mediump_float m_aspectRatio;
 
     typedef PointerHash<HashPtr, extensions::gl::FrameBufferObject> RenderTargetMap;

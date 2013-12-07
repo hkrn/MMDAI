@@ -99,7 +99,7 @@ public:
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
         m_applicationContext->initialize(false);
-        m_applicationContext->setViewportRegion(glm::vec4(0, 0, width, height));
+        m_applicationContext->setViewportRegion(glm::ivec4(0, 0, width, height));
         return true;
     }
     void load() {
@@ -168,7 +168,7 @@ public:
                 const sf::Event::SizeEvent &size = event.size;
                 int w = size.width, h = size.height;
                 glViewport(0, 0, w, h);
-                m_applicationContext->setViewportRegion(glm::vec4(0, 0, w, h));
+                m_applicationContext->setViewportRegion(glm::ivec4(0, 0, w, h));
                 break;
             }
             default:

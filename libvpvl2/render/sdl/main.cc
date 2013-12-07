@@ -118,7 +118,7 @@ public:
         m_factory.reset(new Factory(m_encoding.get()));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
         m_applicationContext->initialize(enableDebug);
-        m_applicationContext->setViewportRegion(glm::vec4(0, 0, width, height));
+        m_applicationContext->setViewportRegion(glm::ivec4(0, 0, width, height));
         return true;
     }
     void load() {
