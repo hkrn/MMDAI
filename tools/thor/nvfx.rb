@@ -21,7 +21,7 @@ class Nvfx < Thor
 
 protected
   def get_uri
-    "https://github.com/tlorach/nvFX"
+    "https://github.com/hkrn/nvFX"
   end
 
   def get_directory_name
