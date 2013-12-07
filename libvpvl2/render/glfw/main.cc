@@ -417,11 +417,14 @@ private:
         default:
             break;
         }
-        glm::vec4 v(context->m_lastCursorPosition, pressed, 0);
-        bool handled = false;
+        bool handled;
+        double x, y;
+        glfwGetCursorPos(window, &x, &y);
+        glm::vec4 v(x, y, pressed, 0);
         context->m_pressed = pressed;
         context->m_pressedModifier = pressed ? modifiers : 0;
         context->m_applicationContext->setMousePosition(v, type, handled);
+        context->m_lastCursorPosition = glm::vec2(v);
     }
     static void handleCursorPosition(GLFWwindow *window, double x, double y) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
@@ -430,11 +433,9 @@ private:
         context->m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
         if (!handled && context->m_pressed) {
             ICamera *camera = context->m_scene->cameraRef();
-            if (context->m_lastCursorPosition.length() > 0) {
-                const Scalar &factor = 0.5;
-                camera->setAngle(camera->angle() + Vector3((y - context->m_lastCursorPosition.y) * factor, (x - context->m_lastCursorPosition.x) * factor, 0));
-                context->m_applicationContext->updateCameraMatrices();
-            }
+            const Scalar &factor = 0.5;
+            camera->setAngle(camera->angle() + Vector3((y - context->m_lastCursorPosition.y) * factor, (x - context->m_lastCursorPosition.x) * factor, 0));
+            context->m_applicationContext->updateCameraMatrices();
             context->m_lastCursorPosition = glm::vec2(x, y);
         }
     }
