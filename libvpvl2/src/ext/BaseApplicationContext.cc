@@ -1371,9 +1371,10 @@ void BaseApplicationContext::createEffectParameterUIWidgets(IEffect *effectRef)
 {
     Array<IEffect::Parameter *> parameters;
     effectRef->getInteractiveParameters(parameters);
-    TwBar *bar = TwNewBar(reinterpret_cast<const char *>(effectRef->name()->toByteArray()));
+    const char *effectName = reinterpret_cast<const char *>(effectRef->name()->toByteArray());
+    TwBar *bar = TwNewBar(effectName);
     TwSetParam(bar, 0, "valueswidth", TW_PARAM_CSTRING, 1, "fit");
-    TwAddVarCB(bar, "Enabled", TW_TYPE_BOOLCPP, UIEffectSetEnableEffect, UIEffectGetEnableEffect, effectRef, "");
+    TwAddVarCB(bar, "Enabled", TW_TYPE_BOOLCPP, UIEffectSetEnableEffect, UIEffectGetEnableEffect, effectRef, (std::string("help='Toggle Enable/Disable Effect of ") + effectName + "'").c_str());
     const int nparameters = parameters.count();
     std::ostringstream stream;
     for (int i = 0; i < nparameters; i++) {
