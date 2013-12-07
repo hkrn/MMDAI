@@ -1619,22 +1619,24 @@ IEffect::Technique *EffectEngine::findTechnique(const char *pass,
                                                 bool hasSphereMap,
                                                 bool useToon) const
 {
-    if (IEffect::Technique *technique = findTechniqueIn(m_techniques,
+    if (m_effectRef->isEnabled()) {
+        if (IEffect::Technique *technique = findTechniqueIn(m_techniques,
+                                                            pass,
+                                                            offset,
+                                                            nmaterials,
+                                                            hasTexture,
+                                                            hasSphereMap,
+                                                            useToon)) {
+            return technique;
+        }
+    }
+    if (IEffect::Technique *technique = findTechniqueIn(m_defaultTechniques,
                                                         pass,
                                                         offset,
                                                         nmaterials,
                                                         hasTexture,
                                                         hasSphereMap,
                                                         useToon)) {
-        return technique;
-    }
-    else if (IEffect::Technique *technique = findTechniqueIn(m_defaultTechniques,
-                                                             pass,
-                                                             offset,
-                                                             nmaterials,
-                                                             hasTexture,
-                                                             hasSphereMap,
-                                                             useToon)) {
         return technique;
     }
     return 0;
@@ -1674,7 +1676,7 @@ void EffectEngine::executeProcess(const IModel *model,
                 /* clearRenderColorTargetIndices must be called before transfering render buffer to the window */
                 m_effectRef->clearRenderColorTargetIndices();
                 m_frameBufferObjectRef->transferToWindow(viewport);
-           }
+            }
         }
     }
 }
