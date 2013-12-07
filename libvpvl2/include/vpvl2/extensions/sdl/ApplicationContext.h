@@ -211,7 +211,8 @@ public:
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     void getToonColor(const IString *name, Color &value, void *userData) {
         ModelContext *modelContext = static_cast<ModelContext *>(userData);
-        const std::string &path = createPath(modelContext->directoryRef(), name);
+        const std::string &path = static_cast<const icu4c::String *>(modelContext->directoryRef())->toStdString()
+                + "/" + static_cast<const icu4c::String *>(name)->toStdString();
         SDL_Surface *surface = createSurface(path);
         if (!surface) {
             value.setValue(1, 1, 1, 1);

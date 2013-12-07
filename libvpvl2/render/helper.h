@@ -236,10 +236,11 @@ static void loadAllModels(const icu4c::StringMap &settings,
                 if (IEffect *effectRef = applicationContextRef->createEffectRef(&s)) {
                     applicationContextRef->parseOffscreenSemantic(effectRef, 0);
                     model.reset(factoryRef->newModel(IModel::kPMXModel));
-                    model->setVisible(false);
+                    model->setName(effectRef->name(), IEncoding::kDefaultLanguage);
                     IRenderEngineSmartPtr engine(sceneRef->createRenderEngine(applicationContextRef, model.get(), flags));
                     BaseApplicationContext::ModelContext modelContext(applicationContextRef, 0, &dir);
                     engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
+                    applicationContextRef->createEffectParameterUIWidgets(effectRef);
                     sceneRef->addModel(model.release(), engine.release(), i);
                 }
             }

@@ -42,12 +42,7 @@
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #include <BulletDynamics/Dynamics/btRigidBody.h>
 #include <LinearMath/btIDebugDraw.h>
-
-#undef VPVL2_LINK_ATB
-#ifdef VPVL2_LINK_ATB
-#include <vpvl2/extensions/ui/AntTweakBar.h>
-using namespace vpvl2::extensions::ui;
-#endif
+#include <glm/gtx/string_cast.hpp>
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
@@ -156,8 +151,6 @@ public:
           m_debugDrawer(new DebugDrawer()),
           m_width(0),
           m_height(0),
-          m_prevX(0),
-          m_prevY(0),
           m_restarted(glfwGetTime()),
           m_current(m_restarted),
           m_currentFPS(0),
@@ -324,10 +317,6 @@ public:
             i++;
         }
 #endif
-#ifdef VPVL2_LINK_ATB
-        m_controller.resize(m_width, m_height);
-        m_controller.setCurrentModelRef(m_applicationContext->currentModelRef());
-#endif
     }
     bool isActive() const {
         return !glfwWindowShouldClose(m_window);
@@ -336,6 +325,7 @@ public:
         m_applicationContext->renderShadowMap();
         m_applicationContext->renderOffscreen();
         ::ui::drawScreen(*m_scene.get());
+        m_applicationContext->renderEffectParameterUIWidgets();
         double current = glfwGetTime();
         if (m_autoplay) {
             const IKeyframe::TimeIndex &newTimeIndex = IKeyframe::TimeIndex(uint64(((current - base) * 1000) / Scene::defaultFPS()));
@@ -369,9 +359,6 @@ public:
 #endif
         m_scene->update(Scene::kUpdateCamera);
         m_pressedKey = 0;
-#ifdef VPVL2_LINK_ATB
-        m_controller.render();
-#endif
         glfwSwapBuffers(m_window);
         glfwPollEvents();
     }
@@ -384,11 +371,7 @@ private:
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
         ICamera *camera = context->m_scene->cameraRef();
         bool handled = false;
-#ifdef VPVL2_LINK_ATB
-        handled = context->m_controller.handleKeycode(key, modifiers);
-#else
-        (void) modifiers;
-#endif
+        context->m_applicationContext->handleKeyPress(key, modifiers, handled);
         if (!handled && action == GLFW_PRESS) {
             const Scalar degree(15.0);
             switch (key) {
@@ -434,35 +417,32 @@ private:
         default:
             break;
         }
-#ifdef VPVL2_LINK_ATB
-        context->m_controller.handleAction(type, pressed);
-#endif
+        glm::vec4 v(context->m_lastCursorPosition, pressed, 0);
+        bool handled = false;
         context->m_pressed = pressed;
         context->m_pressedModifier = pressed ? modifiers : 0;
+        context->m_applicationContext->setMousePosition(v, type, handled);
     }
     static void handleCursorPosition(GLFWwindow *window, double x, double y) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
         bool handled = false;
-#ifdef VPVL2_LINK_ASSIMP
-        handled = context->m_controller.handleMotion(x, y);
-#endif
+        glm::vec4 v(x, y, context->m_pressed, 0);
+        context->m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
         if (!handled && context->m_pressed) {
             ICamera *camera = context->m_scene->cameraRef();
-            if (context->m_prevX > 0 && context->m_prevY > 0) {
+            if (context->m_lastCursorPosition.length() > 0) {
                 const Scalar &factor = 0.5;
-                camera->setAngle(camera->angle() + Vector3((y - context->m_prevY) * factor, (x - context->m_prevX) * factor, 0));
+                camera->setAngle(camera->angle() + Vector3((y - context->m_lastCursorPosition.y) * factor, (x - context->m_lastCursorPosition.x) * factor, 0));
                 context->m_applicationContext->updateCameraMatrices();
             }
-            context->m_prevX = x;
-            context->m_prevY = y;
+            context->m_lastCursorPosition = glm::vec2(x, y);
         }
     }
     static void handleScroll(GLFWwindow *window, double x, double y) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
         bool handled = false;
-#ifdef VPVL2_LINK_ASSIMP
-        handled = context->m_controller.handleWheel(y);
-#endif
+        glm::vec4 v(x, y, context->m_pressed, 0);
+        context->m_applicationContext->setMousePosition(v, IApplicationContext::kMouseWheelPosition, handled);
         if (!handled) {
             ICamera *camera = context->m_scene->cameraRef();
             const Scalar &factor = 1.0;
@@ -479,16 +459,11 @@ private:
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
         context->m_width = width;
         context->m_height = height;
+        context->m_applicationContext->setViewportRegion(glm::vec4(0, 0, width, height));
         glViewport(0, 0, width, height);
-#ifdef VPVL2_LINK_ATB
-        context->m_controller.resize(width, height);
-#endif
     }
 
     GLFWwindow *m_window;
-#ifdef VPVL2_LINK_ATB
-    AntTweakBar m_controller;
-#endif
     StringMap m_config;
     Encoding::Dictionary m_dictionary;
     WorldSmartPtr m_world;
@@ -497,10 +472,9 @@ private:
     SceneSmartPtr m_scene;
     ApplicationContextSmartPtr m_applicationContext;
     DebugDrawerSmartPtr m_debugDrawer;
+    glm::vec2 m_lastCursorPosition;
     vsize m_width;
     vsize m_height;
-    double m_prevX;
-    double m_prevY;
     double m_restarted;
     double m_current;
     int m_currentFPS;

@@ -75,6 +75,9 @@ public:
     inline UnicodeString value(const UnicodeString &key, const UnicodeString &defval = UnicodeString()) const {
         return sval(key, defval);
     }
+    inline std::string value(const std::string &key, const std::string &defval = std::string()) const {
+        return String::toStdString(sval(UnicodeString::fromUTF8(key), UnicodeString::fromUTF8(defval)));
+    }
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(StringMap)

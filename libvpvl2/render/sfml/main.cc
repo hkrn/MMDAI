@@ -43,11 +43,6 @@ using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::sfml;
 
-#ifdef VPVL2_LINK_ATB
-#include <vpvl2/extensions/ui/AntTweakBar.h>
-using namespace vpvl2::extensions::ui;
-#endif
-
 namespace {
 
 struct MemoryMappedFile {
@@ -80,8 +75,6 @@ public:
           m_scene(new Scene(true)),
           m_restarted(m_clock.getElapsedTime()),
           m_current(m_restarted),
-          m_prevX(0),
-          m_prevY(0),
           m_currentFPS(0),
           m_mousePressed(false)
     {
@@ -107,9 +100,6 @@ public:
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
         m_applicationContext->initialize(false);
         m_applicationContext->setViewportRegion(glm::vec4(0, 0, width, height));
-#ifdef VPVL2_LINK_ASSIMP
-        m_controller.create(m_applicationContext.get());
-#endif
         return true;
     }
     void load() {
@@ -131,12 +121,6 @@ public:
         m_scene->setWorldRef(m_world->dynamicWorldRef());
         m_scene->seek(0, Scene::kUpdateAll);
         m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
-#ifdef VPVL2_LINK_ATB
-        bool enableCoreProfile = m_config.value("opengl.enable.core", false);
-        AntTweakBar::initialize(enableCoreProfile);
-        m_controller.resize(m_width, m_height);
-        m_controller.setCurrentModelRef(m_applicationContext->currentModelRef());
-#endif
     }
     bool isActive() const {
         return m_window->isOpen();
@@ -167,9 +151,9 @@ public:
                     break;
                 }
                 m_mousePressed = event.type == sf::Event::MouseButtonPressed;
-#ifdef VPVL2_LINK_ATB
-                m_controller.handleAction(type, m_mousePressed);
-#endif
+                bool handled = false;
+                glm::vec4 v(mouseButton.x, mouseButton.y, m_mousePressed, 0);
+                m_applicationContext->setMousePosition(v, type, handled);
                 break;
             }
             case sf::Event::KeyPressed: {
@@ -201,9 +185,6 @@ public:
         m_scene->update(Scene::kUpdateAll);
         updateFPS();
         last = current;
-#ifdef VPVL2_LINK_ATB
-        m_controller.render();
-#endif
         m_window->display();
     }
 
@@ -265,26 +246,23 @@ private:
     void handleMouseMotion(const sf::Event::MouseMoveEvent &event) {
         bool handled = false;
         int x = event.x, y = event.y;
-#ifdef VPVL2_LINK_ATB
-        handled = m_controller.handleMotion(x, y);
-#endif
+        glm::vec4 v(x, y, m_mousePressed, 0);
+        m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
         if (!handled && m_mousePressed) {
             ICamera *camera = m_scene->cameraRef();
-            if (m_prevX > 0 && m_prevY > 0) {
+            if (m_lastCursorPosition.length() > 0) {
                 const Scalar &factor = 0.5;
-                camera->setAngle(camera->angle() + Vector3((y - m_prevY) * factor, (x - m_prevX) * factor, 0));
+                camera->setAngle(camera->angle() + Vector3((y - m_lastCursorPosition.y) * factor, (x - m_lastCursorPosition.x) * factor, 0));
                 m_applicationContext->updateCameraMatrices();
             }
         }
-        m_prevX = x;
-        m_prevY = y;
+        m_lastCursorPosition = glm::ivec2(x, y);
     }
     void handleMouseWheel(const sf::Event::MouseWheelEvent &event) {
         bool handled = false;
         int delta = event.delta;
-#ifdef VPVL2_LINK_ATB
-        handled = m_controller.handleWheel(delta);
-#endif
+        glm::vec4 v(0, delta, m_mousePressed, 0);
+        m_applicationContext->setMousePosition(v, IApplicationContext::kMouseWheelPosition, handled);
         if (!handled) {
             const Scalar &factor = 1.0;
             ICamera *camera = m_scene->cameraRef();
@@ -308,9 +286,6 @@ private:
     }
 
     sf::RenderWindow *m_window;
-#ifdef VPVL2_LINK_ATB
-    AntTweakBar m_controller;
-#endif
     StringMap m_config;
     Encoding::Dictionary m_dictionary;
     WorldSmartPtr m_world;
@@ -321,8 +296,7 @@ private:
     sf::Clock m_clock;
     sf::Time m_restarted;
     sf::Time m_current;
-    int m_prevX;
-    int m_prevY;
+    glm::ivec2 m_lastCursorPosition;
     int m_currentFPS;
     char m_title[32];
     bool m_mousePressed;

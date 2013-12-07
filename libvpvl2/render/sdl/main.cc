@@ -43,11 +43,6 @@ using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::sdl;
 
-#ifdef VPVL2_LINK_ATB
-#include <vpvl2/extensions/ui/AntTweakBar.h>
-using namespace vpvl2::extensions::ui;
-#endif
-
 namespace {
 
 struct MemoryMappedFile {
@@ -124,10 +119,6 @@ public:
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_config));
         m_applicationContext->initialize(enableDebug);
         m_applicationContext->setViewportRegion(glm::vec4(0, 0, width, height));
-#ifdef VPVL2_LINK_ATB
-        AntTweakBar::initialize(m_config.value("opengl.enable.core", false));
-        m_controller.create(m_applicationContext.get());
-#endif
         return true;
     }
     void load() {
@@ -149,10 +140,6 @@ public:
         m_scene->setWorldRef(m_world->dynamicWorldRef());
         m_scene->seek(0, Scene::kUpdateAll);
         m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
-#ifdef VPVL2_LINK_ATB
-        m_controller.resize(m_width, m_height);
-        m_controller.setCurrentModelRef(m_applicationContext->currentModelRef());
-#endif
     }
     bool isActive() const {
         return m_active;
@@ -167,11 +154,7 @@ public:
             }
             case SDL_MOUSEBUTTONDOWN:
             case SDL_MOUSEBUTTONUP: {
-#ifdef VPVL2_LINK_ATB
-                IApplicationContext::MousePositionType type = static_cast<IApplicationContext::MousePositionType>(event.button.button);
-                m_controller.handleAction(type, event.type == SDL_MOUSEBUTTONDOWN);
-#endif
-                m_pressed = event.type == SDL_MOUSEBUTTONDOWN;
+                handleMouseButtonEvent(event.button);
                 break;
             }
             case SDL_KEYDOWN: {
@@ -197,13 +180,11 @@ public:
         const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex((current - base) / Scene::defaultFPS());
         m_scene->seek(timeIndex, Scene::kUpdateAll);
         m_world->stepSimulation(current - last);
-        m_scene->update(Scene::kUpdateAll);
         updateFPS();
         last = current;
-#ifdef VPVL2_LINK_ATB
-        m_controller.render();
-#endif
+        m_applicationContext->renderEffectParameterUIWidgets();
         SDL_GL_SwapWindow(m_window);
+        m_scene->update(Scene::kUpdateAll);
     }
 
 private:
@@ -284,37 +265,61 @@ private:
     void handleKeyEvent(const SDL_KeyboardEvent &event) {
         const SDL_Keysym &keysym = event.keysym;
         const Scalar degree(15.0);
-        ICamera *camera = m_scene->cameraRef();
-        switch (keysym.sym) {
-        case SDLK_RIGHT:
-            camera->setAngle(camera->angle() + Vector3(0, degree, 0));
-            m_applicationContext->updateCameraMatrices();
-            break;
-        case SDLK_LEFT:
-            camera->setAngle(camera->angle() + Vector3(0, -degree, 0));
-            m_applicationContext->updateCameraMatrices();
-            break;
-        case SDLK_UP:
-            camera->setAngle(camera->angle() + Vector3(degree, 0, 0));
-            m_applicationContext->updateCameraMatrices();
-            break;
-        case SDLK_DOWN:
-            camera->setAngle(camera->angle() + Vector3(-degree, 0, 0));
-            m_applicationContext->updateCameraMatrices();
-            break;
-        case SDLK_ESCAPE:
-            m_active = false;
-            break;
-        default:
-            break;
+        bool handled = false;
+        m_applicationContext->handleKeyPress(keysym.sym, keysym.mod, handled);
+        if (!handled) {
+            ICamera *cameraRef = m_scene->cameraRef();
+            switch (keysym.sym) {
+            case SDLK_RIGHT: {
+                cameraRef->setAngle(cameraRef->angle() + Vector3(0, degree, 0));
+                m_applicationContext->updateCameraMatrices();
+                break;
+            }
+            case SDLK_LEFT:
+                cameraRef->setAngle(cameraRef->angle() + Vector3(0, -degree, 0));
+                m_applicationContext->updateCameraMatrices();
+                break;
+            case SDLK_UP:
+                cameraRef->setAngle(cameraRef->angle() + Vector3(degree, 0, 0));
+                m_applicationContext->updateCameraMatrices();
+                break;
+            case SDLK_DOWN:
+                cameraRef->setAngle(cameraRef->angle() + Vector3(-degree, 0, 0));
+                m_applicationContext->updateCameraMatrices();
+                break;
+            case SDLK_ESCAPE:
+                m_active = false;
+                break;
+            default:
+                break;
+            }
         }
     }
-    void handleMouseMotion(const SDL_MouseMotionEvent &event) {
+    void handleMouseButtonEvent(const SDL_MouseButtonEvent &event) {
         bool handled = false;
-#ifdef VPVL2_LINK_ATB
-        handled = m_controller.handleMotion(event.x, event.y);
-#endif
-        if (!handled && event.state == SDL_PRESSED) {
+        IApplicationContext::MousePositionType type;
+        switch (event.button) {
+        case SDL_BUTTON_LEFT:
+            type = IApplicationContext::kMouseLeftPressPosition;
+            break;
+        case SDL_BUTTON_MIDDLE:
+            type = IApplicationContext::kMouseMiddlePressPosition;
+            break;
+        case SDL_BUTTON_RIGHT:
+            type = IApplicationContext::kMouseRightPressPosition;
+            break;
+        default:
+            type = IApplicationContext::kMouseCursorPosition;
+            break;
+        }
+        glm::vec4 v(event.x, event.y, event.type == SDL_MOUSEBUTTONDOWN, 0);
+        m_applicationContext->setMousePosition(v, type, handled);
+    }
+    void handleMouseMotion(const SDL_MouseMotionEvent &event) {
+        bool handled = false, pressed = event.state == SDL_PRESSED;
+        glm::vec4 v(event.x, event.y, pressed, 0);
+        m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
+        if (!handled && pressed) {
             ICamera *camera = m_scene->cameraRef();
             const Scalar &factor = 0.5;
             camera->setAngle(camera->angle() + Vector3(event.yrel * factor, event.xrel * factor, 0));
@@ -323,14 +328,12 @@ private:
     }
     void handleMouseWheel(const SDL_MouseWheelEvent &event) {
         bool handled = false;
-        int delta = event.y;
-#ifdef VPVL2_LINK_ATB
-        handled = m_controller.handleWheel(delta);
-#endif
+        glm::vec4 v(event.x, event.y, false, 0);
+        m_applicationContext->setMousePosition(v, IApplicationContext::kMouseWheelPosition, handled);
         if (!handled) {
             const Scalar &factor = 1.0;
             ICamera *camera = m_scene->cameraRef();
-            camera->setDistance(camera->distance() + delta * factor);
+            camera->setDistance(camera->distance() + event.y * factor);
             if (m_pressed) {
                 const Matrix3x3 &m = camera->modelViewTransform().getBasis();
                 const Vector3 &v = m[0] * event.x * factor;
@@ -356,9 +359,6 @@ private:
 
     SDL_Window *m_window;
     SDL_GLContext m_contextGL;
-#ifdef VPVL2_LINK_ATB
-    AntTweakBar m_controller;
-#endif
     StringMap m_config;
     Encoding::Dictionary m_dictionary;
     WorldSmartPtr m_world;
