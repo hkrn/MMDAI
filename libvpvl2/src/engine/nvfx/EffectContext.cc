@@ -68,6 +68,10 @@ static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationCo
             if (*name == '\0' && type == nvFX::TGLSL) {
                 static const char kFormat[] =
                         "#version %d core\n"
+                        "#define saturate(v) clamp(v, 0.0, 1.0)\n"
+                        "#if __VERSION__ < 400\n"
+                        "#define fma(v, m, a) (v * m + a)\n"
+                        "#endif\n"
                         "#ifdef GL_ES\n"
                         "precision highp float;\n"
                         "#endif\n"
@@ -78,6 +82,26 @@ static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationCo
                 shader->getExInterface()->addHeaderCode(appendingHeader);
             }
             shader = container->findShader(++i);
+        }
+    }
+    else {
+        int i = 0;
+        while (nvFX::IShader *shader = container->findShader(i)) {
+            nvFX::TargetType type = shader->getType();
+            const char *name = shader->getName();
+            if (*name == '\0' && type == nvFX::TGLSL) {
+                static const char kAppendingHeader[] =
+                        "#define saturate(v) clamp(v, 0.0, 1.0)\n"
+                        "#if __VERSION__ < 400\n"
+                        "#define fma(v, m, a) (v * m + a)\n"
+                        "#endif\n"
+                        "#ifdef GL_ES\n"
+                        "precision highp float;\n"
+                        "#endif\n"
+                        "\n"
+                        ;
+                shader->getExInterface()->addHeaderCode(kAppendingHeader);
+            }
         }
     }
 }
