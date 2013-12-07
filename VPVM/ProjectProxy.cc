@@ -881,7 +881,9 @@ ModelProxy *ProjectProxy::loadModel(const QUrl &fileUrl, const QUuid &uuid, bool
 bool ProjectProxy::loadEffect(const QUrl &fileUrl)
 {
     ModelProxy *modelProxy = new ModelProxy(this, m_factory->newModel(IModel::kPMXModel), QUuid::createUuid(), fileUrl, QUrl());
-    internalAddModel(modelProxy, false, false);
+    m_modelProxies.append(modelProxy);
+    m_instance2ModelProxyRefs.insert(modelProxy->data(), modelProxy);
+    m_uuid2ModelProxyRefs.insert(modelProxy->uuid(), modelProxy);
     emit effectDidAdd(modelProxy);
     emit effectDidCommitUploading();
     return true;

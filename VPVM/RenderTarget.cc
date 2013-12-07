@@ -311,6 +311,9 @@ public:
                 addModelPath(modelRef, fileInfo.absoluteFilePath().toStdString());
                 uploadedEffects.append(modelProxy);
             }
+            else {
+                projectProxy->deleteModel(modelProxy);
+            }
         }
         return uploadedEffects;
     }
@@ -320,10 +323,15 @@ public:
         while (!m_deletingModels.isEmpty()) {
             ModelProxy *modelProxy = m_deletingModels.dequeue();
             IModel *modelRef = modelProxy->data();
-            IRenderEngine *engine = projectRef->findRenderEngine(modelRef);
-            projectRef->removeModel(modelRef);
-            engine->release();
-            delete engine;
+            /* Failed loading effect will have null IRenderEngine instance case  */
+            if (IRenderEngine *engine = projectRef->findRenderEngine(modelRef)) {
+                projectRef->removeModel(modelRef);
+                engine->release();
+                delete engine;
+            }
+            else {
+                projectRef->removeModel(modelRef);
+            }
             deletedModelProxies.append(modelProxy);
         }
         return deletedModelProxies;
