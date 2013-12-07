@@ -93,6 +93,10 @@ public:
     void activateVertexAttribute(VertexAttributeType vtype);
     void deactivateVertexAttribute(VertexAttributeType vtype);
     void setupOverride(const IEffect *effectRef);
+    const IString *name() const;
+    void setName(const IString *value);
+    bool isEnabled() const;
+    void setEnabled(bool value);
     const char *errorString() const;
 
     IApplicationContext *applicationContextRef() const;
@@ -123,12 +127,14 @@ private:
     IApplicationContext *m_applicationContextRef;
     EffectContext *m_effectContextRef;
     nvFX::IContainer *m_container;
+    IString *m_name;
     Array<uint32> m_renderColorTargetIndices;
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
     Array<IEffect::Parameter *> m_interactiveParameters;
     IEffect *m_parentEffectRef;
     extensions::gl::FrameBufferObject *m_parentFrameBufferObject;
     ScriptOrderType m_scriptOrderType;
+    bool m_enabled;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)
 };

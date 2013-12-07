@@ -662,6 +662,7 @@ struct Effect::NvFXTechnique : IEffect::Technique {
 
 bool Effect::isInteractiveParameter(const Parameter *value)
 {
+    VPVL2_CHECK(value);
     const IEffect::Annotation *name = value->annotationRef("UIName");
     const IEffect::Annotation *widget = value->annotationRef("UIWidget");
     return name && widget;
@@ -674,9 +675,11 @@ Effect::Effect(EffectContext *contextRef, IApplicationContext *applicationContex
       m_applicationContextRef(applicationContextRef),
       m_effectContextRef(contextRef),
       m_container(container),
+      m_name(0),
       m_parentEffectRef(0),
       m_parentFrameBufferObject(0),
-      m_scriptOrderType(kStandard)
+      m_scriptOrderType(kStandard),
+      m_enabled(true)
 {
 }
 
@@ -691,12 +694,14 @@ Effect::~Effect()
     m_techniques.releaseAll();
     m_parameters.releaseAll();
     internal::deleteObject(m_parentFrameBufferObject);
+    internal::deleteObject(m_name);
     nvFX::IContainer::destroy(m_container);
     m_container = 0;
     m_applicationContextRef = 0;
     m_effectContextRef = 0;
     m_parentEffectRef = 0;
     m_scriptOrderType = kStandard;
+    m_enabled = false;
 }
 
 void Effect::createFrameBufferObject()
@@ -877,6 +882,26 @@ void Effect::setupOverride(const IEffect *effectRef)
             pass->setupOverrides(this);
         }
     }
+}
+
+const IString *Effect::name() const
+{
+    return m_name;
+}
+
+void Effect::setName(const IString *value)
+{
+    internal::setString(value, m_name);
+}
+
+bool Effect::isEnabled() const
+{
+    return m_enabled;
+}
+
+void Effect::setEnabled(bool value)
+{
+    m_enabled = value;
 }
 
 const char *Effect::errorString() const

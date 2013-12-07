@@ -386,6 +386,14 @@ public:
 
     virtual void setupOverride(const IEffect *effectRef) = 0;
 
+    virtual const IString *name() const = 0;
+
+    virtual void setName(const IString *value) = 0;
+
+    virtual bool isEnabled() const = 0;
+
+    virtual void setEnabled(bool value) = 0;
+
     virtual const char *errorString() const = 0;
 };
 
