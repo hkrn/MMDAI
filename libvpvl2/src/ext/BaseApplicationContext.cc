@@ -50,6 +50,31 @@
 #ifdef VPVL2_ENABLE_EXTENSION_ARCHIVE
 #include <vpvl2/extensions/Archive.h>
 #endif
+//#ifdef VPVL2_LINK_ATB
+#if 1
+#include <AntTweakBar.h>
+#else
+#define TwInit(graphAPI, device)
+#define TwDraw()
+#define TwTerminate()
+#define TwWindowSize(width, height)
+#define TwNewBar(barName) 0
+#define TwSetParam(bar, varName, paramName, paramValueType, inValueCount, inValues)
+#define TwAddVarCB(bar, name, type, setCallback, getCallback, clientData, def)
+#define TwMouseButton(action, button) 0
+#define TwMouseMotion(mouseX, mouseY) 0
+#define TwMouseWheel(pos) 0
+#define TwKeyPressed(key, modifiers) 0
+static const int TW_OPENGL_CORE = 0;
+static const int TW_MOUSE_PRESSED = 1;
+static const int TW_MOUSE_RELEASED = 2;
+static const int TW_TYPE_BOOLCPP = 1;
+static const int TW_TYPE_INT32 = 2;
+static const int TW_TYPE_FLOAT = 3;
+static const int TW_TYPE_CSTRING = 4;
+typedef void TwBar;
+typedef unsigned int ETwMouseAction;
+#endif
 
 /* STL */
 #include <fstream>
@@ -162,6 +187,63 @@ static inline const char *DebugMessageTypeToString(vpvl2::extensions::gl::GLenum
     default:
         return "Unknown";
     }
+}
+
+static void UIEffectGetEnableEffect(void *value, void *userData)
+{
+    const IEffect *effectRef = static_cast<const IEffect *>(userData);
+    *static_cast<bool *>(value) = effectRef->isEnabled();
+}
+
+static void UIEffectSetEnableEffect(const void *value, void *userData)
+{
+    IEffect *parameterRef = static_cast<IEffect *>(userData);
+    parameterRef->setEnabled(*static_cast<const bool *>(value));
+}
+
+static void UIEffectGetBooleanParameter(void *value, void *userData)
+{
+    const IEffect::Parameter *parameterRef = static_cast<const IEffect::Parameter *>(userData);
+    int bv = 0;
+    parameterRef->getValue(bv);
+    *static_cast<bool *>(value) = bv != 0;
+}
+
+static void UIEffectSetBooleanParameter(const void *value, void *userData)
+{
+    IEffect::Parameter *parameterRef = static_cast<IEffect::Parameter *>(userData);
+    bool bv = *static_cast<const bool *>(value);
+    parameterRef->setValue(bv);
+}
+
+static void UIEffectGetIntegerParameter(void *value, void *userData)
+{
+    const IEffect::Parameter *parameterRef = static_cast<const IEffect::Parameter *>(userData);
+    int iv = 0;
+    parameterRef->getValue(iv);
+    *static_cast<int *>(value) = iv;
+}
+
+static void UIEffectSetIntegerParameter(const void *value, void *userData)
+{
+    IEffect::Parameter *parameterRef = static_cast<IEffect::Parameter *>(userData);
+    int iv = *static_cast<const int *>(value);
+    parameterRef->setValue(iv);
+}
+
+static void UIEffectGetFloatParameter(void *value, void *userData)
+{
+    const IEffect::Parameter *parameterRef = static_cast<const IEffect::Parameter *>(userData);
+    float fv = 0;
+    parameterRef->getValue(fv);
+    *static_cast<float *>(value) = fv;
+}
+
+static void UIEffectSetFloatParameter(const void *value, void *userData)
+{
+    IEffect::Parameter *parameterRef = static_cast<IEffect::Parameter *>(userData);
+    float fv = *static_cast<const float *>(value);
+    parameterRef->setValue(fv);
 }
 
 static inline IString *toIStringFromUtf8(const std::string &bytes)
@@ -428,6 +510,7 @@ bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdi
 
 void BaseApplicationContext::terminate()
 {
+    TwTerminate();
     Scene::terminate();
     google::ShutdownGoogleLogging();
 }
@@ -449,12 +532,9 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
       m_cameraWorldMatrix(1),
       m_cameraViewMatrix(1),
       m_cameraProjectionMatrix(1),
-      m_aspectRatio(1)
-    #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
-    ,
+      m_aspectRatio(1),
       m_samplesMSAA(0),
       m_viewportRegionInvalidated(false)
-    #endif /* VPVL2_ENABLE_NVIDIA_CG */
 {
     FreeImage_Initialise();
 }
@@ -477,9 +557,8 @@ void BaseApplicationContext::initialize(bool enableDebug)
         reinterpret_cast<PFNGLDEBUGMESSAGECONTROLARBPROC>(resolver->resolveSymbol("glDebugMessageControlARB"))(kGL_DONT_CARE, kGL_DONT_CARE, kGL_DONT_CARE, 0, 0, kGL_TRUE);
         reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKARBPROC>(resolver->resolveSymbol("glDebugMessageCallbackARB"))(reinterpret_cast<GLDEBUGPROCARB>(&BaseApplicationContext::debugMessageCallback), this);
     }
-#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     getIntegerv(kGL_MAX_SAMPLES, &m_samplesMSAA);
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
+    TwInit(TW_OPENGL_CORE, 0);
     popAnnotationGroup(resolver);
 }
 
@@ -487,10 +566,8 @@ BaseApplicationContext::~BaseApplicationContext()
 {
     m_encodingRef = 0;
     FreeImage_DeInitialise();
-#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     /* m_samplesMSAA must not set zero at #release(), it causes multiple post effect will be lost */
     m_samplesMSAA = 0;
-#endif
 }
 
 void BaseApplicationContext::release()
@@ -498,7 +575,6 @@ void BaseApplicationContext::release()
     pushAnnotationGroup("BaseApplicationContext#release", sharedFunctionResolverInstance());
     m_shadowMap.reset();
     m_currentModelRef = 0;
-#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     m_offscreenTextures.releaseAll();
     m_renderTargets.releaseAll();
     m_basename2modelRefs.clear();
@@ -514,7 +590,6 @@ void BaseApplicationContext::release()
         offscreenEffects.insert(technique->parentEffectRef());
     }
     m_effectCaches.releaseAll();
-#endif
     popAnnotationGroup(sharedFunctionResolverInstance());
 }
 
@@ -540,7 +615,8 @@ bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridg
                 ret = internalUploadTexture(name2, std::string(), bridge, context);
             }
             else if (const IString *directoryRef = context->directoryRef()) {
-                const std::string &path = createPath(directoryRef, name);
+                const std::string &path = static_cast<const String *>(directoryRef)->toStdString()
+                        + "/" + static_cast<const String *>(name)->toStdString();
                 VPVL2_VLOG(2, "Try loading a model toon texture: " << path);
                 ret = internalUploadTexture(name2, path, bridge, context);
             }
@@ -552,7 +628,8 @@ bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridg
         }
     }
     else if (const IString *directoryRef = context->directoryRef()) {
-        const std::string &path = createPath(directoryRef, name);
+        const std::string &path = static_cast<const String *>(directoryRef)->toStdString()
+                + "/" + static_cast<const String *>(name)->toStdString();
         VPVL2_VLOG(2, "Loading a model texture: " << path);
         ret = internalUploadTexture(name2, path, bridge, context);
     }
@@ -688,14 +765,10 @@ void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int
 IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel *model, void *userData)
 {
     std::string file;
-#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     if (type == kModelEffectTechniques) {
         const IString *path = effectFilePath(model, static_cast<const IString *>(userData));
         return loadShaderSource(type, path);
     }
-#else
-    (void) userData;
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
     switch (model->type()) {
     case IModel::kAssetModel:
         file += "/asset/";
@@ -774,7 +847,6 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel 
 
 IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IString *path)
 {
-#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     if (type == kModelEffectTechniques) {
         std::string bytes;
         MapBuffer buffer(this);
@@ -803,10 +875,6 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IString
         }
         return toIStringFromUtf8(bytes);
     }
-#else
-    (void) type;
-    (void) path;
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
     return 0;
 }
 
@@ -838,8 +906,6 @@ IString *BaseApplicationContext::toUnicode(const uint8 *str) const
     }
     return 0;
 }
-
-#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
 
 void BaseApplicationContext::getViewport(Vector3 &value) const
 {
@@ -920,8 +986,8 @@ void BaseApplicationContext::addModelPath(IModel *model, const std::string &path
         }
         else {
             if (!model->name(IEncoding::kDefaultLanguage)) {
-                String s(UnicodeString::fromUTF8(path));
-                model->setName(&s, IEncoding::kDefaultLanguage);
+                IStringSmartPtr s(String::create(path));
+                model->setName(s.get(), IEncoding::kDefaultLanguage);
             }
             m_basename2modelRefs.insert(path.c_str(), model);
         }
@@ -960,11 +1026,12 @@ const IString *BaseApplicationContext::effectFilePath(const IModel *model, const
         extractMatcher.reset(s);
         const UnicodeString &cgfx = extractMatcher.find()
                 ? extractMatcher.replaceAll("$1.cgfx", status) : s + ".cgfx";
-        const std::string &newEffectPath = createPath(dir, String::toStdString(cgfx));
+        const std::string &newEffectPath = static_cast<const String *>(dir)->toStdString()
+                + "/" + String::toStdString(cgfx);
         m_effectPathPtr.reset(existsFile(newEffectPath) ? String::create(newEffectPath) : 0);
     }
     if (!m_effectPathPtr.get()) {
-        m_effectPathPtr.reset(String::create(createPath(dir, "default.cgfx")));
+        m_effectPathPtr.reset(String::create(static_cast<const String *>(dir)->toStdString() + "/default.cgfx"));
     }
     return m_effectPathPtr.get();
 }
@@ -986,24 +1053,37 @@ bool BaseApplicationContext::tryGetSharedTextureParameter(const char *name, Shar
     return false;
 }
 
-void BaseApplicationContext::setMousePosition(const glm::vec2 &value, bool pressed, MousePositionType type)
+void BaseApplicationContext::setMousePosition(const glm::vec4 &value, MousePositionType type, bool &handled)
 {
+    ETwMouseAction mouseAction = !btFuzzyZero(value.z) ? TW_MOUSE_PRESSED : TW_MOUSE_RELEASED;
     switch (type) {
     case kMouseLeftPressPosition:
-        m_mouseLeftPressPosition = glm::vec4(value.x, value.y, pressed, 0);
+        m_mouseLeftPressPosition = value;
+        handled = TwMouseButton(mouseAction, TW_MOUSE_LEFT) != 0;
         break;
     case kMouseMiddlePressPosition:
-        m_mouseMiddlePressPosition = glm::vec4(value.x, value.y, pressed, 0);
+        m_mouseMiddlePressPosition = value;
+        handled = TwMouseButton(mouseAction, TW_MOUSE_MIDDLE) != 0;
         break;
     case kMouseRightPressPosition:
-        m_mouseRightPressPosition = glm::vec4(value.x, value.y, pressed, 0);
+        m_mouseRightPressPosition = value;
+        handled = TwMouseButton(mouseAction, TW_MOUSE_RIGHT) != 0;
+        break;
+    case kMouseWheelPosition:
+        handled = TwMouseWheel(value.y) != 0;
         break;
     case kMouseCursorPosition:
-        m_mouseCursorPosition = glm::vec4(value.x, value.y, 0, 0);
+        m_mouseCursorPosition = value;
+        handled = TwMouseMotion(value.x, value.y) != 0;
         break;
     default:
         break;
     }
+}
+
+void BaseApplicationContext::handleKeyPress(int value, int modifiers, bool &handled)
+{
+    handled = TwKeyPressed(value, modifiers) != 0;
 }
 
 std::string BaseApplicationContext::findModelPath(const IModel *modelRef) const
@@ -1172,26 +1252,30 @@ void BaseApplicationContext::renderOffscreen()
         m_viewportRegionInvalidated = false;
     }
     const int nengines = engines.count(), ntechniques = m_offscreenTechniques.count();
+    int actualProceededTechniques = 0;
     for (int i = 0; i < ntechniques; i++) {
         IEffect::Technique *technique = m_offscreenTechniques[i];
-        technique->getPasses(passes);
-        const int npasses = passes.count();
-        for (int j = 0; j < npasses; j++) {
-            IEffect::Pass *pass = passes[j];
-            pass->setState();
-            if (pass->isRenderable()) {
-                for (int k = 0; k < nengines; k++) {
-                    IRenderEngine *engine = engines[k];
-                    engine->setOverridePass(pass);
-                    engine->renderEdge();
-                    engine->renderModel();
-                    engine->setOverridePass(0);
+        if (technique->parentEffectRef()->isEnabled()) {
+            technique->getPasses(passes);
+            const int npasses = passes.count();
+            for (int j = 0; j < npasses; j++) {
+                IEffect::Pass *pass = passes[j];
+                pass->setState();
+                if (pass->isRenderable()) {
+                    for (int k = 0; k < nengines; k++) {
+                        IRenderEngine *engine = engines[k];
+                        engine->setOverridePass(pass);
+                        engine->renderEdge();
+                        engine->renderModel();
+                        engine->setOverridePass(0);
+                    }
+                    pass->resetState();
                 }
-                pass->resetState();
             }
+            actualProceededTechniques++;
         }
     }
-    if (ntechniques == 0) {
+    if (actualProceededTechniques == 0) {
         viewport(m_viewportRegion.x, m_viewportRegion.y, m_viewportRegion.z, m_viewportRegion.w);
         clear(kGL_COLOR_BUFFER_BIT | kGL_DEPTH_BUFFER_BIT | kGL_STENCIL_BUFFER_BIT);
     }
@@ -1283,21 +1367,94 @@ void BaseApplicationContext::renderOffscreen()
     popAnnotationGroup(sharedFunctionResolverInstance());
 }
 
+void BaseApplicationContext::createEffectParameterUIWidgets(IEffect *effectRef)
+{
+    Array<IEffect::Parameter *> parameters;
+    effectRef->getInteractiveParameters(parameters);
+    TwBar *bar = TwNewBar(reinterpret_cast<const char *>(effectRef->name()->toByteArray()));
+    TwSetParam(bar, 0, "valueswidth", TW_PARAM_CSTRING, 1, "fit");
+    TwAddVarCB(bar, "Enabled", TW_TYPE_BOOLCPP, UIEffectSetEnableEffect, UIEffectGetEnableEffect, effectRef, "");
+    const int nparameters = parameters.count();
+    std::ostringstream stream;
+    for (int i = 0; i < nparameters; i++) {
+        IEffect::Parameter *parameterRef = parameters[i];
+        stream.str(std::string());
+        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIHelp")) {
+            stream << "help='" << annotationRef->stringValue() << "' ";
+        }
+        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIVisible")) {
+            stream << "visible='" << annotationRef->booleanValue() << "' ";
+        }
+        switch (parameterRef->type()) {
+        case IEffect::Parameter::kBoolean: {
+            TwAddVarCB(bar, parameterRef->annotationRef("UIName")->stringValue(), TW_TYPE_BOOLCPP, UIEffectSetBooleanParameter, UIEffectGetBooleanParameter, parameterRef, stream.str().c_str());
+            break;
+        }
+        case IEffect::Parameter::kInteger: {
+            if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIMin")) {
+                stream << "min=" << annotationRef->integerValue() << " ";
+            }
+            else {
+                stream << "min=0 ";
+            }
+            if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIMax")) {
+                stream << "max=" << annotationRef->integerValue() << " ";
+            }
+            TwAddVarCB(bar, parameterRef->annotationRef("UIName")->stringValue(), TW_TYPE_INT32, UIEffectSetIntegerParameter, UIEffectGetIntegerParameter, parameterRef, stream.str().c_str());
+            break;
+        }
+        case IEffect::Parameter::kFloat: {
+            if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIMin")) {
+                stream << "min=" << annotationRef->floatValue() << " ";
+            }
+            else {
+                stream << "min=0.0 ";
+            }
+            if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIMax")) {
+                stream << "max=" << annotationRef->floatValue() << " ";
+            }
+            if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIStep")) {
+                stream << "step=" << annotationRef->floatValue() << " ";
+            }
+            if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIPrecision")) {
+                stream << "precision=" << annotationRef->integerValue() << " ";
+            }
+            TwAddVarCB(bar, parameterRef->annotationRef("UIName")->stringValue(), TW_TYPE_FLOAT, UIEffectSetFloatParameter, UIEffectGetFloatParameter, parameterRef, stream.str().c_str());
+            break;
+        }
+        default:
+            break;
+        }
+        VPVL2_VLOG(1, "UIParameter=" << parameterRef->name());
+    }
+}
+
+void BaseApplicationContext::renderEffectParameterUIWidgets()
+{
+    TwDraw();
+}
+
 IEffect *BaseApplicationContext::createEffectRef(const IString *path)
 {
     pushAnnotationGroup("BaseApplicationContext#createEffectRef", sharedFunctionResolverInstance());
     IEffect *effectRef = 0;
     const HashString key(path->toHashString());
+    const std::string &effectPath = static_cast<const String *>(path)->toStdString();
     if (IEffect *const *value = m_effectCaches.find(key)) {
         effectRef = *value;
     }
-    else if (existsFile(static_cast<const String *>(path)->toStdString())) {
+    else if (existsFile(effectPath)) {
         IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
         if (!effectPtr.get() || !effectPtr->internalPointer()) {
-            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << effectRef->errorString());
+            const char *message = effectPtr.get() ? effectPtr->errorString() : "(null)";
+            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << message);
         }
         else if (!m_effectCaches.find(key)) {
+            const std::string &name = effectPath.substr(effectPath.rfind("/") + 1);
+            IStringSmartPtr namePtr(String::create(name));
             effectRef = m_effectCaches.insert(key, effectPtr.release());
+            effectRef->setName(namePtr.get());
+            VPVL2_LOG(INFO, "Created a effect: " << internal::cstr(path, "(null)"));
         }
         else {
             VPVL2_LOG(INFO, "Duplicated effect was found and ignored it: " << internal::cstr(path, "(null)"));
@@ -1315,16 +1472,14 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
 
 IEffect *BaseApplicationContext::createEffectRef(IModel *modelRef, const IString *directoryRef)
 {
-    const IString *s = effectFilePath(modelRef, directoryRef);
-    IEffect *effectRef = createEffectRef(s);
+    const IString *effectFilePathRef = effectFilePath(modelRef, directoryRef);
+    IEffect *effectRef = createEffectRef(effectFilePathRef);
     if (effectRef) {
         setEffectOwner(effectRef, modelRef);
-        VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(modelRef->name(IEncoding::kDefaultLanguage), "(null)") << " path=" << internal::cstr(s, ""));
+        VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(modelRef->name(IEncoding::kDefaultLanguage), "(null)") << " path=" << internal::cstr(effectFilePathRef, ""));
     }
     return effectRef;
 }
-
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
 
 IModel *BaseApplicationContext::currentModelRef() const
 {
@@ -1400,6 +1555,7 @@ void BaseApplicationContext::setViewportRegion(const glm::vec4 &viewport)
         m_viewportRegion = viewport;
         m_aspectRatio = glm::max(viewport.z, viewport.w) / glm::min(viewport.z, viewport.w);
         m_viewportRegionInvalidated = true;
+        TwWindowSize(viewport.z, viewport.w);
         updateCameraMatrices();
     }
 }
@@ -1454,37 +1610,24 @@ void BaseApplicationContext::renderShadowMap()
     }
 }
 
-std::string BaseApplicationContext::createPath(const IString *directoryRef, const std::string &name)
-{
-    UnicodeString n = UnicodeString::fromUTF8(name);
-    return static_cast<const String *>(directoryRef)->toStdString() + "/" + String::toStdString(n.findAndReplace('\\', '/'));
-}
-
-std::string BaseApplicationContext::createPath(const IString *directoryRef, const IString *name)
-{
-    const UnicodeString &d = static_cast<const String *>(directoryRef)->value();
-    UnicodeString n = static_cast<const String *>(name)->value();
-    return String::toStdString(d + "/" + n.findAndReplace('\\', '/'));
-}
-
 std::string BaseApplicationContext::toonDirectory() const
 {
-    return String::toStdString(m_configRef->value("dir.system.toon", UnicodeString(":textures")));
+    return m_configRef->value("dir.system.toon", std::string(":textures"));
 }
 
 std::string BaseApplicationContext::shaderDirectory() const
 {
-    return String::toStdString(m_configRef->value("dir.system.shaders", UnicodeString(":shaders")));
+    return m_configRef->value("dir.system.shaders", std::string(":shaders"));
 }
 
 std::string BaseApplicationContext::effectDirectory() const
 {
-    return String::toStdString(m_configRef->value("dir.system.effects", UnicodeString(":effects")));
+    return m_configRef->value("dir.system.effects", std::string(":effects"));
 }
 
 std::string BaseApplicationContext::kernelDirectory() const
 {
-    return String::toStdString(m_configRef->value("dir.system.kernels", UnicodeString(":kernels")));
+    return m_configRef->value("dir.system.kernels", std::string(":kernels"));
 }
 
 void BaseApplicationContext::debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei /* length */, const GLchar *message, GLvoid * /* userData */)

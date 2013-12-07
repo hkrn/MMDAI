@@ -203,7 +203,6 @@ public:
     IString *loadKernelSource(KernelType type, void *userData);
     IString *toUnicode(const uint8 *str) const;
 
-#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     typedef std::pair<IEffect *, bool> EffectAttachmentValue;
     typedef std::pair<RegexMatcher *, EffectAttachmentValue> EffectAttachmentRule;
     typedef std::vector<EffectAttachmentRule> EffectAttachmentRuleList;
@@ -252,7 +251,8 @@ public:
     const IString *effectFilePath(const IModel *model, const IString *dir) const;
     void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter);
     bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const;
-    void setMousePosition(const glm::vec2 &value, bool pressed, MousePositionType type);
+    void setMousePosition(const glm::vec4 &value, MousePositionType type, bool &handled);
+    void handleKeyPress(int value, int modifiers, bool &handled);
     std::string findModelPath(const IModel *modelRef) const;
     std::string findModelBasename(const IModel *modelRef) const;
     extensions::gl::FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
@@ -260,9 +260,11 @@ public:
     void releaseOffscreenRenderTarget(const OffscreenTexture *textureRef, bool enableAA);
     void parseOffscreenSemantic(IEffect *effectRef, const IString *directoryRef);
     void renderOffscreen();
+    void createEffectParameterUIWidgets(IEffect *effectRef);
+    void renderEffectParameterUIWidgets();
     IEffect *createEffectRef(const IString *path);
     IEffect *createEffectRef(IModel *modelRef, const IString *directoryRef);
-#else
+#if 0
     void addModelPath(IModel * /* model */, const std::string & /* path */) {}
     void parseOffscreenSemantic(IEffect * /* effect */, const IString * /* dir */) {}
     void renderOffscreen() {}
@@ -301,8 +303,6 @@ protected:
     PFNGLCLEARCOLORPROC clearColor;
     PFNGLCLEARDEPTHPROC clearDepth;
 
-    static std::string createPath(const IString *directoryRef, const std::string &name);
-    static std::string createPath(const IString *directoryRef, const IString *name);
     bool uploadSystemToonTexture(const std::string &name, TextureDataBridge &bridge, ModelContext *context);
     bool internalUploadTexture(const std::string &name, const std::string &path, TextureDataBridge &bridge, ModelContext *context);
     std::string toonDirectory() const;
@@ -328,7 +328,7 @@ protected:
     glm::mat4x4 m_cameraProjectionMatrix;
     glm::vec4 m_viewportRegion;
     glm::mediump_float m_aspectRatio;
-#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
+
     typedef PointerHash<HashPtr, extensions::gl::FrameBufferObject> RenderTargetMap;
     typedef PointerHash<HashString, IEffect> Path2EffectMap;
     typedef Hash<HashPtr, std::string> ModelRef2PathMap;
@@ -356,7 +356,6 @@ protected:
     mutable IStringSmartPtr m_effectPathPtr;
     int m_samplesMSAA;
     bool m_viewportRegionInvalidated;
-#endif
 
 private:
     static void debugMessageCallback(gl::GLenum source, gl::GLenum type, gl::GLuint id, gl::GLenum severity,
