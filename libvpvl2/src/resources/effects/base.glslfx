@@ -122,10 +122,10 @@ vec4 vpvl2FXPerformSkinning(const vec3 origin3, const vec4 boneIndices, const ve
         mat4 matrix2 = vpvl2FXGetBoneTransformMatrix(boneIndices.y);
         mat4 matrix3 = vpvl2FXGetBoneTransformMatrix(boneIndices.z);
         mat4 matrix4 = vpvl2FXGetBoneTransformMatrix(boneIndices.w);
-        return boneWeights.xxxx * (matrix1 * origin)
-             + boneWeights.yyyy * (matrix2 * origin)
-             + boneWeights.zzzz * (matrix3 * origin)
-             + boneWeights.wwww * (matrix4 * origin);
+        return fma(boneWeights.xxxx, (matrix1 * origin),
+               fma(boneWeights.yyyy, (matrix2 * origin),
+               fma(boneWeights.zzzz, (matrix3 * origin),
+                   boneWeights.wwww + (matrix4 * origin))));
     }
     return origin;
 }
@@ -207,7 +207,7 @@ const vec3 kWhiteColor = vec3(1.0);
 
 vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
     vec4 toonColor = mix(vec4(1.0), texture(vpvl2_NS_toonTextureSampler, kToonTexCoord), float(use_toon));
-    float w = clamp(dot(normal, -vpvl2_NS_lightDirection) * 16.0 + 0.5, 0.0, 1.0);
+    float w = saturate(fma(dot(normal, -vpvl2_NS_lightDirection), 16.0, 0.5));
     vec4 newColor = color;
     newColor.rgb *= toonColor.rgb + (kWhiteColor - toonColor.rgb) * vec3(w);
     return newColor;
@@ -232,16 +232,17 @@ GLSLShader global getShadowFactor {
 #endif
 
 const float kEpsilonBias = 0.00001;
+const vec2  kHalf2 = vec2(0.5, 0.5);
 
 float vpvl2FXGetShadowFactor(const vec4 position) {
     vec4 shadowPosition = position / position.w;
-    vec2 shadowCoord = vec2((shadowPosition.xy * 0.5) + 0.5);
+    vec2 shadowCoord = fma(shadowPosition.xy, kHalf2, kHalf2);
 #if 0 /* VSM */
     vec2 depthSample = texture(depthTextureSampler, shadowCoord).rg;
     float sigma = depthSample.y - depthSample.x * depthSample.x + kEpsilonBias;
     float delta = depthSample.x - shadowPosition.z;
     float p = sigma / (sigma + (delta * delta));
-    float shadowFactor = clamp(max(p, float((depthSample.x + kEpsilonBias) < shadowPosition.z)), 0.0, 1.0);
+    float shadowFactor = saturate(max(p, float((depthSample.x + kEpsilonBias) < shadowPosition.z)));
 #else
     float depthSample = texture(vpvl2_NS_depthTextureSampler, shadowCoord).r;
     float shadowFactor = float((depthSample + kEpsilonBias) < shadowPosition.z);
@@ -284,12 +285,9 @@ vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 no
 
 GLSLShader global applyStandardLight {
 
-const vec3 kZero3 = vec3(0.0);
-const vec3 kOne3  = vec3(1.0);
-
 vec4 vpvl2FXApplyStandardLight(const vec4 color, const vec4 origin, const vec3 normal) {
     vec3 halfVector = normalize((vpvl2_NS_cameraPosition - origin.xyz) - vpvl2_NS_lightDirection);
-    vec3 specular = clamp(vpvl2_NS_materialSpecular * vpvl2_NS_lightSpecular, kZero3, kOne3);
+    vec3 specular = saturate(vpvl2_NS_materialSpecular * vpvl2_NS_lightSpecular);
     float hdotn = max(dot(halfVector, normal), 0.0);
     vec4 newColor = color;
     newColor.rgb += specular * vec3(pow(hdotn, max(vpvl2_NS_materialShininess, 1.0)));
@@ -302,10 +300,6 @@ GLSLShader transformVertex {
 
 const vec2 kHalf2 = vec2(0.5);
 const vec2 kOne2  = vec2(1.0);
-const vec3 kZero3 = vec3(0.0);
-const vec3 kOne3  = vec3(1.0);
-const vec4 kZero4 = vec4(0.0);
-const vec4 kOne4  = vec4(1.0);
 
 vec4 vpvl2FXPerformPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 vec4 vpvl2FXPerformNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
@@ -322,13 +316,13 @@ void vpvl2FXTransformVertex(inout vec4 origin,
                             const vec4 boneIndices,
                             const vec4 boneWeights)
 {
-    vec3 ambient = clamp(vpvl2_NS_materialAmbient * vpvl2_NS_lightAmbient + vpvl2_NS_materialEmissive, kZero3, kOne3);
-    vec4 diffuse = clamp(vpvl2_NS_materialDiffuse * vec4(vpvl2_NS_lightDiffuse, 1.0), kZero4, kOne4);
+    vec3 ambient = saturate(fma(vpvl2_NS_materialAmbient, vpvl2_NS_lightAmbient, vpvl2_NS_materialEmissive));
+    vec4 diffuse = saturate(vpvl2_NS_materialDiffuse * vec4(vpvl2_NS_lightDiffuse, 1.0));
     origin       = vpvl2FXPerformPositionTransform(origin, boneIndices, boneWeights);
     position     = vpvl2_NS_worldViewProjectionMatrix * origin;
     normal       = vpvl2_NS_worldViewMatrix * vpvl2FXPerformNormalTransform(normal, position, boneIndices, boneWeights);
-    color        = vec4(clamp(ambient + dot(normal.xyz, -vpvl2_NS_lightDirection) * diffuse.rgb, kZero3, kOne3), diffuse.a);
-    texcoord.zw  = (-normal.xy * kHalf2 + kHalf2) * vec2(use_spheremap)
+    color        = vec4(saturate(ambient + dot(normal.xyz, -vpvl2_NS_lightDirection) * diffuse.rgb), diffuse.a);
+    texcoord.zw  = fma(-normal.xy, kHalf2, kHalf2) * vec2(use_spheremap)
                  + (kOne2 + vec2(dot(vpvl2_NS_lightDirection, -normal.xyz)) * kHalf2) * vec2(!use_spheremap);
 }
 
