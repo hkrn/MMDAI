@@ -128,7 +128,7 @@ public:
     BoneRefObject *parentBindingBone() const;
     void setParentBindingBone(BoneRefObject *value);
     MotionProxy *childMotion() const;
-    void setChildMotion(MotionProxy *value);
+    void setChildMotion(MotionProxy *value, bool emitSignal);
     QUuid uuid() const;
     QUrl fileUrl() const;
     QUrl faviconUrl() const;

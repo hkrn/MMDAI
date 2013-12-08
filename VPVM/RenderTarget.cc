@@ -294,8 +294,7 @@ public:
         while (!m_uploadingEffects.isEmpty()) {
             ModelProxy *modelProxy = m_uploadingEffects.dequeue();
             const QFileInfo fileInfo(modelProxy->fileUrl().toLocalFile());
-            const String filePath(Util::fromQString(fileInfo.absoluteFilePath()));
-            if (IEffect *effectRef = createEffectRef(&filePath)) {
+            if (IEffect *effectRef = createEffectRef(fileInfo.absoluteFilePath().toStdString())) {
                 const String dir(Util::fromQString(fileInfo.absoluteDir().absolutePath()));
                 ModelContext context(this, 0, &dir);
                 IModel *modelRef = modelProxy->data();
@@ -1818,8 +1817,6 @@ void RenderTarget::initialize()
 void RenderTarget::release()
 {
     m_currentGizmoRef = 0;
-    /* use deleteLater due to different thread */
-    m_projectProxyRef->internalDeleteAllMotions(true);
     m_applicationContext->release();
     m_translationGizmo.reset();
     m_orientationGizmo.reset();

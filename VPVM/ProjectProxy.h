@@ -162,8 +162,8 @@ public:
     MotionProxy *createMotionProxy(vpvl2::IMotion *motion, const QUuid &uuid, const QUrl &fileUrl, bool emitSignal);
     ModelProxy *resolveModelProxy(const vpvl2::IModel *value) const;
     MotionProxy *resolveMotionProxy(const vpvl2::IMotion *value) const;
-    void internalDeleteAllMotions(bool deleteLater);
-    void deleteMotion(MotionProxy *value, bool deleteLater);
+    void internalDeleteAllMotions(bool fromDestructor);
+    void deleteMotion(MotionProxy *value, bool fromDestructor);
     QVariant globalSetting(const QString &key, const QVariant &defaultValue = QVariant()) const;
     QVector3D globalSetting(const QString &key, const QVector3D &defaultValue) const;
     void setGlobalString(const QString &key, const QVariant &value);
@@ -288,7 +288,7 @@ private:
     void internalSeek(const qreal &timeIndex, bool forceUpdate);
     void updateOriginValues();
     void setErrorString(const QString &value);
-    void release();
+    void release(bool fromDestructor);
 
     vpvl2::extensions::icu4c::Encoding::Dictionary m_dictionary;
     QScopedPointer<vpvl2::IEncoding> m_encoding;

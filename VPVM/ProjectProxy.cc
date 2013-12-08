@@ -284,7 +284,7 @@ ProjectProxy::ProjectProxy(QObject *parent)
 ProjectProxy::~ProjectProxy()
 {
     /* explicitly release XMLProject (Scene) instance to invalidation of Effect correctly before destorying RenderContext */
-    release();
+    release(true);
     /* explicitly release World instance to ensure release btRigidBody */
     m_worldProxy.reset();
     m_dictionary.releaseAll();
@@ -304,7 +304,7 @@ void ProjectProxy::createAsync()
 {
     emit projectWillCreate();
     connect(this, &ProjectProxy::enqueuedModelsDidDelete, this, &ProjectProxy::internalCreateAsync);
-    release();
+    release(false);
 }
 
 void ProjectProxy::loadAsync(const QUrl &fileUrl)
@@ -312,7 +312,7 @@ void ProjectProxy::loadAsync(const QUrl &fileUrl)
     Q_ASSERT(fileUrl.isValid());
     emit projectWillLoad();
     connect(this, &ProjectProxy::enqueuedModelsDidDelete, this, &ProjectProxy::internalLoadAsync);
-    release();
+    release(false);
     m_fileUrl = fileUrl;
 }
 
@@ -388,7 +388,7 @@ bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, Motio
             VPVL2_VLOG(1, "The mode motion of " << modelProxy->name().toStdString() << " from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
             deleteMotion(modelProxy->childMotion(), false);
             motionProxy->setModelProxy(modelProxy, m_factory.data());
-            modelProxy->setChildMotion(motionProxy);
+            modelProxy->setChildMotion(motionProxy, true);
         }
         else if (type == CameraMotion) {
             VPVL2_VLOG(1, "The camera motion from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
@@ -521,7 +521,7 @@ void ProjectProxy::internalAddModel(ModelProxy *value, bool selected, bool isPro
     VPVL2_VLOG(1, "The initial motion of the model " << value->name().toStdString() << " will be allocated as " << uuid.toString().toStdString());
     if (MotionProxy *motionProxy = createMotionProxy(m_factory->newMotion(IMotion::kVMDMotion, value->data()), uuid, QUrl(), false)) {
         motionProxy->setModelProxy(value, m_factory.data());
-        value->setChildMotion(motionProxy);
+        value->setChildMotion(motionProxy, true);
         emit motionDidLoad(motionProxy);
     }
 }
@@ -937,18 +937,18 @@ MotionProxy *ProjectProxy::resolveMotionProxy(const IMotion *value) const
     return m_instance2MotionProxyRefs.value(value);
 }
 
-void ProjectProxy::internalDeleteAllMotions(bool deleteLater)
+void ProjectProxy::internalDeleteAllMotions(bool fromDestructor)
 {
     m_cameraRefObject->releaseMotion();
     m_lightRefObject->releaseMotion();
     /* copy motion proxies because m_motionProxies will be mutated using removeOne */
     QList<MotionProxy *> motionProxies = m_motionProxies;
     foreach (MotionProxy *motionProxy, motionProxies) {
-        deleteMotion(motionProxy, deleteLater);
+        deleteMotion(motionProxy, fromDestructor);
     }
 }
 
-void ProjectProxy::deleteMotion(MotionProxy *value, bool deleteLater)
+void ProjectProxy::deleteMotion(MotionProxy *value, bool fromDestructor)
 {
     if (value && m_uuid2MotionProxyRefs.contains(value->uuid())) {
         emit motionWillDelete(value);
@@ -956,7 +956,8 @@ void ProjectProxy::deleteMotion(MotionProxy *value, bool deleteLater)
             setCurrentMotion(0);
         }
         if (ModelProxy *modelProxy = value->parentModel()) {
-            modelProxy->setChildMotion(0);
+            /* no signal should be emitted when fromDestructor is true */
+            modelProxy->setChildMotion(0, !fromDestructor);
             value->data()->setParentModelRef(0);
         }
         m_undoGroup->removeStack(m_motion2UndoStacks.value(value));
@@ -965,7 +966,7 @@ void ProjectProxy::deleteMotion(MotionProxy *value, bool deleteLater)
         m_instance2MotionProxyRefs.remove(value->data());
         m_uuid2MotionProxyRefs.remove(value->uuid());
         m_project->removeMotion(value->data());
-        deleteLater ? value->deleteLater() : delete value;
+        delete value;
     }
 }
 
@@ -1106,7 +1107,7 @@ void ProjectProxy::internalLoadAsync()
             if (ModelProxy *modelProxy = resolveModelProxy(motionRef->parentModelRef())) {
                 /* this is a model motion */
                 motionProxy->setModelProxy(modelProxy, m_factory.data());
-                modelProxy->setChildMotion(motionProxy);
+                modelProxy->setChildMotion(motionProxy, true);
                 if (modelSetting(modelProxy, "selected").toBool()) {
                     /* call setCurrentMotion to paint timeline correctly */
                     setCurrentMotion(motionProxy);
@@ -1263,12 +1264,12 @@ void ProjectProxy::reset()
     setCurrentMotion(0);
 }
 
-void ProjectProxy::release()
+void ProjectProxy::release(bool fromDestructor)
 {
     VPVL2_VLOG(1, "The project will be released");
     reset();
     m_undoGroup.reset(new QUndoGroup());
-    internalDeleteAllMotions(false);
+    internalDeleteAllMotions(fromDestructor);
     /* copy motion proxies because m_modelProxies will be mutated using removeOne */
     QList<ModelProxy *> modelProxies = m_modelProxies;
     foreach (ModelProxy *modelProxy, modelProxies) {
