@@ -169,7 +169,7 @@ public:
     bool uploadTextureSFML(const sf::Image &image, const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
         const Vector3 size(image.getSize().x, image.getSize().y, 1);
         ITexture *texturePtr = context->createTexture(image.getPixelsPtr(), defaultTextureFormat(), size, (bridge.flags & IApplicationContext::kGenerateTextureMipmap) != 0);
-        return context->cacheTexture(key, texturePtr, bridge);
+        return context->storeTexture(key, texturePtr, bridge);
     }
 
     struct Resolver : FunctionResolver {

@@ -163,12 +163,12 @@ public:
         ModelContext(BaseApplicationContext *applicationContextRef, Archive *archiveRef, const IString *directory);
         ~ModelContext();
         void addTextureCache(const std::string &path, ITexture *textureRef);
-        bool findTextureCache(const std::string &path, TextureDataBridge &bridge) const;
+        bool findTexture(const std::string &path, TextureDataBridge &bridge) const;
         bool uploadTexture(const std::string &path, TextureDataBridge &bridge);
         bool uploadTexture(const uint8 *data, vsize size, const std::string &key, TextureDataBridge &bridge);
-        bool cacheTexture(const std::string &key, ITexture *textureRef, TextureDataBridge &bridge);
+        bool storeTexture(const std::string &key, ITexture *textureRef, TextureDataBridge &bridge);
         void optimizeTexture(ITexture *texture);
-        int countCachedTextures() const;
+        int countTextures() const;
         ITexture *createTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap) const;
         ITexture *createTexture(const uint8 *data, vsize size, bool mipmap);
         Archive *archiveRef() const;

@@ -365,7 +365,7 @@ void BaseApplicationContext::ModelContext::addTextureCache(const std::string &pa
     }
 }
 
-bool BaseApplicationContext::ModelContext::findTextureCache(const std::string &path, TextureDataBridge &bridge) const
+bool BaseApplicationContext::ModelContext::findTexture(const std::string &path, TextureDataBridge &bridge) const
 {
     VPVL2_DCHECK(!path.empty());
     TextureCacheMap::const_iterator it = m_textureRefCache.find(path);
@@ -376,7 +376,7 @@ bool BaseApplicationContext::ModelContext::findTextureCache(const std::string &p
     return false;
 }
 
-bool BaseApplicationContext::ModelContext::cacheTexture(const std::string &key, ITexture *textureRef, TextureDataBridge &bridge)
+bool BaseApplicationContext::ModelContext::storeTexture(const std::string &key, ITexture *textureRef, TextureDataBridge &bridge)
 {
     VPVL2_DCHECK(!key.empty());
     bool ok = textureRef != 0;
@@ -401,7 +401,7 @@ bool BaseApplicationContext::ModelContext::cacheTexture(const std::string &key, 
     return ok;
 }
 
-int BaseApplicationContext::ModelContext::countCachedTextures() const
+int BaseApplicationContext::ModelContext::countTextures() const
 {
     return int(m_textureRefCache.size());
 }
@@ -495,7 +495,7 @@ bool BaseApplicationContext::ModelContext::uploadTexture(const std::string &path
         VPVL2_VLOG(2, path << " is the directory, skipped.");
         return true;
     }
-    else if (findTextureCache(path, bridge)) {
+    else if (findTexture(path, bridge)) {
         VPVL2_VLOG(2, path << " is already cached, skipped.");
         return true;
     }
@@ -509,13 +509,13 @@ bool BaseApplicationContext::ModelContext::uploadTexture(const std::string &path
             return false;
         }
     }
-    return cacheTexture(path, texturePtr, bridge);
+    return storeTexture(path, texturePtr, bridge);
 }
 
 bool BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsize size, const std::string &key, TextureDataBridge &bridge)
 {
     VPVL2_DCHECK(data && size > 0);
-    if (findTextureCache(key, bridge)) {
+    if (findTexture(key, bridge)) {
         VPVL2_VLOG(2, key << " is already cached, skipped.");
         return true;
     }
@@ -524,7 +524,7 @@ bool BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsiz
         VPVL2_LOG(WARNING, "Cannot load texture with key " << key << ": " << stbi_failure_reason());
         return false;
     }
-    return cacheTexture(key, texturePtr, bridge);
+    return storeTexture(key, texturePtr, bridge);
 }
 
 bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdir, int vlog)
@@ -637,40 +637,44 @@ bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridg
     bool ret = false;
     bridge.dataRef = 0;
     ModelContext *context = static_cast<ModelContext *>(userData);
-    const std::string &name2 = static_cast<const String *>(name)->toStdString();
+    std::string newName = static_cast<const String *>(name)->toStdString();
+    std::string::size_type pos(newName.find('\\'));
+    while (pos != std::string::npos) {
+        newName.replace(pos, 1, "/");
+        pos = newName.find('\\', pos + 1);
+    }
     if (internal::hasFlagBits(bridge.flags, IApplicationContext::kToonTexture)) {
         if (!internal::hasFlagBits(bridge.flags, IApplicationContext::kSystemToonTexture)) {
-            /* name2.isEmpty() = directory */
-            if (name2.empty()) {
+            /* it's directory if name2.empty() is true */
+            if (newName.empty()) {
                 const std::string &newToonPath = toonDirectory() + "/toon0.bmp";
-                if (!context->findTextureCache(newToonPath, bridge)) {
+                if (!context->findTexture(newToonPath, bridge)) {
                     /* uses default system texture loader */
                     VPVL2_VLOG(2, "Try loading a system default toon texture from archive: " << newToonPath);
                     ret = context->uploadTexture(newToonPath, bridge);
                 }
             }
             else if (context->archiveRef()) {
-                VPVL2_VLOG(2, "Try loading a model toon texture from archive: " << name2);
-                ret = internalUploadTexture(name2, std::string(), bridge, context);
+                VPVL2_VLOG(2, "Try loading a model toon texture from archive: " << newName);
+                ret = internalUploadTexture(newName, std::string(), bridge, context);
             }
             else if (const IString *directoryRef = context->directoryRef()) {
                 const std::string &path = static_cast<const String *>(directoryRef)->toStdString()
                         + "/" + static_cast<const String *>(name)->toStdString();
                 VPVL2_VLOG(2, "Try loading a model toon texture: " << path);
-                ret = internalUploadTexture(name2, path, bridge, context);
+                ret = internalUploadTexture(newName, path, bridge, context);
             }
         }
         if (!ret) {
             bridge.flags |= IApplicationContext::kSystemToonTexture;
-            VPVL2_VLOG(2, "Loading a system default toon texture: " << name2);
-            ret = uploadSystemToonTexture(name2, bridge, context);
+            VPVL2_VLOG(2, "Loading a system default toon texture: " << newName);
+            ret = uploadSystemToonTexture(newName, bridge, context);
         }
     }
     else if (const IString *directoryRef = context->directoryRef()) {
-        const std::string &path = static_cast<const String *>(directoryRef)->toStdString()
-                + "/" + static_cast<const String *>(name)->toStdString();
+        const std::string &path = static_cast<const String *>(directoryRef)->toStdString() + "/" + newName;
         VPVL2_VLOG(2, "Loading a model texture: " << path);
-        ret = internalUploadTexture(name2, path, bridge, context);
+        ret = internalUploadTexture(newName, path, bridge, context);
     }
     return ret;
 }
