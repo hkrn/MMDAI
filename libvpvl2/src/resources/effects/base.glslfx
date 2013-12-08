@@ -62,12 +62,6 @@ SamplerState defaultDepthSamplerState {
 
 GLSLShader global performTransform {
 
-#if __VERSION__ < 130
-#ifndef texture
-#define texture texture2D
-#endif
-#endif
-
 const mat4 kIdenticalMatrix = mat4(1.0);
 const int kBdef1 = 0;
 const int kBdef2 = 1;
@@ -78,8 +72,8 @@ const int kQdef  = 4;
 mat4 vpvl2FXGetBoneTransformMatrix(const float index) {
     float newIndex = index / float(BoneCountVPVL2);
     mat4 matrix = kIdenticalMatrix;
-    vec4 p = texture(vpvl2_NS_boneTransformSampler, vec2(0.0,  newIndex));
-    vec4 q = texture(vpvl2_NS_boneTransformSampler, vec2(0.5,  newIndex));
+    vec4 p = vpvl2FXGetTexturePixel2D(vpvl2_NS_boneTransformSampler, vec2(0.0,  newIndex));
+    vec4 q = vpvl2FXGetTexturePixel2D(vpvl2_NS_boneTransformSampler, vec2(0.5,  newIndex));
     matrix[0] = vec4(
         1.0 - 2.0 * q.y * q.y - 2.0 * q.z * q.z,
         2.0 * q.x * q.y + 2.0 * q.w * q.z,
@@ -122,9 +116,9 @@ vec4 vpvl2FXPerformSkinning(const vec3 origin3, const vec4 boneIndices, const ve
         mat4 matrix2 = vpvl2FXGetBoneTransformMatrix(boneIndices.y);
         mat4 matrix3 = vpvl2FXGetBoneTransformMatrix(boneIndices.z);
         mat4 matrix4 = vpvl2FXGetBoneTransformMatrix(boneIndices.w);
-        return fma(boneWeights.xxxx, (matrix1 * origin),
-               fma(boneWeights.yyyy, (matrix2 * origin),
-               fma(boneWeights.zzzz, (matrix3 * origin),
+        return vpvl2FXFMA(boneWeights.xxxx, (matrix1 * origin),
+               vpvl2FXFMA(boneWeights.yyyy, (matrix2 * origin),
+               vpvl2FXFMA(boneWeights.zzzz, (matrix3 * origin),
                    boneWeights.wwww + (matrix4 * origin))));
     }
     return origin;
@@ -159,26 +153,20 @@ vec4 vpvl2FXPerformEdgeTransform(const vec4 origin, const vec4 normal, const vec
 
 GLSLShader global applyTexture {
 
-#if __VERSION__ < 130
-#ifndef texture
-#define texture(samp, uv) texture2D((samp), (uv))
-#endif
-#endif
-
 vec4 vpvl2FXApplyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1) {
     vec4 newColor = color;
     if (use_texture) {
-        newColor *= texture(vpvl2_NS_mainTextureSampler, texcoord.xy);
+        newColor *= vpvl2FXGetTexturePixel2D(vpvl2_NS_mainTextureSampler, texcoord.xy);
     }
     if (use_spheremap) {
         if (spadd) {
-            newColor.rgb += texture(vpvl2_NS_sphereTextureSampler, texcoord.zw).rgb;
+            newColor.rgb += vpvl2FXGetTexturePixel2D(vpvl2_NS_sphereTextureSampler, texcoord.zw).rgb;
         }
         else if (spsub) {
-            newColor.rgb *= texture(vpvl2_NS_sphereTextureSampler, uva1.xy).rgb;
+            newColor.rgb *= vpvl2FXGetTexturePixel2D(vpvl2_NS_sphereTextureSampler, uva1.xy).rgb;
         }
         else {
-            newColor.rgb *= texture(vpvl2_NS_sphereTextureSampler, texcoord.zw).rgb;
+            newColor.rgb *= vpvl2FXGetTexturePixel2D(vpvl2_NS_sphereTextureSampler, texcoord.zw).rgb;
         }
     }
     return newColor;
@@ -196,20 +184,14 @@ vec4 vpvl2FXApplyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1)
 
 GLSLShader global applyToon {
 
-#if __VERSION__ < 130
-#ifndef texture
-#define texture(samp, uv) texture2D((samp), (uv))
-#endif
-#endif
-
 const vec2 kToonTexCoord = vec2(0.0, 1.0);
 const vec3 kWhiteColor = vec3(1.0);
 
 vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
-    vec4 toonColor = mix(vec4(1.0), texture(vpvl2_NS_toonTextureSampler, kToonTexCoord), float(use_toon));
-    float w = saturate(fma(dot(normal, -vpvl2_NS_lightDirection), 16.0, 0.5));
+    vec4 toonColor = mix(vec4(1.0), vpvl2FXGetTexturePixel2D(vpvl2_NS_toonTextureSampler, kToonTexCoord), float(use_toon));
+    float w = vpvl2FXSaturate(vpvl2FXFMA(dot(normal, -vpvl2_NS_lightDirection), 16.0, 0.5));
     vec4 newColor = color;
-    newColor.rgb *= toonColor.rgb + (kWhiteColor - toonColor.rgb) * vec3(w);
+    newColor.rgb *= vpvl2FXFMA(kWhiteColor - toonColor.rgb, vec3(w), toonColor.rgb);
     return newColor;
 }
 
@@ -225,26 +207,20 @@ vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 no
 
 GLSLShader global getShadowFactor {
 
-#if __VERSION__ < 130
-#ifndef texture
-#define texture(samp, uv) texture2D((samp), (uv))
-#endif
-#endif
-
 const float kEpsilonBias = 0.00001;
 const vec2  kHalf2 = vec2(0.5, 0.5);
 
 float vpvl2FXGetShadowFactor(const vec4 position) {
     vec4 shadowPosition = position / position.w;
-    vec2 shadowCoord = fma(shadowPosition.xy, kHalf2, kHalf2);
+    vec2 shadowCoord = vpvl2FXFMA(shadowPosition.xy, kHalf2, kHalf2);
 #if 0 /* VSM */
-    vec2 depthSample = texture(depthTextureSampler, shadowCoord).rg;
+    vec2 depthSample = vpvl2FXGetTexturePixel2D(depthTextureSampler, shadowCoord).rg;
     float sigma = depthSample.y - depthSample.x * depthSample.x + kEpsilonBias;
     float delta = depthSample.x - shadowPosition.z;
     float p = sigma / (sigma + (delta * delta));
-    float shadowFactor = saturate(max(p, float((depthSample.x + kEpsilonBias) < shadowPosition.z)));
+    float shadowFactor = vpvl2FXSaturate(max(p, float((depthSample.x + kEpsilonBias) < shadowPosition.z)));
 #else
-    float depthSample = texture(vpvl2_NS_depthTextureSampler, shadowCoord).r;
+    float depthSample = vpvl2FXGetTexturePixel2D(vpvl2_NS_depthTextureSampler, shadowCoord).r;
     float shadowFactor = float((depthSample + kEpsilonBias) < shadowPosition.z);
 #endif
     return shadowFactor;
@@ -254,20 +230,14 @@ float vpvl2FXGetShadowFactor(const vec4 position) {
 
 GLSLShader global applyToonSelfShadow {
 
-#if __VERSION__ < 130
-#ifndef texture
-#define texture(samp, uv) texture2D((samp), (uv))
-#endif
-#endif
-
 const vec2 kToonTexCoord = vec2(0.0, 1.0);
 
 float vpvl2FXGetShadowFactor(const vec4 position);
 
 vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
-    vec4 toonColor   = mix(vec4(1.0), texture(vpvl2_NS_toonTextureSampler, kToonTexCoord), float(use_toon));
+    vec4 toonColor   = mix(vec4(1.0), vpvl2FXGetTexturePixel2D(vpvl2_NS_toonTextureSampler, kToonTexCoord), float(use_toon));
     vec3 shadowColor = color.rgb * toonColor.rgb;
-    return vec4(shadowColor + (color.rgb - shadowColor) * vec3(1.0 - vpvl2FXGetShadowFactor(shadowPosition)), color.a);
+    return vec4(vpvl2FXFMA(color.rgb - shadowColor, vec3(1.0 - vpvl2FXGetShadowFactor(shadowPosition)), shadowColor), color.a);
 }
 
 } /* applyToonSelfShadow */
@@ -278,7 +248,7 @@ float vpvl2FXGetShadowFactor(const vec4 position);
 
 vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
     vec3 shadowColor = color.rgb * vpvl2_NS_materialAmbient;
-    return vec4(shadowColor + (color.rgb - shadowColor) * vec3(1.0 - vpvl2FXGetShadowFactor(shadowPosition)), color.a);
+    return vec4(vpvl2FXFMA(color.rgb - shadowColor, vec3(1.0 - vpvl2FXGetShadowFactor(shadowPosition)), shadowColor), color.a);
 }
 
 } /* applySelfShadow */
@@ -287,7 +257,7 @@ GLSLShader global applyStandardLight {
 
 vec4 vpvl2FXApplyStandardLight(const vec4 color, const vec4 origin, const vec3 normal) {
     vec3 halfVector = normalize((vpvl2_NS_cameraPosition - origin.xyz) - vpvl2_NS_lightDirection);
-    vec3 specular = saturate(vpvl2_NS_materialSpecular * vpvl2_NS_lightSpecular);
+    vec3 specular = vpvl2FXSaturate(vpvl2_NS_materialSpecular * vpvl2_NS_lightSpecular);
     float hdotn = max(dot(halfVector, normal), 0.0);
     vec4 newColor = color;
     newColor.rgb += specular * vec3(pow(hdotn, max(vpvl2_NS_materialShininess, 1.0)));
@@ -316,14 +286,14 @@ void vpvl2FXTransformVertex(inout vec4 origin,
                             const vec4 boneIndices,
                             const vec4 boneWeights)
 {
-    vec3 ambient = saturate(fma(vpvl2_NS_materialAmbient, vpvl2_NS_lightAmbient, vpvl2_NS_materialEmissive));
-    vec4 diffuse = saturate(vpvl2_NS_materialDiffuse * vec4(vpvl2_NS_lightDiffuse, 1.0));
+    vec3 ambient = vpvl2FXSaturate(vpvl2FXFMA(vpvl2_NS_materialAmbient, vpvl2_NS_lightAmbient, vpvl2_NS_materialEmissive));
+    vec4 diffuse = vpvl2FXSaturate(vpvl2_NS_materialDiffuse * vec4(vpvl2_NS_lightDiffuse, 1.0));
     origin       = vpvl2FXPerformPositionTransform(origin, boneIndices, boneWeights);
     position     = vpvl2_NS_worldViewProjectionMatrix * origin;
     normal       = vpvl2_NS_worldViewMatrix * vpvl2FXPerformNormalTransform(normal, position, boneIndices, boneWeights);
-    color        = vec4(saturate(ambient + dot(normal.xyz, -vpvl2_NS_lightDirection) * diffuse.rgb), diffuse.a);
-    texcoord.zw  = fma(-normal.xy, kHalf2, kHalf2) * vec2(use_spheremap)
-                 + (kOne2 + vec2(dot(vpvl2_NS_lightDirection, -normal.xyz)) * kHalf2) * vec2(!use_spheremap);
+    color        = vec4(vpvl2FXSaturate(vpvl2FXFMA(vec3(dot(normal.xyz, -vpvl2_NS_lightDirection)), diffuse.rgb, ambient)), diffuse.a);
+    texcoord.zw  = vpvl2FXFMA(-normal.xy, kHalf2, kHalf2) * vec2(use_spheremap)
+                 + vpvl2FXFMA(vec2(dot(vpvl2_NS_lightDirection, -normal.xyz)), kHalf2, kOne2) * vec2(!use_spheremap);
 }
 
 } /* transformVertex */
@@ -421,14 +391,15 @@ void vpvl2FXTransformVertex(inout vec4 origin,
 
 GLSLShader mainObjectVS {
 
-#if __VERSION__ < 130
-#define in attribute
-#define out varying
-#else
+#if __VERSION__ >= 130
 out gl_PerVertex {
     vec4 gl_Position;
 };
+#else
+#define in attribute
+#define out varying
 #endif
+
 in vec4 vpvl2_inPosition;
 in vec4 vpvl2_inNormal;
 in vec2 vpvl2_inTexCoord;
@@ -438,16 +409,17 @@ in vec4 vpvl2_inUVA1;
 in vec4 vpvl2_inUVA2;
 in vec4 vpvl2_inUVA3;
 in vec4 vpvl2_inUVA4;
-out vec4 vpvl2_outOrigin;
-out vec3 vpvl2_outNormal;
-out vec4 vpvl2_outPosition;
-out vec4 vpvl2_outShadowPosition;
-out vec4 vpvl2_outTexCoord;
-out vec4 vpvl2_outUVA1;
-out vec4 vpvl2_outUVA2;
-out vec4 vpvl2_outUVA3;
-out vec4 vpvl2_outUVA4;
-out vec4 vpvl2_outColor;
+
+layout(location=1)  out vec4 vpvl2_outOrigin;
+layout(location=2)  out vec4 vpvl2_outPosition;
+layout(location=3)  out vec3 vpvl2_outNormal;
+layout(location=4)  out vec4 vpvl2_outTexCoord;
+layout(location=5)  out vec4 vpvl2_outColor;
+layout(location=6)  out vec4 vpvl2_outShadowPosition;
+layout(location=7)  out vec4 vpvl2_outUVA1;
+layout(location=8)  out vec4 vpvl2_outUVA2;
+layout(location=9)  out vec4 vpvl2_outUVA3;
+layout(location=10) out vec4 vpvl2_outUVA4;
 
 void vpvl2FXTransformVertex(inout vec4 origin,
                             inout vec4 position,
@@ -595,22 +567,23 @@ vec4 vpvl2FXTransformFragment(const vec4 origin,
 
 GLSLShader mainObjectPS {
 
-#if __VERSION__ < 130
+#if __VERSION__ >= 130
+layout(location=0) out vec4 vpvl2_outPixelColor;
+#else
 #define in varying
 #define vpvl2_outPixelColor gl_FragColor
-#else
-layout(location=0) out vec4 vpvl2_outPixelColor;
 #endif
-in vec4 vpvl2_outOrigin;
-in vec4 vpvl2_outPosition;
-in vec4 vpvl2_outShadowPosition;
-in vec4 vpvl2_outTexCoord;
-in vec4 vpvl2_outColor;
-in vec4 vpvl2_outUVA1;
-in vec4 vpvl2_outUVA2;
-in vec4 vpvl2_outUVA3;
-in vec4 vpvl2_outUVA4;
-in vec3 vpvl2_outNormal;
+
+layout(location=1)  in vec4 vpvl2_outOrigin;
+layout(location=2)  in vec4 vpvl2_outPosition;
+layout(location=3)  in vec3 vpvl2_outNormal;
+layout(location=4)  in vec4 vpvl2_outTexCoord;
+layout(location=5)  in vec4 vpvl2_outColor;
+layout(location=6)  in vec4 vpvl2_outShadowPosition;
+layout(location=7)  in vec4 vpvl2_outUVA1;
+layout(location=8)  in vec4 vpvl2_outUVA2;
+layout(location=9)  in vec4 vpvl2_outUVA3;
+layout(location=10) in vec4 vpvl2_outUVA4;
 
 vec4 vpvl2FXTransformFragment(const vec4 origin,
                               const vec4 position,
@@ -640,13 +613,13 @@ void main() {
 
 GLSLShader global drawQuadVS {
 
-#if __VERSION__ < 130
-#define in attribute
-#define out varying
-#else
+#if __VERSION__ >= 130
 out gl_PerVertex {
     vec4 gl_Position;
 };
+#else
+#define in attribute
+#define out varying
 #endif
 
 in vec4 Position;
@@ -662,21 +635,18 @@ void main() {
 
 GLSLShader global drawQuadPS {
 
-#if __VERSION__ < 130
+#if __VERSION__ >= 130
+layout(location=0) out vec4 vpvl2_outPixelColor;
+#else
 #define in varying
 #define vpvl2_outPixelColor gl_FragColor
-#ifndef texture
-#define texture texture2D
-#endif
-#else
-layout(location=0) out vec4 vpvl2_outPixelColor;
 #endif
 
 uniform sampler2D vpvl2_drawQuadTextureSampler;
 in vec3 vpvl2_drawQuadTexCoord;
 
 void main() {
-    vpvl2_outPixelColor = texture(vpvl2_drawQuadTextureSampler, vpvl2_drawQuadTexCoord.xy);
+    vpvl2_outPixelColor = vpvl2FXGetTexturePixel2D(vpvl2_drawQuadTextureSampler, vpvl2_drawQuadTexCoord.xy);
 }
 
 } /* drawQuadPS */
