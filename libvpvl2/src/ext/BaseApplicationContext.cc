@@ -59,6 +59,7 @@
 #define TwTerminate()
 #define TwWindowSize(width, height)
 #define TwNewBar(barName) 0
+#define TwDeleteAllBars()
 #define TwSetParam(bar, varName, paramName, paramValueType, inValueCount, inValues)
 #define TwAddVarCB(bar, name, type, setCallback, getCallback, clientData, def)
 #define TwMouseButton(action, button) 0
@@ -152,6 +153,103 @@ static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SEVERITY_HIGH_ARB = 0x9146;
 static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SEVERITY_MEDIUM_ARB = 0x9147;
 static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SEVERITY_LOW_ARB = 0x9148;
 
+class EffectParameterUIBuilder {
+public:
+    static TwBar *createBar(IEffect *effectRef) {
+        const char *effectName = reinterpret_cast<const char *>(effectRef->name()->toByteArray());
+        TwBar *bar = TwNewBar(effectName);
+        TwSetParam(bar, 0, "valueswidth", TW_PARAM_CSTRING, 1, "fit");
+        TwAddVarCB(bar, "Enabled", TW_TYPE_BOOLCPP, setEnableEffect, getEnableEffect, effectRef, (std::string("help='Toggle Enable/Disable Effect of ") + effectName + "'").c_str());
+        return bar;
+    }
+    static void createBoolean(TwBar *bar, IEffect::Parameter *parameterRef, std::ostringstream &stream) {
+        TwAddVarCB(bar, parameterRef->annotationRef("UIName")->stringValue(), TW_TYPE_BOOLCPP, setBooleanParameter, getBooleanParameter, parameterRef, stream.str().c_str());
+    }
+    static void createInteger(TwBar *bar, IEffect::Parameter *parameterRef, std::ostringstream &stream) {
+        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIMin")) {
+            stream << "min=" << annotationRef->integerValue() << " ";
+        }
+        else {
+            stream << "min=0 ";
+        }
+        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIMax")) {
+            stream << "max=" << annotationRef->integerValue() << " ";
+        }
+        TwAddVarCB(bar, parameterRef->annotationRef("UIName")->stringValue(), TW_TYPE_INT32, setIntegerParameter, getIntegerParameter, parameterRef, stream.str().c_str());
+    }
+    static void createFloat(TwBar *bar, IEffect::Parameter *parameterRef, std::ostringstream &stream) {
+        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIMin")) {
+            stream << "min=" << annotationRef->floatValue() << " ";
+        }
+        else {
+            stream << "min=0.0 ";
+        }
+        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIMax")) {
+            stream << "max=" << annotationRef->floatValue() << " ";
+        }
+        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIStep")) {
+            stream << "step=" << annotationRef->floatValue() << " ";
+        }
+        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIPrecision")) {
+            stream << "precision=" << annotationRef->integerValue() << " ";
+        }
+        TwAddVarCB(bar, parameterRef->annotationRef("UIName")->stringValue(), TW_TYPE_FLOAT, setFloatParameter, getFloatParameter, parameterRef, stream.str().c_str());
+    }
+    static void setCommonDefinition(const IEffect::Parameter *parameterRef, std::ostringstream &stream) {
+        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIHelp")) {
+            stream << "help='" << annotationRef->stringValue() << "' ";
+        }
+        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIVisible")) {
+            stream << "visible='" << annotationRef->booleanValue() << "' ";
+        }
+    }
+
+private:
+    static void getEnableEffect(void *value, void *userData) {
+        const IEffect *effectRef = static_cast<const IEffect *>(userData);
+        *static_cast<bool *>(value) = effectRef->isEnabled();
+    }
+    static void setEnableEffect(const void *value, void *userData) {
+        IEffect *parameterRef = static_cast<IEffect *>(userData);
+        parameterRef->setEnabled(*static_cast<const bool *>(value));
+    }
+    static void getBooleanParameter(void *value, void *userData) {
+        const IEffect::Parameter *parameterRef = static_cast<const IEffect::Parameter *>(userData);
+        int bv = 0;
+        parameterRef->getValue(bv);
+        *static_cast<bool *>(value) = bv != 0;
+    }
+    static void setBooleanParameter(const void *value, void *userData) {
+        IEffect::Parameter *parameterRef = static_cast<IEffect::Parameter *>(userData);
+        bool bv = *static_cast<const bool *>(value);
+        parameterRef->setValue(bv);
+    }
+    static void getIntegerParameter(void *value, void *userData) {
+        const IEffect::Parameter *parameterRef = static_cast<const IEffect::Parameter *>(userData);
+        int iv = 0;
+        parameterRef->getValue(iv);
+        *static_cast<int *>(value) = iv;
+    }
+    static void setIntegerParameter(const void *value, void *userData) {
+        IEffect::Parameter *parameterRef = static_cast<IEffect::Parameter *>(userData);
+        int iv = *static_cast<const int *>(value);
+        parameterRef->setValue(iv);
+    }
+    static void getFloatParameter(void *value, void *userData) {
+        const IEffect::Parameter *parameterRef = static_cast<const IEffect::Parameter *>(userData);
+        float fv = 0;
+        parameterRef->getValue(fv);
+        *static_cast<float *>(value) = fv;
+    }
+    static void setFloatParameter(const void *value, void *userData) {
+        IEffect::Parameter *parameterRef = static_cast<IEffect::Parameter *>(userData);
+        float fv = *static_cast<const float *>(value);
+        parameterRef->setValue(fv);
+    }
+
+    VPVL2_MAKE_STATIC_CLASS(EffectParameterUIBuilder)
+};
+
 static inline const char *DebugMessageSourceToString(vpvl2::extensions::gl::GLenum value)
 {
     switch (value) {
@@ -188,63 +286,6 @@ static inline const char *DebugMessageTypeToString(vpvl2::extensions::gl::GLenum
     default:
         return "Unknown";
     }
-}
-
-static void UIEffectGetEnableEffect(void *value, void *userData)
-{
-    const IEffect *effectRef = static_cast<const IEffect *>(userData);
-    *static_cast<bool *>(value) = effectRef->isEnabled();
-}
-
-static void UIEffectSetEnableEffect(const void *value, void *userData)
-{
-    IEffect *parameterRef = static_cast<IEffect *>(userData);
-    parameterRef->setEnabled(*static_cast<const bool *>(value));
-}
-
-static void UIEffectGetBooleanParameter(void *value, void *userData)
-{
-    const IEffect::Parameter *parameterRef = static_cast<const IEffect::Parameter *>(userData);
-    int bv = 0;
-    parameterRef->getValue(bv);
-    *static_cast<bool *>(value) = bv != 0;
-}
-
-static void UIEffectSetBooleanParameter(const void *value, void *userData)
-{
-    IEffect::Parameter *parameterRef = static_cast<IEffect::Parameter *>(userData);
-    bool bv = *static_cast<const bool *>(value);
-    parameterRef->setValue(bv);
-}
-
-static void UIEffectGetIntegerParameter(void *value, void *userData)
-{
-    const IEffect::Parameter *parameterRef = static_cast<const IEffect::Parameter *>(userData);
-    int iv = 0;
-    parameterRef->getValue(iv);
-    *static_cast<int *>(value) = iv;
-}
-
-static void UIEffectSetIntegerParameter(const void *value, void *userData)
-{
-    IEffect::Parameter *parameterRef = static_cast<IEffect::Parameter *>(userData);
-    int iv = *static_cast<const int *>(value);
-    parameterRef->setValue(iv);
-}
-
-static void UIEffectGetFloatParameter(void *value, void *userData)
-{
-    const IEffect::Parameter *parameterRef = static_cast<const IEffect::Parameter *>(userData);
-    float fv = 0;
-    parameterRef->getValue(fv);
-    *static_cast<float *>(value) = fv;
-}
-
-static void UIEffectSetFloatParameter(const void *value, void *userData)
-{
-    IEffect::Parameter *parameterRef = static_cast<IEffect::Parameter *>(userData);
-    float fv = *static_cast<const float *>(value);
-    parameterRef->setValue(fv);
 }
 
 static inline IString *toIStringFromUtf8(const std::string &bytes)
@@ -491,6 +532,7 @@ bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdi
     VPVL2_CHECK(argv0);
     google::InitGoogleLogging(argv0);
     InstallFailureHandler(logdir);
+    FreeImage_Initialise();
     FLAGS_v = vlog;
     if (logdir) {
         FLAGS_stop_logging_if_full_disk = true;
@@ -511,6 +553,7 @@ bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdi
 
 void BaseApplicationContext::terminate()
 {
+    FreeImage_DeInitialise();
     TwTerminate();
     Scene::terminate();
     google::ShutdownGoogleLogging();
@@ -537,7 +580,6 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
       m_samplesMSAA(0),
       m_viewportRegionInvalidated(false)
 {
-    FreeImage_Initialise();
 }
 
 void BaseApplicationContext::initialize(bool enableDebug)
@@ -566,7 +608,6 @@ void BaseApplicationContext::initialize(bool enableDebug)
 BaseApplicationContext::~BaseApplicationContext()
 {
     m_encodingRef = 0;
-    FreeImage_DeInitialise();
     /* m_samplesMSAA must not set zero at #release(), it causes multiple post effect will be lost */
     m_samplesMSAA = 0;
 }
@@ -580,16 +621,13 @@ void BaseApplicationContext::release()
     m_renderTargets.releaseAll();
     m_basename2modelRefs.clear();
     m_modelRef2Paths.clear();
-    m_effectRef2modelRefs.clear();
-    m_effectRef2owners.clear();
     m_sharedParameters.clear();
-    m_effectPathPtr.reset();
-    std::set<IEffect *> offscreenEffects;
-    const int ntechniques = m_offscreenTechniques.count();
-    for (int i = 0; i < ntechniques; i++) {
-        IEffect::Technique *technique = m_offscreenTechniques[i];
-        offscreenEffects.insert(technique->parentEffectRef());
-    }
+    m_offscreenTechniques.clear();
+    m_effectRef2ModelRefs.clear();
+    m_effectRef2Owners.clear();
+    m_effectRef2Paths.clear();
+    m_effectRef2ParameterUIs.clear();
+    TwDeleteAllBars();
     m_effectCaches.releaseAll();
     popAnnotationGroup(sharedFunctionResolverInstance());
 }
@@ -774,8 +812,8 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel 
 {
     std::string file;
     if (type == kModelEffectTechniques) {
-        const IString *path = effectFilePath(model, static_cast<const IString *>(userData));
-        return loadShaderSource(type, path);
+        IStringSmartPtr path(String::create(effectFilePath(model, static_cast<const IString *>(userData))));
+        return loadShaderSource(type, path.get());
     }
     switch (model->type()) {
     case IModel::kAssetModel:
@@ -964,7 +1002,7 @@ IModel *BaseApplicationContext::findModel(const IString *name) const
 
 IModel *BaseApplicationContext::effectOwner(const IEffect *effect) const
 {
-    if (IModel *const *value = m_effectRef2modelRefs.find(effect)) {
+    if (IModel *const *value = m_effectRef2ModelRefs.find(effect)) {
         return *value;
     }
     return 0;
@@ -973,8 +1011,8 @@ IModel *BaseApplicationContext::effectOwner(const IEffect *effect) const
 void BaseApplicationContext::setEffectOwner(const IEffect *effectRef, IModel *model)
 {
     const IString *name = model->name(IEncoding::kDefaultLanguage);
-    m_effectRef2owners.insert(effectRef, static_cast<const String *>(name)->toStdString());
-    m_effectRef2modelRefs.insert(effectRef, model);
+    m_effectRef2Owners.insert(effectRef, static_cast<const String *>(name)->toStdString());
+    m_effectRef2ModelRefs.insert(effectRef, model);
 }
 
 void BaseApplicationContext::addModelPath(IModel *model, const std::string &path)
@@ -1005,7 +1043,7 @@ void BaseApplicationContext::addModelPath(IModel *model, const std::string &path
 
 std::string BaseApplicationContext::effectOwnerName(const IEffect *effect) const
 {
-    if (const std::string *value = m_effectRef2owners.find(effect)) {
+    if (const std::string *value = m_effectRef2Owners.find(effect)) {
         return *value;
     }
     return std::string();
@@ -1021,7 +1059,7 @@ void BaseApplicationContext::getEffectCompilerArguments(Array<IString *> &argume
     arguments.clear();
 }
 
-const IString *BaseApplicationContext::effectFilePath(const IModel *model, const IString *dir) const
+std::string BaseApplicationContext::effectFilePath(const IModel *model, const IString *dir) const
 {
     const std::string &path = findModelPath(model);
     if (!path.empty()) {
@@ -1036,12 +1074,11 @@ const IString *BaseApplicationContext::effectFilePath(const IModel *model, const
                 ? extractMatcher.replaceAll("$1.cgfx", status) : s + ".cgfx";
         const std::string &newEffectPath = static_cast<const String *>(dir)->toStdString()
                 + "/" + String::toStdString(cgfx);
-        m_effectPathPtr.reset(existsFile(newEffectPath) ? String::create(newEffectPath) : 0);
+        if (existsFile(newEffectPath)) {
+            return newEffectPath;
+        }
     }
-    if (!m_effectPathPtr.get()) {
-        m_effectPathPtr.reset(String::create(static_cast<const String *>(dir)->toStdString() + "/default.cgfx"));
-    }
-    return m_effectPathPtr.get();
+    return static_cast<const String *>(dir)->toStdString() + "/default.cgfx";
 }
 
 void BaseApplicationContext::addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter)
@@ -1376,62 +1413,31 @@ void BaseApplicationContext::createEffectParameterUIWidgets(IEffect *effectRef)
 {
     Array<IEffect::Parameter *> parameters;
     effectRef->getInteractiveParameters(parameters);
-    const char *effectName = reinterpret_cast<const char *>(effectRef->name()->toByteArray());
-    TwBar *bar = TwNewBar(effectName);
-    TwSetParam(bar, 0, "valueswidth", TW_PARAM_CSTRING, 1, "fit");
-    TwAddVarCB(bar, "Enabled", TW_TYPE_BOOLCPP, UIEffectSetEnableEffect, UIEffectGetEnableEffect, effectRef, (std::string("help='Toggle Enable/Disable Effect of ") + effectName + "'").c_str());
+    TwBar *bar = EffectParameterUIBuilder::createBar(effectRef);
     const int nparameters = parameters.count();
     std::ostringstream stream;
     for (int i = 0; i < nparameters; i++) {
         IEffect::Parameter *parameterRef = parameters[i];
         stream.str(std::string());
-        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIHelp")) {
-            stream << "help='" << annotationRef->stringValue() << "' ";
-        }
-        if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIVisible")) {
-            stream << "visible='" << annotationRef->booleanValue() << "' ";
-        }
+        EffectParameterUIBuilder::setCommonDefinition(parameterRef, stream);
         switch (parameterRef->type()) {
         case IEffect::Parameter::kBoolean: {
-            TwAddVarCB(bar, parameterRef->annotationRef("UIName")->stringValue(), TW_TYPE_BOOLCPP, UIEffectSetBooleanParameter, UIEffectGetBooleanParameter, parameterRef, stream.str().c_str());
+            EffectParameterUIBuilder::createBoolean(bar, parameterRef, stream);
             break;
         }
         case IEffect::Parameter::kInteger: {
-            if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIMin")) {
-                stream << "min=" << annotationRef->integerValue() << " ";
-            }
-            else {
-                stream << "min=0 ";
-            }
-            if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIMax")) {
-                stream << "max=" << annotationRef->integerValue() << " ";
-            }
-            TwAddVarCB(bar, parameterRef->annotationRef("UIName")->stringValue(), TW_TYPE_INT32, UIEffectSetIntegerParameter, UIEffectGetIntegerParameter, parameterRef, stream.str().c_str());
+            EffectParameterUIBuilder::createInteger(bar, parameterRef, stream);
             break;
         }
         case IEffect::Parameter::kFloat: {
-            if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIMin")) {
-                stream << "min=" << annotationRef->floatValue() << " ";
-            }
-            else {
-                stream << "min=0.0 ";
-            }
-            if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIMax")) {
-                stream << "max=" << annotationRef->floatValue() << " ";
-            }
-            if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIStep")) {
-                stream << "step=" << annotationRef->floatValue() << " ";
-            }
-            if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIPrecision")) {
-                stream << "precision=" << annotationRef->integerValue() << " ";
-            }
-            TwAddVarCB(bar, parameterRef->annotationRef("UIName")->stringValue(), TW_TYPE_FLOAT, UIEffectSetFloatParameter, UIEffectGetFloatParameter, parameterRef, stream.str().c_str());
+            EffectParameterUIBuilder::createFloat(bar, parameterRef, stream);
             break;
         }
         default:
             break;
         }
     }
+    m_effectRef2ParameterUIs.insert(effectRef, bar);
 }
 
 void BaseApplicationContext::renderEffectParameterUIWidgets()
@@ -1439,37 +1445,38 @@ void BaseApplicationContext::renderEffectParameterUIWidgets()
     TwDraw();
 }
 
-IEffect *BaseApplicationContext::createEffectRef(const IString *path)
+IEffect *BaseApplicationContext::createEffectRef(const std::string &path)
 {
     pushAnnotationGroup("BaseApplicationContext#createEffectRef", sharedFunctionResolverInstance());
     IEffect *effectRef = 0;
-    const HashString key(path->toHashString());
-    const std::string &effectPath = static_cast<const String *>(path)->toStdString();
+    const HashString key(path.c_str());
     if (IEffect *const *value = m_effectCaches.find(key)) {
         effectRef = *value;
     }
-    else if (existsFile(effectPath)) {
-        IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(path, this));
+    else if (existsFile(path)) {
+        IStringSmartPtr pathPtr(String::create(path));
+        IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(pathPtr.get(), this));
         if (!effectPtr.get() || !effectPtr->internalPointer()) {
             const char *message = effectPtr.get() ? effectPtr->errorString() : "(null)";
-            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)") << " error=" << message);
+            VPVL2_LOG(WARNING, "Cannot compile an effect: " << path << " error=" << message);
         }
         else if (!m_effectCaches.find(key)) {
-            const std::string &name = effectPath.substr(effectPath.rfind("/") + 1);
+            const std::string &name = path.substr(path.rfind("/") + 1);
             IStringSmartPtr namePtr(String::create(name));
             effectRef = m_effectCaches.insert(key, effectPtr.release());
             effectRef->setName(namePtr.get());
             validateEffectResources();
-            VPVL2_LOG(INFO, "Created a effect: " << internal::cstr(path, "(null)"));
+            m_effectRef2Paths.insert(effectRef, path);
+            VPVL2_LOG(INFO, "Created a effect: " << path);
         }
         else {
-            VPVL2_LOG(INFO, "Duplicated effect was found and ignored it: " << internal::cstr(path, "(null)"));
+            VPVL2_LOG(INFO, "Duplicated effect was found and ignored it: " << path);
         }
     }
     else {
         effectRef = m_sceneRef->createDefaultStandardEffectRef(this);
         if (!effectRef) {
-            VPVL2_LOG(WARNING, "Cannot compile an effect: " << internal::cstr(path, "(null)"));
+            VPVL2_LOG(WARNING, "Cannot compile an effect: " << path);
         }
     }
     popAnnotationGroup(sharedFunctionResolverInstance());
@@ -1478,13 +1485,44 @@ IEffect *BaseApplicationContext::createEffectRef(const IString *path)
 
 IEffect *BaseApplicationContext::createEffectRef(IModel *modelRef, const IString *directoryRef)
 {
-    const IString *effectFilePathRef = effectFilePath(modelRef, directoryRef);
-    IEffect *effectRef = createEffectRef(effectFilePathRef);
+    const std::string &filePath = effectFilePath(modelRef, directoryRef);
+    IEffect *effectRef = createEffectRef(filePath);
     if (effectRef) {
         setEffectOwner(effectRef, modelRef);
-        VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(modelRef->name(IEncoding::kDefaultLanguage), "(null)") << " path=" << internal::cstr(effectFilePathRef, ""));
+        VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(modelRef->name(IEncoding::kDefaultLanguage), "(null)") << " path=" << filePath);
     }
     return effectRef;
+}
+
+std::string BaseApplicationContext::findEffectPath(const IEffect *effectRef) const
+{
+    if (const std::string *path = m_effectRef2Paths.find(effectRef)) {
+        return *path;
+    }
+    return std::string();
+}
+
+void BaseApplicationContext::deleteEffectRef(const std::string &path)
+{
+    const HashString key(path.c_str());
+    if (IEffect *const *value = m_effectCaches.find(key)) {
+        IEffect *effect = *value;
+        if (void *const *ptr = m_effectRef2ParameterUIs.find(effect)) {
+            m_effectRef2ParameterUIs.remove(effect);
+            TwBar *bar = static_cast<TwBar *>(*ptr);
+            TwDeleteBar(bar);
+        }
+        m_effectRef2Paths.remove(effect);
+        m_effectRef2ModelRefs.remove(effect);
+        m_effectRef2Owners.remove(effect);
+        internal::deleteObject(effect);
+        m_effectCaches.remove(key);
+    }
+}
+
+void BaseApplicationContext::deleteEffectRef(IModel *modelRef, const IString *directoryRef)
+{
+    deleteEffectRef(effectFilePath(modelRef, directoryRef));
 }
 
 IModel *BaseApplicationContext::currentModelRef() const

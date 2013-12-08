@@ -248,7 +248,7 @@ public:
     std::string effectOwnerName(const IEffect *effect) const;
     extensions::gl::FrameBufferObject *createFrameBufferObject();
     void getEffectCompilerArguments(Array<IString *> &arguments) const;
-    const IString *effectFilePath(const IModel *model, const IString *dir) const;
+    std::string effectFilePath(const IModel *model, const IString *dir) const;
     void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter);
     bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const;
     void setMousePosition(const glm::vec4 &value, MousePositionType type, bool &handled);
@@ -262,8 +262,11 @@ public:
     void renderOffscreen();
     void createEffectParameterUIWidgets(IEffect *effectRef);
     void renderEffectParameterUIWidgets();
-    IEffect *createEffectRef(const IString *path);
+    IEffect *createEffectRef(const std::string &path);
     IEffect *createEffectRef(IModel *modelRef, const IString *directoryRef);
+    std::string findEffectPath(const IEffect *effectRef) const;
+    void deleteEffectRef(const std::string &path);
+    void deleteEffectRef(IModel *modelRef, const IString *directoryRef);
 #if 0
     void addModelPath(IModel * /* model */, const std::string & /* path */) {}
     void parseOffscreenSemantic(IEffect * /* effect */, const IString * /* dir */) {}
@@ -335,6 +338,8 @@ protected:
     typedef Hash<HashPtr, std::string> ModelRef2PathMap;
     typedef Hash<HashPtr, std::string> ModelRef2BasenameMap;
     typedef Hash<HashPtr, IModel *> EffectRef2ModelRefMap;
+    typedef Hash<HashPtr, void *> EffectRef2ParameterUIRefMap;
+    typedef Hash<HashPtr, std::string> EffectRef2PathMap;
     typedef Hash<HashPtr, std::string> EffectRef2OwnerNameMap;
     typedef Hash<HashString, IModel *> Name2ModelRefMap;
     typedef PointerArray<OffscreenTexture> OffscreenTextureList;
@@ -344,17 +349,18 @@ protected:
     glm::vec4 m_mouseLeftPressPosition;
     glm::vec4 m_mouseMiddlePressPosition;
     glm::vec4 m_mouseRightPressPosition;
-    Path2EffectMap m_effectCaches;
     Name2ModelRefMap m_basename2modelRefs;
     ModelRef2PathMap m_modelRef2Paths;
     ModelRef2BasenameMap m_modelRef2Basenames;
-    EffectRef2ModelRefMap m_effectRef2modelRefs;
-    EffectRef2OwnerNameMap m_effectRef2owners;
+    Path2EffectMap m_effectCaches;
+    EffectRef2PathMap m_effectRef2Paths;
+    EffectRef2ModelRefMap m_effectRef2ModelRefs;
+    EffectRef2OwnerNameMap m_effectRef2Owners;
+    EffectRef2ParameterUIRefMap m_effectRef2ParameterUIs;
     RenderTargetMap m_renderTargets;
     OffscreenTextureList m_offscreenTextures;
     SharedTextureParameterMap m_sharedParameters;
     Array<vpvl2::IEffect::Technique *> m_offscreenTechniques;
-    mutable IStringSmartPtr m_effectPathPtr;
     int m_samplesMSAA;
     bool m_viewportRegionInvalidated;
 

@@ -233,7 +233,7 @@ static void loadAllModels(const icu4c::StringMap &settings,
         else {
             icu4c::String s(settings.value(prefix + "/effect", UnicodeString()));
             if (!s.value().isEmpty()) {
-                if (IEffect *effectRef = applicationContextRef->createEffectRef(&s)) {
+                if (IEffect *effectRef = applicationContextRef->createEffectRef(s.toStdString())) {
                     applicationContextRef->parseOffscreenSemantic(effectRef, 0);
                     model.reset(factoryRef->newModel(IModel::kPMXModel));
                     model->setName(effectRef->name(), IEncoding::kDefaultLanguage);

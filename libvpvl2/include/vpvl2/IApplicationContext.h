@@ -362,19 +362,6 @@ public:
      */
     virtual void getEffectCompilerArguments(Array<IString *> &arguments) const = 0;
 
-    /**
-     * モデルに紐付けられたエフェクトのファイルの絶対パスを返します.
-     *
-     * 呼び出し側ではメモリを解放しないため、実装する側はヒープでメモリを返してはいけません。
-     * std::shared_ptr などを使って実装する側がエフェクトのパスを保持する必要があります。
-     *
-     * @brief effectFilePath
-     * @param model
-     * @param dir
-     * @return
-     */
-    virtual const IString *effectFilePath(const IModel *model, const IString *dir) const = 0;
-
     virtual void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter) = 0;
 
     virtual bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const = 0;
