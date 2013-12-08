@@ -671,13 +671,13 @@ void ControlObjectSemantic::update(const IModel *self)
             }
             else if (VPVL2_FX_STREQ_CONST(name, len, "(OffscreenOwner)")) {
                 if (IEffect *parent = parameterRef->parentEffectRef()->parentEffectRef()) {
-                    const IModel *model = m_applicationContextRef->effectOwner(parent);
+                    const IModel *model = m_applicationContextRef->findEffectModelRef(parent);
                     setParameter(model, parameterRef);
                 }
             }
             else {
                 IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(name));
-                const IModel *model = m_applicationContextRef->findModel(s);
+                const IModel *model = m_applicationContextRef->findEffectModelRef(s);
                 internal::deleteObject(s);
                 setParameter(model, parameterRef);
             }

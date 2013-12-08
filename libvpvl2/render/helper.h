@@ -204,7 +204,7 @@ static void loadAllModels(const icu4c::StringMap &settings,
              * because BaseRenderContext#createEffectRef() depends on BaseRenderContext#addModelPath() result
              * by BaseRenderContext#findModelPath() via BaseRenderContext#effectFilePath()
              */
-            applicationContextRef->addModelPath(model.get(), icu4c::String::toStdString(modelPath));
+            applicationContextRef->addModelFilePath(model.get(), icu4c::String::toStdString(modelPath));
             if ((flags & Scene::kEffectCapable) != 0) {
                 //effectRef = applicationContextRef->createEffectRef(model.get(), &dir);
                 //if (effectRef) {

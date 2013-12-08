@@ -235,7 +235,6 @@ public:
      */
     virtual IString *toUnicode(const uint8 *str) const = 0;
 
-#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     /**
      * トゥーン色を取得します.
      *
@@ -322,7 +321,7 @@ public:
      * @return IModel
      * @sa effectOwner
      */
-    virtual IModel *findModel(const IString *name) const = 0;
+    virtual IModel *findEffectModelRef(const IString *name) const = 0;
 
     /**
      * エフェクトのインスタンスからモデルのインスタンスを返します.
@@ -335,7 +334,7 @@ public:
      * @return IModel
      * @sa findModel
      */
-    virtual IModel *effectOwner(const IEffect *effect) const = 0;
+    virtual IModel *findEffectModelRef(const IEffect *effect) const = 0;
 
     /**
      * エフェクト毎に使われるレンダーターゲットに対するフレームバッファを作成します.
@@ -367,8 +366,6 @@ public:
     virtual bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const = 0;
 
     virtual FunctionResolver *sharedFunctionResolverInstance() const = 0;
-
-#endif /* VPVL2_ENABLE_NVIDIA_CG || VPVL2_LINK_NVFX */
 };
 
 } /* namespace vpvl2 */

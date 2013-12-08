@@ -281,8 +281,8 @@ public:
                 if (!pair.second) {
                     projectProxy->setModelSetting(modelProxy, "selected", false);
                 }
-                addModelPath(modelRef, fileInfo.absoluteFilePath().toStdString());
-                setEffectOwner(effectRef, modelRef);
+                addModelFilePath(modelRef, fileInfo.absoluteFilePath().toStdString());
+                setEffectModelRef(effectRef, modelRef);
                 uploadedModelProxies.append(pair);
             }
         }
@@ -307,7 +307,7 @@ public:
                 /* remove model reference from project first to add model/engine correctly after loading project */
                 projectRef->removeModel(modelRef);
                 projectRef->addModel(modelRef, engine.release(), uuid, m_orderIndex++);
-                addModelPath(modelRef, fileInfo.absoluteFilePath().toStdString());
+                addModelFilePath(modelRef, fileInfo.absoluteFilePath().toStdString());
                 uploadedEffects.append(modelProxy);
             }
             else {

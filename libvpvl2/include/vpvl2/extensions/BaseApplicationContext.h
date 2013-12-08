@@ -241,20 +241,19 @@ public:
 
     void getViewport(Vector3 &value) const;
     void getMousePosition(Vector4 &value, MousePositionType type) const;
-    IModel *findModel(const IString *name) const;
-    IModel *effectOwner(const IEffect *effect) const;
-    void setEffectOwner(const IEffect *effectRef, IModel *model);
-    void addModelPath(IModel *model, const std::string &path);
-    std::string effectOwnerName(const IEffect *effect) const;
+    IModel *findEffectModelRef(const IString *name) const;
+    IModel *findEffectModelRef(const IEffect *effect) const;
+    void setEffectModelRef(const IEffect *effectRef, IModel *model);
+    void addModelFilePath(IModel *model, const std::string &path);
+    std::string findEffectOwnerName(const IEffect *effect) const;
     extensions::gl::FrameBufferObject *createFrameBufferObject();
     void getEffectCompilerArguments(Array<IString *> &arguments) const;
-    std::string effectFilePath(const IModel *model, const IString *dir) const;
     void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter);
     bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const;
     void setMousePosition(const glm::vec4 &value, MousePositionType type, bool &handled);
     void handleKeyPress(int value, int modifiers, bool &handled);
-    std::string findModelPath(const IModel *modelRef) const;
-    std::string findModelBasename(const IModel *modelRef) const;
+    std::string findModelFilePath(const IModel *modelRef) const;
+    std::string findModelFileBasename(const IModel *modelRef) const;
     extensions::gl::FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
     void bindOffscreenRenderTarget(OffscreenTexture *textureRef, bool enableAA);
     void releaseOffscreenRenderTarget(const OffscreenTexture *textureRef, bool enableAA);
@@ -264,15 +263,11 @@ public:
     void renderEffectParameterUIWidgets();
     IEffect *createEffectRef(const std::string &path);
     IEffect *createEffectRef(IModel *modelRef, const IString *directoryRef);
-    std::string findEffectPath(const IEffect *effectRef) const;
+    std::string findEffectFilePath(const IEffect *effectRef) const;
+    std::string resolveEffectFilePath(const IModel *model, const IString *dir) const;
     void deleteEffectRef(const std::string &path);
+    void deleteEffectRef(IEffect *&effectRef);
     void deleteEffectRef(IModel *modelRef, const IString *directoryRef);
-#if 0
-    void addModelPath(IModel * /* model */, const std::string & /* path */) {}
-    void parseOffscreenSemantic(IEffect * /* effect */, const IString * /* dir */) {}
-    void renderOffscreen() {}
-    IEffect *createEffectRef(IModel * /* model */, const IString * /* dir */) { return 0; }
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
 
     IModel *currentModelRef() const;
     void setCurrentModelRef(IModel *value);
@@ -349,7 +344,7 @@ protected:
     glm::vec4 m_mouseLeftPressPosition;
     glm::vec4 m_mouseMiddlePressPosition;
     glm::vec4 m_mouseRightPressPosition;
-    Name2ModelRefMap m_basename2modelRefs;
+    Name2ModelRefMap m_basename2ModelRefs;
     ModelRef2PathMap m_modelRef2Paths;
     ModelRef2BasenameMap m_modelRef2Basenames;
     Path2EffectMap m_effectCaches;

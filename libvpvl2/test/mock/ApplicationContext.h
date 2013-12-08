@@ -26,16 +26,14 @@ class MockIApplicationContext : public IApplicationContext {
       void(float &value, bool sync));
   MOCK_METHOD4(uploadAnimatedTexture,
       void(float32 offset, float32 speed, float32 seek, void *texture));
-  MOCK_CONST_METHOD1(findModel,
+  MOCK_CONST_METHOD1(findEffectModelRef,
       IModel*(const IString *name));
-  MOCK_CONST_METHOD1(effectOwner,
+  MOCK_CONST_METHOD1(findEffectModelRef,
       IModel*(const IEffect *effect));
   MOCK_METHOD0(createFrameBufferObject,
       extensions::gl::FrameBufferObject*());
   MOCK_CONST_METHOD1(getEffectCompilerArguments,
       void(Array<IString *> &arguments));
-  MOCK_CONST_METHOD2(effectFilePath,
-      const IString*(const IModel *model, const IString *dir));
   MOCK_METHOD2(addSharedTextureParameter,
       void(const char *name, const SharedTextureParameter &parameter));
   MOCK_CONST_METHOD2(tryGetSharedTextureParameter,

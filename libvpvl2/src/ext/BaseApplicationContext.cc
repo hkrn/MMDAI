@@ -619,7 +619,7 @@ void BaseApplicationContext::release()
     m_currentModelRef = 0;
     m_offscreenTextures.releaseAll();
     m_renderTargets.releaseAll();
-    m_basename2modelRefs.clear();
+    m_basename2ModelRefs.clear();
     m_modelRef2Paths.clear();
     m_sharedParameters.clear();
     m_offscreenTechniques.clear();
@@ -812,7 +812,7 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel 
 {
     std::string file;
     if (type == kModelEffectTechniques) {
-        IStringSmartPtr path(String::create(effectFilePath(model, static_cast<const IString *>(userData))));
+        IStringSmartPtr path(String::create(resolveEffectFilePath(model, static_cast<const IString *>(userData))));
         return loadShaderSource(type, path.get());
     }
     switch (model->type()) {
@@ -989,18 +989,18 @@ void BaseApplicationContext::getMousePosition(Vector4 &value, MousePositionType 
     }
 }
 
-IModel *BaseApplicationContext::findModel(const IString *name) const
+IModel *BaseApplicationContext::findEffectModelRef(const IString *name) const
 {
     IModel *model = m_sceneRef->findModel(name);
     if (!model) {
-        if (IModel *const *value = m_basename2modelRefs.find(name->toHashString())) {
+        if (IModel *const *value = m_basename2ModelRefs.find(name->toHashString())) {
             model = *value;
         }
     }
     return model;
 }
 
-IModel *BaseApplicationContext::effectOwner(const IEffect *effect) const
+IModel *BaseApplicationContext::findEffectModelRef(const IEffect *effect) const
 {
     if (IModel *const *value = m_effectRef2ModelRefs.find(effect)) {
         return *value;
@@ -1008,14 +1008,14 @@ IModel *BaseApplicationContext::effectOwner(const IEffect *effect) const
     return 0;
 }
 
-void BaseApplicationContext::setEffectOwner(const IEffect *effectRef, IModel *model)
+void BaseApplicationContext::setEffectModelRef(const IEffect *effectRef, IModel *model)
 {
     const IString *name = model->name(IEncoding::kDefaultLanguage);
     m_effectRef2Owners.insert(effectRef, static_cast<const String *>(name)->toStdString());
     m_effectRef2ModelRefs.insert(effectRef, model);
 }
 
-void BaseApplicationContext::addModelPath(IModel *model, const std::string &path)
+void BaseApplicationContext::addModelFilePath(IModel *model, const std::string &path)
 {
     if (model) {
         UErrorCode status = U_ZERO_ERROR;
@@ -1027,7 +1027,7 @@ void BaseApplicationContext::addModelPath(IModel *model, const std::string &path
                 String s(filenameMatcher.group(2, status));
                 model->setName(&s, IEncoding::kDefaultLanguage);
             }
-            m_basename2modelRefs.insert(basename.c_str(), model);
+            m_basename2ModelRefs.insert(basename.c_str(), model);
             m_modelRef2Basenames.insert(model, basename);
         }
         else {
@@ -1035,13 +1035,13 @@ void BaseApplicationContext::addModelPath(IModel *model, const std::string &path
                 IStringSmartPtr s(String::create(path));
                 model->setName(s.get(), IEncoding::kDefaultLanguage);
             }
-            m_basename2modelRefs.insert(path.c_str(), model);
+            m_basename2ModelRefs.insert(path.c_str(), model);
         }
         m_modelRef2Paths.insert(model, path);
     }
 }
 
-std::string BaseApplicationContext::effectOwnerName(const IEffect *effect) const
+std::string BaseApplicationContext::findEffectOwnerName(const IEffect *effect) const
 {
     if (const std::string *value = m_effectRef2Owners.find(effect)) {
         return *value;
@@ -1057,28 +1057,6 @@ FrameBufferObject *BaseApplicationContext::createFrameBufferObject()
 void BaseApplicationContext::getEffectCompilerArguments(Array<IString *> &arguments) const
 {
     arguments.clear();
-}
-
-std::string BaseApplicationContext::effectFilePath(const IModel *model, const IString *dir) const
-{
-    const std::string &path = findModelPath(model);
-    if (!path.empty()) {
-        UErrorCode status = U_ZERO_ERROR;
-        RegexMatcher filenameMatcher("^.+/(.+)\\.\\w+$", 0, status);
-        const UnicodeString &unicodePath = UnicodeString::fromUTF8(path);
-        filenameMatcher.reset(unicodePath);
-        const UnicodeString &s = filenameMatcher.find() ? filenameMatcher.group(1, status) : unicodePath;
-        RegexMatcher extractMatcher("^.+\\[(.+)(?:\\.(?:cg)?fx)?\\]$", 0, status);
-        extractMatcher.reset(s);
-        const UnicodeString &cgfx = extractMatcher.find()
-                ? extractMatcher.replaceAll("$1.cgfx", status) : s + ".cgfx";
-        const std::string &newEffectPath = static_cast<const String *>(dir)->toStdString()
-                + "/" + String::toStdString(cgfx);
-        if (existsFile(newEffectPath)) {
-            return newEffectPath;
-        }
-    }
-    return static_cast<const String *>(dir)->toStdString() + "/default.cgfx";
 }
 
 void BaseApplicationContext::addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter)
@@ -1131,7 +1109,7 @@ void BaseApplicationContext::handleKeyPress(int value, int modifiers, bool &hand
     handled = TwKeyPressed(value, modifiers) != 0;
 }
 
-std::string BaseApplicationContext::findModelPath(const IModel *modelRef) const
+std::string BaseApplicationContext::findModelFilePath(const IModel *modelRef) const
 {
     if (const std::string *value = m_modelRef2Paths.find(modelRef)) {
         return *value;
@@ -1139,7 +1117,7 @@ std::string BaseApplicationContext::findModelPath(const IModel *modelRef) const
     return std::string();
 }
 
-std::string BaseApplicationContext::findModelBasename(const IModel *modelRef) const
+std::string BaseApplicationContext::findModelFileBasename(const IModel *modelRef) const
 {
     if (const std::string *value = m_modelRef2Basenames.find(modelRef)) {
         return *value;
@@ -1485,21 +1463,43 @@ IEffect *BaseApplicationContext::createEffectRef(const std::string &path)
 
 IEffect *BaseApplicationContext::createEffectRef(IModel *modelRef, const IString *directoryRef)
 {
-    const std::string &filePath = effectFilePath(modelRef, directoryRef);
+    const std::string &filePath = resolveEffectFilePath(modelRef, directoryRef);
     IEffect *effectRef = createEffectRef(filePath);
     if (effectRef) {
-        setEffectOwner(effectRef, modelRef);
+        setEffectModelRef(effectRef, modelRef);
         VPVL2_LOG(INFO, "Loaded an model effect: model=" << internal::cstr(modelRef->name(IEncoding::kDefaultLanguage), "(null)") << " path=" << filePath);
     }
     return effectRef;
 }
 
-std::string BaseApplicationContext::findEffectPath(const IEffect *effectRef) const
+std::string BaseApplicationContext::findEffectFilePath(const IEffect *effectRef) const
 {
     if (const std::string *path = m_effectRef2Paths.find(effectRef)) {
         return *path;
     }
     return std::string();
+}
+
+std::string BaseApplicationContext::resolveEffectFilePath(const IModel *model, const IString *dir) const
+{
+    const std::string &path = findModelFilePath(model);
+    if (!path.empty()) {
+        UErrorCode status = U_ZERO_ERROR;
+        RegexMatcher filenameMatcher("^.+/(.+)\\.\\w+$", 0, status);
+        const UnicodeString &unicodePath = UnicodeString::fromUTF8(path);
+        filenameMatcher.reset(unicodePath);
+        const UnicodeString &s = filenameMatcher.find() ? filenameMatcher.group(1, status) : unicodePath;
+        RegexMatcher extractMatcher("^.+\\[(.+)(?:\\.(?:cg)?fx)?\\]$", 0, status);
+        extractMatcher.reset(s);
+        const UnicodeString &cgfx = extractMatcher.find()
+                ? extractMatcher.replaceAll("$1.cgfx", status) : s + ".cgfx";
+        const std::string &newEffectPath = static_cast<const String *>(dir)->toStdString()
+                + "/" + String::toStdString(cgfx);
+        if (existsFile(newEffectPath)) {
+            return newEffectPath;
+        }
+    }
+    return static_cast<const String *>(dir)->toStdString() + "/default.cgfx";
 }
 
 void BaseApplicationContext::deleteEffectRef(const std::string &path)
@@ -1520,9 +1520,18 @@ void BaseApplicationContext::deleteEffectRef(const std::string &path)
     }
 }
 
+void BaseApplicationContext::deleteEffectRef(IEffect *&effectRef)
+{
+    const std::string &path = findEffectFilePath(effectRef);
+    if (!path.empty()) {
+        deleteEffectRef(path);
+        effectRef = 0;
+    }
+}
+
 void BaseApplicationContext::deleteEffectRef(IModel *modelRef, const IString *directoryRef)
 {
-    deleteEffectRef(effectFilePath(modelRef, directoryRef));
+    deleteEffectRef(resolveEffectFilePath(modelRef, directoryRef));
 }
 
 IModel *BaseApplicationContext::currentModelRef() const
