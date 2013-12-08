@@ -159,7 +159,6 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glBindAttribLocation = reinterpret_cast<PFNGLBINDATTRIBLOCATIONPROC>(resolver->resolve("glBindAttribLocation"));
     glBindBuffer = reinterpret_cast<PFNGLBINDBUFFERPROC>(resolver->resolve("glBindBuffer"));
     glBindFramebuffer = reinterpret_cast<PFNGLBINDFRAMEBUFFERPROC>(resolver->resolve("glBindFramebuffer"));
-    glBindImageTexture = reinterpret_cast<PFNGLBINDIMAGETEXTUREPROC>(resolver->resolve("glBindImageTexture"));
     glBindRenderbuffer = reinterpret_cast<PFNGLBINDRENDERBUFFERPROC>(resolver->resolve("glBindRenderbuffer"));
     glBindTexture = reinterpret_cast<PFNGLBINDTEXTUREPROC>(resolver->resolve("glBindTexture"));
     glBlendColor = reinterpret_cast<PFNGLBLENDCOLORPROC>(resolver->resolve("glBlendColor"));
@@ -250,7 +249,11 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glViewport = reinterpret_cast<PFNGLVIEWPORTPROC>(resolver->resolve("glViewport"));
 
     int version = resolver->queryVersion();
-    if (version >= FunctionResolver::makeVersion(3, 0) || resolver->hasExtension("GL_ARB_vertex_array_object")) {
+    if (version < FunctionResolver::makeVersion(3, 0) && resolver->hasExtension("GL_APPLE_vertex_array_object")) {
+        glBindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolve("glBindVertexArrayAPPLE"));
+        glGenVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolve("glGenVertexArraysAPPLE"));
+    }
+    else if (version >= FunctionResolver::makeVersion(3, 0) || resolver->hasExtension("GL_ARB_vertex_array_object")) {
         glBindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolve("glBindVertexArray"));
         glGenVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolve("glGenVertexArrays"));
     }
@@ -269,6 +272,9 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     }
     if (version >= FunctionResolver::makeVersion(3, 3)) {
         glBindSampler = reinterpret_cast<PFNGLBINDSAMPLERPROC>(resolver->resolve("glBindSampler"));
+    }
+    if (version >= FunctionResolver::makeVersion(4, 2) || resolver->hasExtension("ARB_shader_image_load_store")) {
+        glBindImageTexture = reinterpret_cast<PFNGLBINDIMAGETEXTUREPROC>(resolver->resolve("glBindImageTexture"));
     }
     if (resolver->hasExtension("ARB_separate_shader_objects")) {
         glBindProgramPipeline = reinterpret_cast<PFNGLBINDPROGRAMPIPELINEPROC>(resolver->resolve("glBindProgramPipeline"));
