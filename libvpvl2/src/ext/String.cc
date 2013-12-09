@@ -61,22 +61,6 @@ std::string String::toStdString(const UnicodeString &value)
     return str;
 }
 
-bool String::toBoolean(const UnicodeString &value)
-{
-    return value == "true" || value == "1" || value == "y" || value == "yes";
-}
-
-int String::toInt(const UnicodeString &value, int def)
-{
-    int v = int(strtol(toStdString(value).c_str(), 0, 10));
-    return v != 0 ? v : def;
-}
-
-double String::toDouble(const UnicodeString &value, double def) {
-    double v = strtod(toStdString(value).c_str(), 0);
-    return v != 0.0 ? float(v) : def;
-}
-
 String::String(const UnicodeString &value, const Converter *converterRef)
     : m_converterRef(converterRef),
       m_value(value)

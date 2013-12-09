@@ -46,8 +46,8 @@
 #include <QProcess>
 #include <QQuickItem>
 #include <QQmlPropertyMap>
-#include <vpvl2/extensions/icu4c/StringMap.h>
 #include <vpvl2/extensions/FPSCounter.h>
+#include <vpvl2/extensions/StringMap.h>
 #include <glm/glm.hpp>
 
 #include "ModelProxy.h"
@@ -272,7 +272,7 @@ private:
     glm::mat4 m_viewMatrix;
     glm::mat4 m_projectionMatrix;
     glm::mat4 m_viewProjectionMatrix;
-    vpvl2::extensions::icu4c::StringMap m_config;
+    vpvl2::extensions::StringMap m_config;
     vpvl2::extensions::FPSCounter m_counter;
     EditModeType m_editMode;
     ProjectProxy *m_projectProxyRef;

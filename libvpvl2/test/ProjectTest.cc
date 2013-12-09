@@ -72,7 +72,7 @@ public:
         const QString &s = m_codec->toUnicode(value.c_str());
         return new String(UnicodeString::fromUTF8(s.toStdString()));
     }
-    bool loadModel(const XMLProject::UUID & /* uuid */, const XMLProject::StringMap & /* settings */, IModel::Type type, IModel *&model, IRenderEngine *&engine, int &priority) {
+    bool loadModel(const XMLProject::UUID & /* uuid */, const StringMap & /* settings */, IModel::Type type, IModel *&model, IRenderEngine *&engine, int &priority) {
         model = m_factory.newModel(type);
         engine = new MockIRenderEngine();
         priority = 0;

@@ -41,11 +41,11 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/internal/util.h>
 #include <vpvl2/extensions/Archive.h>
+#include <vpvl2/extensions/StringMap.h>
 #include <vpvl2/extensions/fx/Util.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
 #include <vpvl2/extensions/gl/SimpleShadowMap.h>
 #include <vpvl2/extensions/gl/Texture2D.h>
-#include <vpvl2/extensions/icu4c/StringMap.h>
 
 #ifdef VPVL2_ENABLE_EXTENSION_ARCHIVE
 #include <vpvl2/extensions/Archive.h>
@@ -113,7 +113,6 @@ typedef unsigned int ETwMouseAction;
 #include <glm/gtx/string_cast.hpp>
 
 /* Cg and ICU */
-#include <unicode/udata.h>
 #if defined(VPVL2_LINK_NVFX)
 #include <FxLib.h>
 #elif defined(VPVL2_ENABLE_NVIDIA_CG)
@@ -121,18 +120,14 @@ typedef unsigned int ETwMouseAction;
 #include <unicode/regex.h>
 #endif
 
-#if defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS)
-#include <sys/fcntl.h>
-#endif
-
 using namespace vpvl2;
 using namespace vpvl2::extensions;
-using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::gl;
 
-namespace {
+#include <vpvl2/extensions/icu4c/Encoding.h>
+using namespace vpvl2::extensions::icu4c;
 
-#include "ICUCommonData.inl"
+namespace {
 
 static const vpvl2::extensions::gl::GLenum kGL_DONT_CARE = 0x1100;
 static const vpvl2::extensions::gl::GLenum kGL_MAX_SAMPLES = 0x8D57;
@@ -302,31 +297,6 @@ static inline IString *toIStringFromUtf8(const std::string &bytes)
     return bytes.empty() ? 0 : new (std::nothrow) String(UnicodeString::fromUTF8(bytes));
 #endif
 }
-
-#if defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS)
-
-static char g_crashHandlePath[PATH_MAX];
-
-static void HandleFailure(const char *data, int size)
-{
-    int fd = ::open(g_crashHandlePath, O_WRONLY | O_APPEND | O_CREAT);
-    if (fd != -1) {
-        ::write(fd, data, size);
-        ::close(fd);
-    }
-}
-
-static void InstallFailureHandler(const char *logdir)
-{
-    google::InstallFailureSignalHandler();
-    google::InstallFailureWriter(HandleFailure);
-    static const char kFailureLogFilename[] = "/failure.log";
-    internal::snprintf(g_crashHandlePath, sizeof(g_crashHandlePath), "%s/%s", logdir, kFailureLogFilename);
-}
-
-#else
-#define InstallFailureHandler(logdir)
-#endif
 
 } /* namespace anonymous */
 
@@ -529,34 +499,17 @@ bool BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsiz
 
 bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdir, int vlog)
 {
-    VPVL2_CHECK(argv0);
-    google::InitGoogleLogging(argv0);
-    InstallFailureHandler(logdir);
     FreeImage_Initialise();
-    FLAGS_v = vlog;
-    if (logdir) {
-        FLAGS_stop_logging_if_full_disk = true;
-        FLAGS_log_dir = logdir;
-#ifndef NDEBUG
-        FLAGS_alsologtostderr = true;
-#endif
-    }
-    else {
-        google::LogToStderr();
-        FLAGS_logtostderr = true;
-        FLAGS_colorlogtostderr = true;
-    }
-    UErrorCode err = U_ZERO_ERROR;
-    udata_setCommonData(g_icudt52l_dat, &err);
-    return err == U_ZERO_ERROR;
+    installLogger(argv0, logdir, vlog);
+    return Encoding::initializeOnce();
 }
 
 void BaseApplicationContext::terminate()
 {
     FreeImage_DeInitialise();
     TwTerminate();
+    uninstallLogger();
     Scene::terminate();
-    google::ShutdownGoogleLogging();
 }
 
 BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef)
@@ -582,7 +535,7 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
 {
 }
 
-void BaseApplicationContext::initialize(bool enableDebug)
+void BaseApplicationContext::initializeOpenGLContext(bool enableDebug)
 {
     FunctionResolver *resolver = sharedFunctionResolverInstance();
     pushAnnotationGroup("BaseApplicationContext#initialize", resolver);

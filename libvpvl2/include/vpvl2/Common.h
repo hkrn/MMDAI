@@ -291,6 +291,10 @@ VPVL2_API bool isLibraryVersionCorrect(int version) VPVL2_DECL_NOEXCEPT;
  */
 VPVL2_API const char *libraryVersionString() VPVL2_DECL_NOEXCEPT;
 
+VPVL2_API void installLogger(const char *argv0, const char *logdir, int vlog);
+
+VPVL2_API void uninstallLogger();
+
 } /* namespace vpvl2 */
 
 #endif

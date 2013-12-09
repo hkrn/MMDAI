@@ -1810,7 +1810,7 @@ void RenderTarget::initialize()
         m_graphicsDevice->initialize();
         emit graphicsDeviceChanged();
         m_applicationContext.reset(new ApplicationContext(m_projectProxyRef, &m_config));
-        m_applicationContext->initialize(false);
+        m_applicationContext->initializeOpenGLContext(false);
         m_grid->load(m_applicationContext->sharedFunctionResolverInstance());
         m_applicationContext->setViewportRegion(glm::ivec4(0, 0, win->width(), win->height()));
         QOpenGLContext *contextRef = win->openglContext();

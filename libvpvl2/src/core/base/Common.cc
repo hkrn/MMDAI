@@ -38,6 +38,41 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
+#if defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS)
+#include <sys/fcntl.h>
+#endif
+
+namespace {
+
+using namespace vpvl2;
+
+#if defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS)
+
+static char g_crashHandlePath[PATH_MAX];
+
+static void HandleFailure(const char *data, int size)
+{
+    int fd = ::open(g_crashHandlePath, O_WRONLY | O_APPEND | O_CREAT);
+    if (fd != -1) {
+        ::write(fd, data, size);
+        ::close(fd);
+    }
+}
+
+static void InstallFailureHandler(const char *logdir)
+{
+    google::InstallFailureSignalHandler();
+    google::InstallFailureWriter(HandleFailure);
+    static const char kFailureLogFilename[] = "/failure.log";
+    internal::snprintf(g_crashHandlePath, sizeof(g_crashHandlePath), "%s/%s", logdir, kFailureLogFilename);
+}
+
+#else
+#define InstallFailureHandler(logdir)
+#endif
+
+}
+
 namespace vpvl2
 {
 
@@ -49,6 +84,31 @@ bool isLibraryVersionCorrect(int version) VPVL2_DECL_NOEXCEPT
 const char *libraryVersionString() VPVL2_DECL_NOEXCEPT
 {
     return internal::kCurrentVersionString;
+}
+
+void installLogger(const char *argv0, const char *logdir, int vlog)
+{
+    VPVL2_CHECK(argv0);
+    google::InitGoogleLogging(argv0);
+    InstallFailureHandler(logdir);
+    FLAGS_v = vlog;
+    if (logdir) {
+        FLAGS_stop_logging_if_full_disk = true;
+        FLAGS_log_dir = logdir;
+#ifndef NDEBUG
+        FLAGS_alsologtostderr = true;
+#endif
+    }
+    else {
+        google::LogToStderr();
+        FLAGS_logtostderr = true;
+        FLAGS_colorlogtostderr = true;
+    }
+}
+
+void uninstallLogger()
+{
+    google::ShutdownGoogleLogging();
 }
 
 } /* namespace vpvl2 */

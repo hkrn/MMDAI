@@ -43,8 +43,8 @@
 #include <vpvl2/IApplicationContext.h>
 #include <vpvl2/IEffect.h>
 #include <vpvl2/Scene.h>
+#include <vpvl2/extensions/StringMap.h>
 #include <vpvl2/extensions/gl/FrameBufferObject.h>
-#include <vpvl2/extensions/icu4c/Encoding.h>
 
 /* STL */
 #include <memory>
@@ -117,11 +117,6 @@ class SimpleShadowMap;
 VPVL2_MAKE_SMARTPTR(FrameBufferObject);
 VPVL2_MAKE_SMARTPTR(SimpleShadowMap);
 }
-namespace icu4c {
-class Encoding;
-class StringMap;
-VPVL2_MAKE_SMARTPTR(Encoding);
-}
 
 VPVL2_MAKE_SMARTPTR(Archive);
 VPVL2_MAKE_SMARTPTR(Factory);
@@ -190,10 +185,10 @@ public:
     static bool initializeOnce(const char *argv0, const char *logdir, int vlog);
     static void terminate();
 
-    BaseApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const icu4c::StringMap *configRef);
+    BaseApplicationContext(Scene *sceneRef, IEncoding *encodingRef, const StringMap *configRef);
     ~BaseApplicationContext();
 
-    void initialize(bool enableDebug);
+    void initializeOpenGLContext(bool enableDebug);
     void release();
 
     bool uploadTexture(const IString *name, TextureDataBridge &bridge, void *userData);
@@ -313,7 +308,7 @@ protected:
     virtual bool uploadTextureOpaque(const std::string &path, ModelContext *context, TextureDataBridge &bridge);
     virtual gl::BaseSurface::Format defaultTextureFormat() const;
 
-    const icu4c::StringMap *m_configRef;
+    const StringMap *m_configRef;
     Scene *m_sceneRef;
     IEncoding *m_encodingRef;
     IModel *m_currentModelRef;

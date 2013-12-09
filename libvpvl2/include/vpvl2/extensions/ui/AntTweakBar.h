@@ -44,6 +44,7 @@
 #include <vpvl2/IModel.h>
 #include <vpvl2/IMorph.h>
 #include <vpvl2/extensions/BaseApplicationContext.h>
+#include <vpvl2/extensions/icu4c/String.h>
 
 #include <sstream>
 #include <AntTweakBar.h>
@@ -52,6 +53,8 @@ namespace vpvl2
 {
 namespace extensions
 {
+using namespace icu4c;
+
 namespace ui
 {
 
@@ -417,9 +420,8 @@ private:
     }
     static inline void TW_CALL getModelName(void *value, void *userData) {
         const IModel *modelRef = static_cast<const IModel *>(userData);
-        const icu4c::String *name = static_cast<const icu4c::String *>(modelRef->name(IEncoding::kEnglish));
         std::string *ptr = static_cast<std::string *>(value);
-        TwCopyStdStringToLibrary(*ptr, icu4c::String::toStdString(name->value()));
+        TwCopyStdStringToLibrary(*ptr, static_cast<const String *>(modelRef->name(IEncoding::kEnglish))->toStdString());
     }
     static void buildBoneList(TwBar *currentModelBar, const IModel *modelRef) {
         Array<ILabel *> labels;
@@ -444,7 +446,7 @@ private:
                     nameString.assign(nameStringStream.str());
                     const IString *englishName = boneRef->name(IEncoding::kEnglish);
                     if (englishName && englishName->size() > 0) {
-                        labelString.assign(icu4c::String::toStdString(static_cast<const icu4c::String *>(englishName)->value()));
+                        labelString.assign(static_cast<const String *>(englishName)->toStdString());
                     }
                     else {
                         labelString.assign("Unknown (").append(nameString).append(")");
@@ -471,7 +473,7 @@ private:
             if (found > 0) {
                 const IString *englishName = labelRef->name(IEncoding::kEnglish);
                 if (englishName && englishName->size() > 0) {
-                    labelString.assign(icu4c::String::toStdString(static_cast<const icu4c::String *>(englishName)->value()));
+                    labelString.assign(static_cast<const String *>(englishName)->toStdString());
                 }
                 else {
                     labelString.assign("Unknown (").append(groupString).append(")");
@@ -495,7 +497,7 @@ private:
             nameString.assign(nameStringStream.str());
             const IString *englishName = morphRef->name(IEncoding::kEnglish);
             if (englishName && englishName->size() > 0) {
-                labelString.assign(icu4c::String::toStdString(static_cast<const icu4c::String *>(englishName)->value()));
+                labelString.assign(static_cast<const String *>(englishName)->toStdString());
             }
             else {
                 labelString.assign("Unknown (").append(nameString).append(")");

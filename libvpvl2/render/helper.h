@@ -39,8 +39,8 @@
 #include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/extensions/World.h>
+#include <vpvl2/extensions/StringMap.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
-#include <vpvl2/extensions/icu4c/StringMap.h>
 
 #ifdef VPVL2_OS_OSX
 #include <OpenGL/gl.h>
@@ -56,6 +56,14 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+
+namespace vpvl2 {
+namespace extensions {
+namespace icu4c {
+VPVL2_MAKE_SMARTPTR(Encoding);
+}
+}
+}
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
@@ -93,7 +101,7 @@ static void drawScreen(const Scene &scene)
     }
 }
 
-static void loadSettings(const std::string &path, icu4c::StringMap &settings)
+static void loadSettings(const std::string &path, StringMap &settings)
 {
     std::ifstream stream(path.c_str());
     std::string line;
@@ -108,27 +116,27 @@ static void loadSettings(const std::string &path, icu4c::StringMap &settings)
         std::getline(ss, value);
         k.setTo(UnicodeString::fromUTF8(key));
         v.setTo(UnicodeString::fromUTF8(value));
-        settings[k.trim()] = v.trim();
+        settings[icu4c::String::toStdString(k.trim())] = icu4c::String::toStdString(v.trim());
     }
 }
 
-static void initializeDictionary(const icu4c::StringMap &settings, icu4c::Encoding::Dictionary &dictionary)
+static void initializeDictionary(const StringMap &settings, icu4c::Encoding::Dictionary &dictionary)
 {
-    dictionary.insert(IEncoding::kArm, new icu4c::String(settings.value("encoding.constant.arm", UnicodeString())));
-    dictionary.insert(IEncoding::kAsterisk, new icu4c::String(settings.value("encoding.constant.asterisk", UnicodeString("*"))));
-    dictionary.insert(IEncoding::kCenter, new icu4c::String(settings.value("encoding.constant.center", UnicodeString())));
-    dictionary.insert(IEncoding::kElbow, new icu4c::String(settings.value("encoding.constant.elbow", UnicodeString())));
-    dictionary.insert(IEncoding::kFinger, new icu4c::String(settings.value("encoding.constant.finger", UnicodeString())));
-    dictionary.insert(IEncoding::kLeft, new icu4c::String(settings.value("encoding.constant.left", UnicodeString())));
-    dictionary.insert(IEncoding::kLeftKnee, new icu4c::String(settings.value("encoding.constant.leftknee", UnicodeString())));
-    dictionary.insert(IEncoding::kOpacityMorphAsset, new icu4c::String(settings.value("encoding.constant.opacityMorphAsset", UnicodeString())));
-    dictionary.insert(IEncoding::kRight, new icu4c::String(settings.value("encoding.constant.right", UnicodeString())));
-    dictionary.insert(IEncoding::kRightKnee, new icu4c::String(settings.value("encoding.constant.rightknee", UnicodeString())));
-    dictionary.insert(IEncoding::kRootBone, new icu4c::String(settings.value("encoding.constant.rootBoneAsset", UnicodeString())));
-    dictionary.insert(IEncoding::kScaleBoneAsset, new icu4c::String(settings.value("encoding.constant.scaleBoneAsset", UnicodeString())));
-    dictionary.insert(IEncoding::kSPAExtension, new icu4c::String(settings.value("encoding.constant.spa", UnicodeString(".spa"))));
-    dictionary.insert(IEncoding::kSPHExtension, new icu4c::String(settings.value("encoding.constant.sph", UnicodeString(".sph"))));
-    dictionary.insert(IEncoding::kWrist, new icu4c::String(settings.value("encoding.constant.wrist", UnicodeString())));
+    dictionary.insert(IEncoding::kArm, icu4c::String::create(settings.value("encoding.constant.arm", std::string())));
+    dictionary.insert(IEncoding::kAsterisk, icu4c::String::create(settings.value("encoding.constant.asterisk", std::string("*"))));
+    dictionary.insert(IEncoding::kCenter, icu4c::String::create(settings.value("encoding.constant.center", std::string())));
+    dictionary.insert(IEncoding::kElbow, icu4c::String::create(settings.value("encoding.constant.elbow", std::string())));
+    dictionary.insert(IEncoding::kFinger, icu4c::String::create(settings.value("encoding.constant.finger", std::string())));
+    dictionary.insert(IEncoding::kLeft, icu4c::String::create(settings.value("encoding.constant.left", std::string())));
+    dictionary.insert(IEncoding::kLeftKnee, icu4c::String::create(settings.value("encoding.constant.leftknee", std::string())));
+    dictionary.insert(IEncoding::kOpacityMorphAsset, icu4c::String::create(settings.value("encoding.constant.opacityMorphAsset", std::string())));
+    dictionary.insert(IEncoding::kRight, icu4c::String::create(settings.value("encoding.constant.right", std::string())));
+    dictionary.insert(IEncoding::kRightKnee, icu4c::String::create(settings.value("encoding.constant.rightknee", std::string())));
+    dictionary.insert(IEncoding::kRootBone, icu4c::String::create(settings.value("encoding.constant.rootBoneAsset", std::string())));
+    dictionary.insert(IEncoding::kScaleBoneAsset, icu4c::String::create(settings.value("encoding.constant.scaleBoneAsset", std::string())));
+    dictionary.insert(IEncoding::kSPAExtension, icu4c::String::create(settings.value("encoding.constant.spa", std::string(".spa"))));
+    dictionary.insert(IEncoding::kSPHExtension, icu4c::String::create(settings.value("encoding.constant.sph", std::string(".sph"))));
+    dictionary.insert(IEncoding::kWrist, icu4c::String::create(settings.value("encoding.constant.wrist", std::string())));
 }
 
 static bool loadModel(const UnicodeString &path,
@@ -166,13 +174,13 @@ static bool loadModel(const UnicodeString &path,
     return ok && model.get() != 0;
 }
 
-static void loadAllModels(const icu4c::StringMap &settings,
+static void loadAllModels(const StringMap &settings,
                           BaseApplicationContext *applicationContextRef,
                           Scene *sceneRef,
                           Factory *factoryRef,
                           IEncoding *encodingRef)
 {
-    const std::string &globalMotionPath = icu4c::String::toStdString(settings.value("file.motion", UnicodeString()));
+    const std::string &globalMotionPath = settings.value("file.motion", std::string());
     int nmodels = settings.value("models/size", 0);
     bool parallel = settings.value("enable.parallel", true), ok = false;
     ArchiveSmartPtr archive;
@@ -187,11 +195,11 @@ static void loadAllModels(const icu4c::StringMap &settings,
     for (int i = 0; i < nmodels; i++) {
         stream.str(std::string());
         stream << "models/" << (i + 1);
-        const UnicodeString &prefix = UnicodeString::fromUTF8(stream.str()),
-                &modelPath = settings.value(prefix + "/path", UnicodeString());
+        const std::string &prefix = stream.str(), &path = settings.value(prefix + "/path", std::string());
+        const UnicodeString &modelPath = UnicodeString::fromUTF8(path);
         archive.reset();
         model.reset();
-        VPVL2_VLOG(2, "Loading a model from " << icu4c::String::toStdString(modelPath));
+        VPVL2_VLOG(2, "Loading a model from " << path);
         int flags = settings.value(prefix + "/enable.effects", true) ? Scene::kEffectCapable : 0;
         int indexOf = modelPath.lastIndexOf("/");
         icu4c::String dir(modelPath.tempSubString(0, indexOf));
@@ -219,7 +227,7 @@ static void loadAllModels(const icu4c::StringMap &settings,
                 model->setPhysicsEnable(settings.value(prefix + "/enable.physics", true));
                 sceneRef->addModel(model.get(), engine.release(), i);
                 BaseApplicationContext::MapBuffer motionBuffer(applicationContextRef);
-                const std::string &modelMotionPath = icu4c::String::toStdString(settings.value(prefix + "/motion", UnicodeString()));
+                const std::string &modelMotionPath = settings.value(prefix + "/motion", std::string());
                 if (applicationContextRef->mapFile(!modelMotionPath.empty() ? modelMotionPath : globalMotionPath, &motionBuffer)) {
                     IMotionSmartPtr motion(factoryRef->createMotion(motionBuffer.address,
                                                                     motionBuffer.size,
@@ -231,7 +239,7 @@ static void loadAllModels(const icu4c::StringMap &settings,
             }
         }
         else {
-            icu4c::String s(settings.value(prefix + "/effect", UnicodeString()));
+            icu4c::String s(UnicodeString::fromUTF8(settings.value(prefix + "/effect", std::string())));
             if (!s.value().isEmpty()) {
                 if (IEffect *effectRef = applicationContextRef->createEffectRef(s.toStdString())) {
                     applicationContextRef->parseOffscreenSemantic(effectRef, 0);

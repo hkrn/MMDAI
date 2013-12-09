@@ -453,7 +453,7 @@ struct XMLProject::PrivateContext {
     }
     void getNewModelSettings(const IModel *model, const StringMap &modelSettings, StringMap &newModelSettings) const {
         const IBone *parentBoneRef = model->parentBoneRef();
-        newModelSettings = modelSettings;
+        modelSettings.copyTo(newModelSettings);
         newModelSettings["state.opacity"] = XMLProject::toStringFromFloat32(model->opacity());
         newModelSettings["state.scale"] = XMLProject::toStringFromFloat32(model->scaleFactor());
         newModelSettings["state.offset.position"] = XMLProject::toStringFromVector3(model->worldTranslation());
@@ -2005,7 +2005,7 @@ std::string XMLProject::version() const
 
 std::string XMLProject::globalSetting(const std::string &key) const
 {
-    return m_context->globalSettings.value(key);
+    return m_context->globalSettings.value(key, std::string());
 }
 
 std::string XMLProject::modelSetting(const IModel *model, const std::string &key) const

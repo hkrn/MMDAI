@@ -36,54 +36,34 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_ICU_STRINGMAP_H_
-#define VPVL2_EXTENSIONS_ICU_STRINGMAP_H_
+#ifndef VPVL2_EXTENSIONS_STRINGUTIL_H_
+#define VPVL2_EXTENSIONS_STRINGUTIL_H_
 
-#include <map>
-#include <vpvl2/extensions/icu4c/String.h>
+#include <vpvl2/config.h>
 
 namespace vpvl2
 {
 namespace extensions
 {
-namespace icu4c
-{
 
-class VPVL2_API StringMap VPVL2_DECL_FINAL : public std::map<const UnicodeString, UnicodeString, String::Less> {
+class VPVL2_API StringUtil VPVL2_DECL_FINAL {
 public:
-    StringMap();
-    ~StringMap();
-
-    bool bval(const UnicodeString &key, bool defval) const;
-    int ival(const UnicodeString &key, int defval) const;
-    double dval(const UnicodeString &key, double defval) const;
-    float fval(const UnicodeString &key, float defval) const;
-    UnicodeString sval(const UnicodeString &key, const UnicodeString &defval) const;
-
-    inline bool value(const UnicodeString &key, bool defval = false) const {
-        return bval(key, defval);
+    static bool toBoolean(const std::string &value) {
+        return value == "true" || value == "1" || value == "y" || value == "yes";
     }
-    inline int value(const UnicodeString &key, int defval = 0) const {
-        return ival(key, defval);
+    static int toInt(const std::string &value, int def = 0) {
+        int v = int(strtol(value.c_str(), 0, 10));
+        return v != 0 ? v : def;
     }
-    inline double value(const UnicodeString &key, double defval = 0.0) const {
-        return dval(key, defval);
-    }
-    inline float value(const UnicodeString &key, float defval = 0.0f) const {
-        return fval(key, defval);
-    }
-    inline UnicodeString value(const UnicodeString &key, const UnicodeString &defval = UnicodeString()) const {
-        return sval(key, defval);
-    }
-    inline std::string value(const std::string &key, const std::string &defval = std::string()) const {
-        return String::toStdString(sval(UnicodeString::fromUTF8(key), UnicodeString::fromUTF8(defval)));
+    static double toDouble(const std::string &value, double def = 0.0) {
+        double v = strtod(value.c_str(), 0);
+        return v != 0.0 ? float(v) : def;
     }
 
 private:
-    VPVL2_DISABLE_COPY_AND_ASSIGN(StringMap)
+    VPVL2_MAKE_STATIC_CLASS(StringUtil)
 };
 
-} /* namespace icu */
 } /* namespace extensions */
 } /* namespace vpvl2 */
 

@@ -88,11 +88,11 @@ struct ProjectDelegate : public XMLProject::IDelegate {
     const IString *toStringFromStd(const std::string &value) const {
         return new icu4c::String(Util::fromQString(QString::fromStdString(value)));
     }
-    bool loadModel(const XMLProject::UUID &uuid, const XMLProject::StringMap &settings, IModel::Type /* type */, IModel *&model, IRenderEngine *&engine, int &priority) {
-        const std::string &uri = settings.value(XMLProject::kSettingURIKey);
+    bool loadModel(const XMLProject::UUID &uuid, const StringMap &settings, IModel::Type /* type */, IModel *&model, IRenderEngine *&engine, int &priority) {
+        const std::string &uri = settings.value(XMLProject::kSettingURIKey, std::string());
         if (ModelProxy *modelProxy = m_projectRef->loadModel(QUrl::fromLocalFile(QString::fromStdString(uri)), QUuid(QString::fromStdString(uuid)), true)) {
-            m_projectRef->internalAddModel(modelProxy, settings.value("selected") == "true", true);
-            priority = XMLProject::toIntFromString(settings.value(XMLProject::kSettingOrderKey));;
+            m_projectRef->internalAddModel(modelProxy, settings.value("selected", std::string("false")) == "true", true);
+            priority = XMLProject::toIntFromString(settings.value(XMLProject::kSettingOrderKey, std::string("0")));;
             /* upload render engine later */
             model = modelProxy->data();
         }

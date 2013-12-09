@@ -239,7 +239,7 @@ public:
         std::cerr << "GL_RENDERER: " << glGetString(GL_RENDERER) << std::endl;
         std::cerr << "GL_SHADING_LANGUAGE_VERSION: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
         m_factory.reset(new Factory(m_encoding.get()));
-        m_applicationContext->initialize(enableDebug);
+        m_applicationContext->initializeOpenGLContext(enableDebug);
         m_autoplay = m_config.value("enable.playing", true);
 #ifdef VPVL2_LINK_ASSIMP
         AntTweakBar::initialize(enableCoreProfile);

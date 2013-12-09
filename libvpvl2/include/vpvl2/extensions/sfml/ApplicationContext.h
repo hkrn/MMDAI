@@ -40,8 +40,8 @@
 #define VPVL2_EXTENSIONS_SFML_APPLICATIONCONTEXT_H_
 
 /* libvpvl2 */
-#include <vpvl2/config.h>
 #include <vpvl2/extensions/BaseApplicationContext.h>
+#include <vpvl2/extensions/icu4c/String.h>
 
 /* SFML */
 #include <SFML/Graphics.hpp>
@@ -64,6 +64,8 @@ namespace vpvl2
 {
 namespace extensions
 {
+using namespace icu4c;
+
 namespace sfml
 {
 
@@ -129,7 +131,7 @@ public:
         return true;
     }
 
-    ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, icu4c::StringMap *configRef)
+    ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, StringMap *configRef)
         : BaseApplicationContext(sceneRef, encodingRef, configRef)
     {
     }
@@ -272,8 +274,8 @@ public:
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     void getToonColor(const IString *name, Color &value, void *userData) {
         ModelContext *modelContext = static_cast<ModelContext *>(userData);
-        const std::string &path = static_cast<const icu4c::String *>(modelContext->directoryRef())->toStdString()
-                + "/" + static_cast<const icu4c::String *>(name)->toStdString();
+        const std::string &path = static_cast<const String *>(modelContext->directoryRef())->toStdString()
+                + "/" + static_cast<const String *>(name)->toStdString();
         /* TODO: implement this */
         (void) path;
         value.setValue(1, 1, 1, 1);

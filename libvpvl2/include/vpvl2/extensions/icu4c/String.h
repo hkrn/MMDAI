@@ -89,9 +89,6 @@ public:
 
     static IString *create(const std::string &value, const Converter *converterRef = 0);
     static std::string toStdString(const UnicodeString &value);
-    static bool toBoolean(const UnicodeString &value);
-    static int toInt(const UnicodeString &value, int def = 0);
-    static double toDouble(const UnicodeString &value, double def = 0.0);
 
     explicit String(const UnicodeString &value, const Converter *converterRef = 0);
     ~String();

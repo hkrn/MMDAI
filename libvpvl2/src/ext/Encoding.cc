@@ -39,10 +39,17 @@
 #include <vpvl2/internal/util.h>
 
 #include <cstring> /* for std::strlen */
+#include <unicode/udata.h>
 
 #if defined(VPVL2_OS_WINDOWS)
 #define strncasecmp _strnicmp
 #endif
+
+namespace {
+
+#include "ICUCommonData.inl"
+
+}
 
 namespace vpvl2
 {
@@ -53,7 +60,14 @@ namespace icu4c
 
 const char *Encoding::commonDataPath()
 {
-    return "icudt50l.dat";
+    return "icudt52l.dat";
+}
+
+bool Encoding::initializeOnce()
+{
+    UErrorCode err = U_ZERO_ERROR;
+    udata_setCommonData(g_icudt52l_dat, &err);
+    return err == U_ZERO_ERROR;
 }
 
 Encoding::Encoding(const Dictionary *dictionaryRef)
@@ -75,7 +89,7 @@ Encoding::~Encoding()
 
 const IString *Encoding::stringConstant(ConstantType value) const
 {
-    if (const String *const *s = m_dictionaryRef->find(value)) {
+    if (const IString *const *s = m_dictionaryRef->find(value)) {
         return *s;
     }
     return &m_null;

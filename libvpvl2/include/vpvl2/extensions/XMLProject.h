@@ -45,6 +45,7 @@
 
 #include <vpvl2/IModel.h>
 #include <vpvl2/Scene.h>
+#include <vpvl2/extensions/StringMap.h>
 
 namespace vpvl2
 {
@@ -66,24 +67,6 @@ namespace extensions
 class VPVL2_API XMLProject VPVL2_DECL_FINAL : public Scene
 {
 public:
-    class StringMap : public std::map<std::string, std::string> {
-    public:
-        std::string value(const std::string &key) const {
-            const_iterator it = find(key);
-            return it != end() ? it->second : std::string();
-        }
-        bool tryGetValue(const std::string &key, std::string &value) const {
-            const_iterator it = find(key);
-            if (it != end()) {
-                value = it->second;
-                return true;
-            }
-            else {
-                value.assign(std::string());
-                return false;
-            }
-        }
-    };
     typedef std::string UUID;
     typedef std::vector<UUID> UUIDList;
     typedef std::map<XMLProject::UUID, StringMap> ModelSettings;
