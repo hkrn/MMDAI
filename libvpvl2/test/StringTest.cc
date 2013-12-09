@@ -9,60 +9,60 @@ using namespace vpvl2::extensions::icu4c;
 TEST(String, StartsWith)
 {
     String c("This is a test.");
-    QScopedPointer<IString> s(new String("This"));
-    ASSERT_TRUE(c.startsWith(s.data()));
+    std::unique_ptr<IString> s(new String("This"));
+    ASSERT_TRUE(c.startsWith(s.get()));
     s.reset(new String(" This"));
-    ASSERT_FALSE(c.startsWith(s.data()));
+    ASSERT_FALSE(c.startsWith(s.get()));
     s.reset(new String(" is "));
-    ASSERT_FALSE(c.startsWith(s.data()));
+    ASSERT_FALSE(c.startsWith(s.get()));
     s.reset(new String("test."));
-    ASSERT_FALSE(c.startsWith(s.data()));
+    ASSERT_FALSE(c.startsWith(s.get()));
     s.reset(new String("test. "));
-    ASSERT_FALSE(c.startsWith(s.data()));
+    ASSERT_FALSE(c.startsWith(s.get()));
     s.reset(new String("foo"));
-    ASSERT_FALSE(c.startsWith(s.data()));
+    ASSERT_FALSE(c.startsWith(s.get()));
 }
 
 TEST(String, Contains)
 {
     String c("This is a test.");
-    QScopedPointer<IString> s(new String("This"));
-    ASSERT_TRUE(c.contains(s.data()));
+    std::unique_ptr<IString> s(new String("This"));
+    ASSERT_TRUE(c.contains(s.get()));
     s.reset(new String(" This"));
-    ASSERT_FALSE(c.contains(s.data()));
+    ASSERT_FALSE(c.contains(s.get()));
     s.reset(new String(" is "));
-    ASSERT_TRUE(c.contains(s.data()));
+    ASSERT_TRUE(c.contains(s.get()));
     s.reset(new String("test."));
-    ASSERT_TRUE(c.contains(s.data()));
+    ASSERT_TRUE(c.contains(s.get()));
     s.reset(new String("test. "));
-    ASSERT_FALSE(c.contains(s.data()));
+    ASSERT_FALSE(c.contains(s.get()));
     s.reset(new String("foo"));
-    ASSERT_FALSE(c.contains(s.data()));
+    ASSERT_FALSE(c.contains(s.get()));
 }
 
 TEST(String, EndsWith)
 {
     String c("This is a test.");
-    QScopedPointer<IString> s(new String("This"));
-    ASSERT_FALSE(c.endsWith(s.data()));
+    std::unique_ptr<IString> s(new String("This"));
+    ASSERT_FALSE(c.endsWith(s.get()));
     s.reset(new String(" This"));
-    ASSERT_FALSE(c.endsWith(s.data()));
+    ASSERT_FALSE(c.endsWith(s.get()));
     s.reset(new String(" is "));
-    ASSERT_FALSE(c.endsWith(s.data()));
+    ASSERT_FALSE(c.endsWith(s.get()));
     s.reset(new String("test."));
-    ASSERT_TRUE(c.endsWith(s.data()));
+    ASSERT_TRUE(c.endsWith(s.get()));
     s.reset(new String("test. "));
-    ASSERT_FALSE(c.endsWith(s.data()));
+    ASSERT_FALSE(c.endsWith(s.get()));
     s.reset(new String("foo"));
-    ASSERT_FALSE(c.endsWith(s.data()));
+    ASSERT_FALSE(c.endsWith(s.get()));
 }
 
 TEST(String, Clone)
 {
     String c("This is a test.");
-    QScopedPointer<IString> s(new String("This is a test.")), c2(c.clone());
-    ASSERT_TRUE(c2->equals(s.data()));
-    ASSERT_TRUE(c2.data() != s.data());
+    std::unique_ptr<IString> s(new String("This is a test.")), c2(c.clone());
+    ASSERT_TRUE(c2->equals(s.get()));
+    ASSERT_TRUE(c2.get() != s.get());
 }
 
 TEST(String, ToHashString)
@@ -125,16 +125,16 @@ TEST(String, Join)
 {
     Array<IString *> strings;
     String sep("*"), foo("foo"), bar("bar"), baz("baz");
-    QScopedPointer<IString> empty(sep.join(strings));
+    std::unique_ptr<IString> empty(sep.join(strings));
     ASSERT_STREQ(reinterpret_cast<const char *>(""), reinterpret_cast<const char *>(empty->toByteArray()));
     strings.append(&foo);
-    QScopedPointer<IString> s1(sep.join(strings));
+    std::unique_ptr<IString> s1(sep.join(strings));
     ASSERT_STREQ(reinterpret_cast<const char *>("foo"), reinterpret_cast<const char *>(s1->toByteArray()));
     strings.append(&bar);
-    QScopedPointer<IString> s2(sep.join(strings));
+    std::unique_ptr<IString> s2(sep.join(strings));
     ASSERT_STREQ(reinterpret_cast<const char *>("foo*bar"), reinterpret_cast<const char *>(s2->toByteArray()));
     strings.append(&baz);
-    QScopedPointer<IString> s3(sep.join(strings));
+    std::unique_ptr<IString> s3(sep.join(strings));
     ASSERT_STREQ(reinterpret_cast<const char *>("foo*bar*baz"), reinterpret_cast<const char *>(s3->toByteArray()));
 }
 

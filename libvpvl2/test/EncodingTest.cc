@@ -3,7 +3,7 @@
 #include "vpvl2/extensions/icu4c/Encoding.h"
 
 #define TO_STR_C(s) reinterpret_cast<const char *>(s)
-#define TO_CSTRING(s) static_cast<const String *>(s.data())
+#define TO_CSTRING(s) static_cast<const String *>(s.get())
 #define TO_BYTES(s) TO_STR_C(TO_CSTRING(s)->toByteArray())
 
 using namespace ::testing;
@@ -38,7 +38,7 @@ TEST_P(ConvertTest, ToString)
     const QTextCodec *codec = QTextCodec::codecForName(GetCodecString(codecEnum));
     const QByteArray &bytes = codec->fromUnicode(source);
     const uint8 *stringInBytes = reinterpret_cast<const uint8 *>(bytes.constData());
-    QScopedPointer<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
+    std::unique_ptr<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
     ASSERT_STREQ(source.toUtf8().constData(), String::toStdString(TO_CSTRING(result)->value()).c_str());
 }
 
@@ -50,7 +50,7 @@ TEST_P(ConvertTest, ToStringWithHeadSpaces)
     const QTextCodec *codec = QTextCodec::codecForName(GetCodecString(codecEnum));
     const QByteArray &bytes = codec->fromUnicode(source);
     const uint8 *stringInBytes = reinterpret_cast<const uint8 *>(bytes.constData());
-    QScopedPointer<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
+    std::unique_ptr<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
     ASSERT_STREQ(expected.toUtf8().constData(), String::toStdString(TO_CSTRING(result)->value()).c_str());
 }
 
@@ -62,7 +62,7 @@ TEST_P(ConvertTest, ToStringWithTrailSpaces)
     const QTextCodec *codec = QTextCodec::codecForName(GetCodecString(codecEnum));
     const QByteArray &bytes = codec->fromUnicode(source);
     const uint8 *stringInBytes = reinterpret_cast<const uint8 *>(bytes.constData());
-    QScopedPointer<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
+    std::unique_ptr<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
     ASSERT_STREQ(expected.toUtf8().constData(), String::toStdString(TO_CSTRING(result)->value()).c_str());
 }
 
@@ -74,7 +74,7 @@ TEST_P(ConvertTest, ToStringWithHeadAndTrailSpaces)
     const QTextCodec *codec = QTextCodec::codecForName(GetCodecString(codecEnum));
     const QByteArray &bytes = codec->fromUnicode(source);
     const uint8 *stringInBytes = reinterpret_cast<const uint8 *>(bytes.constData());
-    QScopedPointer<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
+    std::unique_ptr<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
     ASSERT_STREQ(expected.toUtf8().constData(), String::toStdString(TO_CSTRING(result)->value()).c_str());
 }
 
@@ -89,15 +89,15 @@ TEST_P(ConvertTest, ToStringWith0x1a)
     const QTextCodec *codec = QTextCodec::codecForName(GetCodecString(codecEnum));
     const QByteArray &bytes = codec->fromUnicode(source);
     const uint8 *stringInBytes = reinterpret_cast<const uint8 *>(bytes.constData());
-    QScopedPointer<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
+    std::unique_ptr<IString> result(encoding.toString(stringInBytes, codecEnum, bytes.length()));
     ASSERT_STREQ(expected.toUtf8().constData(), String::toStdString(TO_CSTRING(result)->value()).c_str());
 }
 
 TEST(ConvertTest, ToStringWithNull)
 {
     Encoding encoding(0);
-    QScopedPointer<IString> s(encoding.toString(0, IString::kMaxCodecType, 0));
-    ASSERT_TRUE(s);
+    std::unique_ptr<IString> s(encoding.toString(0, IString::kMaxCodecType, 0));
+    ASSERT_TRUE(s.get());
     ASSERT_EQ(0, s->size());
 }
 
@@ -149,8 +149,8 @@ TEST(EncodingTest, StringConstant)
 TEST(EncodingTest, ConvertNullToString)
 {
     Encoding encoding(0);
-    QScopedPointer<IString> result(encoding.toString(0, IString::kUTF8, 0));
-    IString *s = result.data();
+    std::unique_ptr<IString> result(encoding.toString(0, IString::kUTF8, 0));
+    IString *s = result.get();
     ASSERT_TRUE(s);
     ASSERT_EQ(0, s->size());
     ASSERT_EQ(0, s->toByteArray()[0]);

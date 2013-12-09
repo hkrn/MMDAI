@@ -455,10 +455,10 @@ TEST_P(PMXFragmentTest, ReadWriteBone)
     bone.setTransformedByExternalParentEnable(true);
     // write constructed bone and read it
     vsize size = bone.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     bone.write(ptr, info);
-    bone2.read(bytes.data(), info, read);
+    bone2.read(bytes.get(), info, read);
     // compare read bone
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareBone(bone, bone2));
@@ -501,10 +501,10 @@ TEST_P(PMXFragmentTest, ReadWriteJoint)
     expected.setRotationStiffness(Vector3(0.71, 0.72, 0.73));
     // write constructed joint and read it
     vsize size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     expected.write(ptr, info);
-    actual.read(bytes.data(), info, read);
+    actual.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareJoint(expected, actual, body, body2));
 }
@@ -538,10 +538,10 @@ TEST_P(PMXFragmentTest, ReadWriteMaterial)
     expected.setFlags(5);
     // write contructed material and read it
     vsize size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     expected.write(ptr, info);
-    actual.read(bytes.data(), info, read);
+    actual.read(bytes.get(), info, read);
     // compare read material
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareMaterialInterface(expected, actual));
@@ -591,7 +591,7 @@ TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
     Morph morph(0), morph2(0);
     MockIBone mockBone;
     EXPECT_CALL(mockBone, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
-    QScopedPointer<Morph::Bone> bone1(new Morph::Bone()), bone2(new Morph::Bone());
+    std::unique_ptr<Morph::Bone> bone1(new Morph::Bone()), bone2(new Morph::Bone());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.boneIndexSize = indexSize;
@@ -602,13 +602,13 @@ TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
     bone1->index = 0;
     bone1->position.setValue(0.11, 0.12, 0.13);
     bone1->rotation.setValue(0.21, 0.22, 0.23, 0.24);
-    morph.addBoneMorph(bone1.data());
+    morph.addBoneMorph(bone1.get());
     // bone morph2
     bone2->bone = &mockBone;
     bone2->index = 1;
     bone2->position.setValue(0.31, 0.32, 0.33);
     bone2->rotation.setValue(0.41, 0.42, 0.43, 0.44);
-    morph.addBoneMorph(bone2.data());
+    morph.addBoneMorph(bone2.get());
     Array<IMorph::Bone *> boneMorphs;
     morph.getBoneMorphs(boneMorphs);
     ASSERT_EQ(2, boneMorphs.count());
@@ -617,10 +617,10 @@ TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
     morph.setCategory(IMorph::kEyeblow);
     morph.setType(pmx::Morph::kBoneMorph);
     vsize size = morph.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     morph.write(ptr, info);
-    morph2.read(bytes.data(), info, read);
+    morph2.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
     ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
@@ -634,8 +634,8 @@ TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
     ASSERT_TRUE(CompareVector(bone2->position, bones[1]->position));
     ASSERT_TRUE(CompareVector(bone2->rotation, bones[1]->rotation));
     ASSERT_EQ(bone2->index, bones[1]->index);
-    morph.removeBoneMorph(bone2.data());
-    morph.removeBoneMorph(bone1.data());
+    morph.removeBoneMorph(bone2.get());
+    morph.removeBoneMorph(bone1.get());
     morph.getBoneMorphs(boneMorphs);
     ASSERT_EQ(0, boneMorphs.count());
 }
@@ -647,7 +647,7 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     Morph morph(0), morph2(0);
     MockIMorph mockMorph;
     EXPECT_CALL(mockMorph, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
-    QScopedPointer<Morph::Group> group1(new Morph::Group()), group2(new Morph::Group());
+    std::unique_ptr<Morph::Group> group1(new Morph::Group()), group2(new Morph::Group());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.morphIndexSize = indexSize;
@@ -657,12 +657,12 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     group1->morph = &mockMorph;
     group1->index = 0;
     group1->fixedWeight = 0.1;
-    morph.addGroupMorph(group1.data());
+    morph.addGroupMorph(group1.get());
     // group morph2
     group2->morph = &mockMorph;
     group2->index = 1;
     group2->fixedWeight = 0.2;
-    morph.addGroupMorph(group2.data());
+    morph.addGroupMorph(group2.get());
     morph.setName(&name, IEncoding::kJapanese);
     morph.setName(&englishName, IEncoding::kEnglish);
     morph.setCategory(IMorph::kEye);
@@ -671,10 +671,10 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     morph.getGroupMorphs(groupMorphs);
     ASSERT_EQ(2, groupMorphs.count());
     vsize size = morph.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     morph.write(ptr, info);
-    morph2.read(bytes.data(), info, read);
+    morph2.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
     ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
@@ -686,8 +686,8 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     ASSERT_EQ(group1->index, groups[0]->index);
     ASSERT_FLOAT_EQ(group2->fixedWeight, groups[1]->fixedWeight);
     ASSERT_EQ(group2->index, groups[1]->index);
-    morph.removeGroupMorph(group1.data());
-    morph.removeGroupMorph(group2.data());
+    morph.removeGroupMorph(group1.get());
+    morph.removeGroupMorph(group2.get());
     morph.getGroupMorphs(groupMorphs);
     ASSERT_EQ(0, groupMorphs.count());
 }
@@ -699,7 +699,7 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     Morph morph(0), morph2(0);
     MockIMaterial mockMaterial;
     EXPECT_CALL(mockMaterial, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
-    QScopedPointer<Morph::Material> material1(new Morph::Material()), material2(new Morph::Material());
+    std::unique_ptr<Morph::Material> material1(new Morph::Material()), material2(new Morph::Material());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.materialIndexSize = indexSize;
@@ -720,7 +720,7 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     material1->shininess = 0.2;
     material1->operation = 1;
     // material morph2
-    morph.addMaterialMorph(material1.data());
+    morph.addMaterialMorph(material1.get());
     material2->index = 1;
     material2->materials = new Array<IMaterial *>();
     material2->materials->append(&mockMaterial);
@@ -734,7 +734,7 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     material2->edgeSize = 0.2;
     material2->shininess = 0.1;
     material2->operation = 2;
-    morph.addMaterialMorph(material2.data());
+    morph.addMaterialMorph(material2.get());
     morph.setName(&name, IEncoding::kJapanese);
     morph.setName(&englishName, IEncoding::kEnglish);
     morph.setCategory(IMorph::kLip);
@@ -743,10 +743,10 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     morph.getMaterialMorphs(materialMorphs);
     ASSERT_EQ(2, materialMorphs.count());
     vsize size = morph.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     morph.write(ptr, info);
-    morph2.read(bytes.data(), info, read);
+    morph2.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
     ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
@@ -776,8 +776,8 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     ASSERT_FLOAT_EQ(material2->shininess, materials[1]->shininess);
     ASSERT_EQ(material2->operation, materials[1]->operation);
     ASSERT_EQ(material2->index, materials[1]->index);
-    morph.removeMaterialMorph(material1.data());
-    morph.removeMaterialMorph(material2.data());
+    morph.removeMaterialMorph(material1.get());
+    morph.removeMaterialMorph(material2.get());
     morph.getMaterialMorphs(materialMorphs);
     ASSERT_EQ(0, materialMorphs.count());
 }
@@ -811,10 +811,10 @@ TEST_P(PMXFragmentTest, ReadWriteRigidBody)
     expected.setSize(Vector3(0.71, 0.72, 0.73));
     expected.setObjectType(RigidBody::kAlignedObject);
     vsize size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     expected.write(ptr, info);
-    actual.read(bytes.data(), info, read);
+    actual.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareRigidBody(expected, actual, bone));
 }
@@ -826,7 +826,7 @@ TEST_P(PMXFragmentTest, ReadWriteVertexMorph)
     Morph morph(0), morph2(0);
     MockIVertex mockVertex;
     EXPECT_CALL(mockVertex, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
-    QScopedPointer<Morph::Vertex> vertex1(new Morph::Vertex()), vertex2(new Morph::Vertex());
+    std::unique_ptr<Morph::Vertex> vertex1(new Morph::Vertex()), vertex2(new Morph::Vertex());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.vertexIndexSize = indexSize;
@@ -836,12 +836,12 @@ TEST_P(PMXFragmentTest, ReadWriteVertexMorph)
     vertex1->vertex = &mockVertex;
     vertex1->index = 0;
     vertex1->position.setValue(0.1, 0.2, 0.3);
-    morph.addVertexMorph(vertex1.data());
+    morph.addVertexMorph(vertex1.get());
     // vertex morph2
     vertex2->vertex = &mockVertex;
     vertex2->index = 1;
     vertex2->position.setValue(0.4, 0.5, 0.6);
-    morph.addVertexMorph(vertex2.data());
+    morph.addVertexMorph(vertex2.get());
     morph.setName(&name, IEncoding::kJapanese);
     morph.setName(&englishName, IEncoding::kEnglish);
     morph.setCategory(IMorph::kOther);
@@ -850,10 +850,10 @@ TEST_P(PMXFragmentTest, ReadWriteVertexMorph)
     morph.getVertexMorphs(vertexMorphs);
     ASSERT_EQ(2, vertexMorphs.count());
     vsize size = morph.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     morph.write(ptr, info);
-    morph2.read(bytes.data(), info, read);
+    morph2.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
     ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
@@ -865,8 +865,8 @@ TEST_P(PMXFragmentTest, ReadWriteVertexMorph)
     ASSERT_EQ(vertex1->index, vertices[0]->index);
     ASSERT_TRUE(CompareVector(vertex2->position, vertices[1]->position));
     ASSERT_EQ(vertex2->index, vertices[1]->index);
-    morph.removeVertexMorph(vertex1.data());
-    morph.removeVertexMorph(vertex2.data());
+    morph.removeVertexMorph(vertex1.get());
+    morph.removeVertexMorph(vertex2.get());
     morph.getVertexMorphs(vertexMorphs);
     ASSERT_EQ(0, vertexMorphs.count());
 }
@@ -884,10 +884,10 @@ TEST_P(PMXFragmentTest, ReadWriteVertexBdef1)
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
     vsize size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     expected.write(ptr, info);
-    actual.read(bytes.data(), info, read);
+    actual.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
@@ -907,10 +907,10 @@ TEST_P(PMXFragmentTest, ReadWriteVertexBdef2)
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
     vsize size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     expected.write(ptr, info);
-    actual.read(bytes.data(), info, read);
+    actual.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
@@ -934,10 +934,10 @@ TEST_P(PMXFragmentTest, ReadWriteVertexBdef4)
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
     vsize size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     expected.write(ptr, info);
-    actual.read(bytes.data(), info, read);
+    actual.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
@@ -957,10 +957,10 @@ TEST_P(PMXFragmentTest, ReadWriteVertexSdef)
     info.additionalUVSize = indexSize;
     info.boneIndexSize = indexSize;
     vsize size = expected.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     expected.write(ptr, info);
-    actual.read(bytes.data(), info, read);
+    actual.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(CompareVertex(expected, actual, bones));
 }
@@ -973,7 +973,7 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     Morph morph(0), morph2(0);
     MockIVertex mockVertex;
     EXPECT_CALL(mockVertex, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
-    QScopedPointer<Morph::UV> uv1(new Morph::UV()), uv2(new Morph::UV());
+    std::unique_ptr<Morph::UV> uv1(new Morph::UV()), uv2(new Morph::UV());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.vertexIndexSize = indexSize;
@@ -983,12 +983,12 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     uv1->vertex = &mockVertex;
     uv1->index = 0;
     uv1->position.setValue(0.1, 0.2, 0.3, 0.4);
-    morph.addUVMorph(uv1.data());
+    morph.addUVMorph(uv1.get());
     // UV morph2
     uv2->vertex = &mockVertex;
     uv2->index = 1;
     uv2->position.setValue(0.5, 0.6, 0.7, 0.8);
-    morph.addUVMorph(uv2.data());
+    morph.addUVMorph(uv2.get());
     morph.setName(&name, IEncoding::kJapanese);
     morph.setName(&englishName, IEncoding::kEnglish);
     morph.setCategory(IMorph::kOther);
@@ -997,10 +997,10 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     morph.getUVMorphs(uvMorphs);
     ASSERT_EQ(2, uvMorphs.count());
     vsize size = morph.estimateSize(info), read;
-    QScopedArrayPointer<uint8> bytes(new uint8[size]);
-    uint8 *ptr = bytes.data();
+    std::unique_ptr<uint8[]> bytes(new uint8[size]);
+    uint8 *ptr = bytes.get();
     morph.write(ptr, info);
-    morph2.read(bytes.data(), info, read);
+    morph2.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
     ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
     ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
@@ -1014,8 +1014,8 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     ASSERT_TRUE(CompareVector(uv2->position, uvs[1]->position));
     ASSERT_EQ(type - pmx::Morph::kTexCoordMorph, uvs[1]->offset);
     ASSERT_EQ(uv2->index, uvs[1]->index);
-    morph.removeUVMorph(uv1.data());
-    morph.removeUVMorph(uv2.data());
+    morph.removeUVMorph(uv1.get());
+    morph.removeUVMorph(uv2.get());
     morph.getUVMorphs(uvMorphs);
     ASSERT_EQ(0, uvMorphs.count());
 }
@@ -1099,13 +1099,13 @@ TEST(PMXBoneTest, DefaultFlags)
 TEST(PMXVertexTest, Boundary)
 {
     Vertex vertex(0);
-    QScopedPointer<Bone> bone(new Bone(0));
+    std::unique_ptr<Bone> bone(new Bone(0));
     vertex.setOriginUV(-1, Vector4(1, 1, 1, 1));
     vertex.setOriginUV(4, Vector4(1, 1, 1, 1));
     vertex.setWeight(-1, 0.1);
     vertex.setWeight(Vertex::kMaxBones, 0.1);
-    vertex.setBoneRef(-1, bone.data());
-    vertex.setBoneRef(Vertex::kMaxBones, bone.data());
+    vertex.setBoneRef(-1, bone.get());
+    vertex.setBoneRef(Vertex::kMaxBones, bone.get());
     ASSERT_EQ(vertex.uv(-1).x(), 0.0f);
     ASSERT_EQ(vertex.uv(4).x(), 0.0f);
     ASSERT_EQ(vertex.boneRef(-1), Factory::sharedNullBoneRef());
@@ -1117,14 +1117,14 @@ TEST(PMXVertexTest, Boundary)
 TEST(PMXVertexTest, NullRef)
 {
     Vertex vertex(0);
-    QScopedPointer<Bone> bone(new Bone(0));
-    QScopedPointer<Material> material(new Material(0));
+    std::unique_ptr<Bone> bone(new Bone(0));
+    std::unique_ptr<Material> material(new Material(0));
     ASSERT_EQ(vertex.boneRef(0), Factory::sharedNullBoneRef());
     ASSERT_EQ(vertex.materialRef(), Factory::sharedNullMaterialRef());
-    vertex.setBoneRef(0, bone.data());
+    vertex.setBoneRef(0, bone.get());
     vertex.setBoneRef(0, 0);
     ASSERT_EQ(vertex.boneRef(0), Factory::sharedNullBoneRef());
-    vertex.setMaterialRef(material.data());
+    vertex.setMaterialRef(material.get());
     vertex.setMaterialRef(0);
     ASSERT_EQ(vertex.materialRef(), Factory::sharedNullMaterialRef());
 }
@@ -1582,16 +1582,16 @@ TEST(PMXModelTest, AddAndRemoveBone)
 {
     Encoding encoding(0);
     Model model(&encoding);
-    QScopedPointer<IBone> bone(model.createBone());
+    std::unique_ptr<IBone> bone(model.createBone());
     ASSERT_EQ(-1, bone->index());
     model.addBone(0); /* should not be crashed */
-    model.addBone(bone.data());
-    model.addBone(bone.data()); /* no effect because it's already added */
+    model.addBone(bone.get());
+    model.addBone(bone.get()); /* no effect because it's already added */
     ASSERT_EQ(1, model.bones().count());
-    ASSERT_EQ(bone.data(), model.findBoneRefAt(0));
+    ASSERT_EQ(bone.get(), model.findBoneRefAt(0));
     ASSERT_EQ(bone->index(), model.findBoneRefAt(0)->index());
     model.removeBone(0); /* should not be crashed */
-    model.removeBone(bone.data());
+    model.removeBone(bone.get());
     ASSERT_EQ(0, model.bones().count());
     ASSERT_EQ(-1, bone->index());
     MockIBone mockedBone;
@@ -1605,16 +1605,16 @@ TEST(PMXModelTest, AddAndRemoveJoint)
 {
     Encoding encoding(0);
     Model model(&encoding);
-    QScopedPointer<IJoint> joint(model.createJoint());
+    std::unique_ptr<IJoint> joint(model.createJoint());
     ASSERT_EQ(-1, joint->index());
     model.addJoint(0); /* should not be crashed */
-    model.addJoint(joint.data());
-    model.addJoint(joint.data()); /* no effect because it's already added */
+    model.addJoint(joint.get());
+    model.addJoint(joint.get()); /* no effect because it's already added */
     ASSERT_EQ(1, model.joints().count());
-    ASSERT_EQ(joint.data(), model.findJointRefAt(0));
+    ASSERT_EQ(joint.get(), model.findJointRefAt(0));
     ASSERT_EQ(joint->index(), model.findJointRefAt(0)->index());
     model.removeJoint(0); /* should not be crashed */
-    model.removeJoint(joint.data());
+    model.removeJoint(joint.get());
     ASSERT_EQ(0, model.joints().count());
     ASSERT_EQ(-1, joint->index());
     MockIJoint mockedJoint;
@@ -1628,16 +1628,16 @@ TEST(PMXModelTest, AddAndRemoveLabel)
 {
     Encoding encoding(0);
     Model model(&encoding);
-    QScopedPointer<ILabel> label(model.createLabel());
+    std::unique_ptr<ILabel> label(model.createLabel());
     ASSERT_EQ(-1, label->index());
     model.addLabel(0); /* should not be crashed */
-    model.addLabel(label.data());
-    model.addLabel(label.data()); /* no effect because it's already added */
+    model.addLabel(label.get());
+    model.addLabel(label.get()); /* no effect because it's already added */
     ASSERT_EQ(1, model.labels().count());
-    ASSERT_EQ(label.data(), model.findLabelRefAt(0));
+    ASSERT_EQ(label.get(), model.findLabelRefAt(0));
     ASSERT_EQ(label->index(), model.findLabelRefAt(0)->index());
     model.removeLabel(0); /* should not be crashed */
-    model.removeLabel(label.data());
+    model.removeLabel(label.get());
     ASSERT_EQ(0, model.labels().count());
     ASSERT_EQ(-1, label->index());
     MockILabel mockedLabel;
@@ -1651,16 +1651,16 @@ TEST(PMXModelTest, AddAndRemoveMaterial)
 {
     Encoding encoding(0);
     Model model(&encoding);
-    QScopedPointer<IMaterial> material(model.createMaterial());
+    std::unique_ptr<IMaterial> material(model.createMaterial());
     ASSERT_EQ(-1, material->index());
     model.addMaterial(0); /* should not be crashed */
-    model.addMaterial(material.data());
-    model.addMaterial(material.data()); /* no effect because it's already added */
+    model.addMaterial(material.get());
+    model.addMaterial(material.get()); /* no effect because it's already added */
     ASSERT_EQ(1, model.materials().count());
-    ASSERT_EQ(material.data(), model.findMaterialRefAt(0));
+    ASSERT_EQ(material.get(), model.findMaterialRefAt(0));
     ASSERT_EQ(material->index(), model.findMaterialRefAt(0)->index());
     model.removeMaterial(0); /* should not be crashed */
-    model.removeMaterial(material.data());
+    model.removeMaterial(material.get());
     ASSERT_EQ(0, model.materials().count());
     ASSERT_EQ(-1, material->index());
     MockIMaterial mockedMaterial;
@@ -1674,16 +1674,16 @@ TEST(PMXModelTest, AddAndRemoveMorph)
 {
     Encoding encoding(0);
     Model model(&encoding);
-    QScopedPointer<IMorph> morph(model.createMorph());
+    std::unique_ptr<IMorph> morph(model.createMorph());
     ASSERT_EQ(-1, morph->index());
     model.addMorph(0); /* should not be crashed */
-    model.addMorph(morph.data());
-    model.addMorph(morph.data()); /* no effect because it's already added */
+    model.addMorph(morph.get());
+    model.addMorph(morph.get()); /* no effect because it's already added */
     ASSERT_EQ(1, model.morphs().count());
-    ASSERT_EQ(morph.data(), model.findMorphRefAt(0));
+    ASSERT_EQ(morph.get(), model.findMorphRefAt(0));
     ASSERT_EQ(morph->index(), model.findMorphRefAt(0)->index());
     model.removeMorph(0); /* should not be crashed */
-    model.removeMorph(morph.data());
+    model.removeMorph(morph.get());
     ASSERT_EQ(0, model.morphs().count());
     ASSERT_EQ(-1, morph->index());
     MockIMorph mockedMorph;
@@ -1697,16 +1697,16 @@ TEST(PMXModelTest, AddAndRemoveRigidBody)
 {
     Encoding encoding(0);
     Model model(&encoding);
-    QScopedPointer<IRigidBody> body(model.createRigidBody());
+    std::unique_ptr<IRigidBody> body(model.createRigidBody());
     ASSERT_EQ(-1, body->index());
     model.addRigidBody(0); /* should not be crashed */
-    model.addRigidBody(body.data());
-    model.addRigidBody(body.data()); /* no effect because it's already added */
+    model.addRigidBody(body.get());
+    model.addRigidBody(body.get()); /* no effect because it's already added */
     ASSERT_EQ(1, model.rigidBodies().count());
-    ASSERT_EQ(body.data(), model.findRigidBodyRefAt(0));
+    ASSERT_EQ(body.get(), model.findRigidBodyRefAt(0));
     ASSERT_EQ(body->index(), model.findRigidBodyRefAt(0)->index());
     model.removeRigidBody(0); /* should not be crashed */
-    model.removeRigidBody(body.data());
+    model.removeRigidBody(body.get());
     ASSERT_EQ(0, model.rigidBodies().count());
     ASSERT_EQ(-1, body->index());
     MockIRigidBody mockedRigidBody;
@@ -1720,16 +1720,16 @@ TEST(PMXModelTest, AddAndRemoveVertex)
 {
     Encoding encoding(0);
     Model model(&encoding);
-    QScopedPointer<IVertex> vertex(model.createVertex());
+    std::unique_ptr<IVertex> vertex(model.createVertex());
     ASSERT_EQ(-1, vertex->index());
     model.addVertex(0); /* should not be crashed */
-    model.addVertex(vertex.data());
-    model.addVertex(vertex.data()); /* no effect because it's already added */
+    model.addVertex(vertex.get());
+    model.addVertex(vertex.get()); /* no effect because it's already added */
     ASSERT_EQ(1, model.vertices().count());
-    ASSERT_EQ(vertex.data(), model.findVertexRefAt(0));
+    ASSERT_EQ(vertex.get(), model.findVertexRefAt(0));
     ASSERT_EQ(vertex->index(), model.findVertexRefAt(0)->index());
     model.removeVertex(0); /* should not be crashed */
-    model.removeVertex(vertex.data());
+    model.removeVertex(vertex.get());
     ASSERT_EQ(0, model.vertices().count());
     ASSERT_EQ(-1, vertex->index());
     MockIVertex mockedVertex;

@@ -62,8 +62,8 @@ bool UICompareEntries(const QStringList &entries, const Archive &archive)
 static void UncompressArchive(Archive &archive, Archive::EntryNames &entries)
 {
     QFile file(":misc/test.zip");
-    QScopedPointer<QTemporaryFile> temp(QTemporaryFile::createLocalFile(file));
-    ASSERT_TRUE(temp);
+    std::unique_ptr<QTemporaryFile> temp(QTemporaryFile::createLocalFile(file));
+    ASSERT_TRUE(temp.get());
     temp->setAutoRemove(true);
     String path(fromQString(temp->fileName()));
     ASSERT_TRUE(archive.open(&path, entries));

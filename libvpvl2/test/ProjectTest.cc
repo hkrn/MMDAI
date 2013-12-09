@@ -424,8 +424,8 @@ TEST(ProjectTest, HandleAssets)
     Encoding encoding(0);
     Factory factory(&encoding);
     XMLProject project(&delegate, &factory, true);
-    QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));
-    IModel *model = asset.data();
+    std::unique_ptr<IModel> asset(factory.newModel(IModel::kAssetModel));
+    IModel *model = asset.get();
     /* before adding an asset to the project */
     ASSERT_FALSE(project.containsModel(model));
     ASSERT_EQ(XMLProject::kNullUUID, project.modelUUID(0));
@@ -450,7 +450,7 @@ TEST(ProjectTest, HandleAssets)
     /* removing removed asset should not be dirty */
     project.removeModel(model);
     ASSERT_FALSE(project.isDirty());
-    model = asset.take();
+    model = asset.release();
     /* deleting removed asset should do nothing */
     project.deleteModel(model);
     ASSERT_FALSE(model);
@@ -463,8 +463,8 @@ TEST(ProjectTest, HandleModels)
     Encoding encoding(0);
     Factory factory(&encoding);
     XMLProject project(&delegate, &factory, true);
-    QScopedPointer<IModel> modelPtr(factory.newModel(IModel::kPMDModel));
-    IModel *model = modelPtr.data();
+    std::unique_ptr<IModel> modelPtr(factory.newModel(IModel::kPMDModel));
+    IModel *model = modelPtr.get();
     /* before adding a model to the project */
     ASSERT_FALSE(project.containsModel(model));
     ASSERT_EQ(XMLProject::kNullUUID, project.modelUUID(0));
@@ -489,7 +489,7 @@ TEST(ProjectTest, HandleModels)
     /* removing removed model should not be dirty */
     project.removeModel(model);
     ASSERT_FALSE(project.isDirty());
-    model = modelPtr.take();
+    model = modelPtr.release();
     /* deleting removed model should do nothing */
     project.deleteModel(model);
     ASSERT_FALSE(model);
@@ -502,8 +502,8 @@ TEST(ProjectTest, HandleMotions)
     Encoding encoding(0);
     Factory factory(&encoding);
     XMLProject project(&delegate, &factory, true);
-    QScopedPointer<IMotion> motionPtr(factory.newMotion(IMotion::kVMDMotion, 0));
-    IMotion *motion = motionPtr.data();
+    std::unique_ptr<IMotion> motionPtr(factory.newMotion(IMotion::kVMDMotion, 0));
+    IMotion *motion = motionPtr.get();
     /* before adding a motion to the project */
     ASSERT_FALSE(project.containsMotion(motion));
     ASSERT_EQ(XMLProject::kNullUUID, project.motionUUID(0));
@@ -531,8 +531,8 @@ TEST(ProjectTest, HandleNullUUID)
     Encoding encoding(0);
     Factory factory(&encoding);
     XMLProject project(&delegate, &factory, true);
-    QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));
-    IModel *model = asset.data();
+    std::unique_ptr<IModel> asset(factory.newModel(IModel::kAssetModel));
+    IModel *model = asset.get();
     /* null model can be added */
     project.addModel(model, 0, XMLProject::kNullUUID, 0);
     /* reference will be null because render engine instance is not passed */
@@ -541,11 +541,11 @@ TEST(ProjectTest, HandleNullUUID)
     /* and null model can be removed */
     project.removeModel(model);
     ASSERT_EQ(vsize(0), project.modelUUIDs().size());
-    model = asset.take();
+    model = asset.release();
     project.deleteModel(model);
     ASSERT_FALSE(model);
-    QScopedPointer<IModel> modelPtr(factory.newModel(IModel::kPMDModel));
-    model = modelPtr.data();
+    std::unique_ptr<IModel> modelPtr(factory.newModel(IModel::kPMDModel));
+    model = modelPtr.get();
     /* null model can be added */
     project.addModel(model, 0, XMLProject::kNullUUID, 0);
     /* reference will be null because render engine instance is not passed */
@@ -554,11 +554,11 @@ TEST(ProjectTest, HandleNullUUID)
     /* and null model can be removed */
     project.removeModel(model);
     ASSERT_EQ(vsize(0), project.modelUUIDs().size());
-    model = modelPtr.take();
+    model = modelPtr.release();
     project.deleteModel(model);
     ASSERT_FALSE(model);
-    QScopedPointer<IMotion> motionPtr(factory.newMotion(IMotion::kVMDMotion, 0));
-    IMotion *motion = motionPtr.data();
+    std::unique_ptr<IMotion> motionPtr(factory.newMotion(IMotion::kVMDMotion, 0));
+    IMotion *motion = motionPtr.get();
     /* null motion can be added */
     project.addMotion(motion, XMLProject::kNullUUID);
     ASSERT_EQ(vsize(1), project.motionUUIDs().size());
@@ -566,16 +566,16 @@ TEST(ProjectTest, HandleNullUUID)
     project.removeMotion(motion);
     ASSERT_EQ(vsize(0), project.motionUUIDs().size());
     modelPtr.reset(factory.newModel(IModel::kPMDModel));
-    model = modelPtr.data();
+    model = modelPtr.get();
     motionPtr.reset(factory.newMotion(IMotion::kVMDMotion, 0));
-    motion = motionPtr.data();
+    motion = motionPtr.get();
     /* duplicated null motion should be integrated into one */
     project.addModel(model, 0, XMLProject::kNullUUID, 0);
     project.addMotion(motion, XMLProject::kNullUUID);
     project.removeMotion(motion);
     ASSERT_EQ(vsize(0), project.motionUUIDs().size());
     project.removeModel(model);
-    model = modelPtr.take();
+    model = modelPtr.release();
     project.deleteModel(model);
     ASSERT_FALSE(model);
 }
@@ -618,17 +618,17 @@ TEST_P(ProjectModelTest, SaveSceneState)
     Factory factory(&encoding);
     XMLProject project(&delegate, &factory, true);
     IModel::Type modelType = GetParam();
-    QScopedPointer<IModel> modelPtr(factory.newModel(modelType)), model2Ptr(factory.newModel(modelType));
-    QScopedPointer<IRenderEngine> enginePtr(new MockIRenderEngine()), engine2Ptr(new MockIRenderEngine());
+    std::unique_ptr<IModel> modelPtr(factory.newModel(modelType)), model2Ptr(factory.newModel(modelType));
+    std::unique_ptr<IRenderEngine> enginePtr(new MockIRenderEngine()), engine2Ptr(new MockIRenderEngine());
     modelPtr->setEdgeColor(Color(0.1, 0.2, 0.3, 1.0));
     modelPtr->setEdgeWidth(0.4);
     modelPtr->setOpacity(0.5);
     modelPtr->setWorldTranslation(Vector3(0.11, 0.22, 0.33));
     modelPtr->setWorldOrientation(Quaternion(0.44, 0.55, 0.66, 0.77));
-    modelPtr->setParentModelRef(model2Ptr.data());
-    project.addModel(modelPtr.data(), enginePtr.take(), kModel1UUID, 0);
-    project.addModel(model2Ptr.take(), engine2Ptr.take(), kModel2UUID, 0);
-    IModel *model = modelPtr.take();
+    modelPtr->setParentModelRef(model2Ptr.get());
+    project.addModel(modelPtr.get(), enginePtr.release(), kModel1UUID, 0);
+    project.addModel(model2Ptr.release(), engine2Ptr.release(), kModel2UUID, 0);
+    IModel *model = modelPtr.release();
     QTemporaryFile file;
     file.open();
     file.setAutoRemove(true);

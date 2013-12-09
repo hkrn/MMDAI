@@ -117,11 +117,11 @@ TEST(PMDVertexTest, Boundary)
 {
     Encoding encoding(0);
     Vertex vertex(0);
-    QScopedPointer<Bone> bone(new Bone(0, &encoding));
+    std::unique_ptr<Bone> bone(new Bone(0, &encoding));
     vertex.setWeight(-1, 0.1);
     vertex.setWeight(Vertex::kMaxBones, 0.1);
-    vertex.setBoneRef(-1, bone.data());
-    vertex.setBoneRef(Vertex::kMaxBones, bone.data());
+    vertex.setBoneRef(-1, bone.get());
+    vertex.setBoneRef(Vertex::kMaxBones, bone.get());
     ASSERT_EQ(vertex.boneRef(-1), Factory::sharedNullBoneRef());
     ASSERT_EQ(vertex.boneRef(Vertex::kMaxBones), Factory::sharedNullBoneRef());
     ASSERT_EQ(vertex.weight(-1), 0.0f);
@@ -132,14 +132,14 @@ TEST(PMDVertexTest, NullRef)
 {
     Encoding encoding(0);
     Vertex vertex(0);
-    QScopedPointer<Bone> bone(new Bone(0, &encoding));
-    QScopedPointer<Material> material(new Material(0, &encoding));
+    std::unique_ptr<Bone> bone(new Bone(0, &encoding));
+    std::unique_ptr<Material> material(new Material(0, &encoding));
     ASSERT_EQ(vertex.boneRef(0), Factory::sharedNullBoneRef());
     ASSERT_EQ(vertex.materialRef(), Factory::sharedNullMaterialRef());
-    vertex.setBoneRef(0, bone.data());
+    vertex.setBoneRef(0, bone.get());
     vertex.setBoneRef(0, 0);
     ASSERT_EQ(vertex.boneRef(0), Factory::sharedNullBoneRef());
-    vertex.setMaterialRef(material.data());
+    vertex.setMaterialRef(material.get());
     vertex.setMaterialRef(0);
     ASSERT_EQ(vertex.materialRef(), Factory::sharedNullMaterialRef());
 }
@@ -482,16 +482,16 @@ TEST(PMDModelTest, AddAndRemoveBone)
 {
     Encoding encoding(0);
     Model model(&encoding);
-    QScopedPointer<IBone> bone(model.createBone());
+    std::unique_ptr<IBone> bone(model.createBone());
     ASSERT_EQ(-1, bone->index());
     model.addBone(0); /* should not be crashed */
-    model.addBone(bone.data());
-    model.addBone(bone.data()); /* no effect because it's already added */
+    model.addBone(bone.get());
+    model.addBone(bone.get()); /* no effect because it's already added */
     ASSERT_EQ(1, model.bones().count());
-    ASSERT_EQ(bone.data(), model.findBoneRefAt(0));
+    ASSERT_EQ(bone.get(), model.findBoneRefAt(0));
     ASSERT_EQ(bone->index(), model.findBoneRefAt(0)->index());
     model.removeBone(0); /* should not be crashed */
-    model.removeBone(bone.data());
+    model.removeBone(bone.get());
     ASSERT_EQ(0, model.bones().count());
     ASSERT_EQ(-1, bone->index());
     MockIBone mockedBone;
@@ -505,16 +505,16 @@ TEST(PMDModelTest, AddAndRemoveLabel)
 {
     Encoding encoding(0);
     Model model(&encoding);
-    QScopedPointer<ILabel> label(model.createLabel());
+    std::unique_ptr<ILabel> label(model.createLabel());
     ASSERT_EQ(-1, label->index());
     model.addLabel(0); /* should not be crashed */
-    model.addLabel(label.data());
-    model.addLabel(label.data()); /* no effect because it's already added */
+    model.addLabel(label.get());
+    model.addLabel(label.get()); /* no effect because it's already added */
     ASSERT_EQ(1, model.labels().count());
-    ASSERT_EQ(label.data(), model.findLabelRefAt(0));
+    ASSERT_EQ(label.get(), model.findLabelRefAt(0));
     ASSERT_EQ(label->index(), model.findLabelRefAt(0)->index());
     model.removeLabel(0); /* should not be crashed */
-    model.removeLabel(label.data());
+    model.removeLabel(label.get());
     ASSERT_EQ(0, model.labels().count());
     ASSERT_EQ(-1, label->index());
     MockILabel mockedLabel;
@@ -528,16 +528,16 @@ TEST(PMDModelTest, AddAndRemoveMaterial)
 {
     Encoding encoding(0);
     Model model(&encoding);
-    QScopedPointer<IMaterial> material(model.createMaterial());
+    std::unique_ptr<IMaterial> material(model.createMaterial());
     ASSERT_EQ(-1, material->index());
     model.addMaterial(0); /* should not be crashed */
-    model.addMaterial(material.data());
-    model.addMaterial(material.data()); /* no effect because it's already added */
+    model.addMaterial(material.get());
+    model.addMaterial(material.get()); /* no effect because it's already added */
     ASSERT_EQ(1, model.materials().count());
-    ASSERT_EQ(material.data(), model.findMaterialRefAt(0));
+    ASSERT_EQ(material.get(), model.findMaterialRefAt(0));
     ASSERT_EQ(material->index(), model.findMaterialRefAt(0)->index());
     model.removeMaterial(0); /* should not be crashed */
-    model.removeMaterial(material.data());
+    model.removeMaterial(material.get());
     ASSERT_EQ(0, model.materials().count());
     ASSERT_EQ(-1, material->index());
     MockIMaterial mockedMaterial;
@@ -551,16 +551,16 @@ TEST(PMDModelTest, AddAndRemoveMorph)
 {
     Encoding encoding(0);
     Model model(&encoding);
-    QScopedPointer<IMorph> morph(model.createMorph());
+    std::unique_ptr<IMorph> morph(model.createMorph());
     ASSERT_EQ(-1, morph->index());
     model.addMorph(0); /* should not be crashed */
-    model.addMorph(morph.data());
-    model.addMorph(morph.data()); /* no effect because it's already added */
+    model.addMorph(morph.get());
+    model.addMorph(morph.get()); /* no effect because it's already added */
     ASSERT_EQ(1, model.morphs().count());
-    ASSERT_EQ(morph.data(), model.findMorphRefAt(0));
+    ASSERT_EQ(morph.get(), model.findMorphRefAt(0));
     ASSERT_EQ(morph->index(), model.findMorphRefAt(0)->index());
     model.removeMorph(0); /* should not be crashed */
-    model.removeMorph(morph.data());
+    model.removeMorph(morph.get());
     ASSERT_EQ(0, model.morphs().count());
     ASSERT_EQ(-1, morph->index());
     MockIMorph mockedMorph;
@@ -574,16 +574,16 @@ TEST(PMDModelTest, AddAndRemoveVertex)
 {
     Encoding encoding(0);
     Model model(&encoding);
-    QScopedPointer<IVertex> vertex(model.createVertex());
+    std::unique_ptr<IVertex> vertex(model.createVertex());
     ASSERT_EQ(-1, vertex->index());
     model.addVertex(0); /* should not be crashed */
-    model.addVertex(vertex.data());
-    model.addVertex(vertex.data()); /* no effect because it's already added */
+    model.addVertex(vertex.get());
+    model.addVertex(vertex.get()); /* no effect because it's already added */
     ASSERT_EQ(1, model.vertices().count());
-    ASSERT_EQ(vertex.data(), model.findVertexRefAt(0));
+    ASSERT_EQ(vertex.get(), model.findVertexRefAt(0));
     ASSERT_EQ(vertex->index(), model.findVertexRefAt(0)->index());
     model.removeVertex(0); /* should not be crashed */
-    model.removeVertex(vertex.data());
+    model.removeVertex(vertex.get());
     ASSERT_EQ(0, model.vertices().count());
     ASSERT_EQ(-1, vertex->index());
     MockIVertex mockedVertex;

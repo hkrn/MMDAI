@@ -45,18 +45,18 @@ public:
     }
 private:
     IBone *addBone(const IString *name) {
-        QScopedPointer<MockIBone> bone(new MockIBone());
+        std::unique_ptr<MockIBone> bone(new MockIBone());
         EXPECT_CALL(*bone, name(IEncoding::kDefaultLanguage)).Times(AnyNumber()).WillRepeatedly(Return(name));
         EXPECT_CALL(*bone, isInverseKinematicsEnabled()).Times(AnyNumber()).WillRepeatedly(Return(false));
         EXPECT_CALL(*bone, hasInverseKinematics()).Times(AnyNumber()).WillRepeatedly(Return(false));
-        m_bones->append(bone.data());
-        return bone.take();
+        m_bones->append(bone.get());
+        return bone.release();
     }
     IMorph *addMorph(const IString *name) {
-        QScopedPointer<MockIMorph> morph(new MockIMorph());
+        std::unique_ptr<MockIMorph> morph(new MockIMorph());
         EXPECT_CALL(*morph, name(IEncoding::kDefaultLanguage)).Times(AnyNumber()).WillRepeatedly(Return(name));
-        m_morphs->append(morph.data());
-        return morph.take();
+        m_morphs->append(morph.get());
+        return morph.release();
     }
     void getBonesRef(Array<IBone *> &a) {
         a.copy(*m_bones);
@@ -174,9 +174,9 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
     frame.setInterpolationParameter(mvd::BoneKeyframe::kBonePositionZ, pz);
     frame.setInterpolationParameter(mvd::BoneKeyframe::kBoneRotation, pr);
     // write a bone frame to data and read it
-    QScopedArrayPointer<uint8> ptr(new uint8[frame.estimateSize()]);
-    frame.write(ptr.data());
-    newFrame.read(ptr.data());
+    std::unique_ptr<uint8[]> ptr(new uint8[frame.estimateSize()]);
+    frame.write(ptr.get());
+    newFrame.read(ptr.get());
     // compare read bone frame
     ASSERT_EQ(0, motion.nameListSection()->key(&str));
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
@@ -185,13 +185,13 @@ TEST(MVDMotionTest, SaveBoneKeyframe)
     ASSERT_TRUE(CompareVector(rot, newFrame.localOrientation()));
     CompareBoneInterpolationMatrix(p, frame);
     // cloned bone frame shold be copied with deep
-    QScopedPointer<IBoneKeyframe> cloned(frame.clone());
+    std::unique_ptr<IBoneKeyframe> cloned(frame.clone());
     // ASSERT_TRUE(cloned->name()->equals(frame.name()));
     ASSERT_EQ(frame.layerIndex(), cloned->layerIndex());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_TRUE(CompareVector(pos, cloned->localTranslation()));
     ASSERT_TRUE(CompareVector(rot, cloned->localOrientation()));
-    CompareBoneInterpolationMatrix(p, *static_cast<mvd::BoneKeyframe *>(cloned.data()));
+    CompareBoneInterpolationMatrix(p, *static_cast<mvd::BoneKeyframe *>(cloned.get()));
 }
 
 TEST(MVDMotionTest, SaveCameraKeyframe)
@@ -221,9 +221,9 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
     frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraDistance, pd);
     frame.setInterpolationParameter(mvd::CameraKeyframe::kCameraFov, pf);
     // write a camera frame to data and read it
-    QScopedArrayPointer<uint8> ptr(new uint8[frame.estimateSize()]);
-    frame.write(ptr.data());
-    newFrame.read(ptr.data());
+    std::unique_ptr<uint8[]> ptr(new uint8[frame.estimateSize()]);
+    frame.write(ptr.get());
+    newFrame.read(ptr.get());
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_EQ(frame.layerIndex(), newFrame.layerIndex());
     ASSERT_TRUE(CompareVector(frame.lookAt(), newFrame.lookAt()));
@@ -236,7 +236,7 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
     ASSERT_FLOAT_EQ(newFrame.fov(), frame.fov());
     CompareCameraInterpolationMatrix(p, frame);
     // cloned camera frame shold be copied with deep
-    QScopedPointer<ICameraKeyframe> cloned(frame.clone());
+    std::unique_ptr<ICameraKeyframe> cloned(frame.clone());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_EQ(frame.layerIndex(), cloned->layerIndex());
     ASSERT_TRUE(CompareVector(frame.lookAt(), cloned->lookAt()));
@@ -246,7 +246,7 @@ TEST(MVDMotionTest, SaveCameraKeyframe)
     ASSERT_FLOAT_EQ(cloned->angle().z(), frame.angle().z());
     ASSERT_FLOAT_EQ(cloned->distance(), frame.distance());
     ASSERT_FLOAT_EQ(cloned->fov(), frame.fov());
-    CompareCameraInterpolationMatrix(p, *static_cast<mvd::CameraKeyframe *>(cloned.data()));
+    CompareCameraInterpolationMatrix(p, *static_cast<mvd::CameraKeyframe *>(cloned.get()));
 }
 
 TEST(MVDMotionTest, SaveMorphKeyframe)
@@ -260,15 +260,15 @@ TEST(MVDMotionTest, SaveMorphKeyframe)
     frame.setTimeIndex(42);
     frame.setWeight(0.5);
     // write a morph frame to data and read it
-    QScopedArrayPointer<uint8> ptr(new uint8[frame.estimateSize()]);
-    frame.write(ptr.data());
-    newFrame.read(ptr.data());
+    std::unique_ptr<uint8[]> ptr(new uint8[frame.estimateSize()]);
+    frame.write(ptr.get());
+    newFrame.read(ptr.get());
     // compare read morph frame
     ASSERT_EQ(0, motion.nameListSection()->key(&str));
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_EQ(frame.weight(), newFrame.weight());
     // cloned morph frame shold be copied with deep
-    QScopedPointer<IMorphKeyframe> cloned(frame.clone());
+    std::unique_ptr<IMorphKeyframe> cloned(frame.clone());
     // ASSERT_TRUE(cloned->name()->equals(frame.name()));
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_EQ(frame.weight(), cloned->weight());
@@ -301,9 +301,9 @@ TEST(MVDMotionTest, SaveModelKeyframe)
     EXPECT_CALL(model, getBoneRefs(_)).WillRepeatedly(Invoke(&mocker, &MockGetBoneRefs::getBoneRefs));
     EXPECT_CALL(model, findBoneRef(_)).WillRepeatedly(Return(&mocker.bone));
     mvd::ModelSection section(&motion, &model, 0);
-    QScopedArrayPointer<uint8> ptr(new uint8_t[section.estimateSize()]);
-    section.write(ptr.data());
-    section.read(ptr.data());
+    std::unique_ptr<uint8[]> ptr(new uint8_t[section.estimateSize()]);
+    section.write(ptr.get());
+    section.read(ptr.get());
     mvd::ModelKeyframe frame(&section), newFrame(&section);
     // initialize the morph keyframe to be copied
     frame.setTimeIndex(42);
@@ -322,8 +322,8 @@ TEST(MVDMotionTest, SaveModelKeyframe)
     frame.setVisible(false);
     // write a morph keyframe to data and read it
     ptr.reset(new uint8[frame.estimateSize()]);
-    frame.write(ptr.data());
-    newFrame.read(ptr.data());
+    frame.write(ptr.get());
+    newFrame.read(ptr.get());
     // compare read model keyframe
     ASSERT_EQ(frame.timeIndex(), newFrame.timeIndex());
     ASSERT_EQ(frame.isAddBlendEnabled(), newFrame.isAddBlendEnabled());
@@ -335,7 +335,7 @@ TEST(MVDMotionTest, SaveModelKeyframe)
     ASSERT_FALSE(newFrame.isShadowEnabled());
     ASSERT_FALSE(newFrame.isVisible());
     // cloned model keyframe shold be copied with deep
-    QScopedPointer<IModelKeyframe> cloned(frame.clone());
+    std::unique_ptr<IModelKeyframe> cloned(frame.clone());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_EQ(frame.isAddBlendEnabled(), cloned->isAddBlendEnabled());
     ASSERT_FLOAT_EQ(frame.edgeWidth(), cloned->edgeWidth());
@@ -365,7 +365,7 @@ TEST(MVDMotionTest, SaveLightKeyframe)
     ASSERT_TRUE(newFrame.color() == frame.color());
     ASSERT_TRUE(newFrame.direction() == frame.direction());
     // cloned morph frame shold be copied with deep
-    QScopedPointer<ILightKeyframe> cloned(frame.clone());
+    std::unique_ptr<ILightKeyframe> cloned(frame.clone());
     ASSERT_EQ(frame.timeIndex(), cloned->timeIndex());
     ASSERT_TRUE(cloned->color() == frame.color());
     ASSERT_TRUE(cloned->direction() == frame.direction());
@@ -386,8 +386,8 @@ TEST(MVDMotionTest, SaveModelMotion)
         ASSERT_TRUE(motion.load(data, size));
         vsize newSize = motion.estimateSize();
         //ASSERT_EQ(size, newSize);
-        QScopedArrayPointer<uint8> newData(new uint8[newSize]);
-        uint8 *ptr = newData.data();
+        std::unique_ptr<uint8[]> newData(new uint8[newSize]);
+        uint8 *ptr = newData.get();
         mvd::Motion motion2(&model, &encoding);
         motion.save(ptr);
         ASSERT_TRUE(motion2.load(ptr, newSize));
@@ -408,8 +408,8 @@ TEST(MVDMotionTest, SaveCameraMotion)
         mvd::Motion motion(0, &encoding);
         ASSERT_TRUE(motion.load(data, size));
         vsize newSize = motion.estimateSize();
-        QScopedArrayPointer<uint8> newData(new uint8[newSize]);
-        uint8 *ptr = newData.data();
+        std::unique_ptr<uint8[]> newData(new uint8[newSize]);
+        uint8 *ptr = newData.get();
         mvd::Motion motion2(0, &encoding);
         motion.save(ptr);
         ASSERT_TRUE(motion2.load(ptr, newSize));
@@ -471,13 +471,13 @@ TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kBoneKeyframe));
     // mock bone
     EXPECT_CALL(model, findBoneRef(_)).Times(AtLeast(1)).WillRepeatedly(Return(&bone));
-    QScopedPointer<IBoneKeyframe> keyframePtr(new mvd::BoneKeyframe(&motion));
+    std::unique_ptr<IBoneKeyframe> keyframePtr(new mvd::BoneKeyframe(&motion));
     keyframePtr->setTimeIndex(42);
     keyframePtr->setName(&name);
     {
         // add a bone keyframe
-        motion.addKeyframe(keyframePtr.data());
-        IKeyframe *keyframe = keyframePtr.take();
+        motion.addKeyframe(keyframePtr.get());
+        IKeyframe *keyframe = keyframePtr.release();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBoneKeyframe));
         // boudary check of findBoneKeyframeAt
         ASSERT_EQ(static_cast<IBoneKeyframe *>(0), motion.findBoneKeyframeRefAt(-1));
@@ -494,8 +494,8 @@ TEST(MVDMotionTest, AddAndRemoveBoneKeyframes)
     keyframePtr->setName(&name);
     {
         // replaced bone frame should be one keyframe
-        motion.replaceKeyframe(keyframePtr.data(), true);
-        IKeyframe *keyframeToDelete = keyframePtr.take();
+        motion.replaceKeyframe(keyframePtr.get(), true);
+        IKeyframe *keyframeToDelete = keyframePtr.release();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kBoneKeyframe));
         // no longer be find previous bone keyframe
         ASSERT_EQ(keyframeToDelete, motion.findBoneKeyframeRef(42, &name, 0));
@@ -516,13 +516,13 @@ TEST(MVDMotionTest, AddAndRemoveCameraKeyframes)
     Model model(&encoding);
     mvd::Motion motion(&model, &encoding);
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kCameraKeyframe));
-    QScopedPointer<ICameraKeyframe> keyframePtr(new mvd::CameraKeyframe(&motion));
+    std::unique_ptr<ICameraKeyframe> keyframePtr(new mvd::CameraKeyframe(&motion));
     keyframePtr->setTimeIndex(42);
     keyframePtr->setDistance(42);
     {
         // add a camera keyframe
-        motion.addKeyframe(keyframePtr.data());
-        IKeyframe *keyframe = keyframePtr.take();
+        motion.addKeyframe(keyframePtr.get());
+        IKeyframe *keyframe = keyframePtr.release();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCameraKeyframe));
         // boudary check of findCameraKeyframeAt
         ASSERT_EQ(static_cast<ICameraKeyframe *>(0), motion.findCameraKeyframeRefAt(-1));
@@ -539,8 +539,8 @@ TEST(MVDMotionTest, AddAndRemoveCameraKeyframes)
     keyframePtr->setDistance(84);
     {
         // replaced camera frame should be one keyframe
-        motion.replaceKeyframe(keyframePtr.data(), true);
-        IKeyframe *keyframeToDelete = keyframePtr.take();
+        motion.replaceKeyframe(keyframePtr.get(), true);
+        IKeyframe *keyframeToDelete = keyframePtr.release();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kCameraKeyframe));
         // no longer be find previous camera keyframe
         ASSERT_EQ(84.0f, motion.findCameraKeyframeRef(42, 0)->distance());
@@ -562,37 +562,37 @@ TEST(MVDMotionTest, AddAndRemoveLightKeyframes)
     Model model(&encoding);
     mvd::Motion motion(&model, &encoding);
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kLight));
-    QScopedPointer<ILightKeyframe> frame(new mvd::LightKeyframe());
+    std::unique_ptr<ILightKeyframe> frame(new mvd::LightKeyframe());
     frame->setTimeIndex(42);
     frame->setColor(Vector3(1, 0, 0));
     {
         // add a light keyframe (don't forget updating motion!)
-        motion.addKeyframe(frame.data());
+        motion.addKeyframe(frame.get());
         motion.update(IKeyframe::kLight);
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kLight));
         // boudary check of findLightKeyframeAt
         ASSERT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(-1));
-        ASSERT_EQ(frame.data(), motion.findLightKeyframeAt(0));
+        ASSERT_EQ(frame.get(), motion.findLightKeyframeAt(0));
         ASSERT_EQ(static_cast<ILightKeyframe *>(0), motion.findLightKeyframeAt(1));
         // layer index 0 must be used
         ASSERT_EQ(1, motion.countLayers(0, IKeyframe::kLight));
         ASSERT_EQ(0, motion.findLightKeyframe(42, 1));
         // find a light keyframe with timeIndex
-        ASSERT_EQ(frame.take(), motion.findLightKeyframe(42, 0));
+        ASSERT_EQ(frame.release(), motion.findLightKeyframe(42, 0));
     }
-    QScopedPointer<ILightKeyframe> frame2(new mvd::LightKeyframe());
+    std::unique_ptr<ILightKeyframe> frame2(new mvd::LightKeyframe());
     frame2->setTimeIndex(42);
     frame2->setColor(Vector3(0, 0, 1));
     {
         // replaced light frame should be one keyframe (don't forget updating motion!)
-        motion.replaceKeyframe(frame2.data());
+        motion.replaceKeyframe(frame2.get());
         motion.update(IKeyframe::kLight);
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kLight));
         // no longer be find previous light keyframe
         ASSERT_EQ(1.0f, motion.findLightKeyframe(42, 0)->color().z());
     }
     {
-        IKeyframe *keyframeToDelete = frame2.take();
+        IKeyframe *keyframeToDelete = frame2.release();
         // delete light keyframe and set it null (don't forget updating motion!)
         motion.deleteKeyframe(keyframeToDelete);
         motion.update(IKeyframe::kLight);
@@ -614,13 +614,13 @@ TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
     ASSERT_EQ(0, motion.countKeyframes(IKeyframe::kMorphKeyframe));
     // mock morph
     EXPECT_CALL(model, findMorphRef(_)).Times(AtLeast(1)).WillRepeatedly(Return(&morph));
-    QScopedPointer<IMorphKeyframe> keyframePtr(new mvd::MorphKeyframe(&motion));
+    std::unique_ptr<IMorphKeyframe> keyframePtr(new mvd::MorphKeyframe(&motion));
     keyframePtr->setTimeIndex(42);
     keyframePtr->setName(&name);
     {
         // add a morph keyframe
-        motion.addKeyframe(keyframePtr.data());
-        IKeyframe *keyframe = keyframePtr.take();
+        motion.addKeyframe(keyframePtr.get());
+        IKeyframe *keyframe = keyframePtr.release();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorphKeyframe));
         // boudary check of findMorphKeyframeAt
         ASSERT_EQ(static_cast<IMorphKeyframe *>(0), motion.findMorphKeyframeRefAt(-1));
@@ -636,8 +636,8 @@ TEST(MVDMotionTest, AddAndRemoveMorphKeyframes)
     keyframePtr->setName(&name);
     {
         // replaced morph frame should be one keyframe
-        motion.replaceKeyframe(keyframePtr.data(), true);
-        IKeyframe *keyframeToDelete = keyframePtr.take();
+        motion.replaceKeyframe(keyframePtr.get(), true);
+        IKeyframe *keyframeToDelete = keyframePtr.release();
         ASSERT_EQ(1, motion.countKeyframes(IKeyframe::kMorphKeyframe));
         // no longer be find previous morph keyframe
         ASSERT_EQ(keyframeToDelete, motion.findMorphKeyframeRef(42, &name, 0));
@@ -674,30 +674,30 @@ TEST_P(MVDMotionAllKeyframesTest, SetAndGetAllKeyframes)
     mvd::Motion motion(&model, &encoding);
     Array<IKeyframe *> source, dest;
     IKeyframe::Type type = GetParam();
-    QScopedPointer<mvd::BoneKeyframe> boneKeyframe(new mvd::BoneKeyframe(&motion));
+    std::unique_ptr<mvd::BoneKeyframe> boneKeyframe(new mvd::BoneKeyframe(&motion));
     boneKeyframe->setName(encoding.stringConstant(IEncoding::kMaxConstantType));
-    source.append(boneKeyframe.data());
-    QScopedPointer<mvd::CameraKeyframe> cameraKeyframe(new mvd::CameraKeyframe(&motion));
-    source.append(cameraKeyframe.data());
-    QScopedPointer<mvd::EffectKeyframe> effectKeyframe(new mvd::EffectKeyframe(&motion));
-    source.append(effectKeyframe.data());
-    QScopedPointer<mvd::LightKeyframe> lightKeyframe(new mvd::LightKeyframe(&motion));
-    source.append(lightKeyframe.data());
-    QScopedPointer<mvd::ModelKeyframe> modelKeyframe(new mvd::ModelKeyframe(0));
-    source.append(modelKeyframe.data());
-    QScopedPointer<mvd::MorphKeyframe> morphKeyframe(new mvd::MorphKeyframe(&motion));
+    source.append(boneKeyframe.get());
+    std::unique_ptr<mvd::CameraKeyframe> cameraKeyframe(new mvd::CameraKeyframe(&motion));
+    source.append(cameraKeyframe.get());
+    std::unique_ptr<mvd::EffectKeyframe> effectKeyframe(new mvd::EffectKeyframe(&motion));
+    source.append(effectKeyframe.get());
+    std::unique_ptr<mvd::LightKeyframe> lightKeyframe(new mvd::LightKeyframe(&motion));
+    source.append(lightKeyframe.get());
+    std::unique_ptr<mvd::ModelKeyframe> modelKeyframe(new mvd::ModelKeyframe(0));
+    source.append(modelKeyframe.get());
+    std::unique_ptr<mvd::MorphKeyframe> morphKeyframe(new mvd::MorphKeyframe(&motion));
     morphKeyframe->setName(encoding.stringConstant(IEncoding::kMaxConstantType));
-    source.append(morphKeyframe.data());
-    QScopedPointer<mvd::ProjectKeyframe> projectKeyframe(new mvd::ProjectKeyframe(&motion));
-    source.append(projectKeyframe.data());
+    source.append(morphKeyframe.get());
+    std::unique_ptr<mvd::ProjectKeyframe> projectKeyframe(new mvd::ProjectKeyframe(&motion));
+    source.append(projectKeyframe.get());
     motion.setAllKeyframes(source, type);
-    boneKeyframe.take();
-    cameraKeyframe.take();
-    effectKeyframe.take();
-    lightKeyframe.take();
-    modelKeyframe.take();
-    morphKeyframe.take();
-    projectKeyframe.take();
+    boneKeyframe.release();
+    cameraKeyframe.release();
+    effectKeyframe.release();
+    lightKeyframe.release();
+    modelKeyframe.release();
+    morphKeyframe.release();
+    projectKeyframe.release();
     motion.getAllKeyframeRefs(dest, type);
     ASSERT_EQ(1, dest.count());
     ASSERT_EQ(type, dest[0]->type());

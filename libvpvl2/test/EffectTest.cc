@@ -105,7 +105,7 @@ TEST_F(EffectTest, IsPassEquals)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<IEffect> ptr(createEffect(":effects/util.cgfx", scene, applicationContext, effectPtr));
     IEffect::Parameter *parameter = ptr->findUniformParameter("ValueTest");
     const char target[] = "This is string.";
     ASSERT_TRUE(Util::isPassEquals(parameter->annotationRef("NoSuchAnnotation"), target));
@@ -152,7 +152,7 @@ TEST_F(EffectTest, IsIntegerParameter)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<IEffect> ptr(createEffect(":effects/util.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<IEffect> ptr(createEffect(":effects/util.cgfx", scene, applicationContext, effectPtr));
     const int nexpects = sizeof(expects) / sizeof(expects[0]);
     for (int i = 0; i < nexpects; i++) {
         Expect &e = expects[i];
@@ -168,7 +168,7 @@ TEST_F(EffectTest, LoadMatrices)
     MockIModel model, *modelPtr = &model;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/matrices.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/matrices.cgfx", scene, applicationContext, effectPtr));
     setMatrix(applicationContext, modelPtr, IApplicationContext::kCameraMatrix);
     setMatrix(applicationContext, modelPtr, IApplicationContext::kLightMatrix);
     setMatrix(applicationContext, modelPtr, IApplicationContext::kCameraMatrix | IApplicationContext::kInverseMatrix);
@@ -187,7 +187,7 @@ TEST_F(EffectTest, LoadMaterialColors)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/materials.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/materials.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     Vector4 v;
@@ -221,7 +221,7 @@ TEST_F(EffectTest, LoadGeometries)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/geometries.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/geometries.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     Vector4 v;
@@ -240,7 +240,7 @@ TEST_F(EffectTest, LoadControlObjectWithoutAsset)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     EXPECT_CALL(applicationContext, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
@@ -278,7 +278,7 @@ TEST_F(EffectTest, LoadControlObjectWithAsset)
     MockIModel model, *modelPtr = &model;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     EXPECT_CALL(model, isVisible()).Times(AnyNumber()).WillRepeatedly(Return(true));
@@ -315,7 +315,7 @@ TEST_F(EffectTest, LoadControlObjectWithoutModel)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     EXPECT_CALL(applicationContext, findModel(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
@@ -336,7 +336,7 @@ TEST_F(EffectTest, LoadControlObjectWithModel)
     MockIMorph morph, *morphPtr = &morph;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/controlobjects.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     Transform boneTransform;
@@ -373,7 +373,7 @@ TEST_F(EffectTest, LoadTimes)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/times.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/times.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     float f;
@@ -392,7 +392,7 @@ TEST_F(EffectTest, LoadSpecials)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/specials.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/specials.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     float f;
@@ -421,7 +421,7 @@ TEST_F(EffectTest, LoadSASPreProcess)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/preprocess.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/preprocess.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     ASSERT_EQ(EffectEngine::kScene, engine.scriptClass());
@@ -446,7 +446,7 @@ TEST_F(EffectTest, LoadSASStandard)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/standard.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/standard.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     ASSERT_EQ(EffectEngine::kObject, engine.scriptClass());
@@ -472,7 +472,7 @@ TEST_F(EffectTest, LoadSASStandard2)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/standard2.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/standard2.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     ASSERT_EQ(EffectEngine::kObject, engine.scriptClass());
@@ -488,7 +488,7 @@ TEST_F(EffectTest, LoadSASPostProcess)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/postprocess.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/postprocess.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     ASSERT_EQ(EffectEngine::kSceneOrObject, engine.scriptClass());
@@ -515,7 +515,7 @@ TEST_F(EffectTest, FindTechniques)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     ASSERT_FALSE(engine.findTechnique("no_such_object_type", 0, 42, false, false, false));
@@ -544,7 +544,7 @@ TEST_P(FindTechnique, TestEdge)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     ASSERT_STREQ("EdgeTec", engine.findTechnique("edge",
@@ -560,7 +560,7 @@ TEST_P(FindTechnique, TestShadow)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/techniques.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     ASSERT_STREQ("ShadowTec", engine.findTechnique("shadow",
@@ -579,7 +579,7 @@ TEST_F(EffectTest, ParseSyntaxErrorsScript)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     IEffect::Technique *technique = ptr->findTechnique("SyntaxErrors");
@@ -595,7 +595,7 @@ TEST_F(EffectTest, ParseRenderTargetsScript)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     IEffect::Technique *technique = ptr->findTechnique("RenderTargets");
@@ -638,7 +638,7 @@ TEST_F(EffectTest, ParseInvalidRenderTargetsScript)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     IEffect::Technique *technique = ptr->findTechnique("InvalidRenderTargets");
@@ -655,7 +655,7 @@ TEST_F(EffectTest, ParseLoopScript)
     MockIApplicationContext applicationContext;
     Scene scene(true);
     CGeffect effectPtr;
-    QScopedPointer<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, applicationContext, effectPtr));
+    std::unique_ptr<cg::Effect> ptr(createEffect(":effects/scripts.cgfx", scene, applicationContext, effectPtr));
     EXPECT_CALL(applicationContext, findProcedureAddress(_)).Times(AnyNumber()).WillRepeatedly(Return(static_cast<void *>(0)));
     MockEffectEngine engine(&scene, ptr.data(), &applicationContext);
     IEffect::Technique *technique = ptr->findTechnique("Loop");

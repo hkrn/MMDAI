@@ -35,16 +35,16 @@ TEST(FactoryTest, CreateEmptyModels)
 {
     Encoding encoding(0);
     Factory factory(&encoding);
-    QScopedPointer<IModel> pmd(factory.newModel(IModel::kPMDModel));
+    std::unique_ptr<IModel> pmd(factory.newModel(IModel::kPMDModel));
 #ifdef VPVL2_LINK_VPVL
-    ASSERT_TRUE(dynamic_cast<pmd::Model *>(pmd.data()));
+    ASSERT_TRUE(dynamic_cast<pmd::Model *>(pmd.get()));
 #else
-    ASSERT_TRUE(dynamic_cast<pmd2::Model *>(pmd.data()));
+    ASSERT_TRUE(dynamic_cast<pmd2::Model *>(pmd.get()));
 #endif
-    QScopedPointer<IModel> pmx(factory.newModel(IModel::kPMXModel));
-    ASSERT_TRUE(dynamic_cast<pmx::Model *>(pmx.data()));
-    QScopedPointer<IModel> asset(factory.newModel(IModel::kAssetModel));
-    ASSERT_TRUE(dynamic_cast<asset::Model *>(asset.data()));
+    std::unique_ptr<IModel> pmx(factory.newModel(IModel::kPMXModel));
+    ASSERT_TRUE(dynamic_cast<pmx::Model *>(pmx.get()));
+    std::unique_ptr<IModel> asset(factory.newModel(IModel::kAssetModel));
+    ASSERT_TRUE(dynamic_cast<asset::Model *>(asset.get()));
 }
 
 TEST(FactoryTest, CreateEmptyMotions)
@@ -52,10 +52,10 @@ TEST(FactoryTest, CreateEmptyMotions)
     Encoding encoding(0);
     Factory factory(&encoding);
     MockIModel model;
-    QScopedPointer<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
-    ASSERT_TRUE(dynamic_cast<vmd::Motion *>(vmd.data()));
-    QScopedPointer<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
-    ASSERT_TRUE(dynamic_cast<mvd::Motion *>(mvd.data()));
+    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
+    ASSERT_TRUE(dynamic_cast<vmd::Motion *>(vmd.get()));
+    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
+    ASSERT_TRUE(dynamic_cast<mvd::Motion *>(mvd.get()));
 }
 
 TEST(FactoryTest, CreateEmptyBoneKeyframes)
@@ -64,12 +64,12 @@ TEST(FactoryTest, CreateEmptyBoneKeyframes)
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createBoneKeyframe(0));
-    QScopedPointer<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
-    QScopedPointer<IBoneKeyframe> vbk(factory.createBoneKeyframe(vmd.data()));
-    ASSERT_TRUE(dynamic_cast<vmd::BoneKeyframe *>(vbk.data()));
-    QScopedPointer<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
-    QScopedPointer<IBoneKeyframe> mbk(factory.createBoneKeyframe(mvd.data()));
-    ASSERT_TRUE(dynamic_cast<mvd::BoneKeyframe *>(mbk.data()));
+    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
+    std::unique_ptr<IBoneKeyframe> vbk(factory.createBoneKeyframe(vmd.get()));
+    ASSERT_TRUE(dynamic_cast<vmd::BoneKeyframe *>(vbk.get()));
+    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
+    std::unique_ptr<IBoneKeyframe> mbk(factory.createBoneKeyframe(mvd.get()));
+    ASSERT_TRUE(dynamic_cast<mvd::BoneKeyframe *>(mbk.get()));
 }
 
 TEST(FactoryTest, CreateEmptyCameraKeyframes)
@@ -78,12 +78,12 @@ TEST(FactoryTest, CreateEmptyCameraKeyframes)
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createCameraKeyframe(0));
-    QScopedPointer<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
-    QScopedPointer<ICameraKeyframe> vck(factory.createCameraKeyframe(vmd.data()));
-    ASSERT_TRUE(dynamic_cast<vmd::CameraKeyframe *>(vck.data()));
-    QScopedPointer<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
-    QScopedPointer<ICameraKeyframe> mck(factory.createCameraKeyframe(mvd.data()));
-    ASSERT_TRUE(dynamic_cast<mvd::CameraKeyframe *>(mck.data()));
+    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
+    std::unique_ptr<ICameraKeyframe> vck(factory.createCameraKeyframe(vmd.get()));
+    ASSERT_TRUE(dynamic_cast<vmd::CameraKeyframe *>(vck.get()));
+    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
+    std::unique_ptr<ICameraKeyframe> mck(factory.createCameraKeyframe(mvd.get()));
+    ASSERT_TRUE(dynamic_cast<mvd::CameraKeyframe *>(mck.get()));
 }
 
 TEST(FactoryTest, CreateEmptyLightKeyframes)
@@ -92,12 +92,12 @@ TEST(FactoryTest, CreateEmptyLightKeyframes)
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createLightKeyframe(0));
-    QScopedPointer<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
-    QScopedPointer<ILightKeyframe> vlk(factory.createLightKeyframe(vmd.data()));
-    ASSERT_TRUE(dynamic_cast<vmd::LightKeyframe *>(vlk.data()));
-    QScopedPointer<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
-    QScopedPointer<ILightKeyframe> mlk(factory.createLightKeyframe(mvd.data()));
-    ASSERT_TRUE(dynamic_cast<mvd::LightKeyframe *>(mlk.data()));
+    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
+    std::unique_ptr<ILightKeyframe> vlk(factory.createLightKeyframe(vmd.get()));
+    ASSERT_TRUE(dynamic_cast<vmd::LightKeyframe *>(vlk.get()));
+    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
+    std::unique_ptr<ILightKeyframe> mlk(factory.createLightKeyframe(mvd.get()));
+    ASSERT_TRUE(dynamic_cast<mvd::LightKeyframe *>(mlk.get()));
 }
 
 TEST(FactoryTest, CreateEmptyMorphKeyframes)
@@ -106,12 +106,12 @@ TEST(FactoryTest, CreateEmptyMorphKeyframes)
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createMorphKeyframe(0));
-    QScopedPointer<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
-    QScopedPointer<IMorphKeyframe> vmk(factory.createMorphKeyframe(vmd.data()));
-    ASSERT_TRUE(dynamic_cast<vmd::MorphKeyframe *>(vmk.data()));
-    QScopedPointer<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
-    QScopedPointer<IMorphKeyframe> mmk(factory.createMorphKeyframe(mvd.data()));
-    ASSERT_TRUE(dynamic_cast<mvd::MorphKeyframe *>(mmk.data()));
+    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
+    std::unique_ptr<IMorphKeyframe> vmk(factory.createMorphKeyframe(vmd.get()));
+    ASSERT_TRUE(dynamic_cast<vmd::MorphKeyframe *>(vmk.get()));
+    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
+    std::unique_ptr<IMorphKeyframe> mmk(factory.createMorphKeyframe(mvd.get()));
+    ASSERT_TRUE(dynamic_cast<mvd::MorphKeyframe *>(mmk.get()));
 }
 
 class FactoryModelTest : public TestWithParam<IModel::Type> {};
@@ -121,14 +121,14 @@ TEST_P(FactoryModelTest, StopInfiniteParentModelLoop)
     Encoding encoding(0);
     Factory factory(&encoding);
     IModel::Type type = GetParam();
-    QScopedPointer<IModel> model1(factory.newModel(type)),
+    std::unique_ptr<IModel> model1(factory.newModel(type)),
             model2(factory.newModel(type)),
             model3(factory.newModel(type));
-    model3->setParentModelRef(model2.data());
-    model2->setParentModelRef(model1.data());
-    model1->setParentModelRef(model3.data());
-    ASSERT_EQ(model2.data(), model3->parentModelRef());
-    ASSERT_EQ(model1.data(), model2->parentModelRef());
+    model3->setParentModelRef(model2.get());
+    model2->setParentModelRef(model1.get());
+    model1->setParentModelRef(model3.get());
+    ASSERT_EQ(model2.get(), model3->parentModelRef());
+    ASSERT_EQ(model1.get(), model2->parentModelRef());
     ASSERT_EQ(0, model1->parentModelRef());
 }
 
@@ -161,15 +161,15 @@ TEST_P(MotionConversionTest, ConvertModelMotion)
         Encoding encoding(0);
         Factory factory(&encoding);
         MockIModel model;
-        QScopedPointer<Array<IBone *>, ScopedPointerListDeleter> bones(new Array<IBone *>);
-        QScopedPointer<Array<IMorph *>, ScopedPointerListDeleter> morphs(new Array<IMorph *>);
+        QScopedArrayPointer<Array<IBone *>, ScopedPointerListDeleter> bones(new Array<IBone *>);
+        QScopedArrayPointer<Array<IMorph *>, ScopedPointerListDeleter> morphs(new Array<IMorph *>);
         EXPECT_CALL(model, findBoneRef(_)).Times(AtLeast(1)).WillRepeatedly(FindBone(&bones));
         EXPECT_CALL(model, findMorphRef(_)).Times(AtLeast(1)).WillRepeatedly(FindMorph(&morphs));
         bool ok;
-        QScopedPointer<IMotion> source(factory.createMotion(data, size, &model, ok));
+        std::unique_ptr<IMotion> source(factory.createMotion(data, size, &model, ok));
         ASSERT_TRUE(ok);
         IMotion::Type type = get<1>(GetParam());
-        QScopedPointer<IMotion> dest(factory.convertMotion(source.data(), type));
+        std::unique_ptr<IMotion> dest(factory.convertMotion(source.get(), type));
         ASSERT_EQ(dest->type(), type);
         const int nbkeyframes = source->countKeyframes(IKeyframe::kBoneKeyframe);
         const int nmkeyframes = source->countKeyframes(IKeyframe::kMorphKeyframe);
@@ -194,10 +194,10 @@ TEST_P(MotionConversionTest, ConvertCameraMotion)
         Encoding encoding(0);
         Factory factory(&encoding);
         bool ok;
-        QScopedPointer<IMotion> source(factory.createMotion(data, size, 0, ok));
+        std::unique_ptr<IMotion> source(factory.createMotion(data, size, 0, ok));
         ASSERT_TRUE(ok);
         IMotion::Type type = get<1>(GetParam());
-        QScopedPointer<IMotion> dest(factory.convertMotion(source.data(), type));
+        std::unique_ptr<IMotion> dest(factory.convertMotion(source.get(), type));
         ASSERT_EQ(dest->type(), type);
         const int nckeyframes = source->countKeyframes(IKeyframe::kCameraKeyframe);
         ASSERT_EQ(nckeyframes, dest->countKeyframes(IKeyframe::kCameraKeyframe));
