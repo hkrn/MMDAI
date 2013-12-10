@@ -62,38 +62,6 @@ set(VPVL2_VERSION_COMPATIBLE "${VPVL2_VERSION_MAJOR}.${VPVL2_VERSION_COMPAT}.0")
 vpvl2_detect_os()
 vpvl2_detect_compiler_features()
 
-# source configuration
-file(GLOB vpvl2_sources_core "${CMAKE_CURRENT_SOURCE_DIR}/src/core/*.cc")
-file(GLOB vpvl2_sources_base "${CMAKE_CURRENT_SOURCE_DIR}/src/core/base/*.cc")
-source_group("VPVL2 Core Classes" FILES ${vpvl2_sources_core} ${vpvl2_sources_base})
-file(GLOB vpvl2_sources_internal "${CMAKE_CURRENT_SOURCE_DIR}/src/core/internal/*.cc")
-file(GLOB vpvl2_headers_internal "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/internal/*.h")
-source_group("VPVL2 Internal Classes" FILES ${vpvl2_sources_internal} ${vpvl2_headers_internal})
-file(GLOB vpvl2_sources_asset "${CMAKE_CURRENT_SOURCE_DIR}/src/core/asset/*.cc")
-file(GLOB vpvl2_headers_asset "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/asset/*.h")
-source_group("VPVL2 Asset Classes" FILES ${vpvl2_sources_asset} ${vpvl2_headers_asset})
-file(GLOB vpvl2_sources_vmd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/vmd/*.cc")
-file(GLOB vpvl2_headers_vmd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/vmd/*.h")
-source_group("VPVL2 VMD Classes" FILES ${vpvl2_sources_vmd} ${vpvl2_headers_vmd})
-file(GLOB vpvl2_sources_mvd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/mvd/*.cc")
-file(GLOB vpvl2_headers_mvd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/mvd/*.h")
-source_group("VPVL2 MVD Classes" FILES ${vpvl2_sources_mvd} ${vpvl2_headers_mvd})
-if(VPVL2_LINK_VPVL)
-  file(GLOB vpvl2_sources_pmd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd/*.cc")
-  file(GLOB vpvl2_headers_pmd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd/*.h")
-else()
-  file(GLOB vpvl2_sources_pmd "${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmd2/*.cc")
-  file(GLOB vpvl2_headers_pmd "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmd2/*.h")
-endif()
-source_group("VPVL2 PMD Classes" FILES ${vpvl2_sources_pmd} ${vpvl2_headers_pmd})
-file(GLOB vpvl2_sources_pmx "${CMAKE_CURRENT_SOURCE_DIR}/src/core/pmx/*.cc")
-file(GLOB vpvl2_headers_pmx "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/pmx/*.h")
-source_group("VPVL2 PMX Classes" FILES ${vpvl2_sources_pmx} ${vpvl2_headers_pmx})
-
-list(APPEND vpvl2_sources ${vpvl2_sources_core} ${vpvl2_sources_base} ${vpvl2_sources_internal}
-                          ${vpvl2_sources_asset} ${vpvl2_sources_vmd} ${vpvl2_sources_mvd}
-                          ${vpvl2_sources_pmd} ${vpvl2_sources_pmx})
-
 # extensions configuration
 if(VPVL2_ENABLE_EXTENSIONS_ARCHIVE)
   if(APPLE)
@@ -132,6 +100,14 @@ if(VPVL2_ENABLE_EXTENSIONS_PROJECT)
   list(APPEND vpvl2_sources ${vpvl2_sources_project} ${vpvl2_headers_project})
 endif()
 
+# Bullet Physics World extension
+if(VPVL2_ENABLE_EXTENSIONS_WORLD)
+  file(GLOB vpvl2_sources_world "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/World.cc")
+  file(GLOB vpvl2_headers_world "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/World.h")
+  source_group("VPVL2 World Classes" FILES ${vpvl2_sources_world} ${vpvl2_headers_world})
+  list(APPEND vpvl2_sources ${vpvl2_sources_world} ${vpvl2_headers_world})
+endif()
+
 # ICU4C based String extension
 if(VPVL2_ENABLE_EXTENSIONS_STRING)
   file(GLOB vpvl2_sources_string "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/Encoding.cc"
@@ -139,14 +115,6 @@ if(VPVL2_ENABLE_EXTENSIONS_STRING)
   file(GLOB vpvl2_headers_string "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/icu/*.h")
   source_group("VPVL2 String Classes" FILES ${vpvl2_sources_string} ${vpvl2_headers_string})
   list(APPEND vpvl2_sources ${vpvl2_sources_string} ${vpvl2_headers_string})
-endif()
-
-# Bullet Physics World extension
-if(VPVL2_ENABLE_EXTENSIONS_WORLD)
-  file(GLOB vpvl2_sources_world "${CMAKE_CURRENT_SOURCE_DIR}/src/ext/World.cc")
-  file(GLOB vpvl2_headers_world "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/World.h")
-  source_group("VPVL2 World Classes" FILES ${vpvl2_sources_world} ${vpvl2_headers_world})
-  list(APPEND vpvl2_sources ${vpvl2_sources_world} ${vpvl2_headers_world})
 endif()
 
 # Effect extension
@@ -167,11 +135,7 @@ if(VPVL2_ENABLE_EXTENSIONS_PROJECT OR VPVL2_ENABLE_NVIDIA_CG OR VPVL2_LINK_NVFX)
   list(APPEND vpvl2_sources ${vpvl2_sources_tinyxml2} ${vpvl2_headers_tinyxml2})
 endif()
 
-file(GLOB vpvl2_public_headers "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/*.h")
-file(GLOB_RECURSE vpvl2_public_headers_extensions "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/*.h")
-list(APPEND vpvl2_internal_headers ${vpvl2_headers_internal} ${vpvl2_headers_asset} ${vpvl2_headers_vmd}
-                                   ${vpvl2_headers_mvd} ${vpvl2_headers_pmd} ${vpvl2_headers_pmx})
-
+# configure build type
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
@@ -234,25 +198,15 @@ if(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT)
   set(VPVL2_ENABLE_OPENGL ON BOOL)
 endif()
 
-# generate configuration file
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/config.h.in"
-               "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2/config.h")
-set(vpvl2_public_headers ${vpvl2_public_headers} "${CMAKE_CURRENT_BINARY_DIR}/include/vpvl2/config.h")
-
 # create libvpvl2 project
-add_library(${VPVL2_PROJECT_NAME} ${VPVL2_LIB_TYPE} ${vpvl2_sources} ${vpvl2_public_headers} ${vpvl2_public_headers_extensions} ${vpvl2_internal_headers})
 set(LIBRARY_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/lib")
-
-# configure library properties
-set_target_properties(${VPVL2_PROJECT_NAME} PROPERTIES VERSION ${VPVL2_VERSION} SOVERSION ${VPVL2_VERSION_COMPATIBLE})
-set_target_properties(${VPVL2_PROJECT_NAME} PROPERTIES OUTPUT_NAME ${VPVL2_PROJECT_NAME})
-vpvl2_set_library_properties(${VPVL2_PROJECT_NAME} ${vpvl2_public_headers})
-vpvl2_set_warnings()
-
 # project include directories
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 # this for vpvl2/config.h
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
+
+file(GLOB_RECURSE vpvl2_public_headers_extensions "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2/extensions/*.h")
+vpvl2_create_library(${VPVL2_PROJECT_NAME} ${VPVL2_LIB_TYPE} vpvl2_sources vpvl2_public_headers_extensions vpvl2_internal_headers)
 
 # find and link libraries to libvpvl2
 vpvl2_find_all()
@@ -262,12 +216,12 @@ endif()
 
 # link against Qt
 if(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT)
-  vpvl2_add_qt()
   vpvl2_add_sdl_renderer()
   vpvl2_add_sfml_renderer()
   vpvl2_add_glfw_renderer()
   vpvl2_add_allegro_renderer()
   vpvl2_add_egl_renderer()
+  vpvl2_add_qt()
 endif()
 
 # generate pkg-config
@@ -275,11 +229,6 @@ if(NOT WIN32)
   set(PKGCONFIG_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig" CACHE STRING "Base directory for pkgconfig files")
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/vpvl2.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" @ONLY)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/vpvl2.pc" DESTINATION "${PKGCONFIG_INSTALL_PREFIX}")
-endif()
-
-# activate c++11 flag
-if(VPVL2_ENABLE_CXX11)
-  target_compile_options(${VPVL2_PROJECT_NAME} PRIVATE -std=c++11)
 endif()
 
 # install configuration
@@ -305,4 +254,3 @@ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/vpvl2" DESTINATION "${CMA
         PATTERN "nvfx" EXCLUDE
         PATTERN "gl2" EXCLUDE
         PATTERN "qt" EXCLUDE)
-
