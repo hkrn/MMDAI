@@ -28,8 +28,9 @@ LIBS += -L$${MMDAI_ROOT_PATH}/bullet-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/openal-soft-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/alure-src/build-$${BUILD_TYPE}/install-root/lib \
         -L$${MMDAI_ROOT_PATH}/libgizmo-src/build-$${BUILD_TYPE} \
+        -L$${MMDAI_ROOT_PATH}/AntTweakBar-src/lib \
         -L$${MMDAI_ROOT_PATH}/libvpvl2/build-$${BUILD_TYPE}/lib \
-        -lvpvl2 -lBulletDynamics -lBulletSoftBody -lBulletCollision -lLinearMath -lgizmo
+        -lvpvl2 -lBulletDynamics -lBulletSoftBody -lBulletCollision -lLinearMath -lAntTweakBar -lgizmo
 
 CONFIG(debug, debug|release):LIBS += -lassimpD
 CONFIG(release, debug|release):LIBS += -lassimp
