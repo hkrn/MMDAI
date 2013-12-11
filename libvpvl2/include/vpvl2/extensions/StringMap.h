@@ -77,9 +77,6 @@ public:
     inline std::string value(const std::string &key, const std::string &defval = std::string()) const {
         return stringValue(key, defval);
     }
-
-private:
-    VPVL2_DISABLE_COPY_AND_ASSIGN(StringMap)
 };
 
 } /* namespace extensions */

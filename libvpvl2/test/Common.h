@@ -3,6 +3,8 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <memory>
+
 #include <QtCore>
 #include <vpvl2/Common.h>
 

@@ -40,6 +40,7 @@
 
 #if defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS)
 #include <sys/fcntl.h>
+#include <limits.h>
 #endif
 
 namespace {

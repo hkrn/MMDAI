@@ -40,6 +40,7 @@
 #define VPVL2_EXTENSIONS_STRINGUTIL_H_
 
 #include <vpvl2/config.h>
+#include <stdlib.h>
 
 namespace vpvl2
 {
@@ -52,11 +53,11 @@ public:
         return value == "true" || value == "1" || value == "y" || value == "yes";
     }
     static int toInt(const std::string &value, int def = 0) {
-        int v = int(strtol(value.c_str(), 0, 10));
+        int v = int(::strtol(value.c_str(), 0, 10));
         return v != 0 ? v : def;
     }
     static double toDouble(const std::string &value, double def = 0.0) {
-        double v = strtod(value.c_str(), 0);
+        double v = ::strtod(value.c_str(), 0);
         return v != 0.0 ? float(v) : def;
     }
 
