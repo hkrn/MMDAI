@@ -81,27 +81,21 @@ static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationCo
             "#endif\n"
             "#define vpvl2FXSaturate(v) clamp((v), 0.0, 1.0)\n"
             ;
+    char appendingHeader[1024];
     if (resolver->query(IApplicationContext::FunctionResolver::kQueryCoreProfile) != 0) {
-        int i = 0;
-        while (nvFX::IShader *shader = container->findShader(i++)) {
-            nvFX::TargetType type = shader->getType();
-            const char *name = shader->getName();
-            if (*name == '\0' && type == nvFX::TGLSL) {
-                static const char kFormat[] = "#version %d core\n%s";
-                char appendingHeader[512];
-                internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, resolver->query(IApplicationContext::FunctionResolver::kQueryShaderVersion), kAppendingShaderHeader);
-                shader->getExInterface()->addHeaderCode(appendingHeader);
-            }
-        }
+        static const char kFormat[] = "#version %d core\n%s";
+        internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, resolver->query(IApplicationContext::FunctionResolver::kQueryShaderVersion), kAppendingShaderHeader);
     }
     else {
-        int i = 0;
-        while (nvFX::IShader *shader = container->findShader(i++)) {
-            nvFX::TargetType type = shader->getType();
-            const char *name = shader->getName();
-            if (*name == '\0' && type == nvFX::TGLSL) {
-                shader->getExInterface()->addHeaderCode(kAppendingShaderHeader);
-            }
+        static const char kFormat[] = "#version 120\n%s";
+        internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, kAppendingShaderHeader);
+    }
+    int i = 0;
+    while (nvFX::IShader *shader = container->findShader(i++)) {
+        nvFX::TargetType type = shader->getType();
+        const char *name = shader->getName();
+        if (*name == '\0' && type == nvFX::TGLSL) {
+            shader->getExInterface()->addHeaderCode(appendingHeader);
         }
     }
 }
