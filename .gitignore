@@ -59,6 +59,7 @@ Win32
 zlib-*
 *.a
 *.build
+*-debug
 *-*-desktop*
 *.cbp
 *.dll*
@@ -74,6 +75,7 @@ zlib-*
 *.sln
 *.suo
 *.so*
+*.user
 *.vcproj*
 *.vcxproj*
 *.xcodeproj
