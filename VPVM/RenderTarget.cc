@@ -166,6 +166,7 @@ public:
 
     ApplicationContext(const ProjectProxy *proxy, const StringMap *stringMap)
         : BaseApplicationContext(proxy->projectInstanceRef(), proxy->encodingInstanceRef(), stringMap),
+          m_baseTime(QTime::currentTime()),
           m_orderIndex(1)
     {
     }
@@ -186,9 +187,23 @@ public:
     }
     void getToonColor(const IString * /* name */, Color & /* value */, void * /* userData */) {
     }
-    void getTime(float32 & /* value */, bool /* sync */) const {
+    void getTime(float32 &value, bool sync) const {
+        if (sync) {
+            value = m_sceneRef->currentTimeIndex() / Scene::defaultFPS();
+        }
+        else {
+            value = m_baseTime.msecsTo(QTime::currentTime()) / 1000.0f;
+        }
     }
-    void getElapsed(float32 & /* value */, bool /* sync */) const {
+    void getElapsed(float32 &value, bool sync) const {
+        if (sync) {
+            value = m_sceneRef->currentTimeIndex() / Scene::defaultFPS();
+        }
+        else {
+            const QTime &currentTime = QTime::currentTime();
+            value = (m_elapsedTime.isNull() ? 0 : m_elapsedTime.msecsTo(currentTime)) / 1000.0f;
+            m_elapsedTime = currentTime;
+        }
     }
     void uploadAnimatedTexture(float32 /* offset */, float32 /* speed */, float32 /* seek */, void * /* texture */) {
     }
@@ -368,6 +383,8 @@ private:
     QQueue<ModelProxyPair> m_uploadingModels;
     QQueue<ModelProxy *> m_uploadingEffects;
     QQueue<ModelProxy *> m_deletingModels;
+    mutable QTime m_elapsedTime;
+    QTime m_baseTime;
     int m_orderIndex;
 };
 
