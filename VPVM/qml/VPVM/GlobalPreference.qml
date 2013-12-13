@@ -107,13 +107,22 @@ ApplicationWindow {
                 ColumnLayout {
                     RowLayout {
                         id: fontFamilyBox
+                        FontDialog {
+                            id: fontDialog
+                            font: Qt.font({ "family": applicationPreference.fontFamily })
+                            onAccepted: applicationPreference.fontFamily = font.family
+                        }
                         Label { text: qsTr("Font Family") }
-                        ComboBox {
+                        TextField {
+                            id: name
+                            text: applicationPreference.fontFamily || "(Unknown)"
+                            readOnly: true
+                            font.family: applicationPreference.fontFamily || "serif"
                             Layout.fillWidth: true
-                            editable: true
-                            model: Qt.fontFamilies()
-                            currentIndex: Qt.fontFamilies().indexOf(applicationPreference.fontFamily)
-                            onCurrentTextChanged: applicationPreference.fontFamily = currentText
+                        }
+                        Button {
+                            text: qsTr("Change")
+                            onClicked: fontDialog.open()
                         }
                     }
                     CheckBox {
