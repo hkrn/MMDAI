@@ -485,26 +485,27 @@ Item {
             lastX = x
             lastY = y
             renderTarget.forceActiveFocus()
-            renderTarget.handleMousePress(x, y)
+            renderTarget.handleMousePress(x, y, mouse.button)
         }
         onPositionChanged: {
             var x = mouse.x, y = mouse.y
-            renderTarget.handleMouseMove(x, y)
-            if (pressed && !renderTarget.grabbingGizmo) {
+            if (!renderTarget.handleMouseMove(x, y, mouse.button) && pressed) {
                 camera.rotate(x - lastX, y - lastY)
                 lastX = x
                 lastY = y
             }
         }
-        onReleased: renderTarget.handleMouseRelease(mouse.x, mouse.y)
+        onReleased: renderTarget.handleMouseRelease(mouse.x, mouse.y, mouse.button)
         onClicked: projectDocument.ray(mouse.x, mouse.y, width, height)
         onWheel: {
-            if (wheel.modifiers & Qt.ShiftModifier) {
-                var delta = wheel.pixelDelta
-                camera.translate(delta.x * wheelFactor, delta.y * wheelFactor)
-            }
-            else {
-                camera.zoom(wheel.pixelDelta.y * wheelFactor)
+            var delta = wheel.pixelDelta
+            if (!renderTarget.handleMouseWheel(delta.x, delta.y)) {
+                if (wheel.modifiers & Qt.ShiftModifier) {
+                    camera.translate(delta.x * wheelFactor, delta.y * wheelFactor)
+                }
+                else {
+                    camera.zoom(delta.y * wheelFactor)
+                }
             }
         }
         states: State {

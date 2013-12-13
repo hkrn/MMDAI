@@ -71,6 +71,20 @@ using namespace vpvl2::extensions::icu4c;
 
 namespace {
 
+static IApplicationContext::MousePositionType convertMousePositionType(int button)
+{
+    switch (static_cast<Qt::MouseButton>(button)) {
+    case Qt::LeftButton:
+        return IApplicationContext::kMouseLeftPressPosition;
+    case Qt::MiddleButton:
+        return IApplicationContext::kMouseMiddlePressPosition;
+    case Qt::RightButton:
+        return IApplicationContext::kMouseRightPressPosition;
+    default:
+        return IApplicationContext::kMouseCursorPosition;
+    }
+}
+
 struct Resolver : IApplicationContext::FunctionResolver {
     bool hasExtension(const char *name) const {
         if (const bool *ptr = supportedExtensionsCache.find(name)) {
@@ -1155,12 +1169,11 @@ RenderTarget::~RenderTarget()
     m_dirty = false;
 }
 
-bool RenderTarget::handleMousePress(int x, int y)
+bool RenderTarget::handleMousePress(int x, int y, int button)
 {
     bool handled;
-    glm::vec4 v(x, y, 1, 0);
-    m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
-    m_pressingMouse = true;
+    glm::vec4 v(x - m_viewport.x(), y - m_viewport.y(), 1, 0);
+    m_applicationContext->setMousePosition(v, convertMousePositionType(button), handled);
     if (!handled && m_currentGizmoRef) {
         m_grabbingGizmo = m_currentGizmoRef->OnMouseDown(x, y);
         if (m_grabbingGizmo) {
@@ -1183,12 +1196,15 @@ bool RenderTarget::handleMousePress(int x, int y)
     return m_grabbingGizmo;
 }
 
-void RenderTarget::handleMouseMove(int x, int y)
+bool RenderTarget::handleMouseMove(int x, int y,  bool pressed)
 {
     bool handled;
-    glm::vec4 v(x, y, m_pressingMouse, 0);
+    glm::vec4 v(x - m_viewport.x(), y - m_viewport.y(), pressed, 0);
     m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
-    if (!handled && m_currentGizmoRef) {
+    if (handled) {
+        return true;
+    }
+    else if (m_currentGizmoRef) {
         m_currentGizmoRef->OnMouseMove(x, y);
         if (m_grabbingGizmo) {
             const ModelProxy *modelProxy = m_projectProxyRef->currentModel();
@@ -1204,16 +1220,21 @@ void RenderTarget::handleMouseMove(int x, int y)
             transform.setFromOpenGLMatrix(rawMatrix);
             boneRef->setLocalTranslation(transform.getOrigin());
             boneRef->setLocalOrientation(transform.getRotation());
+            return true;
         }
     }
+    return false;
 }
 
-void RenderTarget::handleMouseRelease(int x, int y)
+bool RenderTarget::handleMouseRelease(int x, int y, int button)
 {
     bool handled;
-    glm::vec4 v(x, y, 0, 0);
-    m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
-    if (m_currentGizmoRef) {
+    glm::vec4 v(x - m_viewport.x(), y - m_viewport.y(), 0, 0);
+    m_applicationContext->setMousePosition(v, convertMousePositionType(button), handled);
+    if (handled) {
+        return true;
+    }
+    else if (m_currentGizmoRef) {
         m_currentGizmoRef->OnMouseUp(x, y);
         if (m_grabbingGizmo) {
             ModelProxy *modelProxy = m_projectProxyRef->currentModel();
@@ -1231,8 +1252,18 @@ void RenderTarget::handleMouseRelease(int x, int y)
             }
             m_grabbingGizmo = false;
             emit grabbingGizmoChanged();
+            return true;
         }
     }
+    return false;
+}
+
+bool RenderTarget::handleMouseWheel(int x, int y)
+{
+    bool handled;
+    glm::vec4 v(x, y, 0, 0);
+    m_applicationContext->setMousePosition(v, IApplicationContext::kMouseWheelPosition, handled);
+    return handled;
 }
 
 void RenderTarget::toggleRunning(bool value)

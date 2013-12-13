@@ -1228,7 +1228,7 @@ ApplicationWindow {
                         }
                         Text {
                             anchors.centerIn: parent
-                            font: { family: applicationPreference.fontFamily }
+                            font.family: applicationPreference.fontFamily
                             visible: coverTimeline.visible
                             text: qsTr("No motion is selected to edit.\nClick here to select the motion to edit.\n(Adding a model is also here)")
                         }

@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
 
     app.setApplicationDisplayName("VPVM");
     app.setApplicationName("VPVM");
-    app.setApplicationVersion("0.31.5");
+    app.setApplicationVersion("0.33.0");
     app.setOrganizationName("MMDAI Project");
     app.setOrganizationDomain("mmdai.github.com");
     if (applicationPreference.isFontFamilyToGUIShared()) {

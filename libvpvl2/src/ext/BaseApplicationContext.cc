@@ -1377,7 +1377,9 @@ void BaseApplicationContext::createEffectParameterUIWidgets(IEffect *effectRef)
 
 void BaseApplicationContext::renderEffectParameterUIWidgets()
 {
-    TwDraw();
+    if (m_effectRef2ParameterUIs.count() > 0) {
+        TwDraw();
+    }
 }
 
 IEffect *BaseApplicationContext::createEffectRef(const std::string &path)

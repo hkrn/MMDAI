@@ -115,9 +115,10 @@ public:
     explicit RenderTarget(QQuickItem *parent = 0);
     ~RenderTarget();
 
-    Q_INVOKABLE bool handleMousePress(int x, int y);
-    Q_INVOKABLE void handleMouseMove(int x, int y);
-    Q_INVOKABLE void handleMouseRelease(int x, int y);
+    Q_INVOKABLE bool handleMousePress(int x, int y, int button);
+    Q_INVOKABLE bool handleMouseMove(int x, int y,  bool pressed);
+    Q_INVOKABLE bool handleMouseRelease(int x, int y, int button);
+    Q_INVOKABLE bool handleMouseWheel(int x, int y);
     Q_INVOKABLE void toggleRunning(bool value);
 
     bool isInitialized() const;
@@ -284,7 +285,6 @@ private:
     QVector3D m_snapStepSize;
     VisibleGizmoMasks m_visibleGizmoMasks;
     bool m_grabbingGizmo;
-    bool m_pressingMouse;
     bool m_playing;
     bool m_dirty;
 };
