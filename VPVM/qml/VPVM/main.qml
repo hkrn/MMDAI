@@ -262,7 +262,6 @@ ApplicationWindow {
     }
     Action {
         id: addEffectAction
-        enabled: applicationPreference.effectEnabled
         text: qsTr("Add Effect")
         tooltip: qsTr("Load a effect from file.")
         onTriggered: addEffectDialog.open()
@@ -735,12 +734,6 @@ ApplicationWindow {
         onTriggered: scene.resetMorph(null)
     }
     Action {
-        id: enableEffectAction
-        enabled: false // FIXME: implement nvFX based effect system
-        text: qsTr("Enable Effect")
-        checkable: true
-    }
-    Action {
         id: detachTimelineAction
         text: qsTr("Detach Timeline")
         tooltip: qsTr("Detach left timeline panel. If you want to attach again, you should click the close button.")
@@ -810,7 +803,7 @@ ApplicationWindow {
             MenuSeparator {}
             MenuItem { action: loadProjectAction }
             MenuItem { action: addModelAction }
-            MenuItem { action: addEffectAction }
+            MenuItem { action: addEffectAction; visible: applicationPreference.effectEnabled }
             MenuItem { action: setModelMotionAction }
             MenuItem { action: setCameraMotionAction }
             MenuItem { action: loadPoseAction }
@@ -929,11 +922,6 @@ ApplicationWindow {
                 title: qsTr("Morph")
                 MenuItem { action: resetSelectedMorphAction }
                 MenuItem { action: resetAllMorphsAction }
-            }
-            Menu {
-                id: effectMenu
-                title: qsTr("Effect")
-                MenuItem { action: enableEffectAction }
             }
             MenuSeparator {}
             MenuItem { action: deleteModelAction }
