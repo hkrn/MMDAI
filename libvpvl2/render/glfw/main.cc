@@ -370,9 +370,7 @@ private:
     static void handleKeyEvent(GLFWwindow *window, int key, int /* scancode */, int action, int modifiers) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
         ICamera *camera = context->m_scene->cameraRef();
-        bool handled = false;
-        context->m_applicationContext->handleKeyPress(key, modifiers, handled);
-        if (!handled && action == GLFW_PRESS) {
+        if (!context->m_applicationContext->handleKeyPress(key, modifiers) && action == GLFW_PRESS) {
             const Scalar degree(15.0);
             switch (key) {
             case GLFW_KEY_RIGHT:
@@ -417,21 +415,20 @@ private:
         default:
             break;
         }
-        bool handled;
         double x, y;
         glfwGetCursorPos(window, &x, &y);
         glm::vec4 v(x, y, pressed, 0);
         context->m_pressed = pressed;
         context->m_pressedModifier = pressed ? modifiers : 0;
-        context->m_applicationContext->setMousePosition(v, type, handled);
+        context->m_applicationContext->setMousePosition(v, type);
+        context->m_applicationContext->handleMouse(v, type);
         context->m_lastCursorPosition = glm::vec2(v);
     }
     static void handleCursorPosition(GLFWwindow *window, double x, double y) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        bool handled = false;
         glm::vec4 v(x, y, context->m_pressed, 0);
-        context->m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
-        if (!handled && context->m_pressed) {
+        context->m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition);
+        if (!context->m_applicationContext->handleMouse(v, IApplicationContext::kMouseCursorPosition) && context->m_pressed) {
             ICamera *camera = context->m_scene->cameraRef();
             const Scalar &factor = 0.5;
             camera->setAngle(camera->angle() + Vector3((y - context->m_lastCursorPosition.y) * factor, (x - context->m_lastCursorPosition.x) * factor, 0));
@@ -441,10 +438,8 @@ private:
     }
     static void handleScroll(GLFWwindow *window, double x, double y) {
         Application *context = static_cast<Application *>(glfwGetWindowUserPointer(window));
-        bool handled = false;
         glm::vec4 v(x, y, context->m_pressed, 0);
-        context->m_applicationContext->setMousePosition(v, IApplicationContext::kMouseWheelPosition, handled);
-        if (!handled) {
+        if (!context->m_applicationContext->handleMouse(v, IApplicationContext::kMouseWheelPosition)) {
             ICamera *camera = context->m_scene->cameraRef();
             const Scalar &factor = 1.0;
             camera->setDistance(camera->distance() + y * factor);

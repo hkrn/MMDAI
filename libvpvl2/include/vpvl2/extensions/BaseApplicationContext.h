@@ -245,8 +245,9 @@ public:
     void getEffectCompilerArguments(Array<IString *> &arguments) const;
     void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter);
     bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const;
-    void setMousePosition(const glm::vec4 &value, MousePositionType type, bool &handled);
-    void handleKeyPress(int value, int modifiers, bool &handled);
+    void setMousePosition(const glm::vec4 &value, MousePositionType type);
+    bool handleMouse(const glm::vec4 &value, MousePositionType type);
+    bool handleKeyPress(int value, int modifiers);
     std::string findModelFilePath(const IModel *modelRef) const;
     std::string findModelFileBasename(const IModel *modelRef) const;
     extensions::gl::FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);

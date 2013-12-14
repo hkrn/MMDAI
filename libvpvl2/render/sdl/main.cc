@@ -265,9 +265,7 @@ private:
     void handleKeyEvent(const SDL_KeyboardEvent &event) {
         const SDL_Keysym &keysym = event.keysym;
         const Scalar degree(15.0);
-        bool handled = false;
-        m_applicationContext->handleKeyPress(keysym.sym, keysym.mod, handled);
-        if (!handled) {
+        if (!m_applicationContext->handleKeyPress(keysym.sym, keysym.mod)) {
             ICamera *cameraRef = m_scene->cameraRef();
             switch (keysym.sym) {
             case SDLK_RIGHT: {
@@ -296,7 +294,6 @@ private:
         }
     }
     void handleMouseButtonEvent(const SDL_MouseButtonEvent &event) {
-        bool handled = false;
         IApplicationContext::MousePositionType type;
         switch (event.button) {
         case SDL_BUTTON_LEFT:
@@ -313,13 +310,14 @@ private:
             break;
         }
         glm::vec4 v(event.x, event.y, event.type == SDL_MOUSEBUTTONDOWN, 0);
-        m_applicationContext->setMousePosition(v, type, handled);
+        m_applicationContext->setMousePosition(v, type);
+        m_applicationContext->handleMouse(v, type);
     }
     void handleMouseMotion(const SDL_MouseMotionEvent &event) {
-        bool handled = false, pressed = event.state == SDL_PRESSED;
+        bool pressed = event.state == SDL_PRESSED;
         glm::vec4 v(event.x, event.y, pressed, 0);
-        m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
-        if (!handled && pressed) {
+        m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition);
+        if (!m_applicationContext->handleMouse(v, IApplicationContext::kMouseCursorPosition) && pressed) {
             ICamera *camera = m_scene->cameraRef();
             const Scalar &factor = 0.5;
             camera->setAngle(camera->angle() + Vector3(event.yrel * factor, event.xrel * factor, 0));
@@ -327,10 +325,8 @@ private:
         }
     }
     void handleMouseWheel(const SDL_MouseWheelEvent &event) {
-        bool handled = false;
         glm::vec4 v(event.x, event.y, false, 0);
-        m_applicationContext->setMousePosition(v, IApplicationContext::kMouseWheelPosition, handled);
-        if (!handled) {
+        if (!m_applicationContext->handleMouse(v, IApplicationContext::kMouseWheelPosition)) {
             const Scalar &factor = 1.0;
             ICamera *camera = m_scene->cameraRef();
             camera->setDistance(camera->distance() + event.y * factor);

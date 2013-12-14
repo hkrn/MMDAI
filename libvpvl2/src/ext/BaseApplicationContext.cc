@@ -1033,37 +1033,48 @@ bool BaseApplicationContext::tryGetSharedTextureParameter(const char *name, Shar
     return false;
 }
 
-void BaseApplicationContext::setMousePosition(const glm::vec4 &value, MousePositionType type, bool &handled)
+void BaseApplicationContext::setMousePosition(const glm::vec4 &value, MousePositionType type)
 {
-    ETwMouseAction mouseAction = !btFuzzyZero(value.z) ? TW_MOUSE_PRESSED : TW_MOUSE_RELEASED;
     switch (type) {
     case kMouseLeftPressPosition:
         m_mouseLeftPressPosition = value;
-        handled = TwMouseButton(mouseAction, TW_MOUSE_LEFT) != 0;
         break;
     case kMouseMiddlePressPosition:
         m_mouseMiddlePressPosition = value;
-        handled = TwMouseButton(mouseAction, TW_MOUSE_MIDDLE) != 0;
         break;
     case kMouseRightPressPosition:
         m_mouseRightPressPosition = value;
-        handled = TwMouseButton(mouseAction, TW_MOUSE_RIGHT) != 0;
-        break;
-    case kMouseWheelPosition:
-        handled = TwMouseWheel(value.y) != 0;
         break;
     case kMouseCursorPosition:
         m_mouseCursorPosition = value;
-        handled = TwMouseMotion(value.x, value.y) != 0;
         break;
     default:
         break;
     }
 }
 
-void BaseApplicationContext::handleKeyPress(int value, int modifiers, bool &handled)
+bool BaseApplicationContext::handleMouse(const glm::vec4 &value, MousePositionType type)
 {
-    handled = TwKeyPressed(value, modifiers) != 0;
+    ETwMouseAction mouseAction = !btFuzzyZero(value.z) ? TW_MOUSE_PRESSED : TW_MOUSE_RELEASED;
+    switch (type) {
+    case kMouseLeftPressPosition:
+        return TwMouseButton(mouseAction, TW_MOUSE_LEFT) != 0;
+    case kMouseMiddlePressPosition:
+        return TwMouseButton(mouseAction, TW_MOUSE_MIDDLE) != 0;
+    case kMouseRightPressPosition:
+        return TwMouseButton(mouseAction, TW_MOUSE_RIGHT) != 0;
+    case kMouseWheelPosition:
+        return TwMouseWheel(value.y) != 0;
+    case kMouseCursorPosition:
+        return TwMouseMotion(value.x, value.y) != 0;
+    default:
+        return false;
+    }
+}
+
+bool BaseApplicationContext::handleKeyPress(int value, int modifiers)
+{
+    return TwKeyPressed(value, modifiers) != 0;
 }
 
 std::string BaseApplicationContext::findModelFilePath(const IModel *modelRef) const

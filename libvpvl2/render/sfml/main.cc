@@ -151,9 +151,8 @@ public:
                     break;
                 }
                 m_mousePressed = event.type == sf::Event::MouseButtonPressed;
-                bool handled = false;
                 glm::vec4 v(mouseButton.x, mouseButton.y, m_mousePressed, 0);
-                m_applicationContext->setMousePosition(v, type, handled);
+                m_applicationContext->setMousePosition(v, type);
                 break;
             }
             case sf::Event::KeyPressed: {
@@ -244,11 +243,10 @@ private:
         }
     }
     void handleMouseMotion(const sf::Event::MouseMoveEvent &event) {
-        bool handled = false;
         int x = event.x, y = event.y;
         glm::vec4 v(x, y, m_mousePressed, 0);
-        m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
-        if (!handled && m_mousePressed) {
+        m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition);
+        if (!m_applicationContext->handleMouse(v, IApplicationContext::kMouseCursorPosition) && m_mousePressed) {
             ICamera *camera = m_scene->cameraRef();
             if (m_lastCursorPosition.length() > 0) {
                 const Scalar &factor = 0.5;
@@ -259,11 +257,9 @@ private:
         m_lastCursorPosition = glm::ivec2(x, y);
     }
     void handleMouseWheel(const sf::Event::MouseWheelEvent &event) {
-        bool handled = false;
         int delta = event.delta;
         glm::vec4 v(0, delta, m_mousePressed, 0);
-        m_applicationContext->setMousePosition(v, IApplicationContext::kMouseWheelPosition, handled);
-        if (!handled) {
+        if (m_applicationContext->handleMouse(v, IApplicationContext::kMouseWheelPosition)) {
             const Scalar &factor = 1.0;
             ICamera *camera = m_scene->cameraRef();
             camera->setDistance(camera->distance() + delta * factor);
