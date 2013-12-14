@@ -426,7 +426,7 @@ FocusScope {
                     "id": "t%1".arg(label.index),
                     "name": label.name,
                     "target": label,
-                    "collapsed": true,
+                    "collapsed": i > 0,
                     "selected": false,
                     "propertyTracks": []
                 };
