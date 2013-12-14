@@ -471,6 +471,9 @@ Item {
             }
         }
     }
+    Keys.onPressed: {
+        event.accepted = renderTarget.handleKeyPress(event.key, event.modifiers)
+    }
     MouseArea {
         id: renderTargetMouseArea
         property int lastX : 0

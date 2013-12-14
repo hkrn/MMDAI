@@ -85,6 +85,80 @@ static IApplicationContext::MousePositionType convertMousePositionType(int butto
     }
 }
 
+static int convertKey(int key)
+{
+    switch (static_cast<Qt::Key>(key)) {
+    case Qt::Key_Backspace:
+        return '\b';
+    case Qt::Key_Tab:
+        return '\t';
+    case Qt::Key_Clear:
+        return 0x0c;
+    case Qt::Key_Return:
+        return '\r';
+    case Qt::Key_Pause:
+        return 0x13;
+    case Qt::Key_Escape:
+        return 0x1b;
+    case Qt::Key_Space:
+        return ' ';
+    case Qt::Key_Delete:
+        return 0x7f;
+    case Qt::Key_Up:
+        return 273;
+    case Qt::Key_Down:
+        return 274;
+    case Qt::Key_Right:
+        return 275;
+    case Qt::Key_Left:
+        return 276;
+    case Qt::Key_Insert:
+        return 277;
+    case Qt::Key_Home:
+        return 278;
+    case Qt::Key_End:
+        return 279;
+    case Qt::Key_PageUp:
+        return 280;
+    case Qt::Key_PageDown:
+        return 281;
+    case Qt::Key_F1:
+    case Qt::Key_F2:
+    case Qt::Key_F3:
+    case Qt::Key_F4:
+    case Qt::Key_F5:
+    case Qt::Key_F6:
+    case Qt::Key_F7:
+    case Qt::Key_F8:
+    case Qt::Key_F9:
+    case Qt::Key_F10:
+    case Qt::Key_F11:
+    case Qt::Key_F12:
+    case Qt::Key_F13:
+    case Qt::Key_F14:
+    case Qt::Key_F15:
+        return 282 + (key - Qt::Key_F1);
+    default:
+        return key;
+    }
+}
+
+static int convertModifier(int value)
+{
+    switch (static_cast<Qt::Modifier>(value)) {
+    case Qt::ShiftModifier:
+        return 0x3;
+    case Qt::ControlModifier:
+        return 0xc0;
+    case Qt::AltModifier:
+        return 0x100;
+    case Qt::MetaModifier:
+        return 0xc00;
+    default:
+        return 0;
+    }
+}
+
 struct Resolver : IApplicationContext::FunctionResolver {
     bool hasExtension(const char *name) const {
         if (const bool *ptr = supportedExtensionsCache.find(name)) {
@@ -1171,10 +1245,10 @@ RenderTarget::~RenderTarget()
 
 bool RenderTarget::handleMousePress(int x, int y, int button)
 {
-    bool handled;
     glm::vec4 v(x - m_viewport.x(), y - m_viewport.y(), 1, 0);
-    m_applicationContext->setMousePosition(v, convertMousePositionType(button), handled);
-    if (!handled && m_currentGizmoRef) {
+    IApplicationContext::MousePositionType type = convertMousePositionType(button);
+    m_applicationContext->setMousePosition(v, type);
+    if (!m_applicationContext->handleMouse(v, type) && m_currentGizmoRef) {
         m_grabbingGizmo = m_currentGizmoRef->OnMouseDown(x, y);
         if (m_grabbingGizmo) {
             ModelProxy *modelProxy = m_projectProxyRef->currentModel();
@@ -1198,10 +1272,9 @@ bool RenderTarget::handleMousePress(int x, int y, int button)
 
 bool RenderTarget::handleMouseMove(int x, int y,  bool pressed)
 {
-    bool handled;
     glm::vec4 v(x - m_viewport.x(), y - m_viewport.y(), pressed, 0);
-    m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition, handled);
-    if (handled) {
+    m_applicationContext->setMousePosition(v, IApplicationContext::kMouseCursorPosition);
+    if (m_applicationContext->handleMouse(v, IApplicationContext::kMouseCursorPosition)) {
         return true;
     }
     else if (m_currentGizmoRef) {
@@ -1228,10 +1301,10 @@ bool RenderTarget::handleMouseMove(int x, int y,  bool pressed)
 
 bool RenderTarget::handleMouseRelease(int x, int y, int button)
 {
-    bool handled;
     glm::vec4 v(x - m_viewport.x(), y - m_viewport.y(), 0, 0);
-    m_applicationContext->setMousePosition(v, convertMousePositionType(button), handled);
-    if (handled) {
+    IApplicationContext::MousePositionType type = convertMousePositionType(button);
+    m_applicationContext->setMousePosition(v, type);
+    if (m_applicationContext->handleMouse(v, type)) {
         return true;
     }
     else if (m_currentGizmoRef) {
@@ -1260,10 +1333,13 @@ bool RenderTarget::handleMouseRelease(int x, int y, int button)
 
 bool RenderTarget::handleMouseWheel(int x, int y)
 {
-    bool handled;
     glm::vec4 v(x, y, 0, 0);
-    m_applicationContext->setMousePosition(v, IApplicationContext::kMouseWheelPosition, handled);
-    return handled;
+    return m_applicationContext->handleMouse(v, IApplicationContext::kMouseWheelPosition);
+}
+
+bool RenderTarget::handleKeyPress(int key, int modifier)
+{
+    return m_applicationContext->handleKeyPress(convertKey(key), convertModifier(modifier));
 }
 
 void RenderTarget::toggleRunning(bool value)

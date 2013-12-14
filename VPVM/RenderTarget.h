@@ -119,6 +119,7 @@ public:
     Q_INVOKABLE bool handleMouseMove(int x, int y,  bool pressed);
     Q_INVOKABLE bool handleMouseRelease(int x, int y, int button);
     Q_INVOKABLE bool handleMouseWheel(int x, int y);
+    Q_INVOKABLE bool handleKeyPress(int value, int modifier);
     Q_INVOKABLE void toggleRunning(bool value);
 
     bool isInitialized() const;
