@@ -1315,7 +1315,7 @@ ApplicationWindow {
                 onBoneTransformTypeDidChange: transformModeActionGroup.handleType(type)
                 onBoneDidSelect: timeline.markTrackSelected(bone)
                 onMorphDidSelect: timeline.markTrackSelected(morph)
-                onModelDidUpload: {
+                onUploadingModelDidSucceed: {
                     model.childMotionChanged.connect(__handleModelChildMotionChanged)
                     model.orderIndexChanged.connect(__handleModelOrderIndexChanged)
                     if (!isProject) {
@@ -1326,6 +1326,13 @@ ApplicationWindow {
                         notificationArea.notify(qsTr("The model %1 is loaded.").arg(model.name))
                     }
                 }
+                onUploadingModelDidFail: {
+                    if (!isProject) {
+                        notificationArea.notify(qsTr("The model %1 cannot be loaded").arg(model.name))
+                    }
+                }
+                onUploadingEffectDidSucceed: notificationArea.notify(qsTr("The effect %1 is loaded.").arg(model.name))
+                onUploadingEffectDidFail: notificationArea.notify(qsTr("The effect %1 cannot be loaded.").arg(model.name))
                 onPlayingChanged: playing ? timeline.saveEditMotionState() : timeline.restoreEditMotionState()
                 onEncodeDidFinish: notificationArea.notify(isNormalExit ? qsTr("Encoding process is finished normally.") : qsTr("Encoding process is failed."))
                 onEncodeDidCancel: notificationArea.notify(qsTr("Encode process is cancelled."))

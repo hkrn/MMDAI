@@ -367,9 +367,10 @@ public:
             return false;
         }
     }
-    QList<ModelProxyPair> uploadEnqueuedModelProxies(ProjectProxy *projectProxy) {
-        QList<ModelProxyPair> uploadedModelProxies;
+    void uploadEnqueuedModelProxies(ProjectProxy *projectProxy, QList<ModelProxyPair> &succeededModelProxies, QList<ModelProxyPair> &failedModelProxies) {
         XMLProject *projectRef = projectProxy->projectInstanceRef();
+        succeededModelProxies.clear();
+        failedModelProxies.clear();
         while (!m_uploadingModels.isEmpty()) {
             const ModelProxyPair &pair = m_uploadingModels.dequeue();
             ModelProxy *modelProxy = pair.first;
@@ -395,14 +396,17 @@ public:
                 }
                 addModelFilePath(modelRef, fileInfo.absoluteFilePath().toStdString());
                 setEffectModelRef(effectRef, modelRef);
-                uploadedModelProxies.append(pair);
+                succeededModelProxies.append(pair);
+            }
+            else {
+                failedModelProxies.append(pair);
             }
         }
-        return uploadedModelProxies;
     }
-    QList<ModelProxy *> uploadEnqueuedEffects(ProjectProxy *projectProxy) {
-        QList<ModelProxy *> uploadedEffects;
+    void uploadEnqueuedEffects(ProjectProxy *projectProxy, QList<ModelProxy *> &succeededEffects, QList<ModelProxy *> &failedEffects) {
         XMLProject *projectRef = projectProxy->projectInstanceRef();
+        succeededEffects.clear();
+        failedEffects.clear();
         while (!m_uploadingEffects.isEmpty()) {
             ModelProxy *modelProxy = m_uploadingEffects.dequeue();
             const QFileInfo fileInfo(modelProxy->fileUrl().toLocalFile());
@@ -420,13 +424,13 @@ public:
                 projectRef->removeModel(modelRef);
                 projectRef->addModel(modelRef, engine.release(), uuid, m_orderIndex++);
                 addModelFilePath(modelRef, fileInfo.absoluteFilePath().toStdString());
-                uploadedEffects.append(modelProxy);
+                succeededEffects.append(modelProxy);
             }
             else {
                 projectProxy->deleteModel(modelProxy);
+                failedEffects.append(modelProxy);
             }
         }
-        return uploadedEffects;
     }
     QList<ModelProxy *> deleteEnqueuedModelProxies(ProjectProxy *projectProxy) {
         QList<ModelProxy *> deletedModelProxies;
@@ -2014,13 +2018,19 @@ void RenderTarget::performUploadingEnqueuedModels()
 {
     Q_ASSERT(window() && m_applicationContext);
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedModels);
-    const QList<ApplicationContext::ModelProxyPair> &uploadedModelProxies = m_applicationContext->uploadEnqueuedModelProxies(m_projectProxyRef);
-    foreach (const ApplicationContext::ModelProxyPair &pair, uploadedModelProxies) {
+    QList<ApplicationContext::ModelProxyPair> succeededModelProxies, failedModelProxies;
+    m_applicationContext->uploadEnqueuedModelProxies(m_projectProxyRef, succeededModelProxies, failedModelProxies);
+    foreach (const ApplicationContext::ModelProxyPair &pair, succeededModelProxies) {
         ModelProxy *modelProxy = pair.first;
         VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded" << (pair.second ? " from the project." : "."));
         connect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateGizmo);
-        emit modelDidUpload(modelProxy, pair.second);
+        emit uploadingModelDidSucceed(modelProxy, pair.second);
+    }
+    foreach (const ApplicationContext::ModelProxyPair &pair, failedModelProxies) {
+        ModelProxy *modelProxy = pair.first;
+        VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is not uploaded " << (pair.second ? " from the project." : "."));
+        emit uploadingModelDidFail(modelProxy, pair.second);
     }
     emit enqueuedModelsDidUpload();
 }
@@ -2029,10 +2039,15 @@ void RenderTarget::performUploadingEnqueuedEffects()
 {
     Q_ASSERT(window() && m_applicationContext);
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedEffects);
-    const QList<ModelProxy *> &uploadedEffects = m_applicationContext->uploadEnqueuedEffects(m_projectProxyRef);
-    foreach (ModelProxy *modelProxy, uploadedEffects) {
+    QList<ModelProxy *> succeededEffects, failedEffects;
+    m_applicationContext->uploadEnqueuedEffects(m_projectProxyRef, succeededEffects, failedEffects);
+    foreach (ModelProxy *modelProxy, succeededEffects) {
         VPVL2_VLOG(1, "The effect " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded.");
-        emit effectDidUpload(modelProxy);
+        emit uploadingEffectDidSucceed(modelProxy);
+    }
+    foreach (ModelProxy *modelProxy, failedEffects) {
+        VPVL2_VLOG(1, "The effect " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is not uploaded.");
+        emit uploadingEffectDidFail(modelProxy);
     }
     emit enqueuedEffectsDidUpload();
 }

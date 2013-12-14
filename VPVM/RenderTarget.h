@@ -188,8 +188,10 @@ signals:
     void visibleGizmoMasksChanged();
     void graphicsDeviceChanged();
     void errorDidHappen(const QString &message);
-    void modelDidUpload(ModelProxy *model, bool isProject);
-    void effectDidUpload(ModelProxy *model);
+    void uploadingModelDidSucceed(ModelProxy *model, bool isProject);
+    void uploadingModelDidFail(ModelProxy *model, bool isProject);
+    void uploadingEffectDidSucceed(ModelProxy *model);
+    void uploadingEffectDidFail(ModelProxy *model);
     void enqueuedModelsDidUpload();
     void enqueuedEffectsDidUpload();
     void enqueuedModelsDidDelete();

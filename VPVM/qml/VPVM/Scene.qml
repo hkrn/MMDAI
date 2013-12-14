@@ -69,7 +69,10 @@ Item {
     property var __keycode2closures : ({})
     signal toggleTimelineVisible()
     signal toggleTimelineWindowed()
-    signal modelDidUpload(var model, var isProject)
+    signal uploadingModelDidSucceed(var model, var isProject)
+    signal uploadingModelDidFail(var model, var isProject)
+    signal uploadingEffectDidSucceed(var model)
+    signal uploadingEffectDidFail(var model)
     signal encodeDidFinish(var isNormalExit)
     signal encodeDidCancel()
     signal notificationDidPost(string message)
@@ -403,7 +406,7 @@ Item {
         }
         onCurrentFPSChanged: fpsCountPanel.value = currentFPS > 0 ? currentFPS : "N/A"
         onLastTimeIndexChanged: renderTargetAnimation.setRange(lastTimeIndex, projectDocument.durationTimeIndex)
-        onModelDidUpload: {
+        onUploadingModelDidSucceed: {
             model.targetBonesDidBeginTransform.connect(__handleTargetBonesDidBeginTransform)
             model.targetBonesDidCommitTransform.connect(__handleTargetBonesDidCommitTransform)
             model.transformTypeChanged.connect(__handleTransformTypeChanged)
@@ -413,8 +416,17 @@ Item {
                 model.selectOpaqueObject(model.availableBones[0])
             }
             buzyIndicator.running = false
-            scene.modelDidUpload(model, isProject)
+            scene.uploadingModelDidSucceed(model, isProject)
         }
+        onUploadingModelDidFail: {
+            if (model === currentModel) {
+                currentModel = null
+            }
+            buzyIndicator.running = false
+            scene.uploadingModelDidFail(model, isProject)
+        }
+        onUploadingEffectDidSucceed: scene.uploadingEffectDidSucceed(model)
+        onUploadingEffectDidFail: scene.uploadingEffectDidFail(model)
         onErrorDidHappen: notificationDidPost(message)
         onEncodeDidBegin: scene.state = "encode"
         onEncodeDidProceed: encodingPanel.text = qsTr("Encoding %1 of %2 frames").arg(proceed).arg(estimated)
