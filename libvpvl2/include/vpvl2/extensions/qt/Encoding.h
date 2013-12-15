@@ -75,11 +75,11 @@ public:
         }
         return &m_null;
     }
-    IString *toString(const uint8 *value, vsize /* size */, IString::Codec codec) const {
+    IString *toString(const uint8 *value, vsize size, IString::Codec codec) const {
         const char *str = reinterpret_cast<const char *>(value);
         IString *s = 0;
         if (QTextCodec *converter = detectTextCodec(codec)) {
-            QString us = converter->toUnicode(str);
+            QString us = converter->toUnicode(str, size);
             /* remove head and trail spaces and 0x1a (appended by PMDEditor) */
             us.replace(QChar(0x1a), QChar());
             us = us.trimmed();
