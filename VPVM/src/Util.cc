@@ -36,7 +36,7 @@
 */
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/icu4c/String.h>
+#include <vpvl2/extensions/qt/String.h>
 
 #include "Util.h"
 
@@ -45,22 +45,16 @@
 #include <glm/gtc/type_ptr.hpp>
 
 using namespace vpvl2;
-using namespace vpvl2::extensions::icu4c;
+using namespace vpvl2::extensions::qt;
 
 QString Util::toQString(const IString *value)
 {
-    return value ? toQString(static_cast<const String *>(value)->value()) : QString();
-}
-
-QString Util::toQString(const UnicodeString &value)
-{
-    const ushort *v = reinterpret_cast<const ushort *>(value.getBuffer());
-    return QString::fromUtf16(v, value.length());
+    return value ? static_cast<const String *>(value)->value() : QString();
 }
 
 bool Util::equalsString(const QString lhs, const IString *rhs)
 {
-    return lhs == Util::toQString(rhs);
+    return lhs == static_cast<const String *>(rhs)->value();
 }
 
 QMatrix4x4 Util::fromMatrix4(const glm::mat4 &value)
@@ -70,12 +64,6 @@ QMatrix4x4 Util::fromMatrix4(const glm::mat4 &value)
         m.data()[i] = glm::value_ptr(value)[i];
     }
     return m;
-}
-
-UnicodeString Util::fromQString(const QString &value)
-{
-    const UChar *v = reinterpret_cast<const UChar *>(value.utf16());
-    return UnicodeString(v, value.size());
 }
 
 Vector3 Util::toVector3(const QVector3D &value)

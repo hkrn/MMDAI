@@ -36,11 +36,13 @@
 */
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/gl/Texture2D.h>
+#include <vpvl2/gl/Texture2D.h>
 #include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/extensions/XMLProject.h>
+#include <vpvl2/extensions/qt/String.h>
 
 #include "Common.h"
+#include <QtCore>
 #include <QtMultimedia>
 #include <QQuickWindow>
 #include <QOpenGLBuffer>
@@ -67,7 +69,7 @@
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
-using namespace vpvl2::extensions::icu4c;
+using namespace vpvl2::extensions::qt;
 
 namespace {
 
@@ -333,6 +335,20 @@ public:
     bool existsFile(const std::string &path) const {
         return QFile::exists(QString::fromStdString(path));
     }
+    bool extractFilePath(const std::string &path, std::string &fileName, std::string &basename) const {
+        QFileInfo finfo(QString::fromStdString(path));
+        fileName = finfo.fileName().toStdString();
+        basename = finfo.baseName().toStdString();
+        return true;
+    }
+    bool extractModelNameFromFileName(const std::string &path, std::string &modelName) const {
+        QRegExp regexp("");
+        if (regexp.indexIn(QString::fromStdString(path))) {
+            modelName = regexp.cap(1).toStdString();
+            return true;
+        }
+        return false;
+    }
     bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
         QImage image;
         image.loadFromData(data, size);
@@ -375,7 +391,7 @@ public:
             const ModelProxyPair &pair = m_uploadingModels.dequeue();
             ModelProxy *modelProxy = pair.first;
             const QFileInfo fileInfo(modelProxy->fileUrl().toLocalFile());
-            const String dir(Util::fromQString(fileInfo.absoluteDir().absolutePath()));
+            const String dir(fileInfo.absoluteDir().absolutePath());
             ModelContext context(this, 0, &dir);
             IModel *modelRef = modelProxy->data();
             IRenderEngineSmartPtr engine(projectRef->createRenderEngine(this, modelRef, Scene::kEffectCapable));
@@ -411,7 +427,7 @@ public:
             ModelProxy *modelProxy = m_uploadingEffects.dequeue();
             const QFileInfo fileInfo(modelProxy->fileUrl().toLocalFile());
             if (IEffect *effectRef = createEffectRef(fileInfo.absoluteFilePath().toStdString())) {
-                const String dir(Util::fromQString(fileInfo.absoluteDir().absolutePath()));
+                const String dir(fileInfo.absoluteDir().absolutePath());
                 ModelContext context(this, 0, &dir);
                 IModel *modelRef = modelProxy->data();
                 IRenderEngineSmartPtr engine(projectRef->createRenderEngine(this, modelRef, Scene::kEffectCapable));

@@ -50,12 +50,10 @@ class ProjectProxy;
 namespace vpvl2 {
 class IModel;
 class Scene;
-namespace extensions {
 namespace gl {
 class ShaderProgram;
 class VertexBundle;
 class VertexBundleLayout;
-}
 }
 }
 
@@ -121,8 +119,8 @@ private:
 
     ProjectProxy *m_parentProjectProxyRef;
     QScopedPointer<PrivateShaderProgram> m_program;
-    QScopedPointer<vpvl2::extensions::gl::VertexBundle> m_bundle;
-    QScopedPointer<vpvl2::extensions::gl::VertexBundleLayout> m_layout;
+    QScopedPointer<vpvl2::gl::VertexBundle> m_bundle;
+    QScopedPointer<vpvl2::gl::VertexBundleLayout> m_layout;
     QVector4D m_size;
     QColor m_lineColor;
     QColor m_axisXColor;

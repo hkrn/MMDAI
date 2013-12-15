@@ -35,20 +35,21 @@
 
 */
 
+#include "BaseMotionTrack.h"
+#include "BoneKeyframeRefObject.h"
+#include "BoneMotionTrack.h"
+#include "BoneRefObject.h"
 #include "ModelProxy.h"
-#include "MorphKeyframeRefObject.h"
-#include "MorphMotionTrack.h"
-#include "MorphRefObject.h"
 #include "MotionProxy.h"
 #include "Util.h"
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/icu4c/String.h>
+#include <vpvl2/extensions/qt/String.h>
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 
-MorphKeyframeRefObject::MorphKeyframeRefObject(MorphMotionTrack *trackRef, IMorphKeyframe *keyframeRef)
+BoneKeyframeRefObject::BoneKeyframeRefObject(BoneMotionTrack *trackRef, IBoneKeyframe *keyframeRef)
     : BaseKeyframeRefObject(trackRef->parentMotion()),
       m_parentTrackRef(trackRef),
       m_keyframeRef(keyframeRef)
@@ -57,61 +58,88 @@ MorphKeyframeRefObject::MorphKeyframeRefObject(MorphMotionTrack *trackRef, IMorp
     Q_ASSERT(m_keyframeRef);
 }
 
-MorphKeyframeRefObject::~MorphKeyframeRefObject()
+BoneKeyframeRefObject::~BoneKeyframeRefObject()
 {
+    m_parentTrackRef = 0;
     m_keyframeRef = 0;
 }
 
-BaseMotionTrack *MorphKeyframeRefObject::parentTrack() const
+QVector4D BoneKeyframeRefObject::interpolationParameter(int type) const
+{
+    QuadWord value;
+    m_keyframeRef->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(type), value);
+    return QVector4D(value.x(), value.y(), value.z(), value.w());
+}
+
+void BoneKeyframeRefObject::setInterpolationParameter(int type, const QVector4D &value)
+{
+    QuadWord v(value.x(), value.y(), value.z(), value.w());
+    m_keyframeRef->setInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(type), v);
+}
+
+BaseMotionTrack *BoneKeyframeRefObject::parentTrack() const
 {
     return m_parentTrackRef;
 }
 
-MorphRefObject *MorphKeyframeRefObject::parentMorph() const
+BoneRefObject *BoneKeyframeRefObject::parentBone() const
 {
     if (ModelProxy *modelProxy = parentMotion()->parentModel()) {
-        return modelProxy->findMorphByName(name());
+        return modelProxy->findBoneByName(name());
     }
     return 0;
 }
 
-IKeyframe *MorphKeyframeRefObject::baseKeyframeData() const
+IKeyframe *BoneKeyframeRefObject::baseKeyframeData() const
 {
     return data();
 }
 
-QObject *MorphKeyframeRefObject::opaque() const
+QObject *BoneKeyframeRefObject::opaque() const
 {
-    return parentMorph();
+    return parentBone();
 }
 
-QString MorphKeyframeRefObject::name() const
+QString BoneKeyframeRefObject::name() const
 {
     return Util::toQString(m_keyframeRef->name());
 }
 
-void MorphKeyframeRefObject::setName(const QString &value)
+void BoneKeyframeRefObject::setName(const QString &value)
 {
     if (!Util::equalsString(value, m_keyframeRef->name())) {
-        icu4c::String s(Util::fromQString(value));
+        qt::String s(value);
         m_keyframeRef->setName(&s);
     }
 }
 
-qreal MorphKeyframeRefObject::weight() const
+QVector3D BoneKeyframeRefObject::localTranslation() const
 {
-    return static_cast<qreal>(m_keyframeRef->weight());
+    return Util::fromVector3(m_keyframeRef->localTranslation());
 }
 
-void MorphKeyframeRefObject::setWeight(const qreal &value)
+void BoneKeyframeRefObject::setLocalTranslation(const QVector3D &value)
 {
-    if (!qFuzzyCompare(value, weight())) {
-        m_keyframeRef->setWeight(static_cast<IMorph::WeightPrecision>(value));
-        emit weightChanged();
+    if (!qFuzzyCompare(value, localTranslation())) {
+        m_keyframeRef->setLocalTranslation(Util::toVector3(value));
+        emit localTranslationChanged();
     }
 }
 
-IMorphKeyframe *MorphKeyframeRefObject::data() const
+QQuaternion BoneKeyframeRefObject::localOrientation() const
+{
+    return Util::fromQuaternion(m_keyframeRef->localOrientation());
+}
+
+void BoneKeyframeRefObject::setLocalOrientation(const QQuaternion &value)
+{
+    if (!qFuzzyCompare(value, localOrientation())) {
+        m_keyframeRef->setLocalOrientation(Util::toQuaternion(value));
+        emit localRotationChanged();
+    }
+}
+
+IBoneKeyframe *BoneKeyframeRefObject::data() const
 {
     return m_keyframeRef;
 }

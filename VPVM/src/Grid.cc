@@ -44,15 +44,15 @@
 
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/XMLProject.h>
-#include <vpvl2/extensions/icu4c/String.h>
-#include <vpvl2/extensions/gl/ShaderProgram.h>
-#include <vpvl2/extensions/gl/VertexBundle.h>
-#include <vpvl2/extensions/gl/VertexBundleLayout.h>
+#include <vpvl2/extensions/qt/String.h>
+#include <vpvl2/gl/ShaderProgram.h>
+#include <vpvl2/gl/VertexBundle.h>
+#include <vpvl2/gl/VertexBundleLayout.h>
 #include <glm/gtc/type_ptr.hpp>
 
 using namespace vpvl2;
-using namespace vpvl2::extensions::icu4c;
-using namespace vpvl2::extensions::gl;
+using namespace vpvl2::gl;
+using namespace vpvl2::extensions::qt;
 
 class Grid::PrivateShaderProgram : public ShaderProgram {
 public:
@@ -70,12 +70,12 @@ public:
         m_modelViewProjectionMatrix = -1;
     }
 
-    void addShaderFromFile(const QString &path, vpvl2::extensions::gl::GLuint type) {
+    void addShaderFromFile(const QString &path, GLuint type) {
         QFile file(path);
         if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
             vsize size = file.size();
             uchar *address = file.map(0, size);
-            String s(UnicodeString(reinterpret_cast<const char *>(address), size));
+            String s(QString::fromUtf8(reinterpret_cast<const char *>(address), size));
             addShaderSource(&s, type);
             file.unmap(address);
         }
@@ -100,7 +100,7 @@ public:
         functions.glDisableVertexAttribArray(kColor);
     }
     void setUniformValues(const QMatrix4x4 &matrix) {
-		vpvl2::extensions::gl::GLfloat m[16] = { 0 };
+        GLfloat m[16] = { 0 };
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         const float *source = matrix.constData();
 #else
@@ -113,7 +113,7 @@ public:
     }
 
 private:
-    vpvl2::extensions::gl::GLint m_modelViewProjectionMatrix;
+    GLint m_modelViewProjectionMatrix;
 };
 
 Grid::Grid(QObject *parent)

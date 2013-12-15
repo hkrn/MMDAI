@@ -36,10 +36,11 @@
 */
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/extensions/Pose.h>
 #include <vpvl2/extensions/World.h>
 #include <vpvl2/extensions/XMLProject.h>
+#include <vpvl2/extensions/qt/Encoding.h>
+#include <vpvl2/extensions/qt/String.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -71,6 +72,7 @@
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
+using namespace vpvl2::extensions::qt;
 
 namespace {
 
@@ -86,7 +88,7 @@ struct ProjectDelegate : public XMLProject::IDelegate {
         return Util::toQString(value).toStdString();
     }
     const IString *toStringFromStd(const std::string &value) const {
-        return new icu4c::String(Util::fromQString(QString::fromStdString(value)));
+        return String::create(value);
     }
     bool loadModel(const XMLProject::UUID &uuid, const StringMap &settings, IModel::Type /* type */, IModel *&model, IRenderEngine *&engine, int &priority) {
         const std::string &uri = settings.value(XMLProject::kSettingURIKey, std::string());
@@ -127,7 +129,7 @@ private:
             if (m_result) {
                 /* set filename of the model if the name of the model is null such as asset */
                 if (!m_model->name(IEncoding::kDefaultLanguage)) {
-                    const icu4c::String s(Util::fromQString(QFileInfo(file.fileName()).fileName()));
+                    const qt::String s(QFileInfo(file.fileName()).fileName());
                     m_model->setName(&s, IEncoding::kDefaultLanguage);
                 }
             }
@@ -166,7 +168,7 @@ public:
     inline QString errorString() const { return m_errorString; }
     inline bool isRunning() const { return m_running; }
 
-private:
+//private:
     void run() {
         QFile file(m_fileUrl.toLocalFile());
         if (file.open(QFile::ReadOnly)) {
@@ -222,7 +224,7 @@ static void convertStringFromVariant(const QVariant &value, std::string &result)
 
 ProjectProxy::ProjectProxy(QObject *parent)
     : QObject(parent),
-      m_encoding(new icu4c::Encoding(&m_dictionary)),
+      m_encoding(new Encoding(&m_dictionary)),
       m_factory(new Factory(m_encoding.data())),
       m_delegate(new ProjectDelegate(this)),
       m_project(new XMLProject(m_delegate.data(), m_factory.data(), false)),
@@ -261,7 +263,7 @@ ProjectProxy::ProjectProxy(QObject *parent)
     while (it.hasNext()) {
         it.next();
         const QVariant &value = settings.value("constants." + it.key());
-        m_dictionary.insert(it.value(), new icu4c::String(Util::fromQString(value.toString())));
+        m_dictionary.insert(it.value(), String::create(value.toString().toStdString()));
     }
     connect(this, &ProjectProxy::currentModelChanged, this, &ProjectProxy::updateParentBindingModel);
     connect(this, &ProjectProxy::parentBindingDidUpdate, this, &ProjectProxy::availableParentBindingBonesChanged);
@@ -376,10 +378,12 @@ bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, Motio
 {
     Q_ASSERT(fileUrl.isValid());
     QScopedPointer<LoadingMotionTask> task(new LoadingMotionTask(modelProxy, m_factory.data(), fileUrl));
+    /*
     QThreadPool::globalInstance()->start(task.data());
     while (task->isRunning()) {
         qApp->processEvents(QEventLoop::AllEvents);
     }
+    */
     m_errorString.clear();
     if (IMotion *motion = task->takeMotion()) {
         const QUuid &uuid = QUuid::createUuid();

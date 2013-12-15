@@ -35,40 +35,12 @@
 
 */
 
-#ifndef UTIL_H
-#define UTIL_H
+import qbs 1.0
 
-#include <QColor>
-#include <QMatrix4x4>
-#include <QQuaternion>
-#include <QString>
-#include <QVector3D>
-#include <unicode/unistr.h>
-#include <vpvl2/Common.h>
-#include <glm/glm.hpp>
-
-namespace vpvl2 {
-class IString;
+Project {
+    references: [
+        "libvpvl2/libvpvl2.qbs",
+        "VPVM/VPVM.qbs"
+    ]
 }
 
-class Util {
-public:
-    static QString toQString(const vpvl2::IString *value);
-    static QString toQString(const UnicodeString &value);
-    static bool equalsString(const QString lhs, const vpvl2::IString *rhs);
-    static QMatrix4x4 fromMatrix4(const glm::mat4 &value);
-    static UnicodeString fromQString(const QString &value);
-    static vpvl2::Vector3 toVector3(const QVector3D &value);
-    static QVector3D fromVector3(const vpvl2::Vector3 &value);
-    static vpvl2::Vector3 toColor(const QColor &value);
-    static QColor fromColor(const vpvl2::Vector3 &value);
-    static vpvl2::Quaternion toQuaternion(const QQuaternion &value);
-    static QQuaternion fromQuaternion(const vpvl2::Quaternion &value);
-    static QString resourcePath(const QString &basePath);
-
-private:
-    Util();
-    ~Util();
-};
-
-#endif // UTIL_H
