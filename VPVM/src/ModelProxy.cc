@@ -37,7 +37,7 @@
 
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/XMLProject.h>
-#include <vpvl2/extensions/icu4c/String.h>
+#include <vpvl2/extensions/qt/String.h>
 
 #include <QtCore>
 #include <QVector3D>
@@ -53,7 +53,7 @@
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
-using namespace vpvl2::extensions::icu4c;
+using namespace vpvl2::extensions::qt;
 
 namespace {
 

@@ -58,10 +58,10 @@
 #include <QUndoStack>
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/icu4c/String.h>
+#include <vpvl2/extensions/qt/String.h>
 
 using namespace vpvl2;
-using namespace vpvl2::extensions::icu4c;
+using namespace vpvl2::extensions::qt;
 
 namespace {
 
