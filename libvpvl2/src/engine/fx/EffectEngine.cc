@@ -41,11 +41,11 @@
 #include "vpvl2/extensions/fx/Util.h"
 #include "vpvl2/internal/util.h"
 
-#include "vpvl2/extensions/gl/FrameBufferObject.h"
-#include "vpvl2/extensions/gl/Texture2D.h"
-#include "vpvl2/extensions/gl/Texture3D.h"
-#include "vpvl2/extensions/gl/TexturePtrRef.h"
-#include "vpvl2/extensions/gl/VertexBundle.h"
+#include "vpvl2/gl/FrameBufferObject.h"
+#include "vpvl2/gl/Texture2D.h"
+#include "vpvl2/gl/Texture3D.h"
+#include "vpvl2/gl/TexturePtrRef.h"
+#include "vpvl2/gl/VertexBundle.h"
 
 #include <string.h> /* for Linux */
 
@@ -57,8 +57,8 @@ namespace
 
 using namespace vpvl2;
 using namespace vpvl2::fx;
+using namespace vpvl2::gl;
 using namespace vpvl2::extensions::fx;
-using namespace vpvl2::extensions::gl;
 
 static const Scalar kWidth = 1, kHeight = 1;
 static const Vector4 kVertices[] = {
@@ -91,7 +91,7 @@ namespace vpvl2
 {
 namespace fx
 {
-using namespace extensions::gl;
+using namespace gl;
 
 /* BasicParameter */
 

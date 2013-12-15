@@ -47,12 +47,9 @@ namespace vpvl2
 class IString;
 class ITexture;
 
-namespace extensions
-{
 namespace gl
 {
 class FrameBufferObject;
-}
 }
 
 class IEffect
@@ -262,7 +259,7 @@ public:
      * @brief parentFrameBufferObject
      * @return
      */
-    virtual extensions::gl::FrameBufferObject *parentFrameBufferObject() const = 0;
+    virtual gl::FrameBufferObject *parentFrameBufferObject() const = 0;
 
     /**
      * フレームバッファを作成します.

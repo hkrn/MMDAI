@@ -53,8 +53,8 @@ namespace vpvl2
 namespace nvfx
 {
 
+using namespace gl;
 using namespace extensions::fx;
-using namespace extensions::gl;
 
 template<typename TAttributeBindable>
 static void internalBindAttributes(TAttributeBindable *value)

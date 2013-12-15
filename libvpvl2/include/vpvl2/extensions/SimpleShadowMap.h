@@ -36,18 +36,16 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_SIMPLESHADOWMAP_H_
-#define VPVL2_EXTENSIONS_GL_SIMPLESHADOWMAP_H_
+#ifndef VPVL2_EXTENSIONS_SIMPLESHADOWMAP_H_
+#define VPVL2_EXTENSIONS_SIMPLESHADOWMAP_H_
 
 #include <vpvl2/IShadowMap.h>
-#include <vpvl2/extensions/gl/FrameBufferObject.h>
-#include <vpvl2/extensions/gl/Texture2D.h>
+#include <vpvl2/gl/FrameBufferObject.h>
+#include <vpvl2/gl/Texture2D.h>
 
 namespace vpvl2
 {
 namespace extensions
-{
-namespace gl
 {
 
 class SimpleShadowMap VPVL2_DECL_FINAL : public IShadowMap {
@@ -71,7 +69,7 @@ public:
           m_colorTexture(0),
           m_distance(7.5f)
     {
-        m_colorTexture = new Texture2D(resolver, BaseSurface::Format(kGL_RED, kGL_R32F, kGL_FLOAT, 0), m_size, 0);
+        m_colorTexture = new gl::Texture2D(resolver, gl::BaseSurface::Format(gl::kGL_RED, gl::kGL_R32F, gl::kGL_FLOAT, 0), m_size, 0);
     }
     ~SimpleShadowMap() {
         release();
@@ -83,26 +81,26 @@ public:
             m_colorTexture->create();
             m_colorTexture->bind();
             m_colorTexture->allocate(0);
-            m_colorTexture->setParameter(BaseTexture::kGL_TEXTURE_WRAP_S, int(BaseTexture::kGL_CLAMP_TO_EDGE));
-            m_colorTexture->setParameter(BaseTexture::kGL_TEXTURE_WRAP_T, int(BaseTexture::kGL_CLAMP_TO_EDGE));
-            m_colorTexture->setParameter(BaseTexture::kGL_TEXTURE_MAG_FILTER, int(BaseTexture::kGL_LINEAR));
-            m_colorTexture->setParameter(BaseTexture::kGL_TEXTURE_MIN_FILTER, int(BaseTexture::kGL_LINEAR));
+            m_colorTexture->setParameter(gl::BaseTexture::kGL_TEXTURE_WRAP_S, int(gl::BaseTexture::kGL_CLAMP_TO_EDGE));
+            m_colorTexture->setParameter(gl::BaseTexture::kGL_TEXTURE_WRAP_T, int(gl::BaseTexture::kGL_CLAMP_TO_EDGE));
+            m_colorTexture->setParameter(gl::BaseTexture::kGL_TEXTURE_MAG_FILTER, int(gl::BaseTexture::kGL_LINEAR));
+            m_colorTexture->setParameter(gl::BaseTexture::kGL_TEXTURE_MIN_FILTER, int(gl::BaseTexture::kGL_LINEAR));
             m_colorTexture->unbind();
             genRenderbuffers(1, &m_depthBuffer);
-            bindRenderbuffer(FrameBufferObject::kGL_RENDERBUFFER, m_depthBuffer);
-            renderbufferStorage(FrameBufferObject::kGL_RENDERBUFFER, FrameBufferObject::kGL_DEPTH_COMPONENT32F, m_size.x(), m_size.y());
-            bindRenderbuffer(FrameBufferObject::kGL_RENDERBUFFER, 0);
+            bindRenderbuffer(gl::FrameBufferObject::kGL_RENDERBUFFER, m_depthBuffer);
+            renderbufferStorage(gl::FrameBufferObject::kGL_RENDERBUFFER, gl::FrameBufferObject::kGL_DEPTH_COMPONENT32F, m_size.x(), m_size.y());
+            bindRenderbuffer(gl::FrameBufferObject::kGL_RENDERBUFFER, 0);
             bind();
-            framebufferTexture2D(FrameBufferObject::kGL_FRAMEBUFFER, FrameBufferObject::kGL_COLOR_ATTACHMENT0, Texture2D::kGL_TEXTURE_2D, m_colorTexture->data(), 0);
-            framebufferRenderbuffer(FrameBufferObject::kGL_FRAMEBUFFER, FrameBufferObject::kGL_DEPTH_ATTACHMENT, FrameBufferObject::kGL_RENDERBUFFER, m_depthBuffer);
+            framebufferTexture2D(gl::FrameBufferObject::kGL_FRAMEBUFFER, gl::FrameBufferObject::kGL_COLOR_ATTACHMENT0, gl::Texture2D::kGL_TEXTURE_2D, m_colorTexture->data(), 0);
+            framebufferRenderbuffer(gl::FrameBufferObject::kGL_FRAMEBUFFER, gl::FrameBufferObject::kGL_DEPTH_ATTACHMENT, gl::FrameBufferObject::kGL_RENDERBUFFER, m_depthBuffer);
             unbind();
         }
     }
     void bind() {
-        bindFramebuffer(FrameBufferObject::kGL_FRAMEBUFFER, m_frameBuffer);
+        bindFramebuffer(gl::FrameBufferObject::kGL_FRAMEBUFFER, m_frameBuffer);
     }
     void unbind() {
-        bindFramebuffer(FrameBufferObject::kGL_FRAMEBUFFER, 0);
+        bindFramebuffer(gl::FrameBufferObject::kGL_FRAMEBUFFER, 0);
     }
     void reset() {
         m_position.setZero();
@@ -119,16 +117,16 @@ public:
     void setDistance(const Scalar &value) { m_distance = value; }
 
 private:
-    typedef void (GLAPIENTRY * PFNGLGENFRAMEBUFFERSPROC) (GLsizei n, GLuint* framebuffers);
-    typedef void (GLAPIENTRY * PFNGLBINDFRAMEBUFFERPROC) (GLenum target, GLuint framebuffer);
-    typedef void (GLAPIENTRY * PFNGLDELETEFRAMEBUFFERSPROC) (GLsizei n, const GLuint* framebuffers);
-    typedef void (GLAPIENTRY * PFNGLGENRENDERBUFFERSPROC) (GLsizei n, GLuint* renderbuffers);
-    typedef void (GLAPIENTRY * PFNGLBINDRENDERBUFFERPROC) (GLenum target, GLuint renderbuffer);
-    typedef void (GLAPIENTRY * PFNGLRENDERBUFFERSTORAGEPROC) (GLenum target, GLenum internalformat, GLsizei width, GLsizei height);
-    typedef void (GLAPIENTRY * PFNGLFRAMEBUFFERRENDERBUFFERPROC) (GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer);
-    typedef void (GLAPIENTRY * PFNGLDELETERENDERBUFFERSPROC) (GLsizei n, const GLuint* renderbuffers);
-    typedef void (GLAPIENTRY * PFNGLTEXPARAMETERIPROC) (GLenum target, GLenum pname, GLint param);
-    typedef void (GLAPIENTRY * PFNGLFRAMEBUFFERTEXTURE2DPROC) (GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+    typedef void (GLAPIENTRY * PFNGLGENFRAMEBUFFERSPROC) (gl::GLsizei n, gl::GLuint* framebuffers);
+    typedef void (GLAPIENTRY * PFNGLBINDFRAMEBUFFERPROC) (gl::GLenum target, gl::GLuint framebuffer);
+    typedef void (GLAPIENTRY * PFNGLDELETEFRAMEBUFFERSPROC) (gl::GLsizei n, const gl::GLuint* framebuffers);
+    typedef void (GLAPIENTRY * PFNGLGENRENDERBUFFERSPROC) (gl::GLsizei n, gl::GLuint* renderbuffers);
+    typedef void (GLAPIENTRY * PFNGLBINDRENDERBUFFERPROC) (gl::GLenum target, gl::GLuint renderbuffer);
+    typedef void (GLAPIENTRY * PFNGLRENDERBUFFERSTORAGEPROC) (gl::GLenum target, gl::GLenum internalformat, gl::GLsizei width, gl::GLsizei height);
+    typedef void (GLAPIENTRY * PFNGLFRAMEBUFFERRENDERBUFFERPROC) (gl::GLenum target, gl::GLenum attachment, gl::GLenum renderbuffertarget, gl::GLuint renderbuffer);
+    typedef void (GLAPIENTRY * PFNGLDELETERENDERBUFFERSPROC) (gl::GLsizei n, const gl::GLuint* renderbuffers);
+    typedef void (GLAPIENTRY * PFNGLTEXPARAMETERIPROC) (gl::GLenum target, gl::GLenum pname, gl::GLint param);
+    typedef void (GLAPIENTRY * PFNGLFRAMEBUFFERTEXTURE2DPROC) (gl::GLenum target, gl::GLenum attachment, gl::GLenum textarget, gl::GLuint texture, gl::GLint level);
     PFNGLGENFRAMEBUFFERSPROC genFramebuffers;
     PFNGLBINDFRAMEBUFFERPROC bindFramebuffer;
     PFNGLDELETEFRAMEBUFFERSPROC deleteFramebuffers;
@@ -153,15 +151,14 @@ private:
     IMotion *m_motionRef;
     Vector3 m_position;
     Vector3 m_size;
-    GLuint m_frameBuffer;
-    GLuint m_depthBuffer;
+    gl::GLuint m_frameBuffer;
+    gl::GLuint m_depthBuffer;
     ITexture *m_colorTexture;
     Scalar m_distance;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(SimpleShadowMap)
 };
 
-} /* namespace gl */
 } /* namespace extensions */
 } /* namespace vpvl2 */
 

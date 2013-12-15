@@ -40,15 +40,15 @@
 #include "vpvl2/vpvl2.h"
 
 #include "EngineCommon.h"
-#include "vpvl2/extensions/gl/VertexBundle.h"
-#include "vpvl2/extensions/gl/VertexBundleLayout.h"
+#include "vpvl2/gl/VertexBundle.h"
+#include "vpvl2/gl/VertexBundleLayout.h"
 #include "vpvl2/internal/util.h" /* internal::snprintf */
 #include "vpvl2/gl2/PMXRenderEngine.h"
 #include "vpvl2/cl/PMXAccelerator.h"
 
 using namespace vpvl2;
+using namespace vpvl2::gl;
 using namespace vpvl2::gl2;
-using namespace vpvl2::extensions::gl;
 
 namespace {
 

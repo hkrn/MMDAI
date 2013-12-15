@@ -51,6 +51,7 @@ namespace vpvl2
 {
 namespace extensions
 {
+
 using namespace icu4c;
 
 struct Archive::PrivateContext {

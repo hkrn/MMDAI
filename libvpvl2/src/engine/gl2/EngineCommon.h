@@ -42,17 +42,16 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/ITexture.h"
-#include "vpvl2/extensions/gl/ShaderProgram.h"
-#include "vpvl2/extensions/gl/Texture2D.h"
+#include "vpvl2/gl/ShaderProgram.h"
+#include "vpvl2/gl/Texture2D.h"
 
 namespace vpvl2
 {
 namespace gl2
 {
+using namespace gl;
 
-using namespace extensions::gl;
-
-class BaseShaderProgram : public extensions::gl::ShaderProgram
+class BaseShaderProgram : public ShaderProgram
 {
 public:
     BaseShaderProgram(const IApplicationContext::FunctionResolver *resolver)
@@ -66,7 +65,7 @@ public:
         m_positionAttributeLocation = -1;
     }
 
-    bool addShaderSource(const IString *s, extensions::gl::GLenum type) {
+    bool addShaderSource(const IString *s, gl::GLenum type) {
         VPVL2_CHECK(s);
         ShaderProgram::create();
         if (!ShaderProgram::addShaderSource(s, type)) {
@@ -86,7 +85,7 @@ public:
         return true;
     }
     void setModelViewProjectionMatrix(const float value[16]) {
-        uniformMatrix4fv(m_modelViewProjectionUniformLocation, 1, kGL_FALSE, value);
+        uniformMatrix4fv(m_modelViewProjectionUniformLocation, 1, gl::kGL_FALSE, value);
     }
 
 protected:

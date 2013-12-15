@@ -58,13 +58,10 @@ namespace asset
 class Model;
 }
 
-namespace extensions
-{
 namespace gl
 {
 class VertexBundle;
 class VertexBundleLayout;
-}
 }
 
 class Scene;
@@ -114,14 +111,14 @@ public:
     Scene *sceneRef() const { return m_sceneRef; }
 
 private:
-    typedef void (GLAPIENTRY * PFNGLCULLFACEPROC) (extensions::gl::GLenum mode);
-    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (extensions::gl::GLenum cap);
-    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (extensions::gl::GLenum cap);
-    typedef void (GLAPIENTRY * PFNGLGENQUERIESPROC) (extensions::gl::GLsizei n, extensions::gl::GLuint* ids);
-    typedef void (GLAPIENTRY * PFNGLBEGINQUERYPROC) (extensions::gl::GLenum target, extensions::gl::GLuint id);
-    typedef void (GLAPIENTRY * PFNGLENDQUERYPROC) (extensions::gl::GLenum target);
-    typedef void (GLAPIENTRY * PFNGLGETQUERYOBJECTIVPROC) (extensions::gl::GLuint id, extensions::gl::GLenum pname, extensions::gl::GLint* params);
-    typedef void (GLAPIENTRY * PFNGLDELETEQUERIESPROC) (extensions::gl::GLsizei n, const extensions::gl::GLuint* ids);
+    typedef void (GLAPIENTRY * PFNGLCULLFACEPROC) (gl::GLenum mode);
+    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLGENQUERIESPROC) (gl::GLsizei n, gl::GLuint* ids);
+    typedef void (GLAPIENTRY * PFNGLBEGINQUERYPROC) (gl::GLenum target, gl::GLuint id);
+    typedef void (GLAPIENTRY * PFNGLENDQUERYPROC) (gl::GLenum target);
+    typedef void (GLAPIENTRY * PFNGLGETQUERYOBJECTIVPROC) (gl::GLuint id, gl::GLenum pname, gl::GLint* params);
+    typedef void (GLAPIENTRY * PFNGLDELETEQUERIESPROC) (gl::GLsizei n, const gl::GLuint* ids);
     PFNGLCULLFACEPROC cullFace;
     PFNGLENABLEPROC enable;
     PFNGLDISABLEPROC disable;
@@ -180,8 +177,8 @@ private:
     PointerHash<HashPtr, ITexture> m_allocatedTextures;
     Textures m_textureMap;
     Hash<HashPtr, int> m_numIndices;
-    PointerHash<HashPtr, extensions::gl::VertexBundle> m_vbo;
-    PointerHash<HashPtr, extensions::gl::VertexBundleLayout> m_vao;
+    PointerHash<HashPtr, gl::VertexBundle> m_vbo;
+    PointerHash<HashPtr, gl::VertexBundleLayout> m_vao;
     IEffect *m_defaultEffectRef;
     IEffect::Pass *m_overridePass;
     int m_nvertices;

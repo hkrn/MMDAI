@@ -36,78 +36,50 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_BASESURFACE_H_
-#define VPVL2_EXTENSIONS_GL_BASESURFACE_H_
+#ifndef VPVL2_GL_TEXTUREPTRREF_H_
+#define VPVL2_GL_TEXTUREPTRREF_H_
 
-#include <vpvl2/Common.h>
-#include <vpvl2/extensions/gl/Global.h>
-#define VPVL2_BASESURFACE_INITIALIZE_FIELDS(format, size, sampler) \
-    m_format(format), \
-    m_size(size), \
-    m_name(0), \
-    m_sampler(sampler)
-
-#define VPVL2_BASESURFACE_DESTROY_FIELDS() \
-    m_size.setZero(); \
-    m_name = 0; \
-    m_sampler = 0;
-
-#define VPVL2_BASESURFACE_DEFINE_METHODS() \
-    Vector3 size() const { return m_size; } \
-    intptr_t format() const { return reinterpret_cast<intptr_t>(&m_format); } \
-    intptr_t data() const { return m_name; } \
-    intptr_t sampler() const { return m_sampler; }
-
-#define VPVL2_BASESURFACE_DEFINE_FIELDS() \
-    mutable BaseSurface::Format m_format; \
-    Vector3 m_size; \
-    GLuint m_name; \
-    GLuint m_sampler;
+#include <vpvl2/ITexture.h>
+#include <vpvl2/gl/BaseTexture.h>
 
 namespace vpvl2
-{
-namespace extensions
 {
 namespace gl
 {
 
-class BaseSurface {
+class TexturePtrRef VPVL2_DECL_FINAL : public ITexture {
 public:
-    struct Format {
-        Format()
-            : external(0),
-              internal(0),
-              type(0),
-              target(0)
-        {
-        }
-        Format(const Format &format)
-            : external(format.external),
-              internal(format.internal),
-              type(format.type),
-              target(format.target)
-        {
-        }
-        Format(GLenum e, GLenum i, GLenum t, GLenum g)
-            : external(e),
-              internal(i),
-              type(t),
-              target(g)
-        {
-        }
-        GLenum external;
-        GLenum internal;
-        GLenum type;
-        GLenum target;
-    };
+    TexturePtrRef(const ITexture *texture)
+        : VPVL2_BASESURFACE_INITIALIZE_FIELDS(*reinterpret_cast<const BaseSurface::Format *>(texture->format()), texture->size(), static_cast<GLuint>(texture->sampler()))
+    {
+        m_name = static_cast<GLuint>(texture->data());
+    }
+    ~TexturePtrRef() {
+        VPVL2_BASESURFACE_DESTROY_FIELDS()
+    }
+
+    /* do nothing */
+    void create() {}
+    void bind() {}
+    void fillPixels(const void * /* pixels */) {}
+    void allocate(const void * /* data */) {}
+    void write(const void * /* data */) {}
+    void resize(const Vector3 & /* size */) {}
+    void unbind() {}
+    void release() {}
+    void generateMipmaps() {}
+    void getParameters(unsigned int /* key */, float * /* values */) const {}
+    void getParameters(unsigned int /* key */, int * /* values */) const {}
+    void setParameter(unsigned int /* key */, float /* value */) {}
+    void setParameter(unsigned int /* key */, int /* value */) {}
+
+    VPVL2_BASESURFACE_DEFINE_METHODS()
 
 private:
-    BaseSurface();
-    ~BaseSurface() {}
+    VPVL2_BASESURFACE_DEFINE_FIELDS()
 };
 
 } /* namespace gl */
-} /* namespace extensions */
 } /* namespace vpvl2 */
 
 #endif

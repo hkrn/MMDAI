@@ -51,12 +51,9 @@ class IModel;
 class IString;
 class ITexture;
 
-namespace extensions
-{
 namespace gl
 {
 class FrameBufferObject;
-}
 }
 
 class VPVL2_API IApplicationContext
@@ -138,7 +135,6 @@ public:
         ITexture *dataRef;
         int flags;
     };
-#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
     struct SharedTextureParameter {
         SharedTextureParameter(IEffect::Parameter *parameter = 0)
             : textureRef(0),
@@ -152,7 +148,6 @@ public:
         ITexture *textureRef;
         IEffect::Parameter *parameterRef;
     };
-#endif
 
     virtual ~IApplicationContext() {}
 
@@ -345,7 +340,7 @@ public:
      * @param size
      * @return
      */
-    virtual extensions::gl::FrameBufferObject *createFrameBufferObject() = 0;
+    virtual gl::FrameBufferObject *createFrameBufferObject() = 0;
 
     /**
      * CgFX のコンパイラに渡す引数を設定します.

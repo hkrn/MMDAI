@@ -36,14 +36,12 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_VERTEXBUNDLELAYOUT_H_
-#define VPVL2_EXTENSIONS_GL_VERTEXBUNDLELAYOUT_H_
+#ifndef VPVL2_GL_VERTEXBUNDLELAYOUT_H_
+#define VPVL2_GL_VERTEXBUNDLELAYOUT_H_
 
-#include <vpvl2/extensions/gl/Global.h>
+#include <vpvl2/gl/Global.h>
 
 namespace vpvl2
-{
-namespace extensions
 {
 namespace gl
 {
@@ -121,7 +119,6 @@ private:
 };
 
 } /* namespace gl */
-} /* namespace extensions */
 } /* namespace vpvl2 */
 
 #endif

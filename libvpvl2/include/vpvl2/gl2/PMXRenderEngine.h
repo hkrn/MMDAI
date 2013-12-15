@@ -43,7 +43,7 @@
 
 #include "vpvl2/IApplicationContext.h"
 #include "vpvl2/IRenderEngine.h"
-#include "vpvl2/extensions/gl/Global.h"
+#include "vpvl2/gl/Global.h"
 
 namespace vpvl2 {
 
@@ -90,17 +90,17 @@ public:
     bool testVisible();
 
 private:
-    typedef void (GLAPIENTRY * PFNGLCULLFACEPROC) (extensions::gl::GLenum mode);
-    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (extensions::gl::GLenum cap);
-    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (extensions::gl::GLenum cap);
-    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTSPROC) (extensions::gl::GLenum mode, extensions::gl::GLsizei count, extensions::gl::GLenum type, const extensions::gl::GLvoid *indices);
-    typedef void (GLAPIENTRY * PFNGLGENQUERIESPROC) (extensions::gl::GLsizei n, extensions::gl::GLuint* ids);
-    typedef void (GLAPIENTRY * PFNGLBEGINQUERYPROC) (extensions::gl::GLenum target, extensions::gl::GLuint id);
-    typedef void (GLAPIENTRY * PFNGLENDQUERYPROC) (extensions::gl::GLenum target);
-    typedef void (GLAPIENTRY * PFNGLGETQUERYOBJECTIVPROC) (extensions::gl::GLuint id, extensions::gl::GLenum pname, extensions::gl::GLint* params);
-    typedef void (GLAPIENTRY * PFNGLDELETEQUERIESPROC) (extensions::gl::GLsizei n, const extensions::gl::GLuint* ids);
-    typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (extensions::gl::GLuint);
-    typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (extensions::gl::GLuint index, extensions::gl::GLint size, extensions::gl::GLenum type, extensions::gl::GLboolean normalized, extensions::gl::GLsizei stride, const extensions::gl::GLvoid* pointer);
+    typedef void (GLAPIENTRY * PFNGLCULLFACEPROC) (gl::GLenum mode);
+    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTSPROC) (gl::GLenum mode, gl::GLsizei count, gl::GLenum type, const gl::GLvoid *indices);
+    typedef void (GLAPIENTRY * PFNGLGENQUERIESPROC) (gl::GLsizei n, gl::GLuint* ids);
+    typedef void (GLAPIENTRY * PFNGLBEGINQUERYPROC) (gl::GLenum target, gl::GLuint id);
+    typedef void (GLAPIENTRY * PFNGLENDQUERYPROC) (gl::GLenum target);
+    typedef void (GLAPIENTRY * PFNGLGETQUERYOBJECTIVPROC) (gl::GLuint id, gl::GLenum pname, gl::GLint* params);
+    typedef void (GLAPIENTRY * PFNGLDELETEQUERIESPROC) (gl::GLsizei n, const gl::GLuint* ids);
+    typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (gl::GLuint);
+    typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (gl::GLuint index, gl::GLint size, gl::GLenum type, gl::GLboolean normalized, gl::GLsizei stride, const gl::GLvoid* pointer);
     PFNGLCULLFACEPROC cullFace;
     PFNGLENABLEPROC enable;
     PFNGLDISABLEPROC disable;
@@ -120,8 +120,8 @@ private:
                        IApplicationContext::ShaderType fragmentShaderType,
                        void *userData);
     bool uploadMaterials(void *userData);
-    void createVertexBundle(extensions::gl::GLuint dvbo);
-    void createEdgeBundle(extensions::gl::GLuint dvbo);
+    void createVertexBundle(gl::GLuint dvbo);
+    void createEdgeBundle(gl::GLuint dvbo);
     void bindVertexBundle();
     void bindEdgeBundle();
     void unbindVertexBundle();

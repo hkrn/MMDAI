@@ -36,8 +36,8 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_GLOBAL_H_
-#define VPVL2_EXTENSIONS_GL_GLOBAL_H_
+#ifndef VPVL2_GL_GLOBAL_H_
+#define VPVL2_GL_GLOBAL_H_
 
 #include <vpvl2/config.h>
 #include <vpvl2/IApplicationContext.h>
@@ -51,7 +51,6 @@
 #endif
 
 namespace vpvl2 {
-namespace extensions {
 namespace gl {
 
 typedef void GLvoid;
@@ -242,7 +241,6 @@ static inline void annotateString(const char * /* message */, const IApplication
 #endif
 
 } /* namespace gl */
-} /* namespace extensions */
 } /* namespace vpvl2 */
 
 #endif

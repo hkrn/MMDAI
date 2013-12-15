@@ -42,14 +42,14 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/asset/Model.h"
-#include "vpvl2/extensions/gl/VertexBundle.h"
-#include "vpvl2/extensions/gl/VertexBundleLayout.h"
+#include "vpvl2/gl/VertexBundle.h"
+#include "vpvl2/gl/VertexBundleLayout.h"
 
 namespace vpvl2
 {
 namespace fx
 {
-using namespace extensions::gl;
+using namespace gl;
 
 class AssetRenderEngine::PrivateEffectEngine : public EffectEngine {
 public:

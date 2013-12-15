@@ -43,7 +43,7 @@
 #include "vpvl2/IApplicationContext.h"
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/fx/Effect.h"
-#include "vpvl2/extensions/gl/FrameBufferObject.h"
+#include "vpvl2/gl/FrameBufferObject.h"
 
 #include <string>
 
@@ -56,12 +56,9 @@ class IShadowMap;
 class IString;
 class Scene;
 
-namespace extensions
-{
 namespace gl
 {
 class FrameBufferObject;
-}
 }
 
 namespace fx
@@ -301,7 +298,7 @@ class RenderColorTargetSemantic : public BaseParameter
 {
 public:
     struct TextureReference {
-        TextureReference(extensions::gl::FrameBufferObject *fbo,
+        TextureReference(gl::FrameBufferObject *fbo,
                 ITexture *tex,
                 IEffect::Parameter *p,
                 IEffect::Parameter *s)
@@ -317,7 +314,7 @@ public:
             textureParameterRef = 0;
             samplerParameterRef = 0;
         }
-        extensions::gl::FrameBufferObject *frameBufferObjectRef;
+        gl::FrameBufferObject *frameBufferObjectRef;
         ITexture *textureRef;
         IEffect::Parameter *textureParameterRef;
         IEffect::Parameter *samplerParameterRef;
@@ -333,7 +330,7 @@ public:
 
     void addFrameBufferObjectParameter(IEffect::Parameter *textureParameterRef,
                                        IEffect::Parameter *samplerParameterRef,
-                                       extensions::gl::FrameBufferObject *frameBufferObjectRef,
+                                       gl::FrameBufferObject *frameBufferObjectRef,
                                        void *userData,
                                        bool enableResourceName,
                                        bool enableAllTextureTypes);
@@ -343,7 +340,7 @@ public:
     int countParameters() const;
 
 protected:
-    typedef void (GLAPIENTRY * PFNGLGENERATEMIPMAPPROC) (extensions::gl::GLenum target);
+    typedef void (GLAPIENTRY * PFNGLGENERATEMIPMAPPROC) (gl::GLenum target);
     PFNGLGENERATEMIPMAPPROC generateMipmap;
 
     IApplicationContext *m_applicationContextRef;
@@ -352,12 +349,12 @@ protected:
     virtual void generateTexture2D(IEffect::Parameter *textureParameterRef,
                                    IEffect::Parameter *samplerParameterRef,
                                    const Vector3 &size,
-                                   extensions::gl::FrameBufferObject *frameBufferObjectRef,
-                                   extensions::gl::BaseSurface::Format &format);
+                                   gl::FrameBufferObject *frameBufferObjectRef,
+                                   gl::BaseSurface::Format &format);
     virtual void generateTexture3D(IEffect::Parameter *textureParamaterRef,
                                    IEffect::Parameter *samplerParameterRef,
                                    const Vector3 &size,
-                                   extensions::gl::FrameBufferObject *frameBufferObjectRef);
+                                   gl::FrameBufferObject *frameBufferObjectRef);
     void getSize2(const IEffect::Parameter *parameterRef, vsize &width, vsize &height) const;
     void getSize3(const IEffect::Parameter *parameterRef, vsize &width, vsize &height, vsize &depth) const;
     ITexture *lastTextureRef() const;
@@ -365,10 +362,10 @@ protected:
 private:
     void generateTexture2D0(IEffect::Parameter *textureRef,
                             IEffect::Parameter *samplerRef,
-                            extensions::gl::FrameBufferObject *frameBufferObjectRef);
+                            gl::FrameBufferObject *frameBufferObjectRef);
     void generateTexture3D0(IEffect::Parameter *textureRef,
                             IEffect::Parameter *samplerRef,
-                            extensions::gl::FrameBufferObject *frameBufferObjectRef);
+                            gl::FrameBufferObject *frameBufferObjectRef);
 
     PointerArray<ITexture> m_textures;
     Hash<HashString, TextureReference> m_name2textures;
@@ -381,8 +378,8 @@ class RenderDepthStencilTargetSemantic : public RenderColorTargetSemantic
 {
 public:
     struct Buffer {
-        Buffer(extensions::gl::FrameBufferObject *fbo,
-               extensions::gl::FrameBufferObject::BaseRenderBuffer *renderBuffer,
+        Buffer(gl::FrameBufferObject *fbo,
+               gl::FrameBufferObject::BaseRenderBuffer *renderBuffer,
                IEffect::Parameter *p)
             : frameBufferObjectRef(fbo),
               renderBufferRef(renderBuffer),
@@ -393,20 +390,20 @@ public:
             frameBufferObjectRef = 0;
             renderBufferRef = 0;
         }
-        extensions::gl::FrameBufferObject *frameBufferObjectRef;
-        extensions::gl::FrameBufferObject::BaseRenderBuffer *renderBufferRef;
+        gl::FrameBufferObject *frameBufferObjectRef;
+        gl::FrameBufferObject::BaseRenderBuffer *renderBufferRef;
         IEffect::Parameter *parameterRef;
     };
 
     RenderDepthStencilTargetSemantic(IApplicationContext *applicationContextRef);
     ~RenderDepthStencilTargetSemantic();
 
-    void addFrameBufferObjectParameter(IEffect::Parameter *parameterRef, extensions::gl::FrameBufferObject *frameBufferObjectRef);
+    void addFrameBufferObjectParameter(IEffect::Parameter *parameterRef, gl::FrameBufferObject *frameBufferObjectRef);
     void invalidate();
     const Buffer *findDepthStencilBuffer(const char *name) const;
 
 private:
-    Array<extensions::gl::FrameBufferObject::BaseRenderBuffer *> m_renderBuffers;
+    Array<gl::FrameBufferObject::BaseRenderBuffer *> m_renderBuffers;
     Hash<HashString, Buffer> m_buffers;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(RenderDepthStencilTargetSemantic)
@@ -422,8 +419,8 @@ protected:
     void generateTexture2D(IEffect::Parameter *textureParameterRef,
                            IEffect::Parameter *samplerParameterRef,
                            const Vector3 &size,
-                           extensions::gl::FrameBufferObject *frameBufferObjectRef,
-                           extensions::gl::BaseSurface::Format &format);
+                           gl::FrameBufferObject *frameBufferObjectRef,
+                           gl::BaseSurface::Format &format);
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenRenderTargetSemantic)
@@ -457,8 +454,8 @@ public:
     void update();
 
 private:
-    typedef void (GLAPIENTRY * PFNGLBINDTEXTUREPROC) (extensions::gl::GLenum target, extensions::gl::GLuint texture);
-    typedef void (GLAPIENTRY * PFNGLGETTEXIMAGEPROC) (extensions::gl::GLenum target, extensions::gl::GLint level, extensions::gl::GLenum format, extensions::gl::GLenum type, extensions::gl::GLvoid *pixels);
+    typedef void (GLAPIENTRY * PFNGLBINDTEXTUREPROC) (gl::GLenum target, gl::GLuint texture);
+    typedef void (GLAPIENTRY * PFNGLGETTEXIMAGEPROC) (gl::GLenum target, gl::GLint level, gl::GLenum format, gl::GLenum type, gl::GLvoid *pixels);
     PFNGLBINDTEXTUREPROC bindTexture;
     PFNGLGETTEXIMAGEPROC getTexImage;
 
@@ -547,9 +544,9 @@ public:
     };
     typedef btAlignedObjectArray<ScriptState> Script;
     struct DrawPrimitiveCommand {
-        DrawPrimitiveCommand(extensions::gl::GLenum mode,
-                             extensions::gl::GLsizei count,
-                             extensions::gl::GLenum type,
+        DrawPrimitiveCommand(gl::GLenum mode,
+                             gl::GLsizei count,
+                             gl::GLenum type,
                              const uint8 *ptr, vsize offset, vsize stride)
             : mode(mode),
               count(count),
@@ -562,9 +559,9 @@ public:
         {
         }
         DrawPrimitiveCommand()
-            : mode(extensions::gl::kGL_TRIANGLES),
+            : mode(gl::kGL_TRIANGLES),
               count(0),
-              type(extensions::gl::kGL_UNSIGNED_INT),
+              type(gl::kGL_UNSIGNED_INT),
               ptr(0),
               offset(0),
               stride(sizeof(int)),
@@ -572,9 +569,9 @@ public:
               end(0)
         {
         }
-        extensions::gl::GLenum mode;
-        extensions::gl::GLsizei count;
-        extensions::gl::GLenum type;
+        gl::GLenum mode;
+        gl::GLsizei count;
+        gl::GLenum type;
         const uint8 *ptr;
         vsize offset;
         vsize stride;
@@ -676,9 +673,9 @@ public:
     IntegerParameter boneCount;
 
 protected:
-    typedef void (GLAPIENTRY * PFNGLCLEARPROC) (extensions::gl::GLbitfield mask);
-    typedef void (GLAPIENTRY * PFNGLCLEARCOLORPROC) (extensions::gl::GLclampf red, extensions::gl::GLclampf green, extensions::gl::GLclampf blue, extensions::gl::GLclampf alpha);
-    typedef void (GLAPIENTRY * PFNGLCLEARDEPTHPROC) (extensions::gl::GLclampd depth);
+    typedef void (GLAPIENTRY * PFNGLCLEARPROC) (gl::GLbitfield mask);
+    typedef void (GLAPIENTRY * PFNGLCLEARCOLORPROC) (gl::GLclampf red, gl::GLclampf green, gl::GLclampf blue, gl::GLclampf alpha);
+    typedef void (GLAPIENTRY * PFNGLCLEARDEPTHPROC) (gl::GLclampd depth);
     PFNGLCLEARPROC clear;
     PFNGLCLEARCOLORPROC clearColor;
     PFNGLCLEARDEPTHPROC clearDepth;
@@ -730,10 +727,10 @@ private:
     void clearTechniquePasses();
     void setStandardsGlobal(const IEffect::Parameter *parameterRef, bool &ownTechniques);
     void parseSamplerStateParameter(IEffect::Parameter *samplerParameter,
-                                    extensions::gl::FrameBufferObject *frameBufferObjectRef,
+                                    gl::FrameBufferObject *frameBufferObjectRef,
                                     void *userData);
     void addSharedTextureParameter(IEffect::Parameter *textureParameterRef,
-                                   extensions::gl::FrameBufferObject *frameBufferObjectRef,
+                                   gl::FrameBufferObject *frameBufferObjectRef,
                                    RenderColorTargetSemantic &semantic);
     bool parsePassScript(IEffect::Pass *pass);
     bool parseTechniqueScript(const IEffect::Technique *technique, Passes &passes);
@@ -742,7 +739,7 @@ private:
     IEffect *m_defaultStandardEffectRef;
     IApplicationContext *m_applicationContextRef;
     RectangleRenderEngine *m_rectangleRenderEngine;
-    extensions::gl::FrameBufferObject *m_frameBufferObjectRef;
+    gl::FrameBufferObject *m_frameBufferObjectRef;
     ScriptOutputType m_scriptOutput;
     ScriptClassType m_scriptClass;
     Techniques m_techniques;

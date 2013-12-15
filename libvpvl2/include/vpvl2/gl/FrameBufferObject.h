@@ -36,15 +36,13 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_FRAMEBUFFEROBJECT_H_
-#define VPVL2_EXTENSIONS_GL_FRAMEBUFFEROBJECT_H_
+#ifndef VPVL2_GL_FRAMEBUFFEROBJECT_H_
+#define VPVL2_GL_FRAMEBUFFEROBJECT_H_
 
 #include <vpvl2/ITexture.h>
-#include <vpvl2/extensions/gl/BaseSurface.h>
+#include <vpvl2/gl/BaseSurface.h>
 
 namespace vpvl2
-{
-namespace extensions
 {
 namespace gl
 {
@@ -462,7 +460,6 @@ private:
 };
 
 } /* namespace gl */
-} /* namespace extensions */
 } /* namespace vpvl2 */
 
 #endif

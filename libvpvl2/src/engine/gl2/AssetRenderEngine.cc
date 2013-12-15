@@ -46,8 +46,8 @@
 
 #include "vpvl2/IBone.h"
 #include "vpvl2/asset/Model.h"
-#include "vpvl2/extensions/gl/VertexBundle.h"
-#include "vpvl2/extensions/gl/VertexBundleLayout.h"
+#include "vpvl2/gl/VertexBundle.h"
+#include "vpvl2/gl/VertexBundleLayout.h"
 
 #include <map>
 
@@ -55,7 +55,6 @@ namespace vpvl2
 {
 namespace gl2
 {
-using namespace extensions::gl;
 
 class AssetRenderEngine::Program : public ObjectProgram
 {

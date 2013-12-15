@@ -38,7 +38,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/IApplicationContext.h"
 
-#include "vpvl2/extensions/gl/Global.h"
+#include "vpvl2/gl/Global.h"
 #include "vpvl2/nvfx/Effect.h"
 #include "vpvl2/nvfx/EffectContext.h"
 #include "vpvl2/internal/util.h"
@@ -52,7 +52,6 @@
 #include <FxParser.h>
 
 using namespace vpvl2;
-using namespace vpvl2::extensions;
 
 namespace {
 

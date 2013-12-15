@@ -31,7 +31,7 @@ class MockIApplicationContext : public IApplicationContext {
   MOCK_CONST_METHOD1(findEffectModelRef,
       IModel*(const IEffect *effect));
   MOCK_METHOD0(createFrameBufferObject,
-      extensions::gl::FrameBufferObject*());
+      gl::FrameBufferObject*());
   MOCK_CONST_METHOD1(getEffectCompilerArguments,
       void(Array<IString *> &arguments));
   MOCK_METHOD2(addSharedTextureParameter,

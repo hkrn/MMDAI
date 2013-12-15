@@ -40,7 +40,7 @@
 #define VPVL2_CL_PMXACCELERATOR_H_
 
 #include "vpvl2/Scene.h"
-#include "vpvl2/extensions/gl/Global.h"
+#include "vpvl2/gl/Global.h"
 
 namespace vpvl2
 {
@@ -55,8 +55,8 @@ class VPVL2_API PMXAccelerator VPVL2_DECL_FINAL
 {
 public:
     struct VertexBufferBridge {
-        VertexBufferBridge(extensions::gl::GLuint n) : name(n), mem(0) {}
-        extensions::gl::GLuint name;
+        VertexBufferBridge(gl::GLuint n) : name(n), mem(0) {}
+        gl::GLuint name;
         void *mem;
     };
     typedef Array<VertexBufferBridge> VertexBufferBridgeArray;

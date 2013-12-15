@@ -61,7 +61,7 @@ public:
     void getInteractiveParameters(Array<IEffect::Parameter *> &value) const;
     IEffect *parentEffectRef() const;
     void setParentEffectRef(IEffect *value);
-    extensions::gl::FrameBufferObject *parentFrameBufferObject() const;
+    gl::FrameBufferObject *parentFrameBufferObject() const;
     void createFrameBufferObject();
     ScriptOrderType scriptOrderType() const;
     void addOffscreenRenderTarget(ITexture *textureRef, Parameter *textureParameterRef, Parameter *samplerParameterRef);

@@ -736,7 +736,7 @@ void Effect::setParentEffectRef(IEffect * /* value */)
 {
 }
 
-extensions::gl::FrameBufferObject *Effect::parentFrameBufferObject() const
+gl::FrameBufferObject *Effect::parentFrameBufferObject() const
 {
     return 0;
 }

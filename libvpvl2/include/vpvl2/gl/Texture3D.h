@@ -36,38 +36,36 @@
 */
 
 #pragma once
-#ifndef VPVL2_EXTENSIONS_GL_TEXTURE2D_H_
-#define VPVL2_EXTENSIONS_GL_TEXTURE2D_H_
+#ifndef VPVL2_GL_TEXTURE3D_H_
+#define VPVL2_GL_TEXTURE3D_H_
 
 #include <vpvl2/ITexture.h>
-#include <vpvl2/extensions/gl/BaseTexture.h>
+#include <vpvl2/gl/BaseTexture.h>
 
 namespace vpvl2
-{
-namespace extensions
 {
 namespace gl
 {
 
-class Texture2D VPVL2_DECL_FINAL :  public BaseTexture {
+class Texture3D VPVL2_DECL_FINAL : public BaseTexture {
 public:
-    static const GLenum kGL_TEXTURE_2D = 0x0DE1;
+    static const GLenum kGL_TEXTURE_3D = 0x806F;
 
-    Texture2D(const IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLuint sampler)
+    Texture3D(const IApplicationContext::FunctionResolver *resolver, const BaseSurface::Format &format, const Vector3 &size, GLenum sampler)
         : BaseTexture(resolver, format, size, sampler),
-          texImage2D(reinterpret_cast<PFNGLTEXIMAGE2DPROC>(resolver->resolveSymbol("glTexImage2D"))),
-          texSubImage2D(reinterpret_cast<PFNGLTEXSUBIMAGE2DPROC>(resolver->resolveSymbol("glTexSubImage2D"))),
-          texStorage2D(reinterpret_cast<PFNGLTEXSTORAGE2DPROC>(resolver->resolveSymbol("glTexStorage2D"))),
+          texImage3D(reinterpret_cast<PFNGLTEXIMAGE3DPROC>(resolver->resolveSymbol("glTexImage3D"))),
+          texSubImage3D(reinterpret_cast<PFNGLTEXSUBIMAGE3DPROC>(resolver->resolveSymbol("glTexSubImage3D"))),
+          texStorage3D(reinterpret_cast<PFNGLTEXSTORAGE3DPROC>(resolver->resolveSymbol("glTexStorage3D"))),
           m_hasTextureStorage(resolver->hasExtension("ARB_texture_storage"))
     {
-        m_format.target = kGL_TEXTURE_2D;
+        m_format.target = kGL_TEXTURE_3D;
     }
-    ~Texture2D() {
+    ~Texture3D() {
     }
 
     void fillPixels(const void *pixels) {
         if (m_hasTextureStorage) {
-            texStorage2D(m_format.target, 1, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()));
+            texStorage3D(m_format.target, 1, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()), GLsizei(m_size.z()));
             write(pixels);
         }
         else {
@@ -75,24 +73,23 @@ public:
         }
     }
     void allocate(const void *pixels) {
-        texImage2D(m_format.target, 0, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()), 0, m_format.external, m_format.type, pixels);
+        texImage3D(m_format.target, 0, m_format.internal, GLsizei(m_size.x()), GLsizei(m_size.y()), GLsizei(m_size.z()), 0, m_format.external, m_format.type, pixels);
     }
     void write(const void *pixels) {
-        texSubImage2D(m_format.target, 0, 0, 0, GLsizei(m_size.x()), GLsizei(m_size.y()), m_format.external, m_format.type, pixels);
+        texSubImage3D(m_format.target, 0, 0, 0, 0, GLsizei(m_size.x()), GLsizei(m_size.y()), GLsizei(m_size.z()), m_format.external, m_format.type, pixels);
     }
 
 private:
-    typedef void (GLAPIENTRY * PFNGLTEXIMAGE2DPROC) (GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
-    typedef void (GLAPIENTRY * PFNGLTEXSUBIMAGE2DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid *pixels);
-    typedef void (GLAPIENTRY * PFNGLTEXSTORAGE2DPROC) (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
-    PFNGLTEXIMAGE2DPROC texImage2D;
-    PFNGLTEXSUBIMAGE2DPROC texSubImage2D;
-    PFNGLTEXSTORAGE2DPROC texStorage2D;
+    typedef void (GLAPIENTRY * PFNGLTEXIMAGE3DPROC) (GLenum target, GLint level, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid *pixels);
+    typedef void (GLAPIENTRY * PFNGLTEXSUBIMAGE3DPROC) (GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid *pixels);
+    typedef void (GLAPIENTRY * PFNGLTEXSTORAGE3DPROC) (GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth);
+    PFNGLTEXIMAGE3DPROC texImage3D;
+    PFNGLTEXSUBIMAGE3DPROC texSubImage3D;
+    PFNGLTEXSTORAGE3DPROC texStorage3D;
     const bool m_hasTextureStorage;
 };
 
 } /* namespace gl */
-} /* namespace extensions */
 } /* namespace vpvl2 */
 
 #endif

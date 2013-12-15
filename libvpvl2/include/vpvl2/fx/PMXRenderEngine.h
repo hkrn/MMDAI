@@ -56,11 +56,9 @@ namespace vpvl2
 namespace cl {
 class PMXAccelerator;
 }
-namespace extensions {
 namespace gl {
 class VertexBundle;
 class VertexBundleLayout;
-}
 }
 
 class Scene;
@@ -141,15 +139,15 @@ private:
         Color toonTextureColor;
     };
 
-    typedef void (GLAPIENTRY * PFNGLCULLFACEPROC) (extensions::gl::GLenum mode);
-    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (extensions::gl::GLenum cap);
-    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (extensions::gl::GLenum cap);
-    typedef void (GLAPIENTRY * PFNGLGENQUERIESPROC) (extensions::gl::GLsizei n, extensions::gl::GLuint* ids);
-    typedef void (GLAPIENTRY * PFNGLBEGINQUERYPROC) (extensions::gl::GLenum target, extensions::gl::GLuint id);
-    typedef void (GLAPIENTRY * PFNGLENDQUERYPROC) (extensions::gl::GLenum target);
-    typedef void (GLAPIENTRY * PFNGLGETQUERYOBJECTIVPROC) (extensions::gl::GLuint id, extensions::gl::GLenum pname, extensions::gl::GLint* params);
-    typedef void (GLAPIENTRY * PFNGLDELETEQUERIESPROC) (extensions::gl::GLsizei n, const extensions::gl::GLuint* ids);
-    typedef void (GLAPIENTRY * PFNGLDRAWARRAYSPROC) (extensions::gl::GLenum mode, extensions::gl::GLint first, extensions::gl::GLsizei count);
+    typedef void (GLAPIENTRY * PFNGLCULLFACEPROC) (gl::GLenum mode);
+    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLGENQUERIESPROC) (gl::GLsizei n, gl::GLuint* ids);
+    typedef void (GLAPIENTRY * PFNGLBEGINQUERYPROC) (gl::GLenum target, gl::GLuint id);
+    typedef void (GLAPIENTRY * PFNGLENDQUERYPROC) (gl::GLenum target);
+    typedef void (GLAPIENTRY * PFNGLGETQUERYOBJECTIVPROC) (gl::GLuint id, gl::GLenum pname, gl::GLint* params);
+    typedef void (GLAPIENTRY * PFNGLDELETEQUERIESPROC) (gl::GLsizei n, const gl::GLuint* ids);
+    typedef void (GLAPIENTRY * PFNGLDRAWARRAYSPROC) (gl::GLenum mode, gl::GLint first, gl::GLsizei count);
     PFNGLCULLFACEPROC cullFace;
     PFNGLENABLEPROC enable;
     PFNGLDISABLEPROC disable;
@@ -163,7 +161,7 @@ private:
     bool uploadMaterials(void *userData);
     bool releaseUserData0(void *userData);
     void initializeEffectParameters(int extraCameraFlags);
-    void createVertexBundle(extensions::gl::VertexBundleLayout *layout, IModel::Buffer::StrideType strideType, extensions::gl::GLuint dvbo);
+    void createVertexBundle(gl::VertexBundleLayout *layout, IModel::Buffer::StrideType strideType, gl::GLuint dvbo);
     void unbindVertexBundle();
     void bindDynamicVertexAttributePointers(IModel::Buffer::StrideType type);
     void bindStaticVertexAttributePointers();
@@ -181,8 +179,8 @@ private:
                            void *userData);
     void setupOffscreenEffect(IEffect *effectRef, void *userData);
     void executeOneTechniqueAllPasses(const char *name, Array<IEffect::Pass *> &passes);
-    void labelVertexArray(const extensions::gl::VertexBundleLayout *layout, const char *name);
-    void labelVertexBuffer(extensions::gl::GLenum key, const char *name);
+    void labelVertexArray(const gl::VertexBundleLayout *layout, const char *name);
+    void labelVertexBuffer(gl::GLenum key, const char *name);
     void annotateMaterial(const char *name, const IMaterial *material);
     __attribute__((format(printf, 2, 3)))
     void annotate(const char *const format, ...);
@@ -199,15 +197,15 @@ private:
     IModel::StaticVertexBuffer *m_staticBuffer;
     IModel::DynamicVertexBuffer *m_dynamicBuffer;
     IModel::IndexBuffer *m_indexBuffer;
-    extensions::gl::VertexBundle *m_bundle;
-    extensions::gl::VertexBundleLayout *m_layouts[kMaxVertexArrayObjectType];
+    gl::VertexBundle *m_bundle;
+    gl::VertexBundleLayout *m_layouts[kMaxVertexArrayObjectType];
     Array<MaterialContext> m_materialContexts;
     PointerHash<HashPtr, ITexture> m_allocatedTextures;
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;
     PointerArray<PrivateEffectEngine> m_oseffects;
     IEffect *m_defaultEffectRef;
     IEffect::Pass *m_overridePass;
-    extensions::gl::GLenum m_indexType;
+    gl::GLenum m_indexType;
     Vector3 m_aabbMin;
     Vector3 m_aabbMax;
     bool m_cullFaceState;

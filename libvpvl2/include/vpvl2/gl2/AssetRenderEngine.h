@@ -46,7 +46,7 @@
 
 #include "vpvl2/IApplicationContext.h"
 #include "vpvl2/IRenderEngine.h"
-#include "vpvl2/extensions/gl/VertexBundleLayout.h"
+#include "vpvl2/gl/VertexBundleLayout.h"
 
 struct aiMaterial;
 struct aiMesh;
@@ -113,12 +113,12 @@ public:
     bool testVisible();
 
 private:
-    typedef void (GLAPIENTRY * PFNGLCULLFACEPROC) (extensions::gl::GLenum mode);
-    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (extensions::gl::GLenum cap);
-    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (extensions::gl::GLenum cap);
-    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTS) (extensions::gl::GLenum mode, extensions::gl::GLsizei count, extensions::gl::GLenum type, const extensions::gl::GLvoid *indices);
-    typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (extensions::gl::GLuint);
-    typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (extensions::gl::GLuint index, extensions::gl::GLint size, extensions::gl::GLenum type, extensions::gl::GLboolean normalized, extensions::gl::GLsizei stride, const extensions::gl::GLvoid* pointer);
+    typedef void (GLAPIENTRY * PFNGLCULLFACEPROC) (gl::GLenum mode);
+    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLDISABLEPROC) (gl::GLenum cap);
+    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTS) (gl::GLenum mode, gl::GLsizei count, gl::GLenum type, const gl::GLvoid *indices);
+    typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (gl::GLuint);
+    typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (gl::GLuint index, gl::GLint size, gl::GLenum type, gl::GLboolean normalized, gl::GLsizei stride, const gl::GLvoid* pointer);
     PFNGLCULLFACEPROC cullFace;
     PFNGLENABLEPROC enable;
     PFNGLDISABLEPROC disable;
@@ -155,7 +155,7 @@ private:
     Scene *m_sceneRef;
     asset::Model *m_modelRef;
     PrivateContext *m_context;
-    extensions::gl::VertexBundleLayout m_bundle;
+    gl::VertexBundleLayout m_bundle;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetRenderEngine)
 };

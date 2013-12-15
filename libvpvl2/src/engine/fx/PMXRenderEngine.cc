@@ -40,16 +40,16 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h" /* internal::snprintf */
 #include "vpvl2/cl/PMXAccelerator.h"
-#include "vpvl2/extensions/gl/Texture2D.h"
-#include "vpvl2/extensions/gl/ShaderProgram.h"
-#include "vpvl2/extensions/gl/VertexBundle.h"
-#include "vpvl2/extensions/gl/VertexBundleLayout.h"
+#include "vpvl2/gl/Texture2D.h"
+#include "vpvl2/gl/ShaderProgram.h"
+#include "vpvl2/gl/VertexBundle.h"
+#include "vpvl2/gl/VertexBundleLayout.h"
 
 namespace vpvl2
 {
 namespace fx
 {
-using namespace extensions::gl;
+using namespace gl;
 
 static const int kMaxUVASize = int(IEffect::kUVA4VertexAttribute - IEffect::kUVA1VertexAttribute);
 
@@ -250,7 +250,7 @@ protected:
 
 private:
     const IApplicationContext::FunctionResolver *m_resolver;
-    extensions::gl::Texture2D *m_boneTransformTexture;
+    gl::Texture2D *m_boneTransformTexture;
     Array<float32> m_boneTransformTextureData;
     GLint m_matrixPaletteUniformLocation;
     GLint m_numBoneIndicesUniformLocation;

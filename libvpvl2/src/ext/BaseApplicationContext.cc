@@ -42,10 +42,10 @@
 #include <vpvl2/internal/util.h>
 #include <vpvl2/extensions/Archive.h>
 #include <vpvl2/extensions/StringMap.h>
+#include <vpvl2/extensions/SimpleShadowMap.h>
 #include <vpvl2/extensions/fx/Util.h>
-#include <vpvl2/extensions/gl/FrameBufferObject.h>
-#include <vpvl2/extensions/gl/SimpleShadowMap.h>
-#include <vpvl2/extensions/gl/Texture2D.h>
+#include <vpvl2/gl/FrameBufferObject.h>
+#include <vpvl2/gl/Texture2D.h>
 
 #ifdef VPVL2_ENABLE_EXTENSION_ARCHIVE
 #include <vpvl2/extensions/Archive.h>
@@ -122,31 +122,30 @@ typedef unsigned int ETwMouseAction;
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;
-using namespace vpvl2::extensions::gl;
 
 #include <vpvl2/extensions/icu4c/Encoding.h>
 using namespace vpvl2::extensions::icu4c;
 
 namespace {
 
-static const vpvl2::extensions::gl::GLenum kGL_DONT_CARE = 0x1100;
-static const vpvl2::extensions::gl::GLenum kGL_MAX_SAMPLES = 0x8D57;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_OUTPUT_SYNCHRONOUS = 0x8242;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_API_ARB = 0x8246;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB = 0x8247;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_SHADER_COMPILER_ARB = 0x8248;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_THIRD_PARTY_ARB = 0x8249;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_APPLICATION_ARB = 0x824A;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SOURCE_OTHER_ARB = 0x824B;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_TYPE_ERROR_ARB = 0x824C;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB = 0x824D;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB = 0x824E;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_TYPE_PORTABILITY_ARB = 0x824F;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_TYPE_PERFORMANCE_ARB = 0x8250;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_TYPE_OTHER_ARB = 0x8251;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SEVERITY_HIGH_ARB = 0x9146;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SEVERITY_MEDIUM_ARB = 0x9147;
-static const vpvl2::extensions::gl::GLenum kGL_DEBUG_SEVERITY_LOW_ARB = 0x9148;
+static const vpvl2::gl::GLenum kGL_DONT_CARE = 0x1100;
+static const vpvl2::gl::GLenum kGL_MAX_SAMPLES = 0x8D57;
+static const vpvl2::gl::GLenum kGL_DEBUG_OUTPUT_SYNCHRONOUS = 0x8242;
+static const vpvl2::gl::GLenum kGL_DEBUG_SOURCE_API_ARB = 0x8246;
+static const vpvl2::gl::GLenum kGL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB = 0x8247;
+static const vpvl2::gl::GLenum kGL_DEBUG_SOURCE_SHADER_COMPILER_ARB = 0x8248;
+static const vpvl2::gl::GLenum kGL_DEBUG_SOURCE_THIRD_PARTY_ARB = 0x8249;
+static const vpvl2::gl::GLenum kGL_DEBUG_SOURCE_APPLICATION_ARB = 0x824A;
+static const vpvl2::gl::GLenum kGL_DEBUG_SOURCE_OTHER_ARB = 0x824B;
+static const vpvl2::gl::GLenum kGL_DEBUG_TYPE_ERROR_ARB = 0x824C;
+static const vpvl2::gl::GLenum kGL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB = 0x824D;
+static const vpvl2::gl::GLenum kGL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB = 0x824E;
+static const vpvl2::gl::GLenum kGL_DEBUG_TYPE_PORTABILITY_ARB = 0x824F;
+static const vpvl2::gl::GLenum kGL_DEBUG_TYPE_PERFORMANCE_ARB = 0x8250;
+static const vpvl2::gl::GLenum kGL_DEBUG_TYPE_OTHER_ARB = 0x8251;
+static const vpvl2::gl::GLenum kGL_DEBUG_SEVERITY_HIGH_ARB = 0x9146;
+static const vpvl2::gl::GLenum kGL_DEBUG_SEVERITY_MEDIUM_ARB = 0x9147;
+static const vpvl2::gl::GLenum kGL_DEBUG_SEVERITY_LOW_ARB = 0x9148;
 
 class EffectParameterUIBuilder {
 public:
@@ -245,7 +244,7 @@ private:
     VPVL2_MAKE_STATIC_CLASS(EffectParameterUIBuilder)
 };
 
-static inline const char *DebugMessageSourceToString(vpvl2::extensions::gl::GLenum value)
+static inline const char *DebugMessageSourceToString(vpvl2::gl::GLenum value)
 {
     switch (value) {
     case kGL_DEBUG_SOURCE_API_ARB:
@@ -265,7 +264,7 @@ static inline const char *DebugMessageSourceToString(vpvl2::extensions::gl::GLen
     }
 }
 
-static inline const char *DebugMessageTypeToString(vpvl2::extensions::gl::GLenum value)
+static inline const char *DebugMessageTypeToString(vpvl2::gl::GLenum value)
 {
     switch (value) {
     case kGL_DEBUG_TYPE_ERROR_ARB:

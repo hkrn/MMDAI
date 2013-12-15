@@ -40,7 +40,7 @@
 #define VPVL2_NVFX_EFFECT_H_
 
 #include "vpvl2/IEffect.h"
-#include "vpvl2/extensions/gl/Global.h"
+#include "vpvl2/gl/FrameBufferObject.h"
 
 namespace nvFX {
 class IAnnotation;
@@ -81,7 +81,7 @@ public:
     void getInteractiveParameters(Array<Parameter *> &value) const;
     IEffect *parentEffectRef() const;
     void setParentEffectRef(IEffect *value);
-    extensions::gl::FrameBufferObject *parentFrameBufferObject() const;
+    gl::FrameBufferObject *parentFrameBufferObject() const;
     ScriptOrderType scriptOrderType() const;
     void setScriptOrderType(ScriptOrderType value);
     IEffect::Parameter *findVaryingParameter(const char *name) const;
@@ -102,9 +102,9 @@ public:
     IApplicationContext *applicationContextRef() const;
 
 private:
-    typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (extensions::gl::GLuint);
-    typedef void (GLAPIENTRY * PFNGLDISABLEVERTEXATTRIBARRAYPROC) (extensions::gl::GLuint);
-    typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (extensions::gl::GLuint index, extensions::gl::GLint size, extensions::gl::GLenum type, extensions::gl::GLboolean normalized, extensions::gl::GLsizei stride, const extensions::gl::GLvoid* pointer);
+    typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (gl::GLuint);
+    typedef void (GLAPIENTRY * PFNGLDISABLEVERTEXATTRIBARRAYPROC) (gl::GLuint);
+    typedef void (GLAPIENTRY * PFNGLVERTEXATTRIBPOINTERPROC) (gl::GLuint index, gl::GLint size, gl::GLenum type, gl::GLboolean normalized, gl::GLsizei stride, const gl::GLvoid* pointer);
     PFNGLENABLEVERTEXATTRIBARRAYPROC enableVertexAttribArray;
     PFNGLDISABLEVERTEXATTRIBARRAYPROC disableVertexAttribArray;
     PFNGLVERTEXATTRIBPOINTERPROC vertexAttribPointer;
@@ -132,7 +132,7 @@ private:
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
     Array<IEffect::Parameter *> m_interactiveParameters;
     IEffect *m_parentEffectRef;
-    extensions::gl::FrameBufferObject *m_parentFrameBufferObject;
+    gl::FrameBufferObject *m_parentFrameBufferObject;
     ScriptOrderType m_scriptOrderType;
     bool m_enabled;
 

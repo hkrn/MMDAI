@@ -44,7 +44,7 @@
 #include <vpvl2/IEffect.h>
 #include <vpvl2/Scene.h>
 #include <vpvl2/extensions/StringMap.h>
-#include <vpvl2/extensions/gl/FrameBufferObject.h>
+#include <vpvl2/gl/FrameBufferObject.h>
 
 /* STL */
 #include <memory>
@@ -105,14 +105,14 @@ class IMotion;
 class IRenderEngine;
 class ITexture;
 
+namespace gl {
+VPVL2_MAKE_SMARTPTR(FrameBufferObject);
+}
+
 namespace extensions {
 class Archive;
-class World;
-namespace gl {
 class SimpleShadowMap;
-VPVL2_MAKE_SMARTPTR(FrameBufferObject);
-VPVL2_MAKE_SMARTPTR(SimpleShadowMap);
-}
+class World;
 
 VPVL2_MAKE_SMARTPTR(Archive);
 VPVL2_MAKE_SMARTPTR(Factory);
@@ -121,6 +121,7 @@ VPVL2_MAKE_SMARTPTR2(IMotion, Scene::Deleter);
 VPVL2_MAKE_SMARTPTR2(IRenderEngine, Scene::Deleter);
 VPVL2_MAKE_SMARTPTR(IString);
 VPVL2_MAKE_SMARTPTR(Scene);
+VPVL2_MAKE_SMARTPTR(SimpleShadowMap);
 VPVL2_MAKE_SMARTPTR(World);
 
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
@@ -159,15 +160,15 @@ public:
         bool storeTexture(const std::string &key, ITexture *textureRef, TextureDataBridge &bridge);
         void optimizeTexture(ITexture *texture);
         int countTextures() const;
-        ITexture *createTexture(const void *ptr, const extensions::gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap) const;
+        ITexture *createTexture(const void *ptr, const gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap) const;
         ITexture *createTexture(const uint8 *data, vsize size, bool mipmap);
         Archive *archiveRef() const;
         const IString *directoryRef() const;
     private:
-        static const extensions::gl::GLenum kGL_UNPACK_CLIENT_STORAGE_APPLE = 0x85B2;
-        static const extensions::gl::GLenum kGL_TEXTURE_STORAGE_HINT_APPLE = 0x85BC;
-        static const extensions::gl::GLenum kGL_STORAGE_CACHED_APPLE = 0x85BE;
-        typedef void (GLAPIENTRY * PFNGLPIXELSTOREIPROC) (extensions::gl:: GLenum pname, extensions::gl::GLint param);
+        static const gl::GLenum kGL_UNPACK_CLIENT_STORAGE_APPLE = 0x85B2;
+        static const gl::GLenum kGL_TEXTURE_STORAGE_HINT_APPLE = 0x85BC;
+        static const gl::GLenum kGL_STORAGE_CACHED_APPLE = 0x85BE;
+        typedef void (GLAPIENTRY * PFNGLPIXELSTOREIPROC) (gl:: GLenum pname, gl::GLint param);
         PFNGLPIXELSTOREIPROC pixelStorei;
         typedef std::map<std::string, ITexture *> TextureCacheMap;
         const IString *m_directoryRef;
@@ -220,11 +221,11 @@ public:
         const IEffect::OffscreenRenderTarget renderTarget;
         const EffectAttachmentRuleList attachmentRules;
         ITexture *colorTextureRef;
-        extensions::gl::FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
+        gl::FrameBufferObject::StandardRenderBuffer depthStencilBuffer;
     private:
-        static extensions::gl::BaseSurface::Format createDepthFormat(const ITexture *texture, FunctionResolver *resolver) {
-            const extensions::gl::BaseSurface::Format *formatPtr = reinterpret_cast<extensions::gl::BaseSurface::Format *>(texture->format());
-            return extensions::gl::BaseSurface::Format(0, extensions::gl::FrameBufferObject::detectDepthFormat(resolver, formatPtr->internal), 0, 0);
+        static gl::BaseSurface::Format createDepthFormat(const ITexture *texture, FunctionResolver *resolver) {
+            const gl::BaseSurface::Format *formatPtr = reinterpret_cast<gl::BaseSurface::Format *>(texture->format());
+            return gl::BaseSurface::Format(0, gl::FrameBufferObject::detectDepthFormat(resolver, formatPtr->internal), 0, 0);
         }
 
         VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenTexture)
@@ -238,7 +239,7 @@ public:
     void setEffectModelRef(const IEffect *effectRef, IModel *model);
     void addModelFilePath(IModel *model, const std::string &path);
     std::string findEffectOwnerName(const IEffect *effect) const;
-    extensions::gl::FrameBufferObject *createFrameBufferObject();
+    gl::FrameBufferObject *createFrameBufferObject();
     void getEffectCompilerArguments(Array<IString *> &arguments) const;
     void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter);
     bool tryGetSharedTextureParameter(const char *name, SharedTextureParameter &parameter) const;
@@ -247,7 +248,7 @@ public:
     bool handleKeyPress(int value, int modifiers);
     std::string findModelFilePath(const IModel *modelRef) const;
     std::string findModelFileBasename(const IModel *modelRef) const;
-    extensions::gl::FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
+    gl::FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
     void parseOffscreenSemantic(IEffect *effectRef, const IString *directoryRef);
     void renderOffscreen();
     void createEffectParameterUIWidgets(IEffect *effectRef);
@@ -288,11 +289,11 @@ public:
     virtual bool extractModelNameFromFileName(const std::string &path, std::string &modelName) const = 0;
 
 protected:
-    typedef void (GLAPIENTRY * PFNGLGETINTEGERVPROC) (extensions::gl::GLenum pname, extensions::gl::GLint *params);
-    typedef void (GLAPIENTRY * PFNGLVIEWPORTPROC) (extensions::gl::GLint x, extensions::gl::GLint y, extensions::gl::GLsizei width, extensions::gl::GLsizei height);
-    typedef void (GLAPIENTRY * PFNGLCLEARPROC) (extensions::gl::GLbitfield mask);
-    typedef void (GLAPIENTRY * PFNGLCLEARCOLORPROC) (extensions::gl::GLclampf red, extensions::gl::GLclampf green, extensions::gl::GLclampf blue, extensions::gl::GLclampf alpha);
-    typedef void (GLAPIENTRY * PFNGLCLEARDEPTHPROC) (extensions::gl::GLclampd depth);
+    typedef void (GLAPIENTRY * PFNGLGETINTEGERVPROC) (gl::GLenum pname, gl::GLint *params);
+    typedef void (GLAPIENTRY * PFNGLVIEWPORTPROC) (gl::GLint x, gl::GLint y, gl::GLsizei width, gl::GLsizei height);
+    typedef void (GLAPIENTRY * PFNGLCLEARPROC) (gl::GLbitfield mask);
+    typedef void (GLAPIENTRY * PFNGLCLEARCOLORPROC) (gl::GLclampf red, gl::GLclampf green, gl::GLclampf blue, gl::GLclampf alpha);
+    typedef void (GLAPIENTRY * PFNGLCLEARDEPTHPROC) (gl::GLclampd depth);
     PFNGLGETINTEGERVPROC getIntegerv;
     PFNGLVIEWPORTPROC viewport;
     PFNGLCLEARPROC clear;
@@ -315,8 +316,8 @@ protected:
     Scene *m_sceneRef;
     IEncoding *m_encodingRef;
     IModel *m_currentModelRef;
-    extensions::gl::BaseSurface::Format m_renderColorFormat;
-    extensions::gl::SimpleShadowMapSmartPtr m_shadowMap;
+    extensions::SimpleShadowMapSmartPtr m_shadowMap;
+    gl::BaseSurface::Format m_renderColorFormat;
     glm::mat4x4 m_lightWorldMatrix;
     glm::mat4x4 m_lightViewMatrix;
     glm::mat4x4 m_lightProjectionMatrix;
@@ -326,7 +327,7 @@ protected:
     glm::ivec4 m_viewportRegion;
     glm::mediump_float m_aspectRatio;
 
-    typedef PointerHash<HashPtr, extensions::gl::FrameBufferObject> RenderTargetMap;
+    typedef PointerHash<HashPtr, gl::FrameBufferObject> RenderTargetMap;
     typedef PointerHash<HashString, IEffect> Path2EffectMap;
     typedef Hash<HashPtr, std::string> ModelRef2PathMap;
     typedef Hash<HashPtr, std::string> ModelRef2BasenameMap;
