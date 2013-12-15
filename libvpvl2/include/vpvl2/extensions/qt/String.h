@@ -64,8 +64,9 @@ public:
     String(const QString &value)
         : m_value(value)
     {
-        m_bytes.resize(value.length() + 1);
-        qstrcpy(reinterpret_cast<char *>(&m_bytes[0]), value.toUtf8().constData());
+        const QByteArray &bytes = value.toUtf8();
+        m_bytes.resize(bytes.length() + 1);
+        qstrcpy(reinterpret_cast<char *>(&m_bytes[0]), bytes.constData());
     }
     ~String() {
     }

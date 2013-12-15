@@ -82,7 +82,8 @@ public:
             QString us = converter->toUnicode(str);
             /* remove head and trail spaces and 0x1a (appended by PMDEditor) */
             us.replace(QChar(0x1a), QChar());
-            s = new (std::nothrow) String(us.trimmed());
+            us = us.trimmed();
+            s = new (std::nothrow) String(us);
         }
         return s;
     }
