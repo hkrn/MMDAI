@@ -123,8 +123,13 @@ typedef unsigned int ETwMouseAction;
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 
+#ifdef VPVL2_ENABLE_QT
+#include <vpvl2/extensions/qt/Encoding.h>
+using namespace vpvl2::extensions::qt;
+#else
 #include <vpvl2/extensions/icu4c/Encoding.h>
 using namespace vpvl2::extensions::icu4c;
+#endif
 
 namespace {
 
@@ -293,7 +298,7 @@ static inline IString *toIStringFromUtf8(const std::string &bytes)
     s.releaseBuffer(length16);
     return bytes.empty() ? 0 : new (std::nothrow) String(s);
 #else
-    return bytes.empty() ? 0 : new (std::nothrow) String(UnicodeString::fromUTF8(bytes));
+    return bytes.empty() ? 0 : String::create(bytes);
 #endif
 }
 
@@ -304,7 +309,6 @@ namespace vpvl2
 namespace extensions
 {
 using namespace gl;
-using namespace icu4c;
 
 BaseApplicationContext::ModelContext::ModelContext(BaseApplicationContext *applicationContextRef, vpvl2::extensions::Archive *archiveRef, const IString *directory)
     : pixelStorei(reinterpret_cast<PFNGLPIXELSTOREIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glPixelStorei"))),

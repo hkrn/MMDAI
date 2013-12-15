@@ -39,7 +39,13 @@
 #include <vpvl2/extensions/Archive.h>
 #include <vpvl2/internal/util.h>
 
+#ifdef VPVL2_ENABLE_QT
+#include <vpvl2/extensions/qt/String.h>
+using namespace vpvl2::extensions::qt;
+#else
 #include <vpvl2/extensions/icu4c/String.h>
+using namespace vpvl2::extensions::icu4c;
+#endif
 
 #include <algorithm>
 #include <map>
@@ -51,8 +57,6 @@ namespace vpvl2
 {
 namespace extensions
 {
-
-using namespace icu4c;
 
 struct Archive::PrivateContext {
     PrivateContext(IEncoding *encodingRef)
