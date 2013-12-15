@@ -183,42 +183,27 @@ vsize String::size() const
 vsize String::length(Codec codec) const
 {
     if (m_converterRef) {
-        UErrorCode status = U_ZERO_ERROR;
-        UConverter *converter = 0;
-        switch (codec) {
-        case kShiftJIS:
-            converter = m_converterRef->shiftJIS;
-            break;
-        case kUTF8:
-            converter = m_converterRef->utf8;
-            break;
-        case kUTF16:
-            converter = m_converterRef->utf16;
-            break;
-        case kMaxCodecType:
-        default:
-            break;
+        if (UConverter *converter = m_converterRef->converterFromCodec(codec)) {
+            UErrorCode status = U_ZERO_ERROR;
+            return m_value.extract(0, 0, converter, status);
         }
-        return m_value.extract(0, 0, converter, status);
     }
-    else {
-        const char *codecString = "utf-8";
-        switch (codec) {
-        case kShiftJIS:
-            codecString = "shift_jis";
-            break;
-        case kUTF8:
-            codecString = "utf-8";
-            break;
-        case kUTF16:
-            codecString = "utf-16le";
-            break;
-        case kMaxCodecType:
-        default:
-            break;
-        }
-        return m_value.extract(0, m_value.length(), 0, codecString);
+    const char *codecString = "utf-8";
+    switch (codec) {
+    case kShiftJIS:
+        codecString = "shift_jis";
+        break;
+    case kUTF8:
+        codecString = "utf-8";
+        break;
+    case kUTF16:
+        codecString = "utf-16le";
+        break;
+    case kMaxCodecType:
+    default:
+        break;
     }
+    return m_value.extract(0, m_value.length(), 0, codecString);
 }
 
 } /* namespace icu4c */

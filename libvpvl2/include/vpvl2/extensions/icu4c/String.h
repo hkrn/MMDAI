@@ -76,6 +76,19 @@ public:
             utf16 = ucnv_open("utf-16le", &status);
             shiftJIS  = ucnv_open("ibm-943_P15A-2003", &status);
         }
+        UConverter *converterFromCodec(IString::Codec codec) const {
+            switch (codec) {
+            case IString::kShiftJIS:
+                return shiftJIS;
+            case IString::kUTF8:
+                return utf8;
+            case IString::kUTF16:
+                return utf16;
+            case IString::kMaxCodecType:
+            default:
+                return 0;
+            }
+        }
         UConverter *shiftJIS;
         UConverter *utf8;
         UConverter *utf16;

@@ -97,24 +97,9 @@ const IString *Encoding::stringConstant(ConstantType value) const
 
 IString *Encoding::toString(const uint8 *value, vsize size, IString::Codec codec) const
 {
-    const char *str = reinterpret_cast<const char *>(value);
-    UConverter *converter = 0;
-    switch (codec) {
-    case IString::kShiftJIS:
-        converter = m_converter.shiftJIS;
-        break;
-    case IString::kUTF8:
-        converter = m_converter.utf8;
-        break;
-    case IString::kUTF16:
-        converter = m_converter.utf16;
-        break;
-    case IString::kMaxCodecType:
-    default:
-        break;
-    }
     IString *s = 0;
-    if (converter) {
+    if (UConverter *converter = m_converter.converterFromCodec(codec)) {
+        const char *str = reinterpret_cast<const char *>(value);
         UErrorCode status = U_ZERO_ERROR;
         UnicodeString us(str, int(size), converter, status);
         /* remove head and trail spaces and 0x1a (appended by PMDEditor) */
@@ -139,23 +124,8 @@ uint8 *Encoding::toByteArray(const IString *value, IString::Codec codec) const
     uint8 *data = 0;
     if (value) {
         const String *s = static_cast<const String *>(value);
-        const UnicodeString &src = s->value();
-        UConverter *converter = 0;
-        switch (codec) {
-        case IString::kShiftJIS:
-            converter = m_converter.shiftJIS;
-            break;
-        case IString::kUTF8:
-            converter = m_converter.utf8;
-            break;
-        case IString::kUTF16:
-            converter = m_converter.utf16;
-            break;
-        case IString::kMaxCodecType:
-        default:
-            break;
-        }
-        if (converter) {
+        if (UConverter *converter = m_converter.converterFromCodec(codec)) {
+            const UnicodeString &src = s->value();
             UErrorCode status = U_ZERO_ERROR;
             int32_t newStringLength = src.extract(0, 0, converter, status) + 1;
             data = new (std::nothrow) uint8[newStringLength];
