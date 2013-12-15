@@ -69,6 +69,25 @@ static void InstallFailureHandler(const char *logdir)
 }
 
 #else
+static bool FLAGS_alsologtostderr = false;
+static bool FLAGS_colorlogtostderr = false;
+static bool FLAGS_logtostderr = false;
+static bool FLAGS_stop_logging_if_full_disk = false;
+static int FLAGS_v = 0;
+static const char *FLAGS_log_dir = 0;
+namespace google {
+static inline void InstallFailureSignalHandler() {}
+static inline void InitGoogleLogging(const char * /* argv0 */) {
+    FLAGS_alsologtostderr = false;
+    FLAGS_colorlogtostderr = false;
+    FLAGS_logtostderr = false;
+    FLAGS_stop_logging_if_full_disk = false;
+    FLAGS_v = 0;
+    FLAGS_log_dir = 0;
+}
+static inline void LogToStderr() {}
+static inline void ShutdownGoogleLogging() {}
+} /* namespace google */
 #define InstallFailureHandler(logdir)
 #endif
 
