@@ -39,6 +39,7 @@ import qbs 1.0
 
 Application {
     id: VPVM
+    property string applicationBundlePath: "VPVM.app/Contents"
     property string libraryBuildDirectory: "build-" + qbs.buildVariant.toLowerCase()
     property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
     property string assimpLibrarySuffix: qbs.enableDebugCode ? "D" : ""
@@ -108,15 +109,23 @@ Application {
     ]
     Qt.quick.qmlDebugging: qbs.enableDebugCode
     Group {
+        name: "Application"
+        fileTagsFilter: "application"
+        qbs.install: true
+        qbs.installDir: qbs.targetOS.contains("osx") ? (applicationBundlePath + "/MacOS") : ""
+    }
+    Group {
         name: "Translation Resources"
         files: "translations/*.qm"
         qbs.install: true
+        qbs.installDir: qbs.targetOS.contains("osx") ? (applicationBundlePath + "/Resources/translations") : "translations"
     }
     Group {
         condition: qbs.buildVariant === "debug"
         name: "QML Resources"
-        files: "qml/VPVM/*.qml"
+        files: [ "qml/VPVM/*" ]
         qbs.install: true
+        qbs.installDir: qbs.targetOS.contains("osx") ? (applicationBundlePath + "/Resources/qml") : "qml"
     }
     Depends { name: "cpp" }
     Depends { name: "vpvl2" }
