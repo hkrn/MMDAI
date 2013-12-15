@@ -57,6 +57,7 @@
 #define TwInit(graphAPI, device)
 #define TwDraw()
 #define TwTerminate()
+#define TwHandleErrors(callback)
 #define TwWindowSize(width, height)
 #define TwNewBar(barName) 0
 #define TwDeleteAllBars()
@@ -201,6 +202,9 @@ public:
         if (const IEffect::Annotation *annotationRef = parameterRef->annotationRef("UIVisible")) {
             stream << "visible='" << annotationRef->booleanValue() << "' ";
         }
+    }
+    static void handleError(const char *message) {
+        VPVL2_LOG(WARNING, "AntTweakBar error message: " << message);
     }
 
 private:
@@ -504,6 +508,7 @@ bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdi
 {
     FreeImage_Initialise();
     installLogger(argv0, logdir, vlog);
+    TwHandleErrors(&EffectParameterUIBuilder::handleError);
     return Encoding::initializeOnce();
 }
 

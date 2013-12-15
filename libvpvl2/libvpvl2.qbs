@@ -82,7 +82,6 @@ Product {
         "vendor/tinyxml2-1.0.11",
         libraryBuildDirectory + "/include",
         "../glm-src",
-        "../glog-src/" + libraryInstallDirectory + "/include",
         "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
         "../assimp-src/" + libraryInstallDirectory + "/include",
         "../nvFX-src/" + libraryInstallDirectory + "/include",
@@ -90,7 +89,6 @@ Product {
         "../tbb-src/include"
     ]
     cpp.libraryPaths: [
-        "../glog-src/" + libraryInstallDirectory + "/lib",
         "../bullet-src/" + libraryInstallDirectory + "/lib",
         "../assimp-src/" + libraryInstallDirectory + "/lib",
         "../nvFX-src/" + libraryInstallDirectory + "/lib",
@@ -99,6 +97,7 @@ Product {
         "../tbb-src/lib"
     ]
     cpp.dynamicLibraries: [
+        "z",
         "LinearMath",
         "BulletCollision",
         "BulletDynamics",
@@ -107,8 +106,6 @@ Product {
         "FxParser" + nvFXLibrarySuffix,
         "FxLib" + nvFXLibrarySuffix,
         "FxLibGL" + nvFXLibrarySuffix,
-        "z",
-        "glog",
         "tbb",
         "AntTweakBar"
     ]

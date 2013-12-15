@@ -38,7 +38,9 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/util.h"
 
-#if defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS)
+#if defined(VPVL2_ENABLE_QT)
+#include <QLoggingCategory>
+#elif defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS)
 #include <sys/fcntl.h>
 #include <limits.h>
 #endif
@@ -47,7 +49,7 @@ namespace {
 
 using namespace vpvl2;
 
-#if defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS)
+#if defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS) && !defined(VPVL2_ENABLE_QT)
 
 static char g_crashHandlePath[PATH_MAX];
 
@@ -108,6 +110,18 @@ const char *libraryVersionString() VPVL2_DECL_NOEXCEPT
 
 void installLogger(const char *argv0, const char *logdir, int vlog)
 {
+#if defined(VPVL2_ENABLE_QT)
+    Q_UNUSED(argv0);
+    Q_UNUSED(logdir);
+    for (int i = INFO; i <= ERROR; i++) {
+        QLoggingCategory &category = findLoggingBasicCategory(i);
+        category.setEnabled(QtDebugMsg, true);
+    }
+    for (int i = 1; i <= 3; i++) {
+        QLoggingCategory &category = findLoggingVerboseCategory(i);
+        category.setEnabled(QtDebugMsg, vlog >= i);
+    }
+#else
     VPVL2_CHECK(argv0);
     google::InitGoogleLogging(argv0);
     InstallFailureHandler(logdir);
@@ -124,11 +138,54 @@ void installLogger(const char *argv0, const char *logdir, int vlog)
         FLAGS_logtostderr = true;
         FLAGS_colorlogtostderr = true;
     }
+#endif
 }
 
 void uninstallLogger()
 {
     google::ShutdownGoogleLogging();
 }
+
+#if defined(VPVL2_ENABLE_QT)
+QLoggingCategory &findLoggingBasicCategory(int level) {
+    switch (level) {
+    case INFO: {
+        static QLoggingCategory info("vpvl2.logging.info");
+        return info;
+    }
+    case WARNING: {
+        static QLoggingCategory warning("vpvl2.logging.warning");
+        return warning;
+    }
+    case ERROR: {
+        static QLoggingCategory error("vpvl2.logging.error");
+        return error;
+    }
+    default:
+        static QLoggingCategory unknown("vpvl2.logging.unknown");
+        return unknown;
+    }
+}
+
+QLoggingCategory &findLoggingVerboseCategory(int level) {
+    switch (level) {
+    case 1: {
+        static QLoggingCategory level1("vpvl2.logging.verbose.level1");
+        return level1;
+    }
+    case 2: {
+        static QLoggingCategory level2("vpvl2.logging.verbose.level2");
+        return level2;
+    }
+    case 3: {
+        static QLoggingCategory level3("vpvl2.logging.verbose.level3");
+        return level3;
+    }
+    default:
+        static QLoggingCategory unknown("vpvl2.logging.verbose.unknown");
+        return unknown;
+    }
+}
+#endif
 
 } /* namespace vpvl2 */

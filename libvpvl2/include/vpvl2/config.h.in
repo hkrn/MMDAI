@@ -164,49 +164,85 @@
 #define VPVL2_MAKE_VERSION(major, compat, minor) \
     (((major) << 16) | ((compat) << 8) | (minor))
 #define VPVL2_VERSION VPVL2_MAKE_VERSION(VPVL2_VERSION_MAJOR, \
-                                         VPVL2_VERSION_COMPAT, \
-                                         VPVL2_VERSION_MINOR)
+    VPVL2_VERSION_COMPAT, \
+    VPVL2_VERSION_MINOR)
 
 #define VPVL2_VERSION_STRING "@VPVL2_VERSION@"
 
 /* _MSC_VER < 1300 (= Visual Studio 6) doesn't support */
 #if (defined(_MSC_VER) && _MSC_VER < 1600)
-  #ifndef _MSC_STDINT_H_
-    typedef signed __int8 int8_t;
-    typedef unsigned __int8 uint8_t;
-    typedef signed __int16 int16_t;
-    typedef unsigned __int16 uint16_t;
-    typedef signed __int32 int32_t;
-    typedef unsigned __int32 uint32_t;
-    typedef signed __int64 int64_t;
-    typedef unsigned __int64 uint64_t;
-    #define _MSC_STDINT_H_
-  #endif /* _MSC_STDINT_H_ */
+#ifndef _MSC_STDINT_H_
+typedef signed __int8 int8_t;
+typedef unsigned __int8 uint8_t;
+typedef signed __int16 int16_t;
+typedef unsigned __int16 uint16_t;
+typedef signed __int32 int32_t;
+typedef unsigned __int32 uint32_t;
+typedef signed __int64 int64_t;
+typedef unsigned __int64 uint64_t;
+#define _MSC_STDINT_H_
+#endif /* _MSC_STDINT_H_ */
 #else
 #include <stdint.h>
-  /* SIZE_MAX is C99 macro and use alternative (32bit) if not defined */
-  #ifndef SIZE_MAX
-    #define SIZE_MAX 4294967295U
-  #endif
+/* SIZE_MAX is C99 macro and use alternative (32bit) if not defined */
+#ifndef SIZE_MAX
+#define SIZE_MAX 4294967295U
+#endif
 #endif /* (defined(_MSC_VER) && _MSC_VER < 1600) */
 
 #if defined (WIN32)
-  #if defined(vpvl2_EXPORTS)
-    #define VPVL2_API __declspec(dllexport)
-  #elif defined(BUILD_SHARED_LIBS)
-    #define VPVL2_API __declspec(dllimport)
-  #else
-    #define VPVL2_API
-  #endif /* defined(vpvl2_EXPORTS) */
+#if defined(vpvl2_EXPORTS)
+#define VPVL2_API __declspec(dllexport)
+#elif defined(BUILD_SHARED_LIBS)
+#define VPVL2_API __declspec(dllimport)
+#else
+#define VPVL2_API
+#endif /* defined(vpvl2_EXPORTS) */
 #else /* defined (_WIN32) */
- #if defined(__GNUC__) && __GNUC__ >= 4
-  #define VPVL2_API __attribute__ ((visibility("default")))
- #else
-  #define VPVL2_API
- #endif /* defined(__GNUC__) && __GNUC__ >= 4 */
+#if defined(__GNUC__) && __GNUC__ >= 4
+#define VPVL2_API __attribute__ ((visibility("default")))
+#else
+#define VPVL2_API
+#endif /* defined(__GNUC__) && __GNUC__ >= 4 */
 #endif
 
-#ifdef VPVL2_LINK_GLOG
+#if defined(VPVL2_ENABLE_QT)
+#include <QLoggingCategory>
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+#endif
+static const int INFO = 0;
+static const int WARNING = 1;
+static const int ERROR = 2;
+#ifdef __clang__
+#pragma clang diagnostic push
+#endif
+inline QDebug operator<< (QDebug o, const std::string &string) {
+    o << string.c_str();
+    return o;
+}
+namespace vpvl2 {
+QLoggingCategory &findLoggingBasicCategory(int level);
+QLoggingCategory &findLoggingVerboseCategory(int level);
+}
+#define VPVL2_LOG(level, expr) qCDebug(vpvl2::findLoggingBasicCategory(level)).nospace() << expr
+#define VPVL2_VLOG(level, expr) qCDebug(vpvl2::findLoggingVerboseCategory(level)).nospace() << expr
+#define VPVL2_CHECK(assertion) Q_ASSERT(assertion)
+#ifndef NDEBUG
+#define VPVL2_DLOG(level, expr) qCDebug(vpvl2::findLoggingBasicCategory(level)).nospace() << expr
+#define VPVL2_DVLOG(level, expr) qCDebug(vpvl2::findLoggingVerboseCategory(level)).nospace() << expr
+#define VPVL2_DCHECK(assertion) Q_ASSERT(assertion)
+#define VPVL2_DCHECK_NOTNULL(assertion) Q_ASSERT((assertion) != 0)
+#define VPVL2_DCHECK_GT(expected, actual) Q_ASSERT((expected) > (actual))
+#else
+#define VPVL2_DLOG(level, expr)
+#define VPVL2_DVLOG(level, expr)
+#define VPVL2_DCHECK(assertion)
+#define VPVL2_DCHECK_NOTNULL(assertion)
+#define VPVL2_DCHECK_GT(expected, actual)
+#endif /* NDEBUG */
+#elif defined(VPVL2_LINK_GLOG)
 #ifdef VPVL2_OS_WINDOWS
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 #define GOOGLE_GLOG_DLL_DECL

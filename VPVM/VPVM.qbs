@@ -53,6 +53,9 @@ Application {
         "licenses/licenses.qrc",
         "../libvpvl2/src/resources/resources.qrc"
     ]
+    cpp.defines: [
+        "VPVL2_ENABLE_QT"
+    ]
     cpp.includePaths: [
         "include",
         "../libvpvl2/include",
@@ -60,7 +63,6 @@ Application {
         "../libvpvl2/vendor/cl-1.2",
         "../libvpvl2/vendor/nvFX",
         "../libvpvl2/vendor/tinyxml2-1.0.11",
-        "../glog-src/" + libraryInstallDirectory + "/include",
         "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
         "../assimp-src/" + libraryInstallDirectory + "/include",
         "../nvFX-src/" + libraryInstallDirectory + "/include",
@@ -73,7 +75,6 @@ Application {
         "../icu4c-src/" + libraryInstallDirectory + "/include"
     ]
     cpp.libraryPaths: [
-        "../glog-src/" + libraryInstallDirectory + "/lib",
         "../bullet-src/" + libraryInstallDirectory + "/lib",
         "../assimp-src/" + libraryInstallDirectory + "/lib",
         "../nvFX-src/" + libraryInstallDirectory + "/lib",
@@ -85,6 +86,7 @@ Application {
         "../AntTweakBar-src/lib"
     ]
     cpp.dynamicLibraries: [
+        "z",
         "LinearMath",
         "BulletCollision",
         "BulletDynamics",
@@ -93,10 +95,6 @@ Application {
         "FxParser" + nvFXLibrarySuffix,
         "FxLib" + nvFXLibrarySuffix,
         "FxLibGL" + nvFXLibrarySuffix,
-        "icuuc",
-        "icui18n",
-        "icudata",
-        "glog",
         "tbb",
         "gizmo",
         "OpenAL",
@@ -119,6 +117,11 @@ Application {
         files: "translations/*.qm"
         qbs.install: true
         qbs.installDir: qbs.targetOS.contains("osx") ? (applicationBundlePath + "/Resources/translations") : "translations"
+    }
+    Group {
+        condition: qbs.buildVariant === "release"
+        name: "QML Resources"
+        files: [ "qml/VPVM.qrc" ]
     }
     Group {
         condition: qbs.buildVariant === "debug"
