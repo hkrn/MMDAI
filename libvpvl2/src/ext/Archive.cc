@@ -37,12 +37,12 @@
 
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/Archive.h>
-#include <vpvl2/extensions/icu4c/String.h>
 #include <vpvl2/internal/util.h>
+
+#include <vpvl2/extensions/icu4c/String.h>
 
 #include <algorithm>
 #include <map>
-#include <unicode/regex.h>
 
 #include "ioapi.h"
 #include "unzip.h"

@@ -42,6 +42,7 @@
 /* libvpvl2 */
 #include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/extensions/icu4c/String.h>
+#include <unicode/regex.h>
 
 /* SDL */
 #include <SDL.h>
@@ -116,6 +117,28 @@ public:
             SDL_RWclose(handle);
         }
         return exists;
+    }
+    bool extractFilePath(const std::string &path, std::string &filename, std::string &basename) const {
+        UErrorCode status = U_ZERO_ERROR;
+        RegexMatcher filenameMatcher(".+/((.+)\\.\\w+)$", 0, status);
+        filenameMatcher.reset(UnicodeString::fromUTF8(path));
+        if (filenameMatcher.find()) {
+            basename = String::toStdString(filenameMatcher.group(1, status));
+            filename = String::toStdString(filenameMatcher.group(2, status));
+            return true;
+        }
+        return false;
+    }
+    bool extractModelNameFromFileName(const std::string &path, std::string &modelName) const {
+        UErrorCode status = U_ZERO_ERROR;
+        RegexMatcher extractMatcher("^.+\\[(.+)(?:\\.(?:cg)?fx)?\\]$", 0, status);
+        extractMatcher.reset(UnicodeString::fromUTF8(path));
+        if (extractMatcher.find()) {
+            status = U_ZERO_ERROR;
+            modelName = String::toStdString(extractMatcher.group(1, status));
+            return true;
+        }
+        return false;
     }
     bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
         if (context->uploadTexture(data, size, key, bridge)) {

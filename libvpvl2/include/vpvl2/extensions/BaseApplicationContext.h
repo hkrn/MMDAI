@@ -67,10 +67,6 @@
 #endif /* VPVL2_OS_OSX */
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
-#if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
-#include <unicode/regex.h>
-#endif
-
 #if !defined(VPVL2_MAKE_SMARTPTR) && !defined(VPVL2_MAKE_SMARTPTR2)
 #if __cplusplus > 199907L
 #define VPVL2_MAKE_SMARTPTR(kClass) typedef std::unique_ptr<kClass> kClass ## SmartPtr
@@ -129,7 +125,6 @@ VPVL2_MAKE_SMARTPTR(World);
 
 #if defined(VPVL2_ENABLE_NVIDIA_CG) || defined(VPVL2_LINK_NVFX)
 VPVL2_MAKE_SMARTPTR(IEffect);
-VPVL2_MAKE_SMARTPTR(RegexMatcher);
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
 
 class VPVL2_API BaseApplicationContext : public IApplicationContext {
@@ -198,6 +193,7 @@ public:
     IString *loadKernelSource(KernelType type, void *userData);
     IString *toUnicode(const uint8 *str) const;
 
+#ifdef VPVL2_ENABLE_NVIDIA_CG
     typedef std::pair<IEffect *, bool> EffectAttachmentValue;
     typedef std::pair<RegexMatcher *, EffectAttachmentValue> EffectAttachmentRule;
     typedef std::vector<EffectAttachmentRule> EffectAttachmentRuleList;
@@ -233,6 +229,7 @@ public:
 
         VPVL2_DISABLE_COPY_AND_ASSIGN(OffscreenTexture)
     };
+#endif
 
     void getViewport(Vector3 &value) const;
     void getMousePosition(Vector4 &value, MousePositionType type) const;
@@ -251,8 +248,6 @@ public:
     std::string findModelFilePath(const IModel *modelRef) const;
     std::string findModelFileBasename(const IModel *modelRef) const;
     extensions::gl::FrameBufferObject *findFrameBufferObjectByRenderTarget(const IEffect::OffscreenRenderTarget &rt, bool enableAA);
-    void bindOffscreenRenderTarget(OffscreenTexture *textureRef, bool enableAA);
-    void releaseOffscreenRenderTarget(const OffscreenTexture *textureRef, bool enableAA);
     void parseOffscreenSemantic(IEffect *effectRef, const IString *directoryRef);
     void renderOffscreen();
     void createEffectParameterUIWidgets(IEffect *effectRef);
@@ -281,9 +276,16 @@ public:
     void releaseShadowMap();
     void renderShadowMap();
 
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+    void bindOffscreenRenderTarget(OffscreenTexture *textureRef, bool enableAA);
+    void releaseOffscreenRenderTarget(const OffscreenTexture *textureRef, bool enableAA);
+#endif
+
     virtual bool mapFile(const std::string &path, MapBuffer *bufferRef) const = 0;
     virtual bool unmapFile(MapBuffer *bufferRef) const = 0;
     virtual bool existsFile(const std::string &path) const = 0;
+    virtual bool extractFilePath(const std::string &path, std::string &fileName, std::string &basename) const = 0;
+    virtual bool extractModelNameFromFileName(const std::string &path, std::string &modelName) const = 0;
 
 protected:
     typedef void (GLAPIENTRY * PFNGLGETINTEGERVPROC) (extensions::gl::GLenum pname, extensions::gl::GLint *params);
@@ -333,7 +335,6 @@ protected:
     typedef Hash<HashPtr, std::string> EffectRef2PathMap;
     typedef Hash<HashPtr, std::string> EffectRef2OwnerNameMap;
     typedef Hash<HashString, IModel *> Name2ModelRefMap;
-    typedef PointerArray<OffscreenTexture> OffscreenTextureList;
     typedef std::pair<const IEffect::Parameter *, const char *> SharedTextureParameterKey;
     typedef std::map<SharedTextureParameterKey, SharedTextureParameter> SharedTextureParameterMap;
     glm::vec4 m_mouseCursorPosition;
@@ -349,9 +350,12 @@ protected:
     EffectRef2OwnerNameMap m_effectRef2Owners;
     EffectRef2ParameterUIRefMap m_effectRef2ParameterUIs;
     RenderTargetMap m_renderTargets;
-    OffscreenTextureList m_offscreenTextures;
     SharedTextureParameterMap m_sharedParameters;
     Array<vpvl2::IEffect::Technique *> m_offscreenTechniques;
+#ifdef VPVl2_ENABLE_NVIDIA_CG
+    typedef PointerArray<OffscreenTexture> OffscreenTextureList;
+    OffscreenTextureList m_offscreenTextures;
+#endif
     int m_samplesMSAA;
     bool m_viewportRegionInvalidated;
 

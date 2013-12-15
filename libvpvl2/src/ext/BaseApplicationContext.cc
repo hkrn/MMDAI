@@ -570,7 +570,9 @@ void BaseApplicationContext::release()
     pushAnnotationGroup("BaseApplicationContext#release", sharedFunctionResolverInstance());
     m_shadowMap.reset();
     m_currentModelRef = 0;
+#ifdef VPVl2_ENABLE_NVIDIA_CG
     m_offscreenTextures.releaseAll();
+#endif
     m_renderTargets.releaseAll();
     m_basename2ModelRefs.clear();
     m_modelRef2Paths.clear();
@@ -975,17 +977,14 @@ void BaseApplicationContext::setEffectModelRef(const IEffect *effectRef, IModel 
 void BaseApplicationContext::addModelFilePath(IModel *model, const std::string &path)
 {
     if (model) {
-        UErrorCode status = U_ZERO_ERROR;
-        RegexMatcher filenameMatcher(".+/((.+)\\.\\w+)$", 0, status);
-        filenameMatcher.reset(UnicodeString::fromUTF8(path));
-        if (filenameMatcher.find()) {
-            const std::string &basename = String::toStdString(filenameMatcher.group(1, status));
+        std::string fileName, baseName;
+        if (extractFilePath(path, fileName, baseName)) {
             if (!model->name(IEncoding::kDefaultLanguage)) {
-                String s(filenameMatcher.group(2, status));
-                model->setName(&s, IEncoding::kDefaultLanguage);
+                IStringSmartPtr s(String::create(fileName));
+                model->setName(s.get(), IEncoding::kDefaultLanguage);
             }
-            m_basename2ModelRefs.insert(basename.c_str(), model);
-            m_modelRef2Basenames.insert(model, basename);
+            m_basename2ModelRefs.insert(baseName.c_str(), model);
+            m_modelRef2Basenames.insert(model, baseName);
         }
         else {
             if (!model->name(IEncoding::kDefaultLanguage)) {
@@ -1106,28 +1105,6 @@ FrameBufferObject *BaseApplicationContext::findFrameBufferObjectByRenderTarget(c
         }
     }
     return buffer;
-}
-
-void BaseApplicationContext::bindOffscreenRenderTarget(OffscreenTexture *textureRef, bool enableAA)
-{
-    const IEffect::OffscreenRenderTarget &rt = textureRef->renderTarget;
-    FunctionResolver *resolver = sharedFunctionResolverInstance();
-    if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
-        buffer->bindTexture(textureRef->colorTextureRef, 0);
-        buffer->bindDepthStencilBuffer(&textureRef->depthStencilBuffer);
-    }
-    static const GLuint buffers[] = { FrameBufferObject::kGL_COLOR_ATTACHMENT0 };
-    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
-    fx::Util::setRenderColorTargets(resolver, buffers, nbuffers);
-}
-
-void BaseApplicationContext::releaseOffscreenRenderTarget(const OffscreenTexture *textureRef, bool enableAA)
-{
-    const IEffect::OffscreenRenderTarget &rt = textureRef->renderTarget;
-    if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
-        buffer->readMSAABuffer(0);
-        buffer->unbind();
-    }
 }
 
 void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IString *directoryRef)
@@ -1454,19 +1431,13 @@ std::string BaseApplicationContext::resolveEffectFilePath(const IModel *model, c
 {
     const std::string &path = findModelFilePath(model);
     if (!path.empty()) {
-        UErrorCode status = U_ZERO_ERROR;
-        RegexMatcher filenameMatcher("^.+/(.+)\\.\\w+$", 0, status);
-        const UnicodeString &unicodePath = UnicodeString::fromUTF8(path);
-        filenameMatcher.reset(unicodePath);
-        const UnicodeString &s = filenameMatcher.find() ? filenameMatcher.group(1, status) : unicodePath;
-        RegexMatcher extractMatcher("^.+\\[(.+)(?:\\.(?:cg)?fx)?\\]$", 0, status);
-        extractMatcher.reset(s);
-        const UnicodeString &cgfx = extractMatcher.find()
-                ? extractMatcher.replaceAll("$1.cgfx", status) : s + ".cgfx";
-        const std::string &newEffectPath = static_cast<const String *>(dir)->toStdString()
-                + "/" + String::toStdString(cgfx);
-        if (existsFile(newEffectPath)) {
-            return newEffectPath;
+        std::string fileName, baseName, modelName;
+        if (extractFilePath(path, fileName, baseName) && extractModelNameFromFileName(fileName, modelName)) {
+            const std::string &newEffectPath = static_cast<const String *>(dir)->toStdString()
+                    + "/" + modelName + ".cgfx";
+            if (existsFile(newEffectPath)) {
+                return newEffectPath;
+            }
         }
     }
     return static_cast<const String *>(dir)->toStdString() + "/default.cgfx";
@@ -1633,6 +1604,30 @@ void BaseApplicationContext::renderShadowMap()
         popAnnotationGroup(sharedFunctionResolverInstance());
     }
 }
+
+#ifdef VPVl2_ENABLE_NVIDIA_CG
+void BaseApplicationContext::bindOffscreenRenderTarget(OffscreenTexture *textureRef, bool enableAA)
+{
+    const IEffect::OffscreenRenderTarget &rt = textureRef->renderTarget;
+    FunctionResolver *resolver = sharedFunctionResolverInstance();
+    if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
+        buffer->bindTexture(textureRef->colorTextureRef, 0);
+        buffer->bindDepthStencilBuffer(&textureRef->depthStencilBuffer);
+    }
+    static const GLuint buffers[] = { FrameBufferObject::kGL_COLOR_ATTACHMENT0 };
+    static const int nbuffers = sizeof(buffers) / sizeof(buffers[0]);
+    fx::Util::setRenderColorTargets(resolver, buffers, nbuffers);
+}
+
+void BaseApplicationContext::releaseOffscreenRenderTarget(const OffscreenTexture *textureRef, bool enableAA)
+{
+    const IEffect::OffscreenRenderTarget &rt = textureRef->renderTarget;
+    if (FrameBufferObject *buffer = findFrameBufferObjectByRenderTarget(rt, enableAA)) {
+        buffer->readMSAABuffer(0);
+        buffer->unbind();
+    }
+}
+#endif
 
 std::string BaseApplicationContext::toonDirectory() const
 {
