@@ -39,6 +39,7 @@ import qbs 1.0
 
 Project {
     references: [
+        "libgizmo-src/libgizmo.qbs",
         "libvpvl2/libvpvl2.qbs",
         "VPVM/VPVM.qbs"
     ]

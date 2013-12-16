@@ -79,7 +79,6 @@ Application {
         "../assimp-src/" + libraryInstallDirectory + "/lib",
         "../nvFX-src/" + libraryInstallDirectory + "/lib",
         "../tbb-src/lib",
-        "../libgizmo-src/" + libraryBuildDirectory,
         "../alure-src/" + libraryInstallDirectory + "/lib",
         "../openal-soft-src/" + libraryInstallDirectory + "/lib",
         "../icu4c-src/" + libraryInstallDirectory + "/lib",
@@ -96,7 +95,6 @@ Application {
         "FxLib" + nvFXLibrarySuffix,
         "FxLibGL" + nvFXLibrarySuffix,
         "tbb",
-        "gizmo",
         "OpenAL",
         "alure-static",
         "AntTweakBar"
@@ -131,6 +129,7 @@ Application {
         qbs.installDir: qbs.targetOS.contains("osx") ? (applicationBundlePath + "/Resources/qml") : "qml"
     }
     Depends { name: "cpp" }
+    Depends { name: "gizmo" }
     Depends { name: "vpvl2" }
     Depends {
         name: "Qt"
