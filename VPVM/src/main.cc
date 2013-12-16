@@ -133,6 +133,89 @@ void registerQmlTypes()
     qmlRegisterType<ProjectProxy>("com.github.mmdai.VPVM", 1, 0, "Project");
 }
 
+class LoggerThread : public QRunnable {
+public:
+    static const QString &toString(QtMsgType type) {
+        switch (type) {
+        case QtDebugMsg: {
+            static QString s("info");
+            return s;
+        }
+        case QtWarningMsg: {
+            static QString s("warning");
+            return s;
+        }
+        case QtCriticalMsg: {
+            static QString s("error");
+            return s;
+        }
+        case QtFatalMsg: {
+            static QString s("fatal");
+            return s;
+        }
+        default: {
+            static QString s("unknown");
+            return s;
+        }
+        }
+    }
+    static void delegateMessage(QtMsgType type, const QMessageLogContext &context, const QString &message);
+
+    LoggerThread()
+        : m_active(true)
+    {
+        setAutoDelete(false);
+    }
+    ~LoggerThread() {
+    }
+
+    void post(const QString &message) {
+        QMutexLocker locker(&m_mutex); Q_UNUSED(locker);
+        m_queue.enqueue(message);
+        m_cond.wakeAll();
+    }
+    void stop() {
+        QMutexLocker locker(&m_mutex); Q_UNUSED(locker);
+        m_active = false;
+        m_cond.wakeAll();
+    }
+    void setDirectory(const QString &value) {
+        m_directory = value;
+    }
+
+private:
+    void run() {
+        int count = 0;
+        while (m_active) {
+            QMutexLocker locker(&m_mutex); Q_UNUSED(locker);
+            m_cond.wait(&m_mutex);
+            const QDateTime &currentDateTime = QDateTime::currentDateTime();
+            QFile f(m_directory.absoluteFilePath("%1.log").arg(currentDateTime.toString("yyyyMMdd")));
+            f.open(QFile::Append);
+            while (!m_queue.isEmpty()) {
+                const QString &message = m_queue.dequeue();
+                f.write((currentDateTime.toString(Qt::ISODate) + " " + message).toUtf8() + "\n");
+                count++;
+            }
+            f.close();
+        }
+    }
+
+    QMutex m_mutex;
+    QWaitCondition m_cond;
+    QQueue<QString> m_queue;
+    QDir m_directory;
+    volatile bool m_active;
+};
+Q_GLOBAL_STATIC(LoggerThread, g_loggerThread)
+
+void LoggerThread::delegateMessage(QtMsgType type, const QMessageLogContext &context, const QString &message)
+{
+    Q_UNUSED(type);
+    Q_UNUSED(context);
+    g_loggerThread()->post(QString("[%1] %4 in %2 at line %3").arg(toString(type)).arg(context.function).arg(context.line).arg(message));
+}
+
 }
 
 int main(int argc, char *argv[])
@@ -161,6 +244,10 @@ int main(int argc, char *argv[])
     QQuickWindow::setDefaultAlphaBuffer(applicationPreference.isTransparentWindowEnabled());
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("applicationPreference", &applicationPreference);
+    qInstallMessageHandler(&LoggerThread::delegateMessage);
+    QThreadPool *threadPool = QThreadPool::globalInstance();
+    g_loggerThread()->setDirectory(loggingDirectory);
+    threadPool->start(g_loggerThread());
 #ifdef QT_NO_DEBUG
     engine.load(QUrl("qrc:///qml/VPVM/main.qml"));
 #else
@@ -182,11 +269,11 @@ int main(int argc, char *argv[])
     window->show();
 
     int result = app.exec();
-    QThreadPool *threadPool = QThreadPool::globalInstance();
+    BaseApplicationContext::terminate();
     if (threadPool->activeThreadCount() > 0) {
+        g_loggerThread()->stop();
         threadPool->waitForDone();
     }
-    BaseApplicationContext::terminate();
 
     return result;
 }
