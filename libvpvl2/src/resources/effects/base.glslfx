@@ -10,8 +10,6 @@ uniform bool use_boneTransformTextureVPVL2;
 
 namespace vpvl2 {
 
-uniform mat4 worldViewMatrix           : WORLDVIEW < Object = "Camera"; >;
-uniform mat4 projectionMatrix          : PROJECTION < Object = "Camera"; >;
 uniform mat4 worldViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Camera"; >;
 uniform mat4 lightViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Light"; >;
 uniform vec3 materialAmbient           : AMBIENT < Object = "Geometry"; >;
@@ -290,7 +288,7 @@ void vpvl2FXTransformVertex(inout vec4 origin,
     vec4 diffuse = vpvl2FXSaturate(vpvl2_NS_materialDiffuse * vec4(vpvl2_NS_lightDiffuse, 1.0));
     origin       = vpvl2FXPerformPositionTransform(origin, boneIndices, boneWeights);
     position     = vpvl2_NS_worldViewProjectionMatrix * origin;
-    normal       = vpvl2_NS_worldViewMatrix * vpvl2FXPerformNormalTransform(normal, position, boneIndices, boneWeights);
+    normal       = vpvl2FXPerformNormalTransform(normal, position, boneIndices, boneWeights);
     color        = vec4(vpvl2FXSaturate(vpvl2FXFMA(vec3(dot(normal.xyz, -vpvl2_NS_lightDirection)), diffuse.rgb, ambient)), diffuse.a);
     texcoord.zw  = vpvl2FXFMA(-normal.xy, kHalf2, kHalf2) * vec2(use_spheremap)
                  + vpvl2FXFMA(vec2(dot(vpvl2_NS_lightDirection, -normal.xyz)), kHalf2, kOne2) * vec2(!use_spheremap);
