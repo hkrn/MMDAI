@@ -397,13 +397,13 @@ struct Effect::NvFXParameter : IEffect::Parameter {
 
     void setFloatVector(float *v) {
         switch (valueRef->getType()) {
-        case nvFX::TVec2:
+        case nvFX::IUniform::TVec2:
             valueRef->setValue2fv(v);
             break;
-        case nvFX::TVec3:
+        case nvFX::IUniform::TVec3:
             valueRef->setValue3fv(v);
             break;
-        case nvFX::TVec4:
+        case nvFX::IUniform::TVec4:
             valueRef->setValue4fv(v);
             break;
         default:
@@ -497,23 +497,75 @@ struct Effect::NvFXTechnique : IEffect::Technique {
             }
             nvFX::IUniform::Type type = uniform->getType();
             switch (type) {
-            case nvFX::TFloat:
-            case nvFX::TVec2:
-            case nvFX::TVec3:
-            case nvFX::TVec4: {
+            case nvFX::IUniform::TBool:
+            case nvFX::IUniform::TBool2:
+            case nvFX::IUniform::TBool3:
+            case nvFX::IUniform::TBool4: {
+                int iv[4] = { 0, 0, 0, 0 }, count = (type - nvFX::IUniform::TBool) + 1;
+                bool bv[4] = { false, false, false, false };
+                uniform->getValuebv(bv, count);
+                for (int i = 0; i < 4; i++) {
+                    iv[i] = static_cast<int>(bv[i]);
+                }
+                setUniformInt(iv, resolver, programID, location, count, isPipeline);
+                break;
+            }
+            case nvFX::IUniform::TFloat:
+            case nvFX::IUniform::TVec2:
+            case nvFX::IUniform::TVec3:
+            case nvFX::IUniform::TVec4: {
                 float v[4] = { 0, 0, 0, 0 };
-                int count = (type - nvFX::TFloat) + 1;
+                int count = (type - nvFX::IUniform::TFloat) + 1;
                 uniform->getValuefv(v, count);
                 setUniformFloat(v, resolver, programID, location, count, isPipeline);
                 break;
             }
-            case nvFX::TInt:
-            case nvFX::TInt2:
-            case nvFX::TInt3:
-            case nvFX::TInt4: {
-                int v[4] = { 0, 0, 0, 0 }, count = (type - nvFX::TInt) + 1;
+            case nvFX::IUniform::TInt:
+            case nvFX::IUniform::TInt2:
+            case nvFX::IUniform::TInt3:
+            case nvFX::IUniform::TInt4: {
+                int v[4] = { 0, 0, 0, 0 }, count = (type - nvFX::IUniform::TInt) + 1;
                 uniform->getValueiv(v, count);
                 setUniformInt(v, resolver, programID, location, count, isPipeline);
+                break;
+            }
+            case nvFX::IUniform::TMat2: {
+                float v[4];
+                uniform->getValueRaw(v, sizeof(v));
+                if (isPipeline) {
+                    typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORMMATRIX2FVPROC) (GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+                    reinterpret_cast<PFNGLPROGRAMUNIFORMMATRIX2FVPROC>(resolver->resolveSymbol("glProgramUniform2iv"))(programID, location, 1, kGL_FALSE, v);
+                }
+                else {
+                    typedef void (GLAPIENTRY * PFNGLUNIFORMMATRIX2FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+                    reinterpret_cast<PFNGLUNIFORMMATRIX2FVPROC>(resolver->resolveSymbol("glUniformMatrix2fv"))(location, 1, kGL_FALSE, v);
+                }
+                break;
+            }
+            case nvFX::IUniform::TMat3: {
+                float v[9];
+                uniform->getValueRaw(v, sizeof(v));
+                if (isPipeline) {
+                    typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORMMATRIX3FVPROC) (GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+                    reinterpret_cast<PFNGLPROGRAMUNIFORMMATRIX3FVPROC>(resolver->resolveSymbol("glProgramUniform3iv"))(programID, location, 1, kGL_FALSE, v);
+                }
+                else {
+                    typedef void (GLAPIENTRY * PFNGLUNIFORMMATRIX3FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+                    reinterpret_cast<PFNGLUNIFORMMATRIX3FVPROC>(resolver->resolveSymbol("glUniformMatrix3fv"))(location, 1, kGL_FALSE, v);
+                }
+                break;
+            }
+            case nvFX::IUniform::TMat4: {
+                float v[16];
+                uniform->getValueRaw(v, sizeof(v));
+                if (isPipeline) {
+                    typedef void (GLAPIENTRY * PFNGLPROGRAMUNIFORMMATRIX4FVPROC) (GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+                    reinterpret_cast<PFNGLPROGRAMUNIFORMMATRIX4FVPROC>(resolver->resolveSymbol("glProgramUniform4iv"))(programID, location, 1, kGL_FALSE, v);
+                }
+                else {
+                    typedef void (GLAPIENTRY * PFNGLUNIFORMMATRIX4FVPROC) (GLint location, GLsizei count, GLboolean transpose, const GLfloat* value);
+                    reinterpret_cast<PFNGLUNIFORMMATRIX4FVPROC>(resolver->resolveSymbol("glUniformMatrix4fv"))(location, 1, kGL_FALSE, v);
+                }
                 break;
             }
             default:
