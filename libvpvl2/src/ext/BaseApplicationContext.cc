@@ -619,8 +619,7 @@ bool BaseApplicationContext::uploadTexture(const IString *name, int flags, void 
                 ret = internalUploadTexture(newName, std::string(), flags, context, texturePtr);
             }
             else if (const IString *directoryRef = context->directoryRef()) {
-                const std::string &path = static_cast<const String *>(directoryRef)->toStdString()
-                        + "/" + static_cast<const String *>(name)->toStdString();
+                const std::string &path = static_cast<const String *>(directoryRef)->toStdString() + "/" + newName;
                 VPVL2_VLOG(2, "Try loading a model toon texture: " << path);
                 ret = internalUploadTexture(newName, path, flags, context, texturePtr);
             }
