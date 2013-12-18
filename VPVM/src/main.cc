@@ -40,6 +40,7 @@
 #include "Common.h"
 #include <QtQuick>
 #include <QApplication>
+#include <QCommandLineParser>
 
 #include "ALAudioContext.h"
 #include "ALAudioEngine.h"
@@ -221,19 +222,25 @@ void LoggerThread::delegateMessage(QtMsgType type, const QMessageLogContext &con
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    Preference applicationPreference;
-    const QString &loggingDirectory = applicationPreference.initializeLoggingDirectory();
-    int verboseLogLevel = applicationPreference.verboseLogLevel();
-    BaseApplicationContext::initializeOnce(argv[0],  qPrintable(loggingDirectory), verboseLogLevel);
-
     app.setApplicationDisplayName("VPVM");
     app.setApplicationName("VPVM");
     app.setApplicationVersion("0.33.0");
     app.setOrganizationName("MMDAI Project");
     app.setOrganizationDomain("mmdai.github.com");
+
+    QCommandLineParser parser;
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.process(app);
+
+    Preference applicationPreference;
+    const QString &loggingDirectory = applicationPreference.initializeLoggingDirectory();
+    int verboseLogLevel = applicationPreference.verboseLogLevel();
+    BaseApplicationContext::initializeOnce(argv[0],  qPrintable(loggingDirectory), verboseLogLevel);
     if (applicationPreference.isFontFamilyToGUIShared()) {
         app.setFont(applicationPreference.fontFamily());
     }
+
     QTranslator translator;
     translator.load(QLocale::system(), "VPVM", ".", Util::resourcePath("translations"), ".qm");
     app.installTranslator(&translator);
