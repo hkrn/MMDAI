@@ -349,19 +349,19 @@ public:
         }
         return false;
     }
-    bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context, ITexture *&texturePtr) {
         QImage image;
         image.loadFromData(data, size);
-        if (!uploadTextureQt(image.convertToFormat(QImage::Format_ARGB32), key, context, bridge)) {
-            return context->uploadTexture(data, size, key, bridge);
+        if (!uploadTextureQt(image.convertToFormat(QImage::Format_ARGB32), key, flags, context, texturePtr)) {
+            return context->uploadTexture(data, size, key, flags, texturePtr);
         }
         return true;
     }
-    bool uploadTextureOpaque(const std::string &path, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureOpaque(const std::string &path, int flags, ModelContext *context, ITexture *&texturePtr) {
         QImage image;
         image.load(QString::fromStdString(path));
-        if (!uploadTextureQt(image.convertToFormat(QImage::Format_ARGB32), path, context, bridge)) {
-            return context->uploadTexture(path, bridge);
+        if (!uploadTextureQt(image.convertToFormat(QImage::Format_ARGB32), path, flags, context, texturePtr)) {
+            return context->uploadTexture(path, flags, texturePtr);
         }
         return true;
     }
@@ -369,14 +369,14 @@ public:
         return g_functionResolverInstance;
     }
 
-    bool uploadTextureQt(const QImage &image, const std::string &key, ModelContext *modelContext, TextureDataBridge &bridge) {
+    bool uploadTextureQt(const QImage &image, const std::string &key, int flags, ModelContext *modelContext, ITexture *&texturePtr) {
         /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
         if (!image.isNull()) {
             const Vector3 size(image.width(), image.height(), 1);
             static const gl::BaseSurface::Format kFormat(gl::kGL_BGRA, gl::kGL_RGBA8, gl::kGL_UNSIGNED_INT_8_8_8_8_REV, gl::Texture2D::kGL_TEXTURE_2D);
-            ITexture *texturePtr = modelContext->createTexture(image.constBits(), kFormat, size, (bridge.flags & kGenerateTextureMipmap) != 0);
+            texturePtr = modelContext->createTexture(image.constBits(), kFormat, size, (flags & kGenerateTextureMipmap) != 0);
             VPVL2_VLOG(2, "Created a texture: texture=" << texturePtr);
-            return modelContext->storeTexture(key, texturePtr, bridge);
+            return modelContext->storeTexture(key, flags, texturePtr);
         }
         else {
             VPVL2_LOG(WARNING, "Cannot load an image texture with QImage: " << key);

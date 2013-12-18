@@ -305,6 +305,7 @@ void ProjectProxy::initializeOnce()
 void ProjectProxy::createAsync()
 {
     emit projectWillCreate();
+    /* delete (release) all remain models/motions before creating project */
     connect(this, &ProjectProxy::enqueuedModelsDidDelete, this, &ProjectProxy::internalCreateAsync);
     release(false);
 }
@@ -313,6 +314,7 @@ void ProjectProxy::loadAsync(const QUrl &fileUrl)
 {
     Q_ASSERT(fileUrl.isValid());
     emit projectWillLoad();
+    /* delete (release) all remain models/motions before loading project */
     connect(this, &ProjectProxy::enqueuedModelsDidDelete, this, &ProjectProxy::internalLoadAsync);
     release(false);
     m_fileUrl = fileUrl;
