@@ -174,20 +174,22 @@ public:
         }
         return false;
     }
-    bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
-        if (context->uploadTexture(data, size, key, bridge)) {
+    /*
+    bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context, ITexture *&texturePtr) {
+        if (context->uploadTexture(data, size, key, flags, texturePtr)) {
             // context->optimizeTexture(bridge.dataRef);
             return true;
         }
         return false;
     }
-    bool uploadTextureOpaque(const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
-        if (context->uploadTexture(key, bridge)) {
+    bool uploadTextureOpaque(const std::string &key, int flags, ModelContext *context, ITexture *&texturePtr) {
+        if (context->uploadTexture(key, flags, texturePtr)) {
             // context->optimizeTexture(bridge.dataRef);
             return true;
         }
         return false;
     }
+    */
 
     struct Resolver : FunctionResolver {
         bool hasExtension(const char *name) const {

@@ -153,11 +153,11 @@ public:
     public:
         ModelContext(BaseApplicationContext *applicationContextRef, Archive *archiveRef, const IString *directory);
         ~ModelContext();
-        void addTextureCache(const std::string &path, ITexture *textureRef);
-        bool findTexture(const std::string &path, TextureDataBridge &bridge) const;
-        bool uploadTexture(const std::string &path, TextureDataBridge &bridge);
-        bool uploadTexture(const uint8 *data, vsize size, const std::string &key, TextureDataBridge &bridge);
-        bool storeTexture(const std::string &key, ITexture *textureRef, TextureDataBridge &bridge);
+        void addTextureCache(const std::string &path, ITexture *texturePtr);
+        bool findTexture(const std::string &path, ITexture *&texturePtr) const;
+        bool uploadTexture(const std::string &path, int flags, ITexture *&textureRef);
+        bool uploadTexture(const uint8 *data, vsize size, const std::string &key, int flags, ITexture *&textureRef);
+        bool storeTexture(const std::string &key, int flags, ITexture *textureRef);
         void optimizeTexture(ITexture *texture);
         int countTextures() const;
         ITexture *createTexture(const void *ptr, const gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap) const;
@@ -170,11 +170,11 @@ public:
         static const gl::GLenum kGL_STORAGE_CACHED_APPLE = 0x85BE;
         typedef void (GLAPIENTRY * PFNGLPIXELSTOREIPROC) (gl:: GLenum pname, gl::GLint param);
         PFNGLPIXELSTOREIPROC pixelStorei;
-        typedef std::map<std::string, ITexture *> TextureCacheMap;
+        typedef std::map<std::string, ITexture *> TextureRefCacheMap;
         const IString *m_directoryRef;
         Archive *m_archiveRef;
         BaseApplicationContext *m_applicationContextRef;
-        TextureCacheMap m_textureRefCache;
+        TextureRefCacheMap m_textureRefCache;
         float m_maxAnisotropyValue;
     };
 
@@ -187,7 +187,7 @@ public:
     void initializeOpenGLContext(bool enableDebug);
     void release();
 
-    bool uploadTexture(const IString *name, TextureDataBridge &bridge, void *userData);
+    bool uploadTexture(const IString *name, int flags, void *userData, ITexture *&texturePtr);
     void getMatrix(float32 value[], const IModel *model, int flags) const;
     IString *loadShaderSource(ShaderType type, const IModel *model, void *userData);
     IString *loadShaderSource(ShaderType type, const IString *path);
@@ -300,16 +300,16 @@ protected:
     PFNGLCLEARCOLORPROC clearColor;
     PFNGLCLEARDEPTHPROC clearDepth;
 
-    bool uploadSystemToonTexture(const std::string &name, TextureDataBridge &bridge, ModelContext *context);
-    bool internalUploadTexture(const std::string &name, const std::string &path, TextureDataBridge &bridge, ModelContext *context);
+    bool uploadSystemToonTexture(const std::string &name, int flags, ModelContext *context, ITexture *&textureRef);
+    bool internalUploadTexture(const std::string &name, const std::string &path, int flags, ModelContext *context, ITexture *&textureRef);
     void validateEffectResources();
     std::string toonDirectory() const;
     std::string shaderDirectory() const;
     std::string effectDirectory() const;
     std::string kernelDirectory() const;
 
-    virtual bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge);
-    virtual bool uploadTextureOpaque(const std::string &path, ModelContext *context, TextureDataBridge &bridge);
+    virtual bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context, ITexture *&textureRef);
+    virtual bool uploadTextureOpaque(const std::string &path, int flags, ModelContext *context, ITexture *&textureRef);
     virtual gl::BaseSurface::Format defaultTextureFormat() const;
 
     const StringMap *m_configRef;

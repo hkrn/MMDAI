@@ -884,15 +884,12 @@ void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::Parameter
     if (enableResourceName && annotationRef) {
         const char *name = annotationRef->stringValue();
         IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8*>(name));
-        IApplicationContext::TextureDataBridge texture(flags & ~IApplicationContext::kAsyncLoadingTexture);
-        if (m_applicationContextRef->uploadTexture(s, texture, userData)) {
-            textureRef = texture.dataRef;
-            if (textureRef) {
-                samplerParameterRef->setSampler(textureRef);
-                m_path2parameterRefs.insert(name, textureParameterRef);
-                ITexture *tex = m_textures.append(new TexturePtrRef(textureRef));
-                m_name2textures.insert(textureParameterName, TextureReference(frameBufferObjectRef, tex, textureParameterRef, samplerParameterRef));
-            }
+        ITexture *texturePtr = 0;
+        if (m_applicationContextRef->uploadTexture(s, 0, userData, texturePtr)) {
+            samplerParameterRef->setSampler(texturePtr);
+            m_path2parameterRefs.insert(name, textureParameterRef);
+            ITexture *tex = m_textures.append(new TexturePtrRef(texturePtr));
+            m_name2textures.insert(textureParameterName, TextureReference(frameBufferObjectRef, tex, textureParameterRef, samplerParameterRef));
         }
         internal::deleteObject(s);
     }

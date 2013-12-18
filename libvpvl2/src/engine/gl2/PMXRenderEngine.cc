@@ -971,19 +971,17 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
     Array<IMaterial *> materials;
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
-    IApplicationContext::TextureDataBridge bridge(IApplicationContext::kTexture2D);
     m_context->materialTextureRefs.resize(nmaterials);
+    ITexture *texturePtr = 0;
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const IString *name = material->name(IEncoding::kDefaultLanguage); (void) name;
         const int materialIndex = material->index(); (void) materialIndex;
         MaterialTextureRefs &materialPrivate = m_context->materialTextureRefs[i];
-        bridge.flags = IApplicationContext::kTexture2D | IApplicationContext::kAsyncLoadingTexture;
         if (const IString *mainTexturePath = material->mainTexture()) {
-            if (m_applicationContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
-                ITexture *textureRef = bridge.dataRef;
-                materialPrivate.mainTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
-                VPVL2_VLOG(2, "Binding the texture as a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef << ")");
+            if (m_applicationContextRef->uploadTexture(mainTexturePath, 0, userData, texturePtr)) {
+                materialPrivate.mainTextureRef = m_context->allocatedTextures.insert(texturePtr, texturePtr);
+                VPVL2_VLOG(2, "Binding the texture as a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texturePtr->data() << ")");
             }
             else {
                 VPVL2_LOG(WARNING, "Cannot bind a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << ")");
@@ -991,28 +989,25 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
         }
         if (const IString *sphereTexturePath = material->sphereTexture()) {
-            if (m_applicationContextRef->uploadTexture(sphereTexturePath, bridge, userData)) {
-                ITexture *textureRef = bridge.dataRef;
-                materialPrivate.sphereTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
-                VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef);
+            if (m_applicationContextRef->uploadTexture(sphereTexturePath, 0, userData, texturePtr)) {
+                materialPrivate.sphereTextureRef = m_context->allocatedTextures.insert(texturePtr, texturePtr);
+                VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texturePtr->data());
             }
             else {
                 VPVL2_LOG(WARNING, "Cannot bind a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
                 return false;
             }
         }
-        bridge.flags |= IApplicationContext::kToonTexture;
         if (material->isSharedToonTextureUsed()) {
             char buf[16];
             internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
             IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(buf));
-            bridge.flags |= IApplicationContext::kSystemToonTexture;
-            bool ret = m_applicationContextRef->uploadTexture(s, bridge, userData);
+            // bridge.flags |= IApplicationContext::kSystemToonTexture;
+            bool ret = m_applicationContextRef->uploadTexture(s, IApplicationContext::kToonTexture | IApplicationContext::kSystemToonTexture, userData, texturePtr);
             internal::deleteObject(s);
             if (ret) {
-                ITexture *textureRef = bridge.dataRef;
-                materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
-                VPVL2_VLOG(2, "Binding the texture as a shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef);
+                materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(texturePtr, texturePtr);
+                VPVL2_VLOG(2, "Binding the texture as a shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texturePtr->data());
             }
             else {
                 VPVL2_LOG(WARNING, "Cannot bind a shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);
@@ -1020,10 +1015,9 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
         }
         else if (const IString *toonTexturePath = material->toonTexture()) {
-            if (m_applicationContextRef->uploadTexture(toonTexturePath, bridge, userData)) {
-                ITexture *textureRef = bridge.dataRef;
-                materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(textureRef, textureRef);
-                VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << bridge.dataRef);
+            if (m_applicationContextRef->uploadTexture(toonTexturePath, IApplicationContext::kToonTexture, userData, texturePtr)) {
+                materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(texturePtr, texturePtr);
+                VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texturePtr->data());
             }
             else {
                 VPVL2_LOG(WARNING, "Cannot bind a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex);

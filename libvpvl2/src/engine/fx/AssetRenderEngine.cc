@@ -161,15 +161,15 @@ bool AssetRenderEngine::upload(void *userData)
     const unsigned int nmaterials = scene->mNumMaterials;
     aiString texturePath;
     std::string path, mainTexture, subTexture;
-    IApplicationContext::TextureDataBridge bridge(IApplicationContext::kTexture2D | IApplicationContext::kAsyncLoadingTexture);
-    ITexture *textureRef = 0;
     PrivateEffectEngine *engine = 0;
+    int flags;
     if (PrivateEffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
         engine = *enginePtr;
         if (engine->materialTexture.isMipmapEnabled()) {
-            bridge.flags |= IApplicationContext::kGenerateTextureMipmap;
+            flags |= IApplicationContext::kGenerateTextureMipmap;
         }
     }
+    ITexture *texturePtr = 0;
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
@@ -180,38 +180,38 @@ bool AssetRenderEngine::upload(void *userData)
             if (PrivateEffectEngine::splitTexturePath(path, mainTexture, subTexture)) {
                 if (m_textureMap[mainTexture] == 0) {
                     IString *mainTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
-                    if (m_applicationContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
-                        textureRef = bridge.dataRef;
-                        m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
+                    texturePtr = 0;
+                    if (m_applicationContextRef->uploadTexture(mainTexturePath, flags, userData, texturePtr)) {
+                        m_textureMap[mainTexture] = m_allocatedTextures.insert(texturePtr, texturePtr);
                         if (engine) {
-                            engine->materialTexture.setTexture(material, textureRef);
+                            engine->materialTexture.setTexture(material, texturePtr);
                         }
-                        VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
+                        VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << texturePtr);
                     }
                     internal::deleteObject(mainTexturePath);
                 }
                 if (m_textureMap[subTexture] == 0) {
                     IString *subTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(subTexture.c_str()));
-                    if (m_applicationContextRef->uploadTexture(subTexturePath, bridge, userData)) {
-                        textureRef = bridge.dataRef;
-                        m_textureMap[subTexture] = m_allocatedTextures.insert(textureRef, textureRef);
+                    texturePtr = 0;
+                    if (m_applicationContextRef->uploadTexture(subTexturePath, flags, userData, texturePtr)) {
+                        m_textureMap[subTexture] = m_allocatedTextures.insert(texturePtr, texturePtr);
                         if (engine) {
-                            engine->materialSphereMap.setTexture(material, textureRef);
+                            engine->materialSphereMap.setTexture(material, texturePtr);
                         }
-                        VPVL2_VLOG(2, "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << textureRef);
+                        VPVL2_VLOG(2, "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << texturePtr);
                     }
                     internal::deleteObject(subTexturePath);
                 }
             }
             else if (m_textureMap[mainTexture] == 0) {
                 IString *mainTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
-                if (m_applicationContextRef->uploadTexture(mainTexturePath, bridge, userData)) {
-                    textureRef = bridge.dataRef;
-                    m_textureMap[mainTexture] = m_allocatedTextures.insert(textureRef, textureRef);
+                texturePtr = 0;
+                if (m_applicationContextRef->uploadTexture(mainTexturePath, flags, userData, texturePtr)) {
+                    m_textureMap[mainTexture] = m_allocatedTextures.insert(texturePtr, texturePtr);
                     if (engine) {
-                        engine->materialTexture.setTexture(material, textureRef);
+                        engine->materialTexture.setTexture(material, texturePtr);
                     }
-                    VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << textureRef);
+                    VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << texturePtr);
                 }
                 internal::deleteObject(mainTexturePath);
             }

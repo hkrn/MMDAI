@@ -2,8 +2,8 @@ namespace vpvl2 {
 
 class MockIApplicationContext : public IApplicationContext {
  public:
-  MOCK_METHOD3(uploadTexture,
-      bool(const IString *name, TextureDataBridge &bridge, void *userData));
+  MOCK_METHOD4(uploadTexture,
+      bool(const IString *name, int flags, void *userData, ITexture *&texturePtr));
   MOCK_CONST_METHOD3(getMatrix,
       void(float32 value[16], const IModel *model, int flags));
   MOCK_METHOD2(loadShaderSource,

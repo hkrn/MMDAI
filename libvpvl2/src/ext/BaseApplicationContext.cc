@@ -335,25 +335,25 @@ BaseApplicationContext::ModelContext::~ModelContext()
     m_directoryRef = 0;
 }
 
-void BaseApplicationContext::ModelContext::addTextureCache(const std::string &path, ITexture *textureRef)
+void BaseApplicationContext::ModelContext::addTextureCache(const std::string &path, ITexture *texturePtr)
 {
-    if (textureRef) {
-        m_textureRefCache.insert(std::make_pair(path, textureRef));
+    if (texturePtr) {
+        m_textureRefCache.insert(std::make_pair(path, texturePtr));
     }
 }
 
-bool BaseApplicationContext::ModelContext::findTexture(const std::string &path, TextureDataBridge &bridge) const
+bool BaseApplicationContext::ModelContext::findTexture(const std::string &path, ITexture *&texturePtr) const
 {
     VPVL2_DCHECK(!path.empty());
-    TextureCacheMap::const_iterator it = m_textureRefCache.find(path);
+    TextureRefCacheMap::const_iterator it = m_textureRefCache.find(path);
     if (it != m_textureRefCache.end()) {
-        bridge.dataRef = it->second;
+        texturePtr = it->second;
         return true;
     }
     return false;
 }
 
-bool BaseApplicationContext::ModelContext::storeTexture(const std::string &key, ITexture *textureRef, TextureDataBridge &bridge)
+bool BaseApplicationContext::ModelContext::storeTexture(const std::string &key, int flags, ITexture *textureRef)
 {
     VPVL2_DCHECK(!key.empty());
     bool ok = textureRef != 0;
@@ -362,7 +362,7 @@ bool BaseApplicationContext::ModelContext::storeTexture(const std::string &key, 
         textureRef->bind();
         textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAG_FILTER, int(BaseTexture::kGL_LINEAR));
         textureRef->setParameter(BaseTexture::kGL_TEXTURE_MIN_FILTER, int(BaseTexture::kGL_LINEAR));
-        if (internal::hasFlagBits(bridge.flags, IApplicationContext::kToonTexture)) {
+        if (internal::hasFlagBits(flags, IApplicationContext::kToonTexture)) {
             textureRef->setParameter(BaseTexture::kGL_TEXTURE_WRAP_S, int(BaseTexture::kGL_CLAMP_TO_EDGE));
             textureRef->setParameter(BaseTexture::kGL_TEXTURE_WRAP_T, int(BaseTexture::kGL_CLAMP_TO_EDGE));
         }
@@ -370,7 +370,6 @@ bool BaseApplicationContext::ModelContext::storeTexture(const std::string &key, 
             textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropyValue);
         }
         textureRef->unbind();
-        bridge.dataRef = textureRef;
         annotateObject(BaseTexture::kGL_TEXTURE, textureRef->data(), ("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         addTextureCache(key, textureRef);
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
@@ -380,7 +379,7 @@ bool BaseApplicationContext::ModelContext::storeTexture(const std::string &key, 
 
 int BaseApplicationContext::ModelContext::countTextures() const
 {
-    return int(m_textureRefCache.size());
+    return m_textureRefCache.size();
 }
 
 ITexture *BaseApplicationContext::ModelContext::createTexture(const void *ptr, const BaseSurface::Format &format, const Vector3 &size, bool /* mipmap */) const
@@ -465,43 +464,42 @@ const IString *BaseApplicationContext::ModelContext::directoryRef() const
     return m_directoryRef;
 }
 
-bool BaseApplicationContext::ModelContext::uploadTexture(const std::string &path, TextureDataBridge &bridge)
+bool BaseApplicationContext::ModelContext::uploadTexture(const std::string &path, int flags, ITexture *&textureRef)
 {
     VPVL2_DCHECK(!path.empty());
     if (path[path.length() - 1] == '/') {
         VPVL2_VLOG(2, path << " is the directory, skipped.");
         return true;
     }
-    else if (findTexture(path, bridge)) {
+    else if (findTexture(path, textureRef)) {
         VPVL2_VLOG(2, path << " is already cached, skipped.");
         return true;
     }
-    ITexture *texturePtr = 0;
     MapBuffer buffer(m_applicationContextRef);
     /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
     if (m_applicationContextRef->mapFile(path, &buffer)) {
-        texturePtr = createTexture(buffer.address, buffer.size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
-        if (!texturePtr) {
+        textureRef = createTexture(buffer.address, buffer.size, true);
+        if (!textureRef) {
             VPVL2_LOG(WARNING, "Cannot load texture from " << path << ": " << stbi_failure_reason());
             return false;
         }
     }
-    return storeTexture(path, texturePtr, bridge);
+    return storeTexture(path, flags, textureRef);
 }
 
-bool BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsize size, const std::string &key, TextureDataBridge &bridge)
+bool BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsize size, const std::string &key, int flags, ITexture *&textureRef)
 {
     VPVL2_DCHECK(data && size > 0);
-    if (findTexture(key, bridge)) {
+    if (findTexture(key, textureRef)) {
         VPVL2_VLOG(2, key << " is already cached, skipped.");
         return true;
     }
-    ITexture *texturePtr = createTexture(data, size, internal::hasFlagBits(bridge.flags, IApplicationContext::kGenerateTextureMipmap));
-    if (!texturePtr) {
+    textureRef = createTexture(data, size, internal::hasFlagBits(flags, IApplicationContext::kGenerateTextureMipmap));
+    if (!textureRef) {
         VPVL2_LOG(WARNING, "Cannot load texture with key " << key << ": " << stbi_failure_reason());
         return false;
     }
-    return storeTexture(key, texturePtr, bridge);
+    return storeTexture(key, flags, textureRef);
 }
 
 bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdir, int vlog)
@@ -595,10 +593,9 @@ void BaseApplicationContext::release()
     popAnnotationGroup(sharedFunctionResolverInstance());
 }
 
-bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridge &bridge, void *userData)
+bool BaseApplicationContext::uploadTexture(const IString *name, int flags, void *userData, ITexture *&texturePtr)
 {
     bool ret = false;
-    bridge.dataRef = 0;
     ModelContext *context = static_cast<ModelContext *>(userData);
     std::string newName = static_cast<const String *>(name)->toStdString();
     std::string::size_type pos(newName.find('\\'));
@@ -606,60 +603,60 @@ bool BaseApplicationContext::uploadTexture(const IString *name, TextureDataBridg
         newName.replace(pos, 1, "/");
         pos = newName.find('\\', pos + 1);
     }
-    if (internal::hasFlagBits(bridge.flags, IApplicationContext::kToonTexture)) {
-        if (!internal::hasFlagBits(bridge.flags, IApplicationContext::kSystemToonTexture)) {
+    if (internal::hasFlagBits(flags, IApplicationContext::kToonTexture)) {
+        if (!internal::hasFlagBits(flags, IApplicationContext::kSystemToonTexture)) {
             /* it's directory if name2.empty() is true */
             if (newName.empty()) {
                 const std::string &newToonPath = toonDirectory() + "/toon0.bmp";
-                if (!context->findTexture(newToonPath, bridge)) {
+                if (!context->findTexture(newToonPath, texturePtr)) {
                     /* uses default system texture loader */
                     VPVL2_VLOG(2, "Try loading a system default toon texture from archive: " << newToonPath);
-                    ret = context->uploadTexture(newToonPath, bridge);
+                    ret = context->uploadTexture(newToonPath, flags, texturePtr);
                 }
             }
             else if (context->archiveRef()) {
                 VPVL2_VLOG(2, "Try loading a model toon texture from archive: " << newName);
-                ret = internalUploadTexture(newName, std::string(), bridge, context);
+                ret = internalUploadTexture(newName, std::string(), flags, context, texturePtr);
             }
             else if (const IString *directoryRef = context->directoryRef()) {
                 const std::string &path = static_cast<const String *>(directoryRef)->toStdString()
                         + "/" + static_cast<const String *>(name)->toStdString();
                 VPVL2_VLOG(2, "Try loading a model toon texture: " << path);
-                ret = internalUploadTexture(newName, path, bridge, context);
+                ret = internalUploadTexture(newName, path, flags, context, texturePtr);
             }
         }
         if (!ret) {
-            bridge.flags |= IApplicationContext::kSystemToonTexture;
+            flags |= IApplicationContext::kSystemToonTexture;
             VPVL2_VLOG(2, "Loading a system default toon texture: " << newName);
-            ret = uploadSystemToonTexture(newName, bridge, context);
+            ret = uploadSystemToonTexture(newName, flags, context, texturePtr);
         }
     }
     else if (const IString *directoryRef = context->directoryRef()) {
         const std::string &path = static_cast<const String *>(directoryRef)->toStdString() + "/" + newName;
         VPVL2_VLOG(2, "Loading a model texture: " << path);
-        ret = internalUploadTexture(newName, path, bridge, context);
+        ret = internalUploadTexture(newName, path, flags, context, texturePtr);
     }
     return ret;
 }
 
-bool BaseApplicationContext::uploadSystemToonTexture(const std::string &name, TextureDataBridge &bridge, ModelContext *context)
+bool BaseApplicationContext::uploadSystemToonTexture(const std::string &name, int flags, ModelContext *context, ITexture *&texturePtr)
 {
     MapBuffer buffer(this);
     const std::string &path = toonDirectory() + "/" + name;
     /* open a (system) toon texture from library resource */
-    return mapFile(path, &buffer) ? context->uploadTexture(buffer.address, buffer.size, path, bridge) : false;
+    return mapFile(path, &buffer) ? context->uploadTexture(buffer.address, buffer.size, path, flags,texturePtr) : false;
 }
 
-bool BaseApplicationContext::internalUploadTexture(const std::string &name, const std::string &path, TextureDataBridge &bridge, ModelContext *context)
+bool BaseApplicationContext::internalUploadTexture(const std::string &name, const std::string &path, int flags, ModelContext *context, ITexture *&texturePtr)
 {
-    if (!internal::hasFlagBits(bridge.flags, IApplicationContext::kSystemToonTexture)) {
+    if (!internal::hasFlagBits(flags, IApplicationContext::kSystemToonTexture)) {
         if (Archive *archiveRef = context->archiveRef()) {
             archiveRef->uncompressEntry(name);
             VPVL2_LOG(INFO, name);
             if (const std::string *bytesRef = archiveRef->dataRef(name)) {
                 const uint8 *ptr = reinterpret_cast<const uint8 *>(bytesRef->data());
                 vsize size = bytesRef->size();
-                return uploadTextureOpaque(ptr, size, name, context, bridge);
+                return uploadTextureOpaque(ptr, size, name, flags, context, texturePtr);
             }
             VPVL2_LOG(WARNING, "Cannot load a bridge from archive: " << name);
             /* force true to continue loading texture if path is directory */
@@ -670,7 +667,7 @@ bool BaseApplicationContext::internalUploadTexture(const std::string &name, cons
             return true; /* skip */
         }
     }
-    return uploadTextureOpaque(path, context, bridge);
+    return uploadTextureOpaque(path, flags, context, texturePtr);
 }
 
 void BaseApplicationContext::validateEffectResources()
@@ -680,18 +677,18 @@ void BaseApplicationContext::validateEffectResources()
     resourceRepository->validateAll();
 }
 
-bool BaseApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge)
+bool BaseApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context, ITexture *&texturePtr)
 {
     /* fallback to default texture loader */
     VPVL2_VLOG(2, "Using default texture loader (stbi_image) instead of inherited class texture loader.");
-    return context->uploadTexture(data, size, key, bridge);
+    return context->uploadTexture(data, size, key, flags, texturePtr);
 }
 
-bool BaseApplicationContext::uploadTextureOpaque(const std::string &path, ModelContext *context, TextureDataBridge &bridge)
+bool BaseApplicationContext::uploadTextureOpaque(const std::string &path, int flags, ModelContext *context, ITexture *&texturePtr)
 {
     /* fallback to default texture loader */
     VPVL2_VLOG(2, "Using default texture loader (stbi_image) instead of inherited class texture loader.");
-    return context->uploadTexture(path, bridge);
+    return context->uploadTexture(path, flags, texturePtr);
 }
 
 BaseSurface::Format BaseApplicationContext::defaultTextureFormat() const

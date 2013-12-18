@@ -177,24 +177,24 @@ public:
         }
         return false;
     }
-    bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context, ITexture *&texturePtr) {
         sf::Image image;
         if (image.loadFromMemory(data, size)) {
-            return uploadTextureSFML(image, key, context, bridge);
+            return uploadTextureSFML(image, key, flags, context, texturePtr);
         }
-        return context->uploadTexture(data, size, key, bridge);
+        return context->uploadTexture(data, size, key, flags, texturePtr);
     }
-    bool uploadTextureOpaque(const std::string &path, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureOpaque(const std::string &path, int flags, ModelContext *context, ITexture *&texturePtr) {
         sf::Image image;
         if (image.loadFromFile(path)) {
-            return uploadTextureSFML(image, path, context, bridge);
+            return uploadTextureSFML(image, path, flags, context, texturePtr);
         }
-        return context->uploadTexture(path, bridge);
+        return context->uploadTexture(path, flags, texturePtr);
     }
-    bool uploadTextureSFML(const sf::Image &image, const std::string &key, ModelContext *context, TextureDataBridge &bridge) {
+    bool uploadTextureSFML(const sf::Image &image, const std::string &key, int flags, ModelContext *context, ITexture *&texturePtr) {
         const Vector3 size(image.getSize().x, image.getSize().y, 1);
-        ITexture *texturePtr = context->createTexture(image.getPixelsPtr(), defaultTextureFormat(), size, (bridge.flags & IApplicationContext::kGenerateTextureMipmap) != 0);
-        return context->storeTexture(key, texturePtr, bridge);
+        texturePtr = context->createTexture(image.getPixelsPtr(), defaultTextureFormat(), size, (flags & IApplicationContext::kGenerateTextureMipmap) != 0);
+        return context->storeTexture(key, flags, texturePtr);
     }
 
     struct Resolver : FunctionResolver {

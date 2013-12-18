@@ -175,7 +175,7 @@ private:
                            const IString *toonTexturePath,
                            EffectEngine *engineRef,
                            MaterialContext &context,
-                           bool shared,
+                           int flags,
                            void *userData);
     void setupOffscreenEffect(IEffect *effectRef, void *userData);
     void executeOneTechniqueAllPasses(const char *name, Array<IEffect::Pass *> &passes);

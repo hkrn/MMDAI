@@ -122,19 +122,6 @@ public:
         virtual int query(QueryType type) const = 0;
     };
 
-    struct TextureDataBridge {
-        TextureDataBridge(int flags)
-            : dataRef(0),
-              flags(flags)
-        {
-        }
-        ~TextureDataBridge() {
-            dataRef = 0;
-            flags = 0;
-        }
-        ITexture *dataRef;
-        int flags;
-    };
     struct SharedTextureParameter {
         SharedTextureParameter(IEffect::Parameter *parameter = 0)
             : textureRef(0),
@@ -163,7 +150,7 @@ public:
      * @param userData
      * @return bool
      */
-    virtual bool uploadTexture(const IString *name, TextureDataBridge &bridge, void *userData) = 0;
+    virtual bool uploadTexture(const IString *name, int flags, void *userData, ITexture *&texturePtr) = 0;
 
     /**
      * 取得する型に応じた行列を取得します.
