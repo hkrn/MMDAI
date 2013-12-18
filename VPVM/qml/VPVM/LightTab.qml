@@ -37,6 +37,7 @@
 
 import QtQuick 2.2
 import QtQuick.Controls 1.1
+import QtQuick.Dialogs 1.1
 import QtQuick.Layouts 1.1
 import com.github.mmdai.VPVM 1.0 as VPVM
 
@@ -49,17 +50,42 @@ Tab {
             title: qsTr("Light")
             Layout.fillHeight: true
             RowLayout {
-                AxesSpinBox {
+                GroupBox {
                     title: qsTr("Color")
                     Layout.fillHeight: true
-                    maximumValue: 1.0
-                    minimumValue: 0.0
-                    decimals: 3
-                    stepSize: 0.01
-                    labelX: qsTr("Red")
-                    labelY: qsTr("Green")
-                    labelZ: qsTr("Blue")
-                    value: scene.light.color
+                    ColorDialog {
+                        id: lightColorDialog
+                        property color previous
+                        onColorChanged: scene.light.color = color
+                        onAccepted: scene.light.color = currentColor
+                        onRejected: scene.light.color = previous
+                    }
+                    ColumnLayout {
+                        Rectangle {
+                            id: lightColorPreview
+                            Layout.alignment: Qt.AlignCenter
+                            width: 50
+                            height: 50
+                            color: scene.light.color
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    lightColorDialog.previous = scene.light.color
+                                    lightColorDialog.color = scene.light.color
+                                    lightColorDialog.open()
+                                }
+                            }
+                        }
+                        Button {
+                            id: openDialogButton
+                            text: qsTr("Open Dialog")
+                            onClicked: {
+                                lightColorDialog.previous = scene.light.color
+                                lightColorDialog.color = scene.light.color
+                                lightColorDialog.open()
+                            }
+                        }
+                    }
                 }
                 AxesSpinBox {
                     title: qsTr("Direction")

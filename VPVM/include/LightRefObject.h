@@ -38,6 +38,7 @@
 #ifndef LIGHTREFOBJECT_H
 #define LIGHTREFOBJECT_H
 
+#include <QColor>
 #include <QObject>
 #include <QVector3D>
 
@@ -58,7 +59,7 @@ class LightRefObject : public QObject
     Q_PROPERTY(ProjectProxy *project READ project CONSTANT FINAL)
     Q_PROPERTY(MotionProxy *motion READ motion NOTIFY motionChanged FINAL)
     Q_PROPERTY(LightMotionTrack *track READ track CONSTANT FINAL)
-    Q_PROPERTY(QVector3D color READ color WRITE setColor NOTIFY colorChanged FINAL)
+    Q_PROPERTY(QColor color READ color WRITE setColor NOTIFY colorChanged FINAL)
     Q_PROPERTY(QVector3D direction READ direction WRITE setDirection NOTIFY directionChanged FINAL)
     Q_PROPERTY(ShadowType shadowType READ shadowType WRITE setShadowType NOTIFY shadowTypeChanged)
     Q_PROPERTY(qreal shadowDistance READ shadowDistance WRITE setShadowDistance NOTIFY shadowDistanceChanged)
@@ -82,8 +83,8 @@ public:
     MotionProxy *motion() const;
     LightMotionTrack *track() const;
     vpvl2::ILight *data() const;
-    QVector3D color() const;
-    void setColor(const QVector3D &value);
+    QColor color() const;
+    void setColor(const QColor &value);
     QVector3D direction() const;
     void setDirection(const QVector3D &value);
     ShadowType shadowType() const;
@@ -104,7 +105,7 @@ private:
     MotionProxy *m_motionRef;
     vpvl2::ILight *m_lightRef;
     QScopedPointer<LightMotionTrack> m_track;
-    QVector3D m_color;
+    QColor m_color;
     QVector3D m_direction;
     QString m_name;
     ShadowType m_shadowType;
