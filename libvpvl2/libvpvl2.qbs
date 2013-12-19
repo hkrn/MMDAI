@@ -43,10 +43,7 @@ Product {
     property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
     property string assimpLibrarySuffix: qbs.enableDebugCode ? "D" : ""
     property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + (qbs.enableDebugCode ? "D" : "")
-    type: qbs.buildVariant === "debug" ? "frameworkbundle" : "staticlibrary"
-    name: "vpvl2"
-    version: "0.13.0"
-    files: [
+    property var commonFiles: [
         "src/core/asset/*.cc",
         "src/core/base/*.cc",
         "src/core/internal/*.cc",
@@ -54,7 +51,6 @@ Product {
         "src/core/pmd2/*.cc",
         "src/core/pmx/*.cc",
         "src/core/vmd/*.cc",
-        "src/engine/cl/*.cc",
         "src/engine/fx/*.cc",
         "src/engine/gl2/*.cc",
         "src/engine/nvfx/*.cc",
@@ -69,6 +65,10 @@ Product {
         "vendor/minizip-1.1/*.c",
         "vendor/tinyxml2-1.0.11/*.cpp"
     ]
+    type: qbs.buildVariant === "debug" ? "dynamiclibrary" : "staticlibrary"
+    name: "vpvl2"
+    version: "0.13.0"
+    files: commonFiles
     cpp.defines: [
         "VPVL2_ENABLE_QT",
         "USE_FILE32API"
@@ -97,22 +97,32 @@ Product {
         "../tbb-src/lib"
     ]
     cpp.dynamicLibraries: [
-        "z",
-        "LinearMath",
-        "BulletCollision",
-        "BulletDynamics",
-        "BulletSoftBody",
+        "AntTweakBar",
         "assimp" + assimpLibrarySuffix,
         "FxParser" + nvFXLibrarySuffix,
-        "FxLib" + nvFXLibrarySuffix,
         "FxLibGL" + nvFXLibrarySuffix,
+        "FxLib" + nvFXLibrarySuffix,
+        "BulletSoftBody",
+        "BulletDynamics",
+        "BulletCollision",
+        "LinearMath",
         "tbb",
-        "AntTweakBar"
+        "z",
+        "GL"
     ]
-    cpp.frameworks: [
-        "OpenGL",
-        "OpenCL"
-    ]
+    Properties {
+        condition: qbs.targetOS.contains("osx")
+        type: qbs.buildVariant === "debug" ? "frameworkbundle" : "staticlibrary"
+        cpp.frameworks: [
+            "OpenGL",
+            "OpenCL"
+        ]
+    }
+    Group {
+        condition: qbs.targetOS.contains("osx")
+        name: "OSX Extension"
+        files: [ "src/engine/cl/*.cc" ]
+    }
     Depends { name: "cpp" }
     Depends {
         name: "Qt"

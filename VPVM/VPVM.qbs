@@ -85,23 +85,20 @@ Application {
         "../AntTweakBar-src/lib"
     ]
     cpp.dynamicLibraries: [
-        "z",
-        "LinearMath",
-        "BulletCollision",
-        "BulletDynamics",
-        "BulletSoftBody",
+        "AntTweakBar",
+        "alure-static",
+        "openal",
         "assimp" + assimpLibrarySuffix,
         "FxParser" + nvFXLibrarySuffix,
-        "FxLib" + nvFXLibrarySuffix,
         "FxLibGL" + nvFXLibrarySuffix,
+        "FxLib" + nvFXLibrarySuffix,
+        "BulletSoftBody",
+        "BulletDynamics",
+        "BulletCollision",
+        "LinearMath",
         "tbb",
-        "OpenAL",
-        "alure-static",
-        "AntTweakBar"
-    ]
-    cpp.frameworks: [
-        "OpenGL",
-        "OpenCL"
+        "z",
+        "GL"
     ]
     Qt.quick.qmlDebugging: qbs.enableDebugCode
     Group {
@@ -127,6 +124,14 @@ Application {
         files: [ "qml/VPVM/*" ]
         qbs.install: true
         qbs.installDir: qbs.targetOS.contains("osx") ? (applicationBundlePath + "/Resources/qml") : "qml"
+    }
+    Properties {
+        condition: qbs.targetOS.contains("osx")
+        name: "OSX Frameworks"
+        cpp.frameworks: [
+            "OpenGL",
+            "OpenCL"
+        ]
     }
     Depends { name: "cpp" }
     Depends { name: "gizmo" }

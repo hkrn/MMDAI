@@ -89,7 +89,7 @@ public:
     }
     IString *toString(const uint8 *value, IString::Codec codec, vsize maxlen) const {
         if (maxlen > 0 && value) {
-            vsize size = std::strlen(reinterpret_cast<const char *>(value));
+            vsize size = qstrlen(reinterpret_cast<const char *>(value));
             return toString(value, qMin(maxlen, size), codec);
         }
         else {
