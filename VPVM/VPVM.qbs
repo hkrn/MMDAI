@@ -44,6 +44,21 @@ Application {
     property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
     property string assimpLibrarySuffix: qbs.enableDebugCode ? "D" : ""
     property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + (qbs.enableDebugCode ? "D" : "")
+    property var commonLibraries: [
+        "AntTweakBar",
+        "alure-static",
+        "openal",
+        "assimp" + assimpLibrarySuffix,
+        "FxParser" + nvFXLibrarySuffix,
+        "FxLibGL" + nvFXLibrarySuffix,
+        "FxLib" + nvFXLibrarySuffix,
+        "BulletSoftBody",
+        "BulletDynamics",
+        "BulletCollision",
+        "LinearMath",
+        "tbb",
+        "z",
+    ]
     type: "application"
     name: "VPVM"
     version: "0.33.0"
@@ -84,22 +99,6 @@ Application {
         "../icu4c-src/" + libraryInstallDirectory + "/lib",
         "../AntTweakBar-src/lib"
     ]
-    cpp.dynamicLibraries: [
-        "AntTweakBar",
-        "alure-static",
-        "openal",
-        "assimp" + assimpLibrarySuffix,
-        "FxParser" + nvFXLibrarySuffix,
-        "FxLibGL" + nvFXLibrarySuffix,
-        "FxLib" + nvFXLibrarySuffix,
-        "BulletSoftBody",
-        "BulletDynamics",
-        "BulletCollision",
-        "LinearMath",
-        "tbb",
-        "z",
-        "GL"
-    ]
     Qt.quick.qmlDebugging: qbs.enableDebugCode
     Group {
         name: "Application"
@@ -127,11 +126,15 @@ Application {
     }
     Properties {
         condition: qbs.targetOS.contains("osx")
-        name: "OSX Frameworks"
         cpp.frameworks: [
             "OpenGL",
             "OpenCL"
         ]
+        cpp.dynamicLibraries: commonLibraries
+    }
+    Properties {
+        condition: qbs.targetOS.contains("osx")
+        cpp.dynamicLibraries: commonLibraries.concat("GL")
     }
     Depends { name: "cpp" }
     Depends { name: "gizmo" }

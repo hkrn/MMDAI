@@ -65,6 +65,19 @@ Product {
         "vendor/minizip-1.1/*.c",
         "vendor/tinyxml2-1.0.11/*.cpp"
     ]
+    property var commonLibraries: [
+        "AntTweakBar",
+        "assimp" + assimpLibrarySuffix,
+        "FxParser" + nvFXLibrarySuffix,
+        "FxLibGL" + nvFXLibrarySuffix,
+        "FxLib" + nvFXLibrarySuffix,
+        "BulletSoftBody",
+        "BulletDynamics",
+        "BulletCollision",
+        "LinearMath",
+        "tbb",
+        "z"
+    ]
     type: qbs.buildVariant === "debug" ? "dynamiclibrary" : "staticlibrary"
     name: "vpvl2"
     version: "0.13.0"
@@ -96,27 +109,18 @@ Product {
         "../AntTweakBar-src/lib",
         "../tbb-src/lib"
     ]
-    cpp.dynamicLibraries: [
-        "AntTweakBar",
-        "assimp" + assimpLibrarySuffix,
-        "FxParser" + nvFXLibrarySuffix,
-        "FxLibGL" + nvFXLibrarySuffix,
-        "FxLib" + nvFXLibrarySuffix,
-        "BulletSoftBody",
-        "BulletDynamics",
-        "BulletCollision",
-        "LinearMath",
-        "tbb",
-        "z",
-        "GL"
-    ]
     Properties {
         condition: qbs.targetOS.contains("osx")
         type: qbs.buildVariant === "debug" ? "frameworkbundle" : "staticlibrary"
+        cpp.dynamicLibraries: commonLibraries
         cpp.frameworks: [
             "OpenGL",
             "OpenCL"
         ]
+    }
+    Properties {
+        condition: !qbs.targetOS.contains("osx")
+        cpp.dynamicLibraries: commonLibraries.concat("GL")
     }
     Group {
         condition: qbs.targetOS.contains("osx")
