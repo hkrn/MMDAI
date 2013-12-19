@@ -174,7 +174,6 @@ public:
         }
         return false;
     }
-    /*
     bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context, ITexture *&texturePtr) {
         if (context->uploadTexture(data, size, key, flags, texturePtr)) {
             // context->optimizeTexture(bridge.dataRef);
@@ -189,9 +188,18 @@ public:
         }
         return false;
     }
-    */
 
     struct Resolver : FunctionResolver {
+        Resolver()
+            : coreProfile(false)
+        {
+            GLint flags;
+            glGetIntegerv(gl::kGL_CONTEXT_FLAGS, &flags);
+            coreProfile = (flags & gl::kGL_CONTEXT_CORE_PROFILE_BIT) != 0;
+        }
+        ~Resolver() {
+        }
+
         bool hasExtension(const char *name) const {
             if (const bool *ptr = supportedTable.find(name)) {
                 return *ptr;
@@ -222,7 +230,7 @@ public:
                 return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
             }
             case kQueryCoreProfile: {
-                return true; //gl::isContextCoreProfile(this);
+                return coreProfile;
             }
             default:
                 return 0;
@@ -230,6 +238,7 @@ public:
         }
         mutable Hash<HashString, bool> supportedTable;
         mutable Hash<HashString, void *> addressTable;
+        bool coreProfile;
     };
     FunctionResolver *sharedFunctionResolverInstance() const {
         static Resolver resolver;
