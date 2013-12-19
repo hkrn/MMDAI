@@ -48,8 +48,8 @@
 #include <QUrl>
 #include <QUuid>
 
-#include <vpvl2/extensions/icu4c/Encoding.h>
 #include <vpvl2/extensions/XMLProject.h>
+#include <vpvl2/extensions/qt/Encoding.h>
 
 namespace vpvl2 {
 class Factory;
@@ -290,7 +290,7 @@ private:
     void setErrorString(const QString &value);
     void release(bool fromDestructor);
 
-    vpvl2::extensions::icu4c::Encoding::Dictionary m_dictionary;
+    vpvl2::extensions::qt::Encoding::Dictionary m_dictionary;
     QScopedPointer<vpvl2::IEncoding> m_encoding;
     QScopedPointer<vpvl2::Factory> m_factory;
     QScopedPointer<vpvl2::extensions::XMLProject::IDelegate> m_delegate;

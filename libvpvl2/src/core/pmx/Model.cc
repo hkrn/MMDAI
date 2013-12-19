@@ -125,7 +125,7 @@ struct DefaultStaticVertexBuffer : public IModel::StaticVertexBuffer {
                 }
 #else
                 (void) boneIndexHashes;
-                return boneIndex;
+                return Scalar(boneIndex);
 #endif
             }
             return -1;

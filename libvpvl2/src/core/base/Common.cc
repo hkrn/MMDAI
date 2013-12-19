@@ -147,6 +147,7 @@ void uninstallLogger()
 }
 
 #if defined(VPVL2_ENABLE_QT)
+#undef ERROR
 QLoggingCategory &findLoggingBasicCategory(int level) {
     switch (level) {
     case INFO: {

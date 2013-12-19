@@ -57,21 +57,9 @@ Application {
         "BulletCollision",
         "LinearMath",
         "tbb",
-        "z",
+        "z"
     ]
-    type: "application"
-    name: "VPVM"
-    version: "0.33.0"
-    files: [
-        "src/*.cc",
-        "include/*.h",
-        "licenses/licenses.qrc",
-        "../libvpvl2/src/resources/resources.qrc"
-    ]
-    cpp.defines: [
-        "VPVL2_ENABLE_QT"
-    ]
-    cpp.includePaths: [
+    property var commonIncludePaths: [
         "include",
         "../libvpvl2/include",
         "../libvpvl2/" + libraryBuildDirectory + "/include",
@@ -89,6 +77,19 @@ Application {
         "../openal-soft-src/" + libraryInstallDirectory + "/include",
         "../icu4c-src/" + libraryInstallDirectory + "/include"
     ]
+    type: "application"
+    name: "VPVM"
+    version: "0.33.0"
+    files: [
+        "src/*.cc",
+        "include/*.h",
+        "licenses/licenses.qrc",
+        "../libvpvl2/src/resources/resources.qrc"
+    ]
+    cpp.defines: [
+        "VPVL2_ENABLE_QT"
+    ]
+    cpp.includePaths: commonIncludePaths
     cpp.libraryPaths: [
         "../bullet-src/" + libraryInstallDirectory + "/lib",
         "../assimp-src/" + libraryInstallDirectory + "/lib",
@@ -135,6 +136,11 @@ Application {
     Properties {
         condition: !qbs.targetOS.contains("osx")
         cpp.dynamicLibraries: commonLibraries.concat("GL")
+    }
+    Properties {
+        condition: qbs.targetOS.contains("windows")
+        cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
+        cpp.includePaths: commonIncludePaths.concat([ "../alure-src/include/AL", "../openal-soft-src/" + libraryInstallDirectory + "/include/AL",])
     }
     Depends { name: "cpp" }
     Depends { name: "gizmo" }

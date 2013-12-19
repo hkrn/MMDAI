@@ -204,7 +204,7 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glGenTextures = reinterpret_cast<PFNGLGENTEXTURESPROC>(resolver->resolve("glGenTextures"));
     glGetActiveUniform = reinterpret_cast<PFNGLGETACTIVEUNIFORMPROC>(resolver->resolve("glGetActiveUniform"));
     glGetAttribLocation = reinterpret_cast<PFNGLGETATTRIBLOCATIONPROC>(resolver->resolve("glGetAttribLocation"));
-    glGetError = __glGetError; // reinterpret_cast<PFNGLGETERRORPROC>(resolver->resolve("glGetError"));
+    glGetError = reinterpret_cast<PFNGLGETERRORPROC>(__glGetError); // reinterpret_cast<PFNGLGETERRORPROC>(resolver->resolve("glGetError"));
     glGetInfoLogARB = reinterpret_cast<PFNGLGETINFOLOGARBPROC>(resolver->resolve("glGetInfoLogARB"));
     glGetIntegerv = reinterpret_cast<PFNGLGETINTEGERVPROC>(resolver->resolve("glGetIntegerv"));
     glGetProgramInfoLog = reinterpret_cast<PFNGLGETPROGRAMINFOLOGPROC>(resolver->resolve("glGetProgramInfoLog"));

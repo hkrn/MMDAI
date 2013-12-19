@@ -212,17 +212,18 @@ typedef unsigned __int64 uint64_t;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
-static const int INFO = 0;
-static const int WARNING = 1;
-static const int ERROR = 2;
 #ifdef __clang__
 #pragma clang diagnostic push
 #endif
-inline QDebug operator<< (QDebug o, const std::string &string) {
+inline QDebug operator<< (QDebug &o, const std::string &string) {
     o << string.c_str();
     return o;
 }
 namespace vpvl2 {
+#undef ERROR
+static const int INFO = 0;
+static const int WARNING = 1;
+static const int ERROR = 2;
 QLoggingCategory &findLoggingBasicCategory(int level);
 QLoggingCategory &findLoggingVerboseCategory(int level);
 }

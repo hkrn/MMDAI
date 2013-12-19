@@ -748,8 +748,8 @@ bool ProjectProxy::canRedo() const
 
 qreal ProjectProxy::differenceTimeIndex(qreal value) const
 {
-    static const IKeyframe::TimeIndex kZero = 0;
-    return m_project ? qMax(m_project->duration() - qMax(value, kZero), kZero) : 0;
+    static const qreal kZero = 0.0f;
+    return m_project ? qMax(qreal(m_project->duration()) - qMax(value, kZero), kZero) : 0;
 }
 
 qreal ProjectProxy::differenceDuration(qreal value) const
@@ -869,6 +869,7 @@ void ProjectProxy::updateParentBindingModel()
 
 ModelProxy *ProjectProxy::loadModel(const QUrl &fileUrl, const QUuid &uuid, bool skipConfirm)
 {
+    Q_ASSERT(fileUrl.isValid() && !uuid.isNull());
     ModelProxy *modelProxy = 0;
     QScopedPointer<LoadingModelTask> task(new LoadingModelTask(m_factory.data(), fileUrl));
     QThreadPool::globalInstance()->start(task.data());

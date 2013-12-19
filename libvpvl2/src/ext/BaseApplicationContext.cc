@@ -54,6 +54,7 @@
 #if 1
 #include <AntTweakBar.h>
 #else
+#define TW_CALL
 #define TwInit(graphAPI, device)
 #define TwDraw()
 #define TwTerminate()
@@ -203,48 +204,48 @@ public:
             stream << "visible='" << annotationRef->booleanValue() << "' ";
         }
     }
-    static void handleError(const char *message) {
+    static void TW_CALL handleError(const char *message) {
         VPVL2_LOG(WARNING, "AntTweakBar error message: " << message);
     }
 
 private:
-    static void getEnableEffect(void *value, void *userData) {
+    static void TW_CALL getEnableEffect(void *value, void *userData) {
         const IEffect *effectRef = static_cast<const IEffect *>(userData);
         *static_cast<bool *>(value) = effectRef->isEnabled();
     }
-    static void setEnableEffect(const void *value, void *userData) {
+    static void TW_CALL setEnableEffect(const void *value, void *userData) {
         IEffect *parameterRef = static_cast<IEffect *>(userData);
         parameterRef->setEnabled(*static_cast<const bool *>(value));
     }
-    static void getBooleanParameter(void *value, void *userData) {
+    static void TW_CALL getBooleanParameter(void *value, void *userData) {
         const IEffect::Parameter *parameterRef = static_cast<const IEffect::Parameter *>(userData);
         int bv = 0;
         parameterRef->getValue(bv);
         *static_cast<bool *>(value) = bv != 0;
     }
-    static void setBooleanParameter(const void *value, void *userData) {
+    static void TW_CALL setBooleanParameter(const void *value, void *userData) {
         IEffect::Parameter *parameterRef = static_cast<IEffect::Parameter *>(userData);
         bool bv = *static_cast<const bool *>(value);
         parameterRef->setValue(bv);
     }
-    static void getIntegerParameter(void *value, void *userData) {
+    static void TW_CALL getIntegerParameter(void *value, void *userData) {
         const IEffect::Parameter *parameterRef = static_cast<const IEffect::Parameter *>(userData);
         int iv = 0;
         parameterRef->getValue(iv);
         *static_cast<int *>(value) = iv;
     }
-    static void setIntegerParameter(const void *value, void *userData) {
+    static void TW_CALL setIntegerParameter(const void *value, void *userData) {
         IEffect::Parameter *parameterRef = static_cast<IEffect::Parameter *>(userData);
         int iv = *static_cast<const int *>(value);
         parameterRef->setValue(iv);
     }
-    static void getFloatParameter(void *value, void *userData) {
+    static void TW_CALL getFloatParameter(void *value, void *userData) {
         const IEffect::Parameter *parameterRef = static_cast<const IEffect::Parameter *>(userData);
         float fv = 0;
         parameterRef->getValue(fv);
         *static_cast<float *>(value) = fv;
     }
-    static void setFloatParameter(const void *value, void *userData) {
+    static void TW_CALL setFloatParameter(const void *value, void *userData) {
         IEffect::Parameter *parameterRef = static_cast<IEffect::Parameter *>(userData);
         float fv = *static_cast<const float *>(value);
         parameterRef->setValue(fv);
@@ -293,17 +294,7 @@ static inline const char *DebugMessageTypeToString(vpvl2::gl::GLenum value)
 
 static inline IString *toIStringFromUtf8(const std::string &bytes)
 {
-#ifdef _MSC_VER /* workaround for unexpected bogus string from UnicodeString::fromUTF8 on MSVC build */
-    UnicodeString s;
-    int32_t length = int32_t(bytes.length()), length16;
-    UChar *utf16 = s.getBuffer(length + 1);
-    UErrorCode errorCode = U_ZERO_ERROR;
-    u_strFromUTF8WithSub(utf16, s.getCapacity(), &length16, bytes.data(), length, 0xfffd, 0, &errorCode);
-    s.releaseBuffer(length16);
-    return bytes.empty() ? 0 : new (std::nothrow) String(s);
-#else
     return bytes.empty() ? 0 : String::create(bytes);
-#endif
 }
 
 } /* namespace anonymous */

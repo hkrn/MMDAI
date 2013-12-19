@@ -88,10 +88,10 @@ public:
             m_colorTexture->unbind();
             genRenderbuffers(1, &m_depthBuffer);
             bindRenderbuffer(gl::FrameBufferObject::kGL_RENDERBUFFER, m_depthBuffer);
-            renderbufferStorage(gl::FrameBufferObject::kGL_RENDERBUFFER, gl::FrameBufferObject::kGL_DEPTH_COMPONENT32F, m_size.x(), m_size.y());
+            renderbufferStorage(gl::FrameBufferObject::kGL_RENDERBUFFER, gl::FrameBufferObject::kGL_DEPTH_COMPONENT32F, gl::GLsizei(m_size.x()), gl::GLsizei(m_size.y()));
             bindRenderbuffer(gl::FrameBufferObject::kGL_RENDERBUFFER, 0);
             bind();
-            framebufferTexture2D(gl::FrameBufferObject::kGL_FRAMEBUFFER, gl::FrameBufferObject::kGL_COLOR_ATTACHMENT0, gl::Texture2D::kGL_TEXTURE_2D, m_colorTexture->data(), 0);
+            framebufferTexture2D(gl::FrameBufferObject::kGL_FRAMEBUFFER, gl::FrameBufferObject::kGL_COLOR_ATTACHMENT0, gl::Texture2D::kGL_TEXTURE_2D, gl::GLuint(m_colorTexture->data()), 0);
             framebufferRenderbuffer(gl::FrameBufferObject::kGL_FRAMEBUFFER, gl::FrameBufferObject::kGL_DEPTH_ATTACHMENT, gl::FrameBufferObject::kGL_RENDERBUFFER, m_depthBuffer);
             unbind();
         }

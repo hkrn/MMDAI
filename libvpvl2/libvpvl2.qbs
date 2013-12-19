@@ -98,6 +98,7 @@ Product {
         "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
         "../assimp-src/" + libraryInstallDirectory + "/include",
         "../nvFX-src/" + libraryInstallDirectory + "/include",
+        "../zlib-src/" + libraryInstallDirectory + "/include",
         "../AntTweakBar-src/include",
         "../tbb-src/include"
     ]
@@ -126,6 +127,10 @@ Product {
         condition: qbs.targetOS.contains("osx")
         name: "OSX Extension"
         files: [ "src/engine/cl/*.cc" ]
+    }
+    Properties {
+        condition: qbs.targetOS.contains("windows")
+        cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
     }
     Depends { name: "cpp" }
     Depends {

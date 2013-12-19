@@ -51,10 +51,9 @@
 #include <glm/gtc/type_ptr.hpp>
 
 using namespace vpvl2;
-using namespace vpvl2::gl;
 using namespace vpvl2::extensions::qt;
 
-class Grid::PrivateShaderProgram : public ShaderProgram {
+class Grid::PrivateShaderProgram : public gl::ShaderProgram {
 public:
     enum VertexType {
         kPosition,
@@ -70,7 +69,7 @@ public:
         m_modelViewProjectionMatrix = -1;
     }
 
-    void addShaderFromFile(const QString &path, GLuint type) {
+    void addShaderFromFile(const QString &path, gl::GLuint type) {
         QFile file(path);
         if (file.open(QFile::ReadOnly | QFile::Unbuffered)) {
             vsize size = file.size();
@@ -100,7 +99,7 @@ public:
         functions.glDisableVertexAttribArray(kColor);
     }
     void setUniformValues(const QMatrix4x4 &matrix) {
-        GLfloat m[16] = { 0 };
+        gl::GLfloat m[16] = { 0 };
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         const float *source = matrix.constData();
 #else
@@ -113,7 +112,7 @@ public:
     }
 
 private:
-    GLint m_modelViewProjectionMatrix;
+    gl::GLint m_modelViewProjectionMatrix;
 };
 
 Grid::Grid(QObject *parent)
@@ -137,11 +136,11 @@ Grid::~Grid()
 void Grid::load(vpvl2::IApplicationContext::FunctionResolver *resolver)
 {
     m_program.reset(new PrivateShaderProgram(resolver)),
-    m_bundle.reset(new VertexBundle(resolver)),
-    m_layout.reset(new VertexBundleLayout(resolver)),
+    m_bundle.reset(new gl::VertexBundle(resolver)),
+    m_layout.reset(new gl::VertexBundleLayout(resolver)),
     m_program->create();
-    m_program->addShaderFromFile(":shaders/gui/grid.vsh", ShaderProgram::kGL_VERTEX_SHADER);
-    m_program->addShaderFromFile(":shaders/gui/grid.fsh", ShaderProgram::kGL_FRAGMENT_SHADER);
+    m_program->addShaderFromFile(":shaders/gui/grid.vsh", gl::ShaderProgram::kGL_VERTEX_SHADER);
+    m_program->addShaderFromFile(":shaders/gui/grid.fsh", gl::ShaderProgram::kGL_FRAGMENT_SHADER);
     if (m_program->link()) {
         // draw black grid
         Array<Vertex> vertices;
@@ -162,9 +161,9 @@ void Grid::load(vpvl2::IApplicationContext::FunctionResolver *resolver)
         addLine(kZeroV3, Vector3(0.0f, height, 0.0f), m_axisYColor, vertices, indices, index);
         // Z coordinate (blue)
         addLine(kZeroV3, Vector3(0.0f, 0.0f, depth), m_axisZColor, vertices, indices, index);
-        m_bundle->create(VertexBundle::kVertexBuffer, 0, VertexBundle::kGL_STATIC_DRAW,
+        m_bundle->create(gl::VertexBundle::kVertexBuffer, 0, gl::VertexBundle::kGL_STATIC_DRAW,
                          &vertices[0].position, sizeof(Vertex) * vertices.count());
-        m_bundle->create(VertexBundle::kIndexBuffer, 0, VertexBundle::kGL_STATIC_DRAW,
+        m_bundle->create(gl::VertexBundle::kIndexBuffer, 0, gl::VertexBundle::kGL_STATIC_DRAW,
                          &indices[0], sizeof(uint8) * indices.count());
         m_layout->create();
         m_layout->bind();
@@ -299,7 +298,7 @@ void Grid::bindVertexBundle(bool bundle)
 {
     if (!bundle || !m_layout->bind()) {
         QOpenGLFunctions functions(QOpenGLContext::currentContext());
-        m_bundle->bind(VertexBundle::kVertexBuffer, 0);
+        m_bundle->bind(gl::VertexBundle::kVertexBuffer, 0);
         static const Vertex v;
         functions.glVertexAttribPointer(PrivateShaderProgram::kPosition, 3, GL_FLOAT, GL_FALSE, sizeof(v), 0);
         const uint8 *offset = reinterpret_cast<const uint8 *>(
@@ -307,7 +306,7 @@ void Grid::bindVertexBundle(bool bundle)
                     - reinterpret_cast<const uint8 *>(&v.position));
         functions.glVertexAttribPointer(PrivateShaderProgram::kColor, 3, GL_FLOAT, GL_FALSE, sizeof(v), offset);
         m_program->enableAttributes();
-        m_bundle->bind(VertexBundle::kIndexBuffer, 0);
+        m_bundle->bind(gl::VertexBundle::kIndexBuffer, 0);
     }
 }
 
@@ -315,7 +314,7 @@ void Grid::releaseVertexBundle(bool bundle)
 {
     if (!bundle || !m_layout->unbind()) {
         m_program->disableAttributes();
-        m_bundle->unbind(VertexBundle::kVertexBuffer);
-        m_bundle->unbind(VertexBundle::kIndexBuffer);
+        m_bundle->unbind(gl::VertexBundle::kVertexBuffer);
+        m_bundle->unbind(gl::VertexBundle::kIndexBuffer);
     }
 }
