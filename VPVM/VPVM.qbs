@@ -133,7 +133,7 @@ Application {
         cpp.dynamicLibraries: commonLibraries
     }
     Properties {
-        condition: qbs.targetOS.contains("osx")
+        condition: !qbs.targetOS.contains("osx")
         cpp.dynamicLibraries: commonLibraries.concat("GL")
     }
     Depends { name: "cpp" }
