@@ -130,7 +130,7 @@ VPVL2_DECL_CONSTEXPR static inline int makeVersion(int major, int minor)
 static inline int makeVersion(const char *s)
 {
     if (s) {
-        int major = s[0] - '0', minor = minor = s[2] - '0';
+        int major = s[0] - '0', minor = s[2] - '0';
         if (major >= 0 && major <=  9 && minor >= 0 && minor <= 9) {
             return gl::makeVersion(major, minor);
         }

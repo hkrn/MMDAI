@@ -2185,11 +2185,15 @@ IGizmo *RenderTarget::orientationGizmo() const
     return m_orientationGizmo.data();
 }
 
+#if !defined(QT_OPENGL_ES_2)
+#define glClearDepthf(value) glClearDepth(value)
+#endif
+
 void RenderTarget::clearScene()
 {
     const QColor &color = m_projectProxyRef ? m_projectProxyRef->screenColor() : QColor(Qt::white);
     glClearColor(color.redF(), color.greenF(), color.blueF(), color.alphaF());
-    glClearDepth(1);
+    glClearDepthf(1);
     glClearStencil(0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }

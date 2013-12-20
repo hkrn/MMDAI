@@ -220,6 +220,7 @@ public:
 #if defined(GL_CHROMIUM_map_sub)
         return glMapBufferSubDataCHROMIUM(target, offset, size, GL_WRITE_ONLY);
 #elif defined(VPVL2_ENABLE_GLES2)
+        (void) target;
         (void) offset;
         m_bytes.resize(int(size));
         return &m_bytes[0];
@@ -237,6 +238,7 @@ public:
         (void) type;
         glUnmapBufferSubDataCHROMIUM(address);
 #elif defined(VPVL2_ENABLE_GLES2)
+        (void) address;
         GLuint target = type2target(type);
         bufferSubData(target, 0, m_bytes.count(), &m_bytes[0]);
 #else /* GL_CHROMIUM_map_sub */

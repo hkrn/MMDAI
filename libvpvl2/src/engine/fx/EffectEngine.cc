@@ -1749,6 +1749,7 @@ void EffectEngine::updateModelLightParameters(const Scene *scene, const IModel *
     const ILight *light = scene->lightRef();
     const Vector3 &lc = light->color();
     Color lightColor(lc.x(), lc.y(), lc.z(), 1);
+    (void) model;
     if (false) { //model && model->type() == IModel::kAssetModel) {
         const Vector3 &ac = Vector3(0.7f, 0.7f, 0.7f) - lightColor;
         ambient.setLightColor(Color(ac.x(), ac.y(), ac.z(), 1));

@@ -40,6 +40,8 @@
 #include <vpvl2/vpvl2.h>
 #include <QOpenGLContext>
 
+using namespace vpvl2;
+
 GraphicsDevice::GraphicsDevice(QObject *parent)
     : QObject(parent)
 {
