@@ -85,8 +85,8 @@ bool NameListSection::preparse(uint8 *&ptr, vsize &rest, Motion::DataInfo & /* i
     VPVL2_VLOG(2, "MVDNameListSection(Header): reserved1=" << header.reserved);
     VPVL2_VLOG(2, "MVDNameListSection(Header): reserved2=" << header.reserved2);
     VPVL2_VLOG(2, "MVDNameListSection(Header): reserved3=" << header.reserved3);
-    uint8 *namePtr;
-    int32 size;
+    uint8 *namePtr = 0;
+    int32 size = 0;
     const int nkeyframes = header.count;
     for (int i = 0; i < nkeyframes; i++) {
         if (!internal::validateSize(ptr, sizeof(size), rest)) {
@@ -107,9 +107,9 @@ void NameListSection::read(const uint8 *data, const IString::Codec &codec)
     NameSectionHeader header;
     internal::getData(ptr, header);
     vsize rest = SIZE_MAX;
-    uint8 *namePtr;
+    uint8 *namePtr = 0;
     const int nnames = header.count;
-    int32 size;
+    int32 size = 0;
     m_strings.reserve(nnames);
     ptr += sizeof(header) + header.reserved3;
     for (int i = 0; i < nnames; i++) {

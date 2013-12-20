@@ -104,7 +104,7 @@ Label::~Label()
 
 bool Label::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int nlabels, size;
+    int nlabels = 0, size = 0;
     if (!internal::getTyped<int>(ptr, rest, nlabels)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX labels detected: size=" << nlabels << " rest=" << rest);
         return false;
@@ -228,9 +228,9 @@ vsize Label::estimateTotalSize(const Array<Label *> &labels, const Model::DataIn
 
 void Label::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 {
-    uint8 *namePtr, *ptr = const_cast<uint8 *>(data), *start = ptr;
+    uint8 *namePtr = 0, *ptr = const_cast<uint8 *>(data), *start = ptr;
     vsize rest = SIZE_MAX;
-    int32 nNameSize;
+    int32 nNameSize = 0;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->name);
@@ -238,7 +238,7 @@ void Label::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->englishName);
     VPVL2_VLOG(3, "PMXLabel: englishName=" << internal::cstr(m_context->englishName, "(null)"));
-    uint8 type;
+    uint8 type = 0;
     internal::getTyped<uint8>(ptr, rest, type);
     m_context->special = type == 1;
     VPVL2_VLOG(3, "PMXLabel: special=" << m_context->special);

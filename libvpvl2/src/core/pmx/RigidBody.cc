@@ -84,7 +84,7 @@ RigidBody::~RigidBody()
 
 bool RigidBody::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32 nbodies, size, boneIndexSize = int32(info.boneIndexSize);
+    int32 nbodies = 0, size = 0, boneIndexSize = int32(info.boneIndexSize);
     if (!internal::getTyped<int32>(ptr, rest, nbodies)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX rigid bodies detected: size=" << nbodies << " rest=" << rest);
         return false;
@@ -162,7 +162,7 @@ vsize RigidBody::estimateTotalSize(const Array<RigidBody *> &rigidBodies, const 
 
 void RigidBody::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 {
-    uint8 *namePtr, *ptr = const_cast<uint8 *>(data), *start = ptr;
+    uint8 *namePtr = 0, *ptr = const_cast<uint8 *>(data), *start = ptr;
     vsize rest = SIZE_MAX;
     int32 nNameSize;
     IEncoding *encoding = info.encoding;

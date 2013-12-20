@@ -166,7 +166,7 @@ Vertex::~Vertex()
 
 bool Vertex::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32 nvertices;
+    int32 nvertices = 0;
     if (!internal::getTyped<int32>(ptr, rest, nvertices)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX vertex detected: size=" << nvertices << " rest=" << rest);
         return false;

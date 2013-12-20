@@ -140,7 +140,7 @@ bool SoftBody::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
     info.softBodiesPtr = ptr;
     if (info.version >= 2.1) {
-        int nbodies, size;
+        int nbodies = 0, size = 0;
         if (!internal::getTyped<int>(ptr, rest, nbodies)) {
             VPVL2_LOG(WARNING, "Invalid size of PMX bodies detected: size=" << nbodies << " rest=" << rest);
             return false;
@@ -209,9 +209,9 @@ vsize SoftBody::estimateTotalSize(const Array<SoftBody *> &bodies, const Model::
 
 void SoftBody::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 {
-    uint8 *namePtr, *ptr = const_cast<uint8 *>(data), *start = ptr;
+    uint8 *namePtr = 0, *ptr = const_cast<uint8 *>(data), *start = ptr;
     vsize rest = SIZE_MAX;
-    int32 nNameSize;
+    int32 nNameSize = 0;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->name);

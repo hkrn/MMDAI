@@ -712,7 +712,7 @@ struct Model::PrivateContext {
         const int ntextures = int(info.texturesCount);
         vsize rest = SIZE_MAX;
         uint8 *ptr = info.texturesPtr;
-        uint8 *texturePtr;
+        uint8 *texturePtr = 0;
         int size;
         for (int i = 0; i < ntextures; i++) {
             internal::getText(ptr, rest, texturePtr, size);
@@ -1228,7 +1228,7 @@ bool Model::preparse(const uint8 *data, vsize size, DataInfo &info)
 
     /* flags */
     Flags flags;
-    uint8 flagSize;
+    uint8 flagSize = 0;
     internal::drainBytes(sizeof(Header), ptr, rest);
     if (!internal::getTyped<uint8>(ptr, rest, flagSize) || flagSize != sizeof(flags)) {
         VPVL2_LOG(WARNING, "Invalid PMX flag size: " << flagSize);

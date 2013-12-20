@@ -214,7 +214,7 @@ Material::~Material()
 
 bool Material::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32 nmaterials, size, textureIndexSize = int32(info.textureIndexSize);
+    int32 nmaterials = 0, size = 0, textureIndexSize = int32(info.textureIndexSize);
     if (!internal::getTyped<int32>(ptr, rest, nmaterials)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX materials detected: size=" << nmaterials << " rest=" << rest);
         return false;
@@ -356,9 +356,9 @@ vsize Material::estimateTotalSize(const Array<Material *> &materials, const Mode
 
 void Material::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 {
-    uint8 *namePtr, *ptr = const_cast<uint8 *>(data), *start = ptr;
+    uint8 *namePtr = 0, *ptr = const_cast<uint8 *>(data), *start = ptr;
     vsize rest = SIZE_MAX, textureIndexSize = info.textureIndexSize;
-    int32 nNameSize;
+    int32 nNameSize = 0;
     IEncoding *encoding = info.encoding;
     internal::getText(ptr, rest, namePtr, nNameSize);
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->name);
@@ -390,7 +390,7 @@ void Material::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
     VPVL2_VLOG(3, "PMXMaterial: mainTextureIndex=" << m_context->mainTextureIndex);
     m_context->sphereTextureIndex = internal::readSignedIndex(ptr, textureIndexSize);
     VPVL2_VLOG(3, "PMXMaterial: sphereTextureIndex=" << m_context->sphereTextureIndex);
-    uint8 type;
+    uint8 type = 0;
     internal::getTyped<uint8>(ptr, rest, type);
     m_context->sphereTextureRenderMode = static_cast<SphereTextureRenderMode>(type);
     internal::getTyped<uint8>(ptr, rest, type);
