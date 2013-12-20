@@ -41,8 +41,9 @@ Product {
     id: libvpvl2
     property string libraryBuildDirectory: "build-" + qbs.buildVariant.toLowerCase()
     property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
-    property string assimpLibrarySuffix: qbs.enableDebugCode ? "D" : ""
-    property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + (qbs.enableDebugCode ? "D" : "")
+    property string debugLibrarySuffix: qbs.enableDebugCode ? "d" : ""
+    property string assimpLibrarySuffix: debugLibrarySuffix.toUpperCase()
+    property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + debugLibrarySuffix.toUpperCase()
     property var commonFiles: [
         "src/core/asset/*.cc",
         "src/core/base/*.cc",
@@ -120,17 +121,25 @@ Product {
         ]
     }
     Properties {
-        condition: !qbs.targetOS.contains("osx")
+        condition: qbs.toolchain.contains("mingw")
+        cpp.dynamicLibraries: commonLibraries.concat([ "OpenGL32" ])
+    }
+    Properties {
+        condition: qbs.toolchain.contains("msvc")
+        cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
+        cpp.dynamicLibraries: commonLibraries.concat([
+            "libGLESv2" + debugLibrarySuffix,
+            "libEGL" + debugLibrarySuffix
+        ])
+    }
+    Properties {
+        condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
         cpp.dynamicLibraries: commonLibraries.concat("GL")
     }
     Group {
         condition: qbs.targetOS.contains("osx")
         name: "OSX Extension"
         files: [ "src/engine/cl/*.cc" ]
-    }
-    Properties {
-        condition: qbs.targetOS.contains("windows")
-        cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
     }
     Depends { name: "cpp" }
     Depends {

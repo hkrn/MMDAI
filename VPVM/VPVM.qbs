@@ -42,12 +42,11 @@ Application {
     property string applicationBundlePath: "VPVM.app/Contents"
     property string libraryBuildDirectory: "build-" + qbs.buildVariant.toLowerCase()
     property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
-    property string assimpLibrarySuffix: qbs.enableDebugCode ? "D" : ""
-    property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + (qbs.enableDebugCode ? "D" : "")
+    property string debugLibrarySuffix: qbs.enableDebugCode ? "d" : ""
+    property string assimpLibrarySuffix: debugLibrarySuffix.toUpperCase()
+    property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + debugLibrarySuffix.toUpperCase()
     property var commonLibraries: [
         "AntTweakBar",
-        "alure-static",
-        "openal",
         "assimp" + assimpLibrarySuffix,
         "FxParser" + nvFXLibrarySuffix,
         "FxLibGL" + nvFXLibrarySuffix,
@@ -55,9 +54,7 @@ Application {
         "BulletSoftBody",
         "BulletDynamics",
         "BulletCollision",
-        "LinearMath",
-        "tbb",
-        "z"
+        "LinearMath"
     ]
     property var commonIncludePaths: [
         "include",
@@ -91,14 +88,15 @@ Application {
     ]
     cpp.includePaths: commonIncludePaths
     cpp.libraryPaths: [
+        "../AntTweakBar-src/lib",
+        "../tbb-src/lib",
         "../bullet-src/" + libraryInstallDirectory + "/lib",
         "../assimp-src/" + libraryInstallDirectory + "/lib",
         "../nvFX-src/" + libraryInstallDirectory + "/lib",
-        "../tbb-src/lib",
         "../alure-src/" + libraryInstallDirectory + "/lib",
         "../openal-soft-src/" + libraryInstallDirectory + "/lib",
         "../icu4c-src/" + libraryInstallDirectory + "/lib",
-        "../AntTweakBar-src/lib"
+        "../zlib-src/" + libraryInstallDirectory + "/lib"
     ]
     Qt.quick.qmlDebugging: qbs.enableDebugCode
     Group {
@@ -134,13 +132,36 @@ Application {
         cpp.dynamicLibraries: commonLibraries
     }
     Properties {
-        condition: !qbs.targetOS.contains("osx")
-        cpp.dynamicLibraries: commonLibraries.concat("GL")
+        condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
+        cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z", "GL"])
     }
     Properties {
-        condition: qbs.targetOS.contains("windows")
+        condition: qbs.toolchain.contains("mingw")
+        cpp.includePaths: commonIncludePaths.concat([
+            "../alure-src/include/AL",
+            "../openal-soft-src/" + libraryInstallDirectory + "/include/AL"
+        ])
+        cpp.dynamicLibraries: commonLibraries.concat([
+            "alure32-static",
+            "OpenAL32",
+            "OpenGL32",
+            "zlibstatic" + debugLibrarySuffix
+        ])
+    }
+    Properties {
+        condition: qbs.toolchain.contains("msvc")
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
-        cpp.includePaths: commonIncludePaths.concat([ "../alure-src/include/AL", "../openal-soft-src/" + libraryInstallDirectory + "/include/AL",])
+        cpp.includePaths: commonIncludePaths.concat([
+            "../alure-src/include/AL",
+            "../openal-soft-src/" + libraryInstallDirectory + "/include/AL"
+        ])
+        cpp.dynamicLibraries: commonLibraries.concat([
+            "alure32-static",
+            "OpenAL32",
+            "libGLESv2" + debugLibrarySuffix,
+            "libEGL" + debugLibrarySuffix,
+            "zlibstatic" + debugLibrarySuffix
+        ])
     }
     Depends { name: "cpp" }
     Depends { name: "gizmo" }
