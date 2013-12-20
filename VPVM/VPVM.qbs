@@ -129,7 +129,7 @@ Application {
             "OpenGL",
             "OpenCL"
         ]
-        cpp.dynamicLibraries: commonLibraries
+        cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z" ])
     }
     Properties {
         condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
