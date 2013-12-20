@@ -99,6 +99,10 @@ class PMXAccelerator;
 #include <GL/glx.h>
 #endif
 
+#ifdef VPVL2_LINK_EGL
+#include <EGL/egl.h>
+#endif
+
 #ifdef VPVL2_LINK_REGAL
 #include <GL/Regal.h>
 #else
@@ -695,6 +699,8 @@ void *Scene::opaqueCurrentPlatformOpenGLContext() VPVL2_DECL_NOEXCEPT
 {
 #if !defined(VPVL2_ENABLE_OPENGL)
     return 0;
+#elif defined(VPVL2_LINK_EGL)
+    return ::eglGetCurrentContext();
 #elif defined(VPVL2_OS_WINDOWS)
     return ::wglGetCurrentContext();
 #elif defined(VPVL2_OS_OSX)
@@ -710,6 +716,8 @@ void *Scene::opaqueCurrentPlatformOpenGLDevice() VPVL2_DECL_NOEXCEPT
 {
 #if !defined(VPVL2_ENABLE_OPENGL)
     return 0;
+#elif defined(VPVL2_LINK_EGL)
+    return ::eglGetCurrentDisplay();
 #elif defined(VPVL2_OS_WINDOWS)
     return ::wglGetCurrentDC();
 #elif defined(VPVL2_OS_OSX)

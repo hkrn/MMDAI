@@ -123,6 +123,11 @@ struct PMXAccelerator::PrivateContext {
             const ::cl::Platform &platform = platforms[0];
             cl_context_properties properties[] = {
                 CL_CONTEXT_PLATFORM, (cl_context_properties)(platform)(),
+    #if defined(VPVL2_LINK_EGL)
+                CL_GL_CONTEXT_KHR,
+                reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLContext()),
+                CL_EGL_DISPLAY_KHR,
+                reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
     #if defined(VPVL2_OS_WINDOWS)
                 CL_GL_CONTEXT_KHR,
                 reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLContext()),

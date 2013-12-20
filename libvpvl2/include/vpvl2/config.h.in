@@ -112,6 +112,9 @@
 /* Link libvpvl2 against Allegro5 */
 #cmakedefine VPVL2_LINK_ALLEGRO5
 
+/* Link libvpvl2 against EGL */
+#cmakedefine VPVL2_LINK_EGL
+
 /* Platform is Emscripten */
 #cmakedefine VPVL2_PLATFORM_EMSCRIPTEN
 
