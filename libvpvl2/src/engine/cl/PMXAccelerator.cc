@@ -128,7 +128,7 @@ struct PMXAccelerator::PrivateContext {
                 reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLContext()),
                 CL_EGL_DISPLAY_KHR,
                 reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
-    #if defined(VPVL2_OS_WINDOWS)
+    #elif defined(VPVL2_OS_WINDOWS)
                 CL_GL_CONTEXT_KHR,
                 reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLContext()),
                 CL_WGL_HDC_KHR,
