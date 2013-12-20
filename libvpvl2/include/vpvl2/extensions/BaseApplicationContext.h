@@ -359,6 +359,7 @@ protected:
 #endif
     int m_samplesMSAA;
     bool m_viewportRegionInvalidated;
+    bool m_hasDepthClamp;
 
 private:
     static void debugMessageCallback(gl::GLenum source, gl::GLenum type, gl::GLuint id, gl::GLenum severity,

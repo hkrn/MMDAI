@@ -154,6 +154,8 @@ static const vpvl2::gl::GLenum kGL_DEBUG_SEVERITY_HIGH_ARB = 0x9146;
 static const vpvl2::gl::GLenum kGL_DEBUG_SEVERITY_MEDIUM_ARB = 0x9147;
 static const vpvl2::gl::GLenum kGL_DEBUG_SEVERITY_LOW_ARB = 0x9148;
 
+static const vpvl2::gl::GLenum kGL_DEPTH_CLAMP = 0x864F;
+
 class EffectParameterUIBuilder {
 public:
     static TwBar *createBar(IEffect *effectRef) {
@@ -528,12 +530,14 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
       m_cameraProjectionMatrix(1),
       m_aspectRatio(1),
       m_samplesMSAA(0),
-      m_viewportRegionInvalidated(false)
+      m_viewportRegionInvalidated(false),
+      m_hasDepthClamp(false)
 {
 }
 
 void BaseApplicationContext::initializeOpenGLContext(bool enableDebug)
 {
+    typedef void (GLAPIENTRY * PFNGLENABLEPROC) (GLenum cap);
     FunctionResolver *resolver = sharedFunctionResolverInstance();
     pushAnnotationGroup("BaseApplicationContext#initialize", resolver);
     getIntegerv = reinterpret_cast<PFNGLGETINTEGERVPROC>(resolver->resolveSymbol("glGetIntegerv"));
@@ -543,12 +547,16 @@ void BaseApplicationContext::initializeOpenGLContext(bool enableDebug)
     clearDepth = reinterpret_cast<PFNGLCLEARDEPTHPROC>(resolver->resolveSymbol("glClearDepth"));
     if (enableDebug && resolver->hasExtension("ARB_debug_output")) {
         typedef void (GLAPIENTRY * GLDEBUGPROCARB) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam);
-        typedef void (GLAPIENTRY * PFNGLENABLEPROC) (GLenum cap);
         typedef void (GLAPIENTRY * PFNGLDEBUGMESSAGECONTROLARBPROC) (GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint* ids, GLboolean enabled);
         typedef void (GLAPIENTRY * PFNGLDEBUGMESSAGECALLBACKARBPROC) (GLDEBUGPROCARB callback, void* userParam);
         reinterpret_cast<PFNGLENABLEPROC>(resolver->resolveSymbol("glEnable"))(kGL_DEBUG_OUTPUT_SYNCHRONOUS);
         reinterpret_cast<PFNGLDEBUGMESSAGECONTROLARBPROC>(resolver->resolveSymbol("glDebugMessageControlARB"))(kGL_DONT_CARE, kGL_DONT_CARE, kGL_DONT_CARE, 0, 0, kGL_TRUE);
         reinterpret_cast<PFNGLDEBUGMESSAGECALLBACKARBPROC>(resolver->resolveSymbol("glDebugMessageCallbackARB"))(reinterpret_cast<GLDEBUGPROCARB>(&BaseApplicationContext::debugMessageCallback), this);
+    }
+    if (resolver->query(FunctionResolver::kQueryVersion) >= gl::makeVersion(3, 2) ||
+            resolver->hasExtension("ARB_depth_clamp") || resolver->hasExtension("NV_depth_clamp")) {
+        reinterpret_cast<PFNGLENABLEPROC>(resolver->resolveSymbol("glEnable"))(kGL_DEPTH_CLAMP);
+        m_hasDepthClamp = true;
     }
     getIntegerv(kGL_MAX_SAMPLES, &m_samplesMSAA);
     TwInit(resolver->query(FunctionResolver::kQueryCoreProfile) != 0 ? TW_OPENGL_CORE : TW_OPENGL, 0);
@@ -1529,7 +1537,8 @@ void BaseApplicationContext::updateCameraMatrices()
     Scalar matrix[16];
     cameraRef->modelViewTransform().getOpenGLMatrix(matrix);
     const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
-            &projection = glm::infinitePerspective(cameraRef->fov(), m_aspectRatio, cameraRef->znear());
+            &projection = m_hasDepthClamp ? glm::infinitePerspective(cameraRef->fov(), m_aspectRatio, cameraRef->znear())
+                                          : glm::tweakedInfinitePerspective(cameraRef->fov(), m_aspectRatio, cameraRef->znear());
     setCameraMatrices(world, view, projection);
 }
 
