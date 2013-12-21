@@ -380,12 +380,10 @@ bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, Motio
 {
     Q_ASSERT(fileUrl.isValid());
     QScopedPointer<LoadingMotionTask> task(new LoadingMotionTask(modelProxy, m_factory.data(), fileUrl));
-    /*
     QThreadPool::globalInstance()->start(task.data());
     while (task->isRunning()) {
         qApp->processEvents(QEventLoop::AllEvents);
     }
-    */
     m_errorString.clear();
     if (IMotion *motion = task->takeMotion()) {
         const QUuid &uuid = QUuid::createUuid();
