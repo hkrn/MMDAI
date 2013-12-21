@@ -59,6 +59,8 @@ class Factory;
 class Scene;
 }
 
+class ApplicationContext;
+class EncodingTask;
 class GraphicsDevice;
 class Grid;
 class QOpenGLFramebufferObject;
@@ -66,6 +68,7 @@ class QOpenGLShaderProgram;
 class QOpenGLVertexArrayObject;
 class QTemporaryDir;
 class ProjectProxy;
+class VideoSurface;
 class IGizmo;
 
 class RenderTarget : public QQuickItem
@@ -239,11 +242,8 @@ private slots:
     void handleMediaPlayerError(QMediaPlayer::Error error);
 
 private:
-    class ApplicationContext;
     class DebugDrawer;
-    class EncodingTask;
     class ModelDrawer;
-    class VideoSurface;
     QMediaPlayer *mediaPlayer() const;
     EncodingTask *encodingTask() const;
     IGizmo *translationGizmo() const;
