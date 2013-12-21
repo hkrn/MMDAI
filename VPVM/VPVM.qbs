@@ -113,13 +113,13 @@ Application {
     }
     Group {
         condition: qbs.buildVariant === "release"
-        name: "QML Resources"
-        files: [ "qml/VPVM.qrc" ]
+        name: "Application Resources for Release Build"
+        files: [ "qml/VPVM.qrc", "libav/libav.qrc" ]
     }
     Group {
         condition: qbs.buildVariant === "debug"
-        name: "QML Resources"
-        files: [ "qml/VPVM/*" ]
+        name: "Application Resources for Debug Build"
+        files: [ "qml/VPVM/*", "libav/libav.qrc" ]
         qbs.install: true
         qbs.installDir: qbs.targetOS.contains("osx") ? (applicationBundlePath + "/Resources/qml") : "qml"
     }
