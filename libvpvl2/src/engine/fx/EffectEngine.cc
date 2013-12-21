@@ -117,6 +117,11 @@ void BaseParameter::invalidate()
     }
 }
 
+void BaseParameter::clear()
+{
+    m_parameterRef = 0;
+}
+
 IEffect::Parameter *BaseParameter::parameterRef() const
 {
     return m_parameterRef;
@@ -1599,6 +1604,53 @@ void EffectEngine::invalidate()
     opadd.invalidate();
     vertexCount.invalidate();
     subsetCount.invalidate();
+    m_frameBufferObjectRef = 0;
+    m_effectRef = 0;
+}
+
+void EffectEngine::clearEffect()
+{
+    viewportPixelSize.clear();
+    worldViewProjection.clear();
+    worldView.clear();
+    viewProjection.clear();
+    world.clear();
+    view.clear();
+    projection.clear();
+    diffuse.clear();
+    ambient.clear();
+    emissive.clear();
+    specularPower.clear();
+    specular.clear();
+    toonColor.clear();
+    edgeColor.clear();
+    edgeWidth.clear();
+    addingTexture.clear();
+    addingSphere.clear();
+    multiplyTexture.clear();
+    multiplySphere.clear();
+    position.clear();
+    direction.clear();
+    time.clear();
+    elapsedTime.clear();
+    mousePosition.clear();
+    leftMouseDown.clear();
+    middleMouseDown.clear();
+    rightMouseDown.clear();
+    controlObject.clear();
+    animatedTexture.clear();
+    textureValue.clear();
+    renderDepthStencilTarget.clear();
+    selfShadow.clear();
+    parthf.clear();
+    spadd.clear();
+    transp.clear();
+    useTexture.clear();
+    useSpheremap.clear();
+    useToon.clear();
+    opadd.clear();
+    vertexCount.clear();
+    subsetCount.clear();
     m_target2BufferRefs.clear();
     m_target2TextureRefs.clear();
     m_passScripts.clear();

@@ -39,6 +39,7 @@
 #ifndef APPLICATIONCONTEXT_H_
 #define APPLICATIONCONTEXT_H_
 
+#include <QFileSystemWatcher>
 #include <QOpenGLFramebufferObject>
 #include <QQueue>
 #include <QTime>
@@ -54,10 +55,13 @@ class StringMap;
 }
 }
 
-class ApplicationContext : public vpvl2::extensions::BaseApplicationContext
+class ApplicationContext : public QObject, public vpvl2::extensions::BaseApplicationContext
 {
+    Q_OBJECT
+
 public:
     typedef QPair<ModelProxy *, bool> ModelProxyPair;
+    static QOpenGLFramebufferObjectFormat framebufferObjectFormat(const QQuickWindow *win);
 
     ApplicationContext(const ProjectProxy *proxy, const vpvl2::extensions::StringMap *stringMap, bool isCoreProfile);
     ~ApplicationContext();
@@ -84,10 +88,21 @@ public:
     void enqueueUploadingEffect(ModelProxy *model);
     void enqueueDeletingModelProxy(ModelProxy *model);
     void resetOrderIndex(int startOrderIndex);
+    void reloadTexture(const QString &filePath);
+    void reloadEffect(const QString &filePath);
+    void reloadFile(const QString &filePath);
 
-    static QOpenGLFramebufferObjectFormat framebufferObjectFormat(const QQuickWindow *win);
+signals:
+    void fileDidChange(const QString &filePath);
 
 private:
+    void addTextureWatch(const vpvl2::IModel *modelRef, const ModelContext &context);
+    void removeTextureWatch(const vpvl2::IModel *modelRef);
+
+    QFileSystemWatcher m_fileSystemWatcher;
+    QHash<const vpvl2::IModel *, BaseApplicationContext::ModelContext::TextureRefCacheMap> m_textureCacheRefs;
+    QHash<const QString, vpvl2::ITexture *> m_filePath2TextureRefs;
+    QHash<const QString, vpvl2::IEffect *> m_filePath2EffectRefs;
     QQueue<ModelProxyPair> m_uploadingModels;
     QQueue<ModelProxy *> m_uploadingEffects;
     QQueue<ModelProxy *> m_deletingModels;

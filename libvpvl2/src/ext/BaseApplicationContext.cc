@@ -447,6 +447,13 @@ void BaseApplicationContext::ModelContext::optimizeTexture(ITexture *texture)
     texture->unbind();
 }
 
+void BaseApplicationContext::ModelContext::getTextureRefCaches(TextureRefCacheMap &value) const
+{
+    for (TextureRefCacheMap::const_iterator it = m_textureRefCache.begin(); it != m_textureRefCache.end(); it++) {
+        value.insert(std::make_pair(it->first, it->second));
+    }
+}
+
 Archive *BaseApplicationContext::ModelContext::archiveRef() const
 {
     return m_archiveRef;
@@ -506,7 +513,6 @@ bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdi
 void BaseApplicationContext::terminate()
 {
     FreeImage_DeInitialise();
-    TwTerminate();
     uninstallLogger();
     Scene::terminate();
 }
@@ -573,6 +579,8 @@ BaseApplicationContext::~BaseApplicationContext()
 void BaseApplicationContext::release()
 {
     pushAnnotationGroup("BaseApplicationContext#release", sharedFunctionResolverInstance());
+    TwDeleteAllBars();
+    TwTerminate();
     m_shadowMap.reset();
     m_currentModelRef = 0;
 #ifdef VPVl2_ENABLE_NVIDIA_CG
@@ -587,7 +595,6 @@ void BaseApplicationContext::release()
     m_effectRef2Owners.clear();
     m_effectRef2Paths.clear();
     m_effectRef2ParameterUIs.clear();
-    TwDeleteAllBars();
     m_effectCaches.releaseAll();
     popAnnotationGroup(sharedFunctionResolverInstance());
 }
@@ -673,6 +680,15 @@ void BaseApplicationContext::validateEffectResources()
     nvFX::IResourceRepository *resourceRepository = nvFX::getResourceRepositorySingleton();
     resourceRepository->setParams(m_viewportRegion.x, m_viewportRegion.y, m_viewportRegion.z, m_viewportRegion.w, m_samplesMSAA, 0, static_cast<BufferHandle>(0));
     resourceRepository->validateAll();
+}
+
+void BaseApplicationContext::deleteEffectParameterUIWidget(IEffect *effectRef)
+{
+    if (void *const *ptr = m_effectRef2ParameterUIs.find(effectRef)) {
+        m_effectRef2ParameterUIs.remove(effectRef);
+        TwBar *bar = static_cast<TwBar *>(*ptr);
+        TwDeleteBar(bar);
+    }
 }
 
 bool BaseApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context, ITexture *&texturePtr)
@@ -1369,7 +1385,25 @@ void BaseApplicationContext::createEffectParameterUIWidgets(IEffect *effectRef)
 void BaseApplicationContext::renderEffectParameterUIWidgets()
 {
     if (m_effectRef2ParameterUIs.count() > 0) {
+        const int numDirtyEffects = m_dirtyEffects.count();
+        for (int i = 0; i < numDirtyEffects; i++) {
+            IEffect *effectRef = m_dirtyEffects[i];
+            deleteEffectParameterUIWidget(effectRef);
+            createEffectParameterUIWidgets(effectRef);
+        }
         TwDraw();
+    }
+}
+
+void BaseApplicationContext::saveDirtyEffects()
+{
+    const int neffects = m_effectCaches.count();
+    m_dirtyEffects.clear();
+    for (int i = 0; i < neffects; i++) {
+        IEffect *effectRef = *m_effectCaches.value(i);
+        if (effectRef->isDirty()) {
+            m_dirtyEffects.append(effectRef);
+        }
     }
 }
 
@@ -1451,11 +1485,7 @@ void BaseApplicationContext::deleteEffectRef(const std::string &path)
     const HashString key(path.c_str());
     if (IEffect *const *value = m_effectCaches.find(key)) {
         IEffect *effect = *value;
-        if (void *const *ptr = m_effectRef2ParameterUIs.find(effect)) {
-            m_effectRef2ParameterUIs.remove(effect);
-            TwBar *bar = static_cast<TwBar *>(*ptr);
-            TwDeleteBar(bar);
-        }
+        deleteEffectParameterUIWidget(effect);
         m_effectRef2Paths.remove(effect);
         m_effectRef2ModelRefs.remove(effect);
         m_effectRef2Owners.remove(effect);

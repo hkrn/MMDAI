@@ -43,7 +43,9 @@
 #include <QImage>
 #include <QMatrix4x4>
 #include <QMediaPlayer>
+#include <QMutex>
 #include <QProcess>
+#include <QQueue>
 #include <QQuickItem>
 #include <QQmlPropertyMap>
 #include <vpvl2/extensions/FPSCounter.h>
@@ -240,6 +242,8 @@ private slots:
     void seekMediaFromProject();
     void handleAudioDecoderError(QAudioDecoder::Error error);
     void handleMediaPlayerError(QMediaPlayer::Error error);
+    void handleFileChange(const QString &filePath);
+    void consumeFileChangeQueue();
 
 private:
     class DebugDrawer;
@@ -269,6 +273,8 @@ private:
     QScopedPointer<Grid> m_grid;
     QScopedPointer<GraphicsDevice> m_graphicsDevice;
     QElapsedTimer m_renderTimer;
+    QQueue<QString> m_fileChangeQueue;
+    QMutex m_fileChangeQueueMutex;
     QSize m_exportSize;
     QUrl m_exportLocation;
     QImage m_exportImage;

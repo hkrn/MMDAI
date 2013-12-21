@@ -522,6 +522,7 @@ void PMXRenderEngine::renderModel()
         m_currentEffectEngineRef->selfShadow.updateParameter(shadowMap);
         hasShadowMap = true;
     }
+    refreshEffect();
     bindVertexBundle();
     EffectEngine::DrawPrimitiveCommand command;
     getDrawPrimitivesCommand(command);
@@ -572,6 +573,7 @@ void PMXRenderEngine::renderEdge()
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     cullFace(kGL_FRONT);
+    refreshEffect();
     bindEdgeBundle();
     EffectEngine::DrawPrimitiveCommand command;
     getDrawPrimitivesCommand(command);
@@ -608,6 +610,7 @@ void PMXRenderEngine::renderShadow()
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     cullFace(kGL_FRONT);
+    refreshEffect();
     bindVertexBundle();
     EffectEngine::DrawPrimitiveCommand command;
     getDrawPrimitivesCommand(command);
@@ -644,6 +647,7 @@ void PMXRenderEngine::renderZPlot()
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     disable(kGL_CULL_FACE);
+    refreshEffect();
     bindVertexBundle();
     EffectEngine::DrawPrimitiveCommand command;
     getDrawPrimitivesCommand(command);
@@ -920,6 +924,17 @@ void PMXRenderEngine::initializeEffectParameters(int extraCameraFlags)
     m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
 }
 
+void PMXRenderEngine::refreshEffect()
+{
+    if (IEffect *effectRef = m_currentEffectEngineRef->effect()) {
+        if (effectRef->isDirty()) {
+            m_currentEffectEngineRef->clearEffect();
+            m_currentEffectEngineRef->setEffect(effectRef, 0, false);
+            effectRef->setDirty(false);
+        }
+    }
+}
+
 void PMXRenderEngine::createVertexBundle(VertexBundleLayout *layout, IModel::Buffer::StrideType strideType, GLuint dvbo)
 {
     pushAnnotationGroup("PMXRenderEngine#createVertexBundle", m_applicationContextRef->sharedFunctionResolverInstance());
@@ -1136,6 +1151,7 @@ void PMXRenderEngine::setupOffscreenEffect(IEffect *effectRef, void *userData)
 
 void PMXRenderEngine::executeOneTechniqueAllPasses(const char *name, Array<IEffect::Pass *> &passes)
 {
+    refreshEffect();
     if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(name, 0, 0, false, false, false)) {
         technique->getPasses(passes);
         m_currentEffectEngineRef->controlObject.update(m_modelRef);

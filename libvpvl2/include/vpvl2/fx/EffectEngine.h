@@ -72,6 +72,7 @@ public:
 
     virtual void addParameter(IEffect::Parameter *parameter);
     virtual void invalidate();
+    void clear();
     IEffect::Parameter *parameterRef() const;
 
 protected:
@@ -584,6 +585,7 @@ public:
 
     bool setEffect(IEffect *effect, void *userData, bool isDefaultStandardEffect);
     void invalidate();
+    void clearEffect();
     IEffect::Technique *findTechnique(const char *pass,
                                        int offset,
                                        int nmaterials,

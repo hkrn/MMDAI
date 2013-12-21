@@ -1092,6 +1092,24 @@ void RenderTarget::handleMediaPlayerError(QMediaPlayer::Error error)
     emit errorDidHappen(QStringLiteral("%1 (code=%2)").arg(message).arg(error));
 }
 
+void RenderTarget::handleFileChange(const QString &filePath)
+{
+    Q_ASSERT(window());
+    QMutexLocker locker(&m_fileChangeQueueMutex); Q_UNUSED(locker);
+    connect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::consumeFileChangeQueue, Qt::DirectConnection);
+    m_fileChangeQueue.enqueue(filePath);
+}
+
+void RenderTarget::consumeFileChangeQueue()
+{
+    Q_ASSERT(m_applicationContext && window());
+    QMutexLocker locker(&m_fileChangeQueueMutex); Q_UNUSED(locker);
+    disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::consumeFileChangeQueue);
+    while (!m_fileChangeQueue.isEmpty()) {
+        m_applicationContext->reloadFile(m_fileChangeQueue.dequeue());
+    }
+}
+
 void RenderTarget::draw()
 {
     Q_ASSERT(m_applicationContext);
@@ -1104,6 +1122,7 @@ void RenderTarget::draw()
             m_videoSurface->initialize();
             m_videoSurface->renderVideoFrame();
         }
+        m_applicationContext->saveDirtyEffects();
         m_grid->draw(m_viewProjectionMatrix);
         drawScene();
         drawDebug();
@@ -1249,6 +1268,7 @@ void RenderTarget::initialize()
     if (!Scene::isInitialized()) {
         bool isCoreProfile = win->format().profile() == QSurfaceFormat::CoreProfile;
         m_applicationContext.reset(new ApplicationContext(m_projectProxyRef, &m_config, isCoreProfile));
+        connect(m_applicationContext.data(), &ApplicationContext::fileDidChange, this, &RenderTarget::handleFileChange);
         Scene::initialize(m_applicationContext->sharedFunctionResolverInstance());
         m_graphicsDevice.reset(new GraphicsDevice());
         m_graphicsDevice->initialize();
@@ -1268,6 +1288,7 @@ void RenderTarget::initialize()
 
 void RenderTarget::release()
 {
+    disconnect(m_applicationContext.data(), &ApplicationContext::fileDidChange, this, &RenderTarget::handleFileChange);
     m_currentGizmoRef = 0;
     m_applicationContext->release();
     m_translationGizmo.reset();

@@ -57,48 +57,6 @@ namespace {
 
 VPVL2_DECL_TLS static bool g_initialized = false;
 
-static void AppendShaderHeader(nvFX::IContainer *container, const IApplicationContext::FunctionResolver *resolver)
-{
-    static const char kAppendingShaderHeader[] =
-            "#if defined(GL_ES) || __VERSION__ >= 150\n"
-            "precision highp float;\n"
-            "#else\n"
-            "#define highp\n"
-            "#define mediump\n"
-            "#define lowp\n"
-            "#endif\n"
-            "#if __VERSION__ >= 130\n"
-            "#define vpvl2FXGetTexturePixel2D(samp, uv) texture(samp, (uv))\n"
-            "#else\n"
-            "#define vpvl2FXGetTexturePixel2D(samp, uv) texture2D(samp, (uv))\n"
-            "#define layout(expr)\n"
-            "#endif\n"
-            "#if __VERSION__ >= 400\n"
-            "#define vpvl2FXFMA(v, m, a) fma((v), (m), (a))\n"
-            "#else\n"
-            "#define vpvl2FXFMA(v, m, a) ((v) * (m) + (a))\n"
-            "#endif\n"
-            "#define vpvl2FXSaturate(v) clamp((v), 0.0, 1.0)\n"
-            ;
-    char appendingHeader[1024];
-    if (resolver->query(IApplicationContext::FunctionResolver::kQueryCoreProfile) != 0) {
-        static const char kFormat[] = "#version %d core\n%s";
-        internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, resolver->query(IApplicationContext::FunctionResolver::kQueryShaderVersion), kAppendingShaderHeader);
-    }
-    else {
-        static const char kFormat[] = "#version 120\n%s";
-        internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, kAppendingShaderHeader);
-    }
-    int i = 0;
-    while (nvFX::IShader *shader = container->findShader(i++)) {
-        nvFX::TargetType type = shader->getType();
-        const char *name = shader->getName();
-        if (*name == '\0' && type == nvFX::TGLSL) {
-            shader->getExInterface()->addHeaderCode(appendingHeader);
-        }
-    }
-}
-
 static void handleErrorCallback(const char *message)
 {
     VPVL2_LOG(WARNING, message);
@@ -183,7 +141,6 @@ IEffect *EffectContext::compileFromFile(const IString *pathRef, IApplicationCont
     if (pathRef) {
         container = nvFX::IContainer::create();
         if (nvFX::loadEffectFromFile(container, internal::cstr(pathRef, 0))) {
-            AppendShaderHeader(container, applicationContextRef->sharedFunctionResolverInstance());
             return new nvfx::Effect(this, applicationContextRef, container);
         }
     }
@@ -196,7 +153,6 @@ IEffect *EffectContext::compileFromSource(const IString *source, IApplicationCon
     if (source) {
         container = nvFX::IContainer::create();
         if (nvFX::loadEffect(container, internal::cstr(source, 0))) {
-            AppendShaderHeader(container, applicationContextRef->sharedFunctionResolverInstance());
             return new nvfx::Effect(this, applicationContextRef, container);
         }
     }

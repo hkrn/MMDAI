@@ -46,6 +46,7 @@
 #ifndef GLhandleARB
 #define GLhandleARB void *
 #endif
+#include <FxLib.h>
 #include <FxParser.h>
 
 namespace vpvl2
@@ -97,6 +98,48 @@ static IEffect::Parameter::Type toEffectType(nvFX::IUniform::Type type)
         return IEffect::Parameter::kSamplerCube;
     default:
         return IEffect::Parameter::kUnknownParameterType;
+    }
+}
+
+static void appendShaderHeader(nvFX::IContainer *container, const IApplicationContext::FunctionResolver *resolver)
+{
+    static const char kAppendingShaderHeader[] =
+            "#if defined(GL_ES) || __VERSION__ >= 150\n"
+            "precision highp float;\n"
+            "#else\n"
+            "#define highp\n"
+            "#define mediump\n"
+            "#define lowp\n"
+            "#endif\n"
+            "#if __VERSION__ >= 130\n"
+            "#define vpvl2FXGetTexturePixel2D(samp, uv) texture(samp, (uv))\n"
+            "#else\n"
+            "#define vpvl2FXGetTexturePixel2D(samp, uv) texture2D(samp, (uv))\n"
+            "#define layout(expr)\n"
+            "#endif\n"
+            "#if __VERSION__ >= 400\n"
+            "#define vpvl2FXFMA(v, m, a) fma((v), (m), (a))\n"
+            "#else\n"
+            "#define vpvl2FXFMA(v, m, a) ((v) * (m) + (a))\n"
+            "#endif\n"
+            "#define vpvl2FXSaturate(v) clamp((v), 0.0, 1.0)\n"
+            ;
+    char appendingHeader[1024];
+    if (resolver->query(IApplicationContext::FunctionResolver::kQueryCoreProfile) != 0) {
+        static const char kFormat[] = "#version %d core\n%s";
+        internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, resolver->query(IApplicationContext::FunctionResolver::kQueryShaderVersion), kAppendingShaderHeader);
+    }
+    else {
+        static const char kFormat[] = "#version 120\n%s";
+        internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, kAppendingShaderHeader);
+    }
+    int i = 0;
+    while (nvFX::IShader *shader = container->findShader(i++)) {
+        nvFX::TargetType type = shader->getType();
+        const char *name = shader->getName();
+        if (*name == '\0' && type == nvFX::TGLSL) {
+            shader->getExInterface()->addHeaderCode(appendingHeader);
+        }
     }
 }
 
@@ -731,24 +774,17 @@ Effect::Effect(EffectContext *contextRef, IApplicationContext *applicationContex
       m_parentEffectRef(0),
       m_parentFrameBufferObject(0),
       m_scriptOrderType(kStandard),
-      m_enabled(true)
+      m_enabled(true),
+      m_dirty(false)
 {
+    appendShaderHeader(container, applicationContextRef->sharedFunctionResolverInstance());
 }
 
 Effect::~Effect()
 {
-    const int numAnnotationHash = m_annotationRefsHash.count();
-    for (int i = 0; i < numAnnotationHash; i++) {
-        NvFXAnnotationHash **hash = m_annotationRefsHash.value(i);
-        (*hash)->releaseAll();
-    }
-    m_annotationRefsHash.releaseAll();
-    m_techniques.releaseAll();
-    m_parameters.releaseAll();
-    internal::deleteObject(m_parentFrameBufferObject);
+    release();
     internal::deleteObject(m_name);
-    nvFX::IContainer::destroy(m_container);
-    m_container = 0;
+    m_name = 0;
     m_applicationContextRef = 0;
     m_effectContextRef = 0;
     m_parentEffectRef = 0;
@@ -944,6 +980,7 @@ const IString *Effect::name() const
 void Effect::setName(const IString *value)
 {
     internal::setString(value, m_name);
+    m_container->setName(reinterpret_cast<const char *>(value->toByteArray()));
 }
 
 bool Effect::isEnabled() const
@@ -956,6 +993,46 @@ void Effect::setEnabled(bool value)
     m_enabled = value;
 }
 
+bool Effect::recompileFromFile(const char *filePath)
+{
+    nvFX::IContainer *container = nvFX::IContainer::create();
+    if (nvFX::loadEffectFromFile(container, filePath)) {
+        VPVL2_VLOG(1, "Recompiled the effect succeeded: " << filePath);
+        release();
+        resetEffect(container);
+        return true;
+    }
+    else {
+        VPVL2_LOG(WARNING, "Recompiling the effect failed: " << filePath);
+        nvFX::IContainer::destroy(container);
+        return false;
+    }
+}
+
+bool Effect::recompileFromSource(const char *source, int /* length */)
+{
+    nvFX::IContainer *container = nvFX::IContainer::create();
+    if (nvFX::loadEffect(container, source)) {
+        release();
+        resetEffect(container);
+        return true;
+    }
+    else {
+        nvFX::IContainer::destroy(container);
+        return false;
+    }
+}
+
+bool Effect::isDirty() const
+{
+    return m_dirty;
+}
+
+void Effect::setDirty(bool value)
+{
+    m_dirty = value;
+}
+
 const char *Effect::errorString() const
 {
     return 0;
@@ -964,6 +1041,25 @@ const char *Effect::errorString() const
 IApplicationContext *Effect::applicationContextRef() const
 {
     return m_applicationContextRef;
+}
+
+void Effect::release()
+{
+    m_enabled = false;
+    const int numAnnotationHash = m_annotationRefsHash.count();
+    for (int i = 0; i < numAnnotationHash; i++) {
+        NvFXAnnotationHash **hash = m_annotationRefsHash.value(i);
+        (*hash)->releaseAll();
+    }
+    m_annotationRefsHash.releaseAll();
+    m_techniques.releaseAll();
+    m_parameters.releaseAll();
+    m_renderColorTargetIndices.clear();
+    m_offscreenRenderTargets.clear();
+    m_interactiveParameters.clear();
+    internal::deleteObject(m_parentFrameBufferObject);
+    nvFX::IContainer::destroy(m_container);
+    m_container = 0;
 }
 
 IEffect::Annotation *Effect::cacheAnnotationRef(nvFX::IAnnotation *annotation, const char *name) const
@@ -1023,6 +1119,17 @@ IEffect::Technique *Effect::cacheTechniqueRef(nvFX::ITechnique *technique) const
         popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
     }
     return techniqueRef;
+}
+
+void Effect::resetEffect(nvFX::IContainer *container)
+{
+    m_container = container;
+    m_enabled = true;
+    setDirty(true);
+    if (m_name) {
+        container->setName(reinterpret_cast<const char *>(m_name->toByteArray()));
+    }
+    appendShaderHeader(container, m_applicationContextRef->sharedFunctionResolverInstance());
 }
 
 } /* namespace nvfx */

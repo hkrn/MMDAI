@@ -141,11 +141,21 @@ Q_GLOBAL_STATIC(Resolver, g_functionResolverInstance)
 
 }
 
+QOpenGLFramebufferObjectFormat ApplicationContext::framebufferObjectFormat(const QQuickWindow *win)
+{
+    QOpenGLFramebufferObjectFormat format;
+    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    format.setSamples(win->format().samples());
+    return format;
+}
+
 ApplicationContext::ApplicationContext(const ProjectProxy *proxy, const StringMap *stringMap, bool isCoreProfile)
-    : BaseApplicationContext(proxy->projectInstanceRef(), proxy->encodingInstanceRef(), stringMap),
+    : QObject(0),
+      BaseApplicationContext(proxy->projectInstanceRef(), proxy->encodingInstanceRef(), stringMap),
       m_baseTime(QTime::currentTime()),
       m_orderIndex(1)
 {
+    connect(&m_fileSystemWatcher, &QFileSystemWatcher::fileChanged, this, &ApplicationContext::fileDidChange);
     g_functionResolverInstance->coreProfile = isCoreProfile;
 }
 
@@ -328,6 +338,7 @@ void ApplicationContext::uploadEnqueuedModelProxies(ProjectProxy *projectProxy, 
             if (!pair.second) {
                 projectProxy->setModelSetting(modelProxy, "selected", false);
             }
+            addTextureWatch(modelRef, context);
             addModelFilePath(modelRef, fileInfo.absoluteFilePath().toStdString());
             setEffectModelRef(effectRef, modelRef);
             succeededModelProxies.append(pair);
@@ -359,7 +370,10 @@ void ApplicationContext::uploadEnqueuedEffects(ProjectProxy *projectProxy, QList
             /* remove model reference from project first to add model/engine correctly after loading project */
             projectRef->removeModel(modelRef);
             projectRef->addModel(modelRef, engine.release(), uuid, m_orderIndex++);
-            addModelFilePath(modelRef, fileInfo.absoluteFilePath().toStdString());
+            const QString &filePath = fileInfo.absoluteFilePath();
+            m_fileSystemWatcher.addPath(filePath);
+            m_filePath2EffectRefs.insert(filePath, effectRef);
+            addModelFilePath(modelRef, filePath.toStdString());
             succeededEffects.append(modelProxy);
         }
         else {
@@ -378,6 +392,12 @@ QList<ModelProxy *> ApplicationContext::deleteEnqueuedModelProxies(ProjectProxy 
         IModel *modelRef = modelProxy->data();
         /* Failed loading effect will have null IRenderEngine instance case  */
         if (IRenderEngine *engine = projectRef->findRenderEngine(modelRef)) {
+            const QString &filePath = QString::fromStdString(findModelFilePath(modelRef));
+            if (!filePath.isEmpty()) {
+                m_filePath2EffectRefs.remove(filePath);
+                m_fileSystemWatcher.removePath(filePath);
+            }
+            removeTextureWatch(modelRef);
             projectRef->removeModel(modelRef);
             engine->release();
             delete engine;
@@ -410,10 +430,66 @@ void ApplicationContext::resetOrderIndex(int startOrderIndex)
     m_orderIndex = startOrderIndex;
 }
 
-QOpenGLFramebufferObjectFormat ApplicationContext::framebufferObjectFormat(const QQuickWindow *win)
+void ApplicationContext::reloadTexture(const QString &filePath)
 {
-    QOpenGLFramebufferObjectFormat format;
-    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-    format.setSamples(win->format().samples());
-    return format;
+    if (m_filePath2TextureRefs.contains(filePath)) {
+        QImage image(filePath);
+        if (!image.isNull()) {
+            ITexture *textureRef = m_filePath2TextureRefs.value(filePath);
+            if (textureRef->size() == Vector3(image.width(), image.height(), 1)) {
+                textureRef->bind();
+                textureRef->write(image.convertToFormat(QImage::Format_ARGB32).constBits());
+                textureRef->unbind();
+                VPVL2_VLOG(2, "Reload texture succeeded: path=" << filePath.toStdString() << " data=" << textureRef->data());
+            }
+            else {
+                VPVL2_LOG(WARNING, "Difference size detected: path=" << filePath.toStdString());
+            }
+        }
+        else {
+            VPVL2_LOG(WARNING, "Cannot load image: path=" << filePath.toStdString());
+        }
+    }
+}
+
+void ApplicationContext::reloadEffect(const QString &filePath)
+{
+    if (m_filePath2EffectRefs.contains(filePath)) {
+        IEffect *effectRef = m_filePath2EffectRefs.value(filePath);
+        QByteArray bytes = filePath.toUtf8();
+        effectRef->recompileFromFile(bytes.constData());
+    }
+}
+
+void ApplicationContext::reloadFile(const QString &filePath)
+{
+    reloadTexture(filePath);
+    reloadEffect(filePath);
+}
+
+void ApplicationContext::addTextureWatch(const IModel *modelRef, const ModelContext &context)
+{
+    if (!m_textureCacheRefs.contains(modelRef)) {
+        ModelContext::TextureRefCacheMap caches;
+        context.getTextureRefCaches(caches);
+        for (ModelContext::TextureRefCacheMap::const_iterator it = caches.begin(); it != caches.end(); it++) {
+            const QString &filePath = QString::fromStdString(it->first);
+            m_filePath2TextureRefs.insert(filePath, it->second);
+            m_fileSystemWatcher.addPath(filePath);
+        }
+        m_textureCacheRefs.insert(modelRef, caches);
+    }
+}
+
+void ApplicationContext::removeTextureWatch(const IModel *modelRef)
+{
+    if (m_textureCacheRefs.contains(modelRef)) {
+        const ModelContext::TextureRefCacheMap &caches = m_textureCacheRefs.value(modelRef);
+        for (ModelContext::TextureRefCacheMap::const_iterator it = caches.begin(); it != caches.end(); it++) {
+            const QString &filePath = QString::fromStdString(it->first);
+            m_filePath2TextureRefs.remove(filePath);
+            m_fileSystemWatcher.removePath(filePath);
+        }
+        m_textureCacheRefs.remove(modelRef);
+    }
 }

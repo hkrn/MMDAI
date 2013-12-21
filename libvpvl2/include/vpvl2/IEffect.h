@@ -391,6 +391,14 @@ public:
 
     virtual void setEnabled(bool value) = 0;
 
+    virtual bool recompileFromFile(const char *filePath) = 0;
+
+    virtual bool recompileFromSource(const char *source, int length) = 0;
+
+    virtual bool isDirty() const = 0;
+
+    virtual void setDirty(bool value) = 0;
+
     virtual const char *errorString() const = 0;
 };
 

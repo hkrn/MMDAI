@@ -151,6 +151,7 @@ public:
     };
     class ModelContext {
     public:
+        typedef std::map<std::string, ITexture *> TextureRefCacheMap;
         ModelContext(BaseApplicationContext *applicationContextRef, Archive *archiveRef, const IString *directory);
         ~ModelContext();
         void addTextureCache(const std::string &path, ITexture *texturePtr);
@@ -159,6 +160,7 @@ public:
         bool uploadTexture(const uint8 *data, vsize size, const std::string &key, int flags, ITexture *&textureRef);
         bool storeTexture(const std::string &key, int flags, ITexture *textureRef);
         void optimizeTexture(ITexture *texture);
+        void getTextureRefCaches(TextureRefCacheMap &value) const;
         int countTextures() const;
         ITexture *createTexture(const void *ptr, const gl::BaseSurface::Format &format, const Vector3 &size, bool mipmap) const;
         ITexture *createTexture(const uint8 *data, vsize size, bool mipmap);
@@ -168,9 +170,8 @@ public:
         static const gl::GLenum kGL_UNPACK_CLIENT_STORAGE_APPLE = 0x85B2;
         static const gl::GLenum kGL_TEXTURE_STORAGE_HINT_APPLE = 0x85BC;
         static const gl::GLenum kGL_STORAGE_CACHED_APPLE = 0x85BE;
-        typedef void (GLAPIENTRY * PFNGLPIXELSTOREIPROC) (gl:: GLenum pname, gl::GLint param);
+        typedef void (GLAPIENTRY * PFNGLPIXELSTOREIPROC) (gl::GLenum pname, gl::GLint param);
         PFNGLPIXELSTOREIPROC pixelStorei;
-        typedef std::map<std::string, ITexture *> TextureRefCacheMap;
         const IString *m_directoryRef;
         Archive *m_archiveRef;
         BaseApplicationContext *m_applicationContextRef;
@@ -253,6 +254,7 @@ public:
     void renderOffscreen();
     void createEffectParameterUIWidgets(IEffect *effectRef);
     void renderEffectParameterUIWidgets();
+    void saveDirtyEffects();
     IEffect *createEffectRef(const std::string &path);
     IEffect *createEffectRef(IModel *modelRef, const IString *directoryRef);
     std::string findEffectFilePath(const IEffect *effectRef) const;
@@ -303,6 +305,7 @@ protected:
     bool uploadSystemToonTexture(const std::string &name, int flags, ModelContext *context, ITexture *&textureRef);
     bool internalUploadTexture(const std::string &name, const std::string &path, int flags, ModelContext *context, ITexture *&textureRef);
     void validateEffectResources();
+    void deleteEffectParameterUIWidget(IEffect *effectRef);
     std::string toonDirectory() const;
     std::string shaderDirectory() const;
     std::string effectDirectory() const;
@@ -353,6 +356,7 @@ protected:
     RenderTargetMap m_renderTargets;
     SharedTextureParameterMap m_sharedParameters;
     Array<vpvl2::IEffect::Technique *> m_offscreenTechniques;
+    Array<vpvl2::IEffect *> m_dirtyEffects;
 #ifdef VPVl2_ENABLE_NVIDIA_CG
     typedef PointerArray<OffscreenTexture> OffscreenTextureList;
     OffscreenTextureList m_offscreenTextures;

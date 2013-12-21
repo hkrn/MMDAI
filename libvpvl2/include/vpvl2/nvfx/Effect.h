@@ -97,9 +97,14 @@ public:
     void setName(const IString *value);
     bool isEnabled() const;
     void setEnabled(bool value);
+    bool recompileFromFile(const char *filePath);
+    bool recompileFromSource(const char *source, int length);
+    bool isDirty() const;
+    void setDirty(bool value);
     const char *errorString() const;
 
     IApplicationContext *applicationContextRef() const;
+    void release();
 
 private:
     typedef void (GLAPIENTRY * PFNGLENABLEVERTEXATTRIBARRAYPROC) (gl::GLuint);
@@ -117,6 +122,7 @@ private:
     Annotation *cacheAnnotationRef(nvFX::IAnnotation *annotation, const char *name) const;
     Parameter *cacheParameterRef(nvFX::IUniform *parameter) const;
     Technique *cacheTechniqueRef(nvFX::ITechnique *technique) const;
+    void resetEffect(nvFX::IContainer *container);
 
     typedef PointerHash<HashString, NvFXAnnotation> NvFXAnnotationHash;
     mutable PointerArray<NvFXParameter> m_parameters;
@@ -135,6 +141,7 @@ private:
     gl::FrameBufferObject *m_parentFrameBufferObject;
     ScriptOrderType m_scriptOrderType;
     bool m_enabled;
+    bool m_dirty;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(Effect)
 };

@@ -162,7 +162,7 @@ bool AssetRenderEngine::upload(void *userData)
     aiString texturePath;
     std::string path, mainTexture, subTexture;
     PrivateEffectEngine *engine = 0;
-    int flags;
+    int flags = 0;
     if (PrivateEffectEngine *const *enginePtr = m_effectEngines.find(IEffect::kStandard)) {
         engine = *enginePtr;
         if (engine->materialTexture.isMipmapEnabled()) {
@@ -265,6 +265,7 @@ void AssetRenderEngine::renderModel()
         hasShadowMap = true;
     }
     initializeEffectParameters();
+    refreshEffect();
     const aiScene *a = m_modelRef->aiScenePtr();
     renderRecurse(a, a->mRootNode, hasShadowMap);
     if (!m_cullFaceState) {
@@ -292,6 +293,7 @@ void AssetRenderEngine::renderZPlot()
     }
     pushAnnotationGroup(std::string("AssetRenderEngine#renderZPlot name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
     initializeEffectParameters();
+    refreshEffect();
     const aiScene *a = m_modelRef->aiScenePtr();
     disable(kGL_CULL_FACE);
     renderZPlotRecurse(a, a->mRootNode);
@@ -578,6 +580,17 @@ void AssetRenderEngine::initializeEffectParameters()
     m_currentEffectEngineRef->boneTransformTexture.setTexture(0);
     m_currentEffectEngineRef->updateModelLightParameters(m_sceneRef, m_modelRef);
     m_currentEffectEngineRef->setModelMatrixParameters(m_modelRef);
+}
+
+void AssetRenderEngine::refreshEffect()
+{
+    if (IEffect *effectRef = m_currentEffectEngineRef->effect()) {
+        if (effectRef->isDirty()) {
+            m_currentEffectEngineRef->invalidate();
+            m_currentEffectEngineRef->setEffect(effectRef, 0, false);
+            effectRef->setDirty(false);
+        }
+    }
 }
 
 void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap)

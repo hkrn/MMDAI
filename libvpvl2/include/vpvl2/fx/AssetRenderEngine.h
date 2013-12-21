@@ -158,6 +158,7 @@ private:
 
     bool uploadRecurse(const aiScene *scene, const aiNode *node, void *userData);
     void initializeEffectParameters();
+    void refreshEffect();
     void renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap);
     void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);

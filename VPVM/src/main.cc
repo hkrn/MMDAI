@@ -280,6 +280,7 @@ int main(int argc, char *argv[])
     window->show();
 
     int result = app.exec();
+    qInstallMessageHandler(0);
     BaseApplicationContext::terminate();
     g_loggerThread.stop();
     threadPool->waitForDone();

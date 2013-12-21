@@ -161,6 +161,7 @@ private:
     bool uploadMaterials(void *userData);
     bool releaseUserData0(void *userData);
     void initializeEffectParameters(int extraCameraFlags);
+    void refreshEffect();
     void createVertexBundle(gl::VertexBundleLayout *layout, IModel::Buffer::StrideType strideType, gl::GLuint dvbo);
     void unbindVertexBundle();
     void bindDynamicVertexAttributePointers(IModel::Buffer::StrideType type);
