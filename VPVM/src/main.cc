@@ -198,7 +198,6 @@ private:
                 f.write((currentDateTime.toString(Qt::ISODate) + " " + message).toUtf8() + "\n");
                 count++;
             }
-            f.close();
         }
     }
 
@@ -207,14 +206,19 @@ private:
     QQueue<QString> m_queue;
     QDir m_directory;
     volatile bool m_active;
-};
-Q_GLOBAL_STATIC(LoggerThread, g_loggerThread)
+} g_loggerThread;
 
 void LoggerThread::delegateMessage(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
     Q_UNUSED(type);
     Q_UNUSED(context);
-    g_loggerThread()->post(QString("[%1] %4 in %2 at line %3").arg(toString(type)).arg(context.function).arg(context.line).arg(message));
+#if !defined(QT_NO_DEBUG)
+    /* supress warnings of Invalid font from Context2D */
+    if (message.startsWith("Context2D:")) {
+        return;
+    }
+#endif
+    g_loggerThread.post(QString("[%1] %4 in %2 at line %3").arg(toString(type)).arg(context.function).arg(context.line).arg(message));
 }
 
 }
@@ -253,8 +257,8 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("applicationPreference", &applicationPreference);
     qInstallMessageHandler(&LoggerThread::delegateMessage);
     QThreadPool *threadPool = QThreadPool::globalInstance();
-    g_loggerThread()->setDirectory(loggingDirectory);
-    threadPool->start(g_loggerThread());
+    g_loggerThread.setDirectory(loggingDirectory);
+    threadPool->start(&g_loggerThread);
 #ifdef QT_NO_DEBUG
     engine.load(QUrl("qrc:///qml/VPVM/main.qml"));
 #else
@@ -277,10 +281,8 @@ int main(int argc, char *argv[])
 
     int result = app.exec();
     BaseApplicationContext::terminate();
-    if (threadPool->activeThreadCount() > 0) {
-        g_loggerThread()->stop();
-        threadPool->waitForDone();
-    }
+    g_loggerThread.stop();
+    threadPool->waitForDone();
 
     return result;
 }
