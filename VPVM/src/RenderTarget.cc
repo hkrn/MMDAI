@@ -1680,7 +1680,7 @@ void RenderTarget::exportImage(const QUrl &fileUrl, const QSize &size)
     if (!m_exportSize.isValid()) {
         m_exportSize = m_viewport.size();
     }
-    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForImage, Qt::DirectConnection);
+    connect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForImage, Qt::DirectConnection);
 }
 
 void RenderTarget::exportVideo(const QUrl &fileUrl, const QSize &size, const QString &videoType, const QString &frameImageType)
@@ -1703,14 +1703,14 @@ void RenderTarget::exportVideo(const QUrl &fileUrl, const QSize &size, const QSt
     encodingTaskRef->setInputImageFormat(frameImageType);
     encodingTaskRef->setOutputFormat(videoType);
     encodingTaskRef->setOutputPath(fileUrl.toLocalFile());
-    connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo, Qt::DirectConnection);
+    connect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForVideo, Qt::DirectConnection);
 }
 
 void RenderTarget::cancelExportingVideo()
 {
     Q_ASSERT(window());
-    disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
-    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::launchEncodingTask);
+    disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForVideo);
+    disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::launchEncodingTask);
     if (m_encodingTask && m_encodingTask->isRunning()) {
         m_encodingTask->stop();
         emit encodeDidCancel();
@@ -1823,8 +1823,8 @@ void RenderTarget::drawOffscreenForImage()
 {
     Q_ASSERT(window());
     QQuickWindow *win = window();
-    disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForImage);
-    connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::writeExportedImage);
+    disconnect(win, &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForImage);
+    connect(win, &QQuickWindow::frameSwapped, this, &RenderTarget::writeExportedImage);
     QOpenGLFramebufferObject fbo(m_exportSize, ApplicationContext::framebufferObjectFormat(win));
     drawOffscreen(&fbo);
     m_exportImage = fbo.toImage();
@@ -1839,8 +1839,8 @@ void RenderTarget::drawOffscreenForVideo()
     drawOffscreen(fbo);
     if (qFuzzyIsNull(m_projectProxyRef->differenceTimeIndex(m_currentTimeIndex))) {
         encodingTaskRef->setEstimatedFrameCount(m_currentTimeIndex);
-        disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::drawOffscreenForVideo);
-        connect(win, &QQuickWindow::afterRendering, this, &RenderTarget::launchEncodingTask);
+        disconnect(win, &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForVideo);
+        connect(win, &QQuickWindow::frameSwapped, this, &RenderTarget::launchEncodingTask);
     }
     else {
         const qreal &currentTimeIndex = m_currentTimeIndex;
@@ -1855,7 +1855,7 @@ void RenderTarget::drawOffscreenForVideo()
 void RenderTarget::writeExportedImage()
 {
     Q_ASSERT(window());
-    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::writeExportedImage);
+    disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::writeExportedImage);
     QFileInfo finfo(m_exportLocation.toLocalFile());
     const QString &suffix = finfo.suffix();
     if (suffix != "bmp" && !QQuickWindow::hasDefaultAlphaBuffer()) {
@@ -1895,7 +1895,7 @@ void RenderTarget::writeExportedImage()
 void RenderTarget::launchEncodingTask()
 {
     Q_ASSERT(window());
-    disconnect(window(), &QQuickWindow::afterRendering, this, &RenderTarget::launchEncodingTask);
+    disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::launchEncodingTask);
     encodingTask()->launch();
     m_exportSize = QSize();
 }
@@ -2289,24 +2289,16 @@ void RenderTarget::drawCurrentGizmo()
 
 void RenderTarget::drawOffscreen(QOpenGLFramebufferObject *fbo)
 {
+    m_applicationContext->setViewportRegion(glm::ivec4(0, 0, fbo->width(), fbo->height()));
     Scene::setRequiredOpenGLState();
     drawShadowMap();
     Q_ASSERT(fbo->isValid());
     fbo->bind();
-    glm::mat4 modelMatrix, viewMatrix, projectionMatrix;
-    m_applicationContext->getCameraMatrices(modelMatrix, viewMatrix, projectionMatrix);
-    const ICamera *camera = m_projectProxyRef->camera()->data();
-    const glm::mediump_float &aspect = fbo->width() > fbo->height()
-            ? fbo->width() / glm::mediump_float(fbo->height())
-            : fbo->height() / glm::mediump_float(fbo->width());
-    Q_ASSERT(aspect != 0);
-    const glm::mat4 &newProjectionMatrix = glm::infinitePerspective(camera->fov(), aspect, camera->znear());
-    m_applicationContext->setCameraMatrices(modelMatrix, viewMatrix, newProjectionMatrix);
     glViewport(0, 0, fbo->width(), fbo->height());
     clearScene();
     drawScene();
-    m_applicationContext->setCameraMatrices(modelMatrix, viewMatrix, projectionMatrix);
-    fbo->bindDefault();
+    m_applicationContext->setViewportRegion(glm::ivec4(m_viewport.x(), m_viewport.y(), m_viewport.width(), m_viewport.height()));
+    QOpenGLFramebufferObject::bindDefault();
 }
 
 void RenderTarget::updateViewport()
