@@ -66,6 +66,7 @@ Item {
     property int baseIconPointSize : 48
     property bool isHUDAvailable : true
     property real offsetY : 0
+    property string lastState: "stop"
     property var __keycode2closures : ({})
     signal toggleTimelineVisible()
     signal toggleTimelineWindowed()
@@ -260,6 +261,17 @@ Item {
                     renderTargetAnimation.stop()
                     projectDocument.rewind()
                     renderTarget.render()
+                }
+            }
+        },
+        State {
+            name: "suspend"
+            PropertyChanges { target: scene; isHUDAvailable: false }
+            StateChangeScript {
+                script: {
+                    renderTargetAnimation.stop()
+                    standbyRenderTimer.stop()
+                    lastState = state
                 }
             }
         }

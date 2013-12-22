@@ -50,6 +50,10 @@ ApplicationWindow {
     minimumHeight: 620
     title: "%1 - %2".arg(Qt.application.name).arg(scene.project.title)
 
+    function __handleApplicationStateChange() {
+        var state = Qt.application.state
+        scene.state = Qt.ApplicationActive ? scene.lastState : "suspend"
+    }
     function updateWindowRect() {
         x = applicationPreference.windowRect.x
         y = applicationPreference.windowRect.y
@@ -86,6 +90,7 @@ ApplicationWindow {
     Component.onCompleted: {
         updateWindowRect()
         applicationPreference.windowRectChanged.connect(updateWindowRect)
+        Qt.application.stateChanged.connect(__handleApplicationStateChange)
     }
 
     ApplicationWindow {
