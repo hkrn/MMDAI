@@ -153,21 +153,6 @@ private:
     volatile bool m_active;
 } g_loggerThread;
 
-class ApplicationFinalizer : public QObject {
-    Q_OBJECT
-
-public:
-    ApplicationFinalizer() : QObject(0) {}
-    ~ApplicationFinalizer() {}
-
-public slots:
-    void finalize() {
-        g_loggerThread.stop();
-        BaseApplicationContext::terminate();
-    }
-
-} g_finalizer;
-
 class ApplicationBootstrapOption : public QObject {
     Q_OBJECT
 
@@ -308,7 +293,6 @@ int main(int argc, char *argv[])
     QQmlContext *rootContext = engine.rootContext();
     rootContext->setContextProperty("applicationPreference", &applicationPreference);
     rootContext->setContextProperty("applicationBootstrapOption", &applicationBootstrapOption);
-    QObject::connect(&engine, &QQmlApplicationEngine::quit, &g_finalizer, &ApplicationFinalizer::finalize);
     g_loggerThread.setDirectory(loggingDirectory);
     QThreadPool::globalInstance()->start(&g_loggerThread);
 #ifdef QT_NO_DEBUG
@@ -331,7 +315,11 @@ int main(int argc, char *argv[])
 #endif
     window->show();
 
-    return application.exec();
+    int result = application.exec();
+    g_loggerThread.stop();
+    BaseApplicationContext::terminate();
+
+    return result;
 }
 
 #include "main.moc"
