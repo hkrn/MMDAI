@@ -513,6 +513,7 @@ bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdi
 void BaseApplicationContext::terminate()
 {
     FreeImage_DeInitialise();
+    TwTerminate();
     uninstallLogger();
     Scene::terminate();
 }
@@ -580,7 +581,6 @@ void BaseApplicationContext::release()
 {
     pushAnnotationGroup("BaseApplicationContext#release", sharedFunctionResolverInstance());
     TwDeleteAllBars();
-    TwTerminate();
     m_shadowMap.reset();
     m_currentModelRef = 0;
 #ifdef VPVl2_ENABLE_NVIDIA_CG
