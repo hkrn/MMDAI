@@ -782,7 +782,7 @@ ApplicationWindow {
     }
     Action {
         id: openAboutQtAction
-        text: qsTr("About Qt")
+        text: qsTr("About Qt 5.2")
         tooltip: qsTr("Show information dialog of Qt.")
         onTriggered: VPVM.UIAuxHelper.openAboutQt()
     }
@@ -951,6 +951,8 @@ ApplicationWindow {
             title: isOSX ? qsTr("Window") : qsTr("&Window")
             MenuItem { action: detachTimelineAction }
             MenuItem { action: toggleVisiblePropertyPanelAction }
+            MenuSeparator {}
+            MenuItem { action: openAboutQtAction }
         }
         Menu {
             id: helpMenu
@@ -958,7 +960,6 @@ ApplicationWindow {
             MenuItem { action: openGlobalPreferenceAction }
             MenuSeparator {}
             MenuItem { action: openAboutAction }
-            MenuItem { action: openAboutQtAction }
         }
     }
 

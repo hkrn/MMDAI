@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/qt">
+        <file alias="etc/qt.conf">osx/etc/qt.conf</file>
+    </qresource>
+</RCC>
+

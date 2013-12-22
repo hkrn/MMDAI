@@ -76,18 +76,19 @@ Application {
         "../openal-soft-src/" + libraryInstallDirectory + "/include",
         "../icu4c-src/" + libraryInstallDirectory + "/include"
     ]
-    property var requiredSubmodules: [
-         "core", "gui", "widgets", "qml", "quick", "multimedia"
-    ]
-    type: "application"
-    name: "VPVM"
-    version: "0.33.0"
-    files: [
+    property var commonFiles: [
         "src/*.cc",
         "include/*.h",
         "licenses/licenses.qrc",
         "../libvpvl2/src/resources/resources.qrc"
     ]
+    property var requiredSubmodules: [
+         "core", "gui", "widgets", "qml", "quick", "multimedia"
+    ]
+    type: "application"
+    name: "VPVM"
+    version: "0.33.1"
+    files: commonFiles
     cpp.defines: [
         "VPVL2_ENABLE_QT"
     ]
@@ -108,13 +109,16 @@ Application {
         name: "Application"
         fileTagsFilter: "application"
         qbs.install: true
-        qbs.installDir: qbs.targetOS.contains("osx") ? (applicationBundlePath + "/MacOS") : ""
+        qbs.installDir: qbs.targetOS.contains("osx") ? FileInfo.joinPaths(applicationBundlePath, "MacOS") : ""
     }
     Group {
         name: "Translation Resources"
-        files: "translations/*.qm"
+        files: [
+            "translations/*.qm",
+            Qt.core.binPath + "/../translations/qt*.qm",
+        ]
         qbs.install: true
-        qbs.installDir: qbs.targetOS.contains("osx") ? (applicationBundlePath + "/Resources/translations") : "translations"
+        qbs.installDir: qbs.targetOS.contains("osx") ? FileInfo.joinPaths(applicationBundlePath, "Resources", "translations") : "translations"
     }
     Group {
         condition: qbs.buildVariant === "release"
@@ -126,7 +130,7 @@ Application {
         name: "Application Resources for Debug Build"
         files: [ "qml/VPVM/*", "libav/libav.qrc" ]
         qbs.install: true
-        qbs.installDir: qbs.targetOS.contains("osx") ? (applicationBundlePath + "/Resources/qml") : "qml"
+        qbs.installDir: qbs.targetOS.contains("osx") ? FileInfo.joinPaths(applicationBundlePath, "Resources", "qml") : "qml"
     }
     Properties {
         condition: qbs.targetOS.contains("osx")
@@ -135,6 +139,7 @@ Application {
             "OpenCL"
         ]
         cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z" ])
+        files: qbs.enableDebugCode ? commonFiles : commonFiles.concat([ "qt/osx.qrc" ])
     }
     Properties {
         condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
@@ -190,7 +195,7 @@ Application {
                 var name = requiredSubmodule.toUpperCase().charAt(0) + requiredSubmodule.substring(1)
                 found.push(FileInfo.joinPaths(Qt.core.libPath, "libQt5" + name + ".so.5*"))
             }
-            found.push(FileInfo.joinPaths(product.buildDirectory, "/libvpvl2.so*"))
+            found.push(FileInfo.joinPaths(product.buildDirectory, "libvpvl2.so*"))
             found.push(FileInfo.joinPaths(Qt.core.libPath, "libicu*.so.*"))
             return found
         }
