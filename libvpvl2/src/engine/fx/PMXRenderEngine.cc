@@ -47,9 +47,10 @@
 
 namespace vpvl2
 {
+using namespace gl;
+
 namespace fx
 {
-using namespace gl;
 
 static const int kMaxUVASize = int(IEffect::kUVA4VertexAttribute - IEffect::kUVA1VertexAttribute);
 
@@ -1176,7 +1177,12 @@ void PMXRenderEngine::labelVertexBuffer(GLenum key, const char *name)
 {
     char buffer[1024];
     internal::snprintf(buffer, sizeof(buffer), "name=%s model=%s", name, internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "(null)"));
-    annotateObject(key == VertexBundle::kIndexBuffer ? VertexBundle::kGL_ELEMENT_ARRAY_BUFFER : VertexBundle::kGL_ARRAY_BUFFER, m_bundle->findName(key), buffer, m_applicationContextRef->sharedFunctionResolverInstance());
+    if (key == VertexBundle::kIndexBuffer) {
+        annotateObject(VertexBundle::kGL_ELEMENT_ARRAY_BUFFER, m_bundle->findName(key), buffer, m_applicationContextRef->sharedFunctionResolverInstance());
+    }
+    else {
+        annotateObject(VertexBundle::kGL_ARRAY_BUFFER, m_bundle->findName(key), buffer, m_applicationContextRef->sharedFunctionResolverInstance());
+    }
 }
 
 void PMXRenderEngine::annotateMaterial(const char *name, const IMaterial *material)
