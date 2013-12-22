@@ -55,6 +55,7 @@ UpgradeLog*.XML
 _UpgradeReport_Files
 VPVM*.png
 VPVM.desktop
+VPVM*.json
 Win32
 zlib-*
 *.a

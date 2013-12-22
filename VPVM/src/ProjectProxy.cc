@@ -640,6 +640,19 @@ void ProjectProxy::setAudioSource(const QUrl &value)
     }
 }
 
+qreal ProjectProxy::audioVolume() const
+{
+    return globalSetting("audio.volume").toFloat();
+}
+
+void ProjectProxy::setAudioVolume(const qreal &value)
+{
+    if (value != audioVolume()) {
+        setGlobalString("audio.volume", value);
+        emit audioVolumeChanged();
+    }
+}
+
 QColor ProjectProxy::screenColor() const
 {
     return m_screenColor;

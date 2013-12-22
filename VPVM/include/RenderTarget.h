@@ -169,6 +169,7 @@ public slots:
     Q_INVOKABLE void exportImage(const QUrl &fileUrl, const QSize &size);
     Q_INVOKABLE void exportVideo(const QUrl &fileUrl, const QSize &size, const QString &videoType, const QString &frameImageType);
     Q_INVOKABLE void cancelExportingVideo();
+    Q_INVOKABLE void loadJson(const QUrl &fileUrl);
     void resetCurrentTimeIndex();
     void resetLastTimeIndex();
 

@@ -411,6 +411,11 @@ Item {
         viewport: defaultViewportSetting
         width: viewport.width
         height: viewport.height
+        onInitializedChanged: {
+            if (initialized && applicationBootstrapOption.hasJson) {
+                renderTarget.loadJson(applicationBootstrapOption.json)
+            }
+        }
         onCurrentTimeIndexChanged: {
             var timeIndex = currentTimeIndex
             projectDocument.seek(timeIndex);

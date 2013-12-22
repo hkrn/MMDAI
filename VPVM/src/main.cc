@@ -72,68 +72,6 @@ using namespace vpvl2::extensions;
 
 namespace {
 
-static void prepareRegal()
-{
-    static const QByteArray kRegalEnableVariables[] = {
-        "REGAL_EMULATION",
-        0
-    };
-    static const QByteArray kRegalDisableVariables[] = {
-        "REGAL_NO_EMULATION",
-        0
-    };
-    for (int i = 0; !kRegalEnableVariables[i].isNull(); i++) {
-        qputenv(kRegalEnableVariables[i], "1");
-    }
-    for (int i = 0; !kRegalDisableVariables[i].isNull(); i++) {
-        qputenv(kRegalEnableVariables[i], "0");
-    }
-}
-
-static QObject *createALAudioContext(QQmlEngine *engine, QJSEngine *scriptEngine)
-{
-    Q_UNUSED(scriptEngine);
-    QObject *value = new ALAudioContext(engine);
-    return value;
-}
-
-static QObject *createUIAuxHelper(QQmlEngine *engine, QJSEngine *scriptEngine)
-{
-    Q_UNUSED(scriptEngine);
-    QObject *value = new UIAuxHelper(engine);
-    return value;
-}
-
-void registerQmlTypes()
-{
-    qmlRegisterSingletonType<ALAudioContext>("com.github.mmdai.VPVM", 1, 0, "ALAudioContext", createALAudioContext);
-    qmlRegisterType<ALAudioEngine>("com.github.mmdai.VPVM", 1, 0, "ALAudioEngine");
-    qmlRegisterUncreatableType<BaseKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "BaseKeyframe", "");
-    qmlRegisterUncreatableType<BaseMotionTrack>("com.github.mmdai.VPVM", 1, 0, "BaseMotionTrack", "");
-    qmlRegisterUncreatableType<BoneKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "BoneKeyframe", "");
-    qmlRegisterUncreatableType<BoneMotionTrack>("com.github.mmdai.VPVM", 1, 0, "BoneMotionTrack", "");
-    qmlRegisterUncreatableType<BoneRefObject>("com.github.mmdai.VPVM", 1, 0, "Bone", "");
-    qmlRegisterUncreatableType<CameraKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "CameraKeyframe", "");
-    qmlRegisterUncreatableType<CameraMotionTrack>("com.github.mmdai.VPVM", 1, 0, "CameraMotionTrack", "");
-    qmlRegisterUncreatableType<CameraRefObject>("com.github.mmdai.VPVM", 1, 0, "Camera", "");
-    qmlRegisterUncreatableType<GraphicsDevice>("com.github.mmdai.VPVM", 1, 0, "GraphicsDevice", "");
-    qmlRegisterUncreatableType<Grid>("com.github.mmdai.VPVM", 1, 0, "Grid", "");
-    qmlRegisterUncreatableType<LabelRefObject>("com.github.mmdai.VPVM", 1, 0, "Label", "");
-    qmlRegisterUncreatableType<LightKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "LightKeyframe", "");
-    qmlRegisterUncreatableType<LightMotionTrack>("com.github.mmdai.VPVM", 1, 0, "LightMotionTrack", "");
-    qmlRegisterUncreatableType<LightRefObject>("com.github.mmdai.VPVM", 1, 0, "Light", "");
-    qmlRegisterUncreatableType<ModelProxy>("com.github.mmdai.VPVM", 1, 0, "Model", "");
-    qmlRegisterUncreatableType<MorphKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "MorphKeyframe", "");
-    qmlRegisterUncreatableType<MorphMotionTrack>("com.github.mmdai.VPVM", 1, 0, "MorphMotionTrack", "");
-    qmlRegisterUncreatableType<MorphRefObject>("com.github.mmdai.VPVM", 1, 0, "Morph", "");
-    qmlRegisterUncreatableType<MotionProxy>("com.github.mmdai.VPVM", 1, 0, "Motion", "");
-    qmlRegisterUncreatableType<Preference>("com.github.mmdai.VPVM", 1, 0, "Preference", "");
-    qmlRegisterUncreatableType<WorldProxy>("com.github.mmdai.VPVM", 1, 0, "World", "");
-    qmlRegisterSingletonType<UIAuxHelper>("com.github.mmdai.VPVM", 1, 0, "UIAuxHelper", createUIAuxHelper);
-    qmlRegisterType<RenderTarget>("com.github.mmdai.VPVM", 1, 0, "RenderTarget");
-    qmlRegisterType<ProjectProxy>("com.github.mmdai.VPVM", 1, 0, "Project");
-}
-
 class LoggerThread : public QRunnable {
 public:
     static const QString &toString(QtMsgType type) {
@@ -215,12 +153,12 @@ private:
     volatile bool m_active;
 } g_loggerThread;
 
-class Finalizer : public QObject {
+class ApplicationFinalizer : public QObject {
     Q_OBJECT
 
 public:
-    Finalizer() : QObject(0) {}
-    ~Finalizer() {}
+    ApplicationFinalizer() : QObject(0) {}
+    ~ApplicationFinalizer() {}
 
 public slots:
     void finalize() {
@@ -229,6 +167,38 @@ public slots:
     }
 
 } g_finalizer;
+
+class ApplicationBootstrapOption : public QObject {
+    Q_OBJECT
+
+public:
+    Q_PROPERTY(QUrl json READ json CONSTANT FINAL)
+    Q_PROPERTY(bool hasJson READ hasJson CONSTANT FINAL)
+
+    ApplicationBootstrapOption(QCommandLineParser *parser)
+        : QObject(0),
+          m_parser(parser),
+          m_json(QStringList() << "j" << "json", "Configuration JSON from <file> to load at startup.", "file")
+    {
+        parser->setApplicationDescription(QApplication::tr("VPVM (a.k.a MMDAI2) is an application to create/edit motion like MikuMikuDance (MMD)"));
+        parser->addHelpOption();
+        parser->addVersionOption();
+        parser->addOption(m_json);
+    }
+    ~ApplicationBootstrapOption() {
+    }
+
+    QUrl json() const {
+        return QUrl::fromLocalFile(m_parser->value(m_json));
+    }
+    bool hasJson() const {
+        return m_parser->isSet(m_json);
+    }
+
+private:
+    const QCommandLineParser *m_parser;
+    QCommandLineOption m_json;
+};
 
 void LoggerThread::delegateMessage(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
@@ -243,44 +213,104 @@ void LoggerThread::delegateMessage(QtMsgType type, const QMessageLogContext &con
     g_loggerThread.post(QString("[%1] %4 in %2 at line %3").arg(toString(type)).arg(context.function).arg(context.line).arg(message));
 }
 
+static void prepareRegal()
+{
+    static const QByteArray kRegalEnableVariables[] = {
+        "REGAL_EMULATION",
+        0
+    };
+    static const QByteArray kRegalDisableVariables[] = {
+        "REGAL_NO_EMULATION",
+        0
+    };
+    for (int i = 0; !kRegalEnableVariables[i].isNull(); i++) {
+        qputenv(kRegalEnableVariables[i], "1");
+    }
+    for (int i = 0; !kRegalDisableVariables[i].isNull(); i++) {
+        qputenv(kRegalEnableVariables[i], "0");
+    }
+}
+
+static QObject *createALAudioContext(QQmlEngine *engine, QJSEngine *scriptEngine)
+{
+    Q_UNUSED(scriptEngine);
+    QObject *value = new ALAudioContext(engine);
+    return value;
+}
+
+static QObject *createUIAuxHelper(QQmlEngine *engine, QJSEngine *scriptEngine)
+{
+    Q_UNUSED(scriptEngine);
+    QObject *value = new UIAuxHelper(engine);
+    return value;
+}
+
+void registerQmlTypes()
+{
+    qmlRegisterSingletonType<ALAudioContext>("com.github.mmdai.VPVM", 1, 0, "ALAudioContext", createALAudioContext);
+    qmlRegisterType<ALAudioEngine>("com.github.mmdai.VPVM", 1, 0, "ALAudioEngine");
+    qmlRegisterUncreatableType<BaseKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "BaseKeyframe", "");
+    qmlRegisterUncreatableType<BaseMotionTrack>("com.github.mmdai.VPVM", 1, 0, "BaseMotionTrack", "");
+    qmlRegisterUncreatableType<BoneKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "BoneKeyframe", "");
+    qmlRegisterUncreatableType<BoneMotionTrack>("com.github.mmdai.VPVM", 1, 0, "BoneMotionTrack", "");
+    qmlRegisterUncreatableType<BoneRefObject>("com.github.mmdai.VPVM", 1, 0, "Bone", "");
+    qmlRegisterUncreatableType<CameraKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "CameraKeyframe", "");
+    qmlRegisterUncreatableType<CameraMotionTrack>("com.github.mmdai.VPVM", 1, 0, "CameraMotionTrack", "");
+    qmlRegisterUncreatableType<CameraRefObject>("com.github.mmdai.VPVM", 1, 0, "Camera", "");
+    qmlRegisterUncreatableType<GraphicsDevice>("com.github.mmdai.VPVM", 1, 0, "GraphicsDevice", "");
+    qmlRegisterUncreatableType<Grid>("com.github.mmdai.VPVM", 1, 0, "Grid", "");
+    qmlRegisterUncreatableType<LabelRefObject>("com.github.mmdai.VPVM", 1, 0, "Label", "");
+    qmlRegisterUncreatableType<LightKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "LightKeyframe", "");
+    qmlRegisterUncreatableType<LightMotionTrack>("com.github.mmdai.VPVM", 1, 0, "LightMotionTrack", "");
+    qmlRegisterUncreatableType<LightRefObject>("com.github.mmdai.VPVM", 1, 0, "Light", "");
+    qmlRegisterUncreatableType<ModelProxy>("com.github.mmdai.VPVM", 1, 0, "Model", "");
+    qmlRegisterUncreatableType<MorphKeyframeRefObject>("com.github.mmdai.VPVM", 1, 0, "MorphKeyframe", "");
+    qmlRegisterUncreatableType<MorphMotionTrack>("com.github.mmdai.VPVM", 1, 0, "MorphMotionTrack", "");
+    qmlRegisterUncreatableType<MorphRefObject>("com.github.mmdai.VPVM", 1, 0, "Morph", "");
+    qmlRegisterUncreatableType<MotionProxy>("com.github.mmdai.VPVM", 1, 0, "Motion", "");
+    qmlRegisterUncreatableType<Preference>("com.github.mmdai.VPVM", 1, 0, "Preference", "");
+    qmlRegisterUncreatableType<WorldProxy>("com.github.mmdai.VPVM", 1, 0, "World", "");
+    qmlRegisterSingletonType<UIAuxHelper>("com.github.mmdai.VPVM", 1, 0, "UIAuxHelper", createUIAuxHelper);
+    qmlRegisterType<RenderTarget>("com.github.mmdai.VPVM", 1, 0, "RenderTarget");
+    qmlRegisterType<ProjectProxy>("com.github.mmdai.VPVM", 1, 0, "Project");
+}
+
 }
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
-    app.setApplicationDisplayName("VPVM");
-    app.setApplicationName("VPVM");
-    app.setApplicationVersion("0.33.0");
-    app.setOrganizationName("MMDAI Project");
-    app.setOrganizationDomain("mmdai.github.com");
+    QApplication application(argc, argv);
+    application.setApplicationDisplayName("VPVM");
+    application.setApplicationName("VPVM");
+    application.setApplicationVersion("0.33.0");
+    application.setOrganizationName("MMDAI Project");
+    application.setOrganizationDomain("mmdai.github.com");
+    QTranslator translator;
+    translator.load(QLocale::system(), "VPVM", ".", Util::resourcePath("translations"), ".qm");
+    application.installTranslator(&translator);
 
     QCommandLineParser parser;
-    parser.addHelpOption();
-    parser.addVersionOption();
-    parser.process(app);
+    ApplicationBootstrapOption applicationBootstrapOption(&parser);
+    parser.process(application);
 
     Preference applicationPreference;
     const QString &loggingDirectory = applicationPreference.initializeLoggingDirectory();
     int verboseLogLevel = applicationPreference.verboseLogLevel();
     BaseApplicationContext::initializeOnce(argv[0],  qPrintable(loggingDirectory), verboseLogLevel);
     if (applicationPreference.isFontFamilyToGUIShared()) {
-        app.setFont(applicationPreference.fontFamily());
+        application.setFont(applicationPreference.fontFamily());
     }
-
-    QTranslator translator;
-    translator.load(QLocale::system(), "VPVM", ".", Util::resourcePath("translations"), ".qm");
-    app.installTranslator(&translator);
-
     prepareRegal();
     registerQmlTypes();
 
     QQuickWindow::setDefaultAlphaBuffer(applicationPreference.isTransparentWindowEnabled());
     QQmlApplicationEngine engine;
-    QObject::connect(&engine, &QQmlApplicationEngine::quit, &g_finalizer, &Finalizer::finalize);
-    engine.rootContext()->setContextProperty("applicationPreference", &applicationPreference);
-    QThreadPool *threadPool = QThreadPool::globalInstance();
+    QQmlContext *rootContext = engine.rootContext();
+    rootContext->setContextProperty("applicationPreference", &applicationPreference);
+    rootContext->setContextProperty("applicationBootstrapOption", &applicationBootstrapOption);
+    QObject::connect(&engine, &QQmlApplicationEngine::quit, &g_finalizer, &ApplicationFinalizer::finalize);
     g_loggerThread.setDirectory(loggingDirectory);
-    threadPool->start(&g_loggerThread);
+    QThreadPool::globalInstance()->start(&g_loggerThread);
 #ifdef QT_NO_DEBUG
     engine.load(QUrl("qrc:///qml/VPVM/main.qml"));
 #else
@@ -301,7 +331,7 @@ int main(int argc, char *argv[])
 #endif
     window->show();
 
-    return app.exec();
+    return application.exec();
 }
 
 #include "main.moc"

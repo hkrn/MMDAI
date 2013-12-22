@@ -91,6 +91,7 @@ class ProjectProxy : public QObject
     Q_PROPERTY(ModelProxy *currentModel READ currentModel WRITE setCurrentModel NOTIFY currentModelChanged FINAL)
     Q_PROPERTY(MotionProxy *currentMotion READ currentMotion WRITE setCurrentMotion NOTIFY currentMotionChanged FINAL)
     Q_PROPERTY(QUrl audioSource READ audioSource WRITE setAudioSource NOTIFY audioSourceChanged FINAL)
+    Q_PROPERTY(qreal audioVolume READ audioVolume WRITE setAudioVolume NOTIFY audioVolumeChanged FINAL)
     Q_PROPERTY(QColor screenColor READ screenColor WRITE setScreenColor NOTIFY screenColorChanged FINAL)
     Q_PROPERTY(qreal currentTimeIndex READ currentTimeIndex NOTIFY currentTimeIndexChanged FINAL)
     Q_PROPERTY(qreal durationTimeIndex READ durationTimeIndex NOTIFY durationTimeIndexChanged FINAL)
@@ -184,6 +185,8 @@ public:
     void setCurrentMotion(MotionProxy *value);
     QUrl audioSource() const;
     void setAudioSource(const QUrl &value);
+    qreal audioVolume() const;
+    void setAudioVolume(const qreal &value);
     QColor screenColor() const;
     void setScreenColor(const QColor &value);
     LanguageType language() const;
@@ -192,8 +195,6 @@ public:
     void setAccelerationType(AccelerationType value);
     bool isDirty() const;
     void setDirty(bool value);
-    bool isPhysicsSimulationEnabled() const;
-    void setPhysicsSimulationEnabled(bool value);
     bool isLoop() const;
     void setLoop(bool value);
     bool canUndo() const;
@@ -266,6 +267,7 @@ signals:
     void currentModelChanged();
     void currentMotionChanged();
     void audioSourceChanged();
+    void audioVolumeChanged();
     void screenColorChanged();
     void durationTimeIndexChanged();
     void errorStringChanged();

@@ -1017,6 +1017,76 @@ void RenderTarget::cancelExportingVideo()
     }
 }
 
+void RenderTarget::loadJson(const QUrl &fileUrl)
+{
+    QFile file(fileUrl.toLocalFile());
+    if (file.open(QFile::ReadOnly)) {
+        const QJsonDocument &document = QJsonDocument::fromJson(file.readAll());
+        const QJsonObject &root = document.object(), &projectObject = root.value("project").toObject();
+        QFileInfo fileInfo(projectObject.value("path").toString());
+        if (fileInfo.exists() && fileInfo.isFile()) {
+            m_projectProxyRef->loadAsync(QUrl::fromLocalFile(fileInfo.absoluteFilePath()));
+        }
+        else {
+            m_projectProxyRef->world()->setSimulationType(projectObject.value("simulationPhysics").toBool(false) ? WorldProxy::EnableSimulationPlayOnly : WorldProxy::DisableSimulation);
+            m_projectProxyRef->setTitle(projectObject.value("title").toString(tr("Untitled Project")));
+            m_projectProxyRef->setScreenColor(QColor(projectObject.value("screenColor").toString("#ffffff")));
+            const QJsonObject &gridObject = root.value("grid").toObject();
+            m_grid->setVisible(gridObject.value("visible").toBool(true));
+            const QJsonObject &audioObject = root.value("audio").toObject();
+            fileInfo.setFile(audioObject.value("source").toString());
+            if (fileInfo.exists() && fileInfo.isFile()) {
+                m_projectProxyRef->setAudioSource(QUrl::fromLocalFile(fileInfo.absoluteFilePath()));
+                m_projectProxyRef->setAudioVolume(audioObject.value("volume").toDouble());
+            }
+            CameraRefObject *camera = m_projectProxyRef->camera();
+            const QJsonObject &cameraObject = root.value("camera").toObject();
+            if (cameraObject.contains("motion")) {
+                fileInfo.setFile(cameraObject.value("motion").toString());
+                if (fileInfo.exists() && fileInfo.isFile()) {
+                    m_projectProxyRef->loadMotion(QUrl::fromLocalFile(fileInfo.absoluteFilePath()), 0, ProjectProxy::CameraMotion);
+                }
+            }
+            else {
+                camera->setFov(cameraObject.value("fov").toDouble(camera->fov()));
+                camera->setDistance(cameraObject.value("distance").toDouble(camera->distance()));
+            }
+            const QJsonObject &lightObject = root.value("light").toObject();
+            LightRefObject *light = m_projectProxyRef->light();
+            light->setColor(QColor(lightObject.value("color").toString("#999999")));
+            foreach (const QJsonValue &v, root.value("models").toArray()) {
+                const QJsonObject &item = v.toObject();
+                fileInfo.setFile(item.value("path").toString());
+                if (fileInfo.exists() && fileInfo.isFile()) {
+                    ModelProxy *modelProxy = m_projectProxyRef->loadModel(QUrl::fromLocalFile(fileInfo.absoluteFilePath()), QUuid::createUuid(), true);
+                    modelProxy->setScaleFactor(item.value("scaleFactor").toDouble(1.0));
+                    modelProxy->setOpacity(item.value("opacity").toDouble(1.0));
+                    modelProxy->setEdgeWidth(item.value("edgeWidth").toDouble(1.0));
+                    foreach (const QJsonValue &m, item.value("motions").toArray()) {
+                        fileInfo.setFile(m.toString());
+                        if (fileInfo.exists() && fileInfo.isFile()) {
+                            m_projectProxyRef->loadMotion(QUrl::fromLocalFile(fileInfo.absoluteFilePath()), modelProxy, ProjectProxy::ModelMotion);
+                        }
+                    }
+                }
+            }
+            foreach (const QJsonValue &v, root.value("effects").toArray()) {
+                const QJsonObject &item = v.toObject();
+                fileInfo.setFile(item.value("path").toString());
+                if (fileInfo.exists() && fileInfo.isFile()) {
+                    m_projectProxyRef->loadEffect(QUrl::fromLocalFile(fileInfo.absoluteFilePath()));
+                }
+            }
+            const QJsonObject &videoObject = root.value("video").toObject();
+            fileInfo.setFile(videoObject.value("source").toString());
+            if (fileInfo.exists() && fileInfo.isFile()) {
+                setVideoUrl(QUrl::fromLocalFile(fileInfo.absoluteFilePath()));
+            }
+            setCurrentTimeIndex(root.value("currentTimeIndex").toDouble());
+        }
+    }
+}
+
 void RenderTarget::resetCurrentTimeIndex()
 {
     m_currentTimeIndex = 0;
