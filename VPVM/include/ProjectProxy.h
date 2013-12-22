@@ -92,6 +92,7 @@ class ProjectProxy : public QObject
     Q_PROPERTY(MotionProxy *currentMotion READ currentMotion WRITE setCurrentMotion NOTIFY currentMotionChanged FINAL)
     Q_PROPERTY(QUrl audioSource READ audioSource WRITE setAudioSource NOTIFY audioSourceChanged FINAL)
     Q_PROPERTY(qreal audioVolume READ audioVolume WRITE setAudioVolume NOTIFY audioVolumeChanged FINAL)
+    Q_PROPERTY(QUrl videoSource READ videoSource WRITE setVideoSource NOTIFY videoSourceChanged FINAL)
     Q_PROPERTY(QColor screenColor READ screenColor WRITE setScreenColor NOTIFY screenColorChanged FINAL)
     Q_PROPERTY(qreal currentTimeIndex READ currentTimeIndex NOTIFY currentTimeIndexChanged FINAL)
     Q_PROPERTY(qreal durationTimeIndex READ durationTimeIndex NOTIFY durationTimeIndexChanged FINAL)
@@ -102,6 +103,7 @@ class ProjectProxy : public QObject
     Q_PROPERTY(WorldProxy *world READ world CONSTANT FINAL)
     Q_PROPERTY(AccelerationType accelerationType READ accelerationType WRITE setAccelerationType NOTIFY accelerationTypeChanged FINAL)
     Q_PROPERTY(LanguageType language READ language WRITE setLanguage NOTIFY languageChanged FINAL)
+    Q_PROPERTY(bool gridVisible READ isGridVisible WRITE setGridVisible NOTIFY gridVisibleChanged FINAL)
     Q_PROPERTY(bool loop READ isLoop WRITE setLoop NOTIFY loopChanged FINAL)
     Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY canUndoChanged FINAL)
@@ -187,12 +189,16 @@ public:
     void setAudioSource(const QUrl &value);
     qreal audioVolume() const;
     void setAudioVolume(const qreal &value);
+    QUrl videoSource() const;
+    void setVideoSource(const QUrl &value);
     QColor screenColor() const;
     void setScreenColor(const QColor &value);
     LanguageType language() const;
     void setLanguage(LanguageType value);
     AccelerationType accelerationType() const;
     void setAccelerationType(AccelerationType value);
+    bool isGridVisible() const;
+    void setGridVisible(bool value);
     bool isDirty() const;
     void setDirty(bool value);
     bool isLoop() const;
@@ -268,6 +274,7 @@ signals:
     void currentMotionChanged();
     void audioSourceChanged();
     void audioVolumeChanged();
+    void videoSourceChanged();
     void screenColorChanged();
     void durationTimeIndexChanged();
     void errorStringChanged();
@@ -275,6 +282,7 @@ signals:
     void lightChanged();
     void accelerationTypeChanged();
     void languageChanged();
+    void gridVisibleChanged();
     void loopChanged();
     void dirtyChanged();
     void undoDidPerform();

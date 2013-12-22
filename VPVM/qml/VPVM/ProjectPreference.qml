@@ -215,8 +215,8 @@ ApplicationWindow {
                                 }
                                 CheckBox {
                                     text: qsTr("Show Grid")
-                                    checked: scene.grid.visible
-                                    onCheckedChanged: scene.grid.visible = checked
+                                    checked: scene.project.gridVisible
+                                    onCheckedChanged: scene.project.gridVisible = checked
                                 }
                             }
                             RowLayout {

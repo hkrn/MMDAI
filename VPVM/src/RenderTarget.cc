@@ -730,6 +730,7 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
 {
     Q_ASSERT(value);
     connect(this, &RenderTarget::enqueuedModelsDidDelete, value, &ProjectProxy::enqueuedModelsDidDelete);
+    connect(value, &ProjectProxy::gridVisibleChanged, this, &RenderTarget::toggleGridVisible);
     connect(value, &ProjectProxy::modelDidAdd, this, &RenderTarget::enqueueUploadingModel);
     connect(value, &ProjectProxy::modelDidCommitUploading, this, &RenderTarget::commitUploadingModels);
     connect(value, &ProjectProxy::modelDidRemove, this, &RenderTarget::enqueueDeletingModel);
@@ -739,9 +740,9 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
     connect(value, &ProjectProxy::currentModelChanged, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::projectDidRelease, this, &RenderTarget::commitDeletingModels);
-    connect(value, &ProjectProxy::projectWillCreate, this, &RenderTarget::initializeProject);
+    connect(value, &ProjectProxy::projectWillCreate, this, &RenderTarget::disconnectProjectSignals);
     connect(value, &ProjectProxy::projectDidCreate, this, &RenderTarget::prepareUploadingModelsInProject);
-    connect(value, &ProjectProxy::projectWillLoad, this, &RenderTarget::initializeProject);
+    connect(value, &ProjectProxy::projectWillLoad, this, &RenderTarget::disconnectProjectSignals);
     connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::prepareUploadingModelsInProject);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::synchronizeExplicitly);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmo);
@@ -761,11 +762,11 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     LightRefObject *light = value->light();
     connect(light, &LightRefObject::directionChanged, this, &RenderTarget::prepareUpdatingLight);
     connect(light, &LightRefObject::shadowTypeChanged, this, &RenderTarget::prepareUpdatingLight);
-    const QUrl &url = value->globalSetting("video.url").toUrl();
+    const QUrl &url = value->videoSource();
     if (!url.isEmpty() && url.isValid()) {
         setVideoUrl(url);
     }
-    m_grid->setProjectProxy(value);
+    m_grid->setVisible(value->isGridVisible());
     m_projectProxyRef = value;
 }
 
@@ -873,7 +874,7 @@ void RenderTarget::setVideoUrl(const QUrl &value)
         Q_ASSERT(m_projectProxyRef);
         QMediaPlayer *mediaPlayerRef = mediaPlayer();
         mediaPlayerRef->setMedia(value);
-        m_projectProxyRef->projectInstanceRef()->setGlobalSetting("video.url", value.toString().toStdString());
+        m_projectProxyRef->setVideoSource(value);
         emit videoUrlChanged();
     }
 }
@@ -1032,7 +1033,7 @@ void RenderTarget::loadJson(const QUrl &fileUrl)
             m_projectProxyRef->setTitle(projectObject.value("title").toString(tr("Untitled Project")));
             m_projectProxyRef->setScreenColor(QColor(projectObject.value("screenColor").toString("#ffffff")));
             const QJsonObject &gridObject = root.value("grid").toObject();
-            m_grid->setVisible(gridObject.value("visible").toBool(true));
+            m_projectProxyRef->setGridVisible(gridObject.value("visible").toBool(true));
             const QJsonObject &audioObject = root.value("audio").toObject();
             fileInfo.setFile(audioObject.value("source").toString());
             if (fileInfo.exists() && fileInfo.isFile()) {
@@ -1178,6 +1179,11 @@ void RenderTarget::consumeFileChangeQueue()
     while (!m_fileChangeQueue.isEmpty()) {
         m_applicationContext->reloadFile(m_fileChangeQueue.dequeue());
     }
+}
+
+void RenderTarget::toggleGridVisible()
+{
+    m_grid->setVisible(m_projectProxyRef->isGridVisible());
 }
 
 void RenderTarget::draw()
@@ -1499,7 +1505,7 @@ void RenderTarget::performUpdatingLight()
     }
 }
 
-void RenderTarget::initializeProject()
+void RenderTarget::disconnectProjectSignals()
 {
     /* disable below signals behavior while loading project */
     disconnect(m_projectProxyRef, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
@@ -1510,9 +1516,34 @@ void RenderTarget::initializeProject()
     disconnect(m_projectProxyRef->light(), &LightRefObject::shadowTypeChanged, this, &RenderTarget::prepareUpdatingLight);
 }
 
+void RenderTarget::releaseVideoSurface()
+{
+    /* prepareUploadingModelsInProject -> releaseVideoSurface -> resetMediaPlayer */
+    disconnect(this, &RenderTarget::enqueuedModelsDidUpload, this, &RenderTarget::releaseVideoSurface);
+    connect(this, &RenderTarget::videoSurfaceDidRelease, this, &RenderTarget::resetMediaPlayer);
+    if (m_videoSurface) {
+        m_videoSurface->release();
+        emit videoSurfaceDidRelease();
+    }
+}
+
+void RenderTarget::resetMediaPlayer()
+{
+    Q_ASSERT(m_projectProxyRef);
+    disconnect(this, &RenderTarget::videoSurfaceDidRelease, this, &RenderTarget::resetMediaPlayer);
+    m_mediaPlayer.reset();
+    m_videoSurface.reset();
+    const QUrl &url = m_projectProxyRef->videoSource();
+    if (!url.isEmpty() && url.isValid()) {
+        setVideoUrl(url);
+    }
+}
+
 void RenderTarget::prepareUploadingModelsInProject()
 {
     connect(this, &RenderTarget::enqueuedModelsDidUpload, this, &RenderTarget::activateProject);
+    /* must use Qt::DirectConnection due to VideoSurface contains OpenGL resources */
+    connect(this, &RenderTarget::enqueuedModelsDidUpload, this, &RenderTarget::releaseVideoSurface, Qt::DirectConnection);
     commitUploadingModels();
 }
 
@@ -1524,6 +1555,7 @@ void RenderTarget::activateProject()
     m_applicationContext->release();
     m_applicationContext->resetOrderIndex(m_projectProxyRef->modelProxies().count() + 1);
     m_applicationContext->createShadowMap(Vector3(m_shadowMapSize.x(), m_shadowMapSize.y(), 1));
+    m_grid->setVisible(m_projectProxyRef->isGridVisible());
     connect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::prepareUpdatingLight);
     connect(m_projectProxyRef, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
     connect(m_projectProxyRef, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);

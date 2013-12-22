@@ -117,7 +117,6 @@ private:
 
 Grid::Grid(QObject *parent)
     : QObject(parent),
-      m_parentProjectProxyRef(0),
       m_size(50.0, 50.0, 50.0, 5.0),
       m_lineColor(127, 127, 127),
       m_axisXColor(255, 0, 0),
@@ -130,7 +129,6 @@ Grid::Grid(QObject *parent)
 
 Grid::~Grid()
 {
-    m_parentProjectProxyRef = 0;
 }
 
 void Grid::load(vpvl2::IApplicationContext::FunctionResolver *resolver)
@@ -193,12 +191,6 @@ void Grid::draw(const glm::mat4 &mvp)
         releaseVertexBundle(true);
         m_program->unbind();
     }
-}
-
-void Grid::setProjectProxy(ProjectProxy *value)
-{
-    m_parentProjectProxyRef = value;
-    setVisible(value->globalSetting("grid.visible", true).toBool());
 }
 
 QVector4D Grid::size() const
@@ -273,9 +265,7 @@ bool Grid::isVisible() const
 
 void Grid::setVisible(bool value)
 {
-    Q_ASSERT(m_parentProjectProxyRef);
     if (value != m_visible) {
-        m_parentProjectProxyRef->projectInstanceRef()->setGlobalSetting("grid.visible", value ? "true" : "false");
         m_visible = value;
         emit visibleChanged();
     }

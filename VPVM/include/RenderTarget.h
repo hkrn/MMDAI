@@ -198,6 +198,7 @@ signals:
     void uploadingModelDidFail(ModelProxy *model, bool isProject);
     void uploadingEffectDidSucceed(ModelProxy *model);
     void uploadingEffectDidFail(ModelProxy *model);
+    void videoSurfaceDidRelease();
     void enqueuedModelsDidUpload();
     void enqueuedEffectsDidUpload();
     void enqueuedModelsDidDelete();
@@ -235,7 +236,9 @@ private slots:
     void performUploadingEnqueuedEffects();
     void performDeletingEnqueuedModels();
     void performUpdatingLight();
-    void initializeProject();
+    void disconnectProjectSignals();
+    void releaseVideoSurface();
+    void resetMediaPlayer();
     void prepareUploadingModelsInProject();
     void activateProject();
     void markDirty();
@@ -245,6 +248,7 @@ private slots:
     void handleMediaPlayerError(QMediaPlayer::Error error);
     void handleFileChange(const QString &filePath);
     void consumeFileChangeQueue();
+    void toggleGridVisible();
 
 private:
     class DebugDrawer;

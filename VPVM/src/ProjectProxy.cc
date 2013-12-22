@@ -653,6 +653,19 @@ void ProjectProxy::setAudioVolume(const qreal &value)
     }
 }
 
+QUrl ProjectProxy::videoSource() const
+{
+    return globalSetting("video.url").toUrl();
+}
+
+void ProjectProxy::setVideoSource(const QUrl &value)
+{
+    if (value != videoSource()) {
+        setGlobalString("video.url", value);
+        emit videoSourceChanged();
+    }
+}
+
 QColor ProjectProxy::screenColor() const
 {
     return m_screenColor;
@@ -718,6 +731,19 @@ void ProjectProxy::setAccelerationType(AccelerationType value)
         }
         m_accelerationType = value;
         emit accelerationTypeChanged();
+    }
+}
+
+bool ProjectProxy::isGridVisible() const
+{
+    return globalSetting("grid.visible").toBool();
+}
+
+void ProjectProxy::setGridVisible(bool value)
+{
+    if (isGridVisible() != value) {
+        setGlobalString("grid.visible", value);
+        emit gridVisibleChanged();
     }
 }
 
@@ -1084,10 +1110,15 @@ void ProjectProxy::createProjectInstance()
     m_errorString = QString();
     setTitle(tr("Untitled Project"));
     setAudioSource(QUrl());
+    setVideoSource(QUrl());
     setAccelerationType(ParallelAcceleration);
     setLanguage(DefaultLauguage);
+    setScreenColor(Qt::white);
+    setGridVisible(true);
     setLoop(false);
     setScreenColor(Qt::white);
+    m_cameraRefObject->reset();
+    m_lightRefObject->reset();
     m_worldProxy->resetProjectInstance(this);
 }
 

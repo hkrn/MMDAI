@@ -73,7 +73,6 @@ public:
 
     void load(vpvl2::IApplicationContext::FunctionResolver *resolver);
     void draw(const glm::mat4 &mvp);
-    void setProjectProxy(ProjectProxy *value);
 
     QVector4D size() const;
     void setSize(const QVector4D &value);
@@ -117,7 +116,6 @@ private:
     void bindVertexBundle(bool bundle);
     void releaseVertexBundle(bool bundle);
 
-    ProjectProxy *m_parentProjectProxyRef;
     QScopedPointer<PrivateShaderProgram> m_program;
     QScopedPointer<vpvl2::gl::VertexBundle> m_bundle;
     QScopedPointer<vpvl2::gl::VertexBundleLayout> m_layout;

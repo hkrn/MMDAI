@@ -60,7 +60,6 @@ Item {
     property alias enableSnapGizmo : renderTarget.enableSnapGizmo
     property alias snapGizmoStepSize : renderTarget.snapGizmoStepSize
     property alias shadowMapSize : renderTarget.shadowMapSize
-    property alias grid : renderTarget.grid
     property alias editMode : renderTarget.editMode
     property int baseFontPointSize : 16
     property int baseIconPointSize : 48
