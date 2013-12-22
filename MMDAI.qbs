@@ -38,6 +38,7 @@
 import qbs 1.0
 
 Project {
+    name: "MMDAI"
     references: [
         "libgizmo-src/libgizmo.qbs",
         "libvpvl2/libvpvl2.qbs",

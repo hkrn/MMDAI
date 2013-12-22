@@ -36,6 +36,8 @@
 */
 
 import qbs 1.0
+import qbs.File
+import qbs.FileInfo
 
 Application {
     id: VPVM
@@ -73,6 +75,9 @@ Application {
         "../AntTweakBar-src/include",
         "../openal-soft-src/" + libraryInstallDirectory + "/include",
         "../icu4c-src/" + libraryInstallDirectory + "/include"
+    ]
+    property var requiredSubmodules: [
+         "core", "gui", "widgets", "qml", "quick", "multimedia"
     ]
     type: "application"
     name: "VPVM"
@@ -134,6 +139,8 @@ Application {
     Properties {
         condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
         cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z", "GL"])
+        cpp.rpaths: [ "$ORIGIN/lib", "$ORIGIN" ]
+        cpp.positionIndependentCode: true
     }
     Properties {
         condition: qbs.toolchain.contains("mingw")
@@ -163,11 +170,38 @@ Application {
             "zlibstatic" + debugLibrarySuffix
         ])
     }
+    Group {
+        condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
+        name: "Deploying Libraries"
+        files: {
+            var found = []
+            var librarieTargets = commonLibraries.concat([ "openal", "tbb", "z", "vpvl2" ])
+            var libraryPaths = cpp.libraryPaths
+            for (var i in libraryPaths) {
+                var libraryPath = libraryPaths[i]
+                for (var j in librarieTargets) {
+                    var libraryTarget = librarieTargets[j]
+                    var libraryFilePath = FileInfo.joinPaths(libraryPath, "*" + libraryTarget + ".so*")
+                    found.push(libraryFilePath)
+                }
+            }
+            for (var i in requiredSubmodules) {
+                var requiredSubmodule = requiredSubmodules[i]
+                var name = requiredSubmodule.toUpperCase().charAt(0) + requiredSubmodule.substring(1)
+                found.push(FileInfo.joinPaths(Qt.core.libPath, "libQt5" + name + ".so.5*"))
+            }
+            found.push(FileInfo.joinPaths(product.buildDirectory, "/libvpvl2.so*"))
+            found.push(FileInfo.joinPaths(Qt.core.libPath, "libicu*.so.*"))
+            return found
+        }
+        qbs.install: true
+        qbs.installDir: "lib"
+    }
     Depends { name: "cpp" }
     Depends { name: "gizmo" }
     Depends { name: "vpvl2" }
     Depends {
         name: "Qt"
-        submodules: [ "core", "gui", "widgets", "qml", "quick", "multimedia" ]
+        submodules: requiredSubmodules
     }
 }
