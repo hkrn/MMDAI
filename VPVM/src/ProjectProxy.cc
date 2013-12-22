@@ -736,7 +736,7 @@ void ProjectProxy::setAccelerationType(AccelerationType value)
 
 bool ProjectProxy::isGridVisible() const
 {
-    return globalSetting("grid.visible").toBool();
+    return globalSetting("grid.visible", true).toBool();
 }
 
 void ProjectProxy::setGridVisible(bool value)
