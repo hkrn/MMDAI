@@ -186,7 +186,9 @@ public:
 
 private:
     void run() {
-        int count = 0;
+        QStringList stringList;
+        stringList.reserve(4);
+        qInstallMessageHandler(&LoggerThread::delegateMessage);
         while (m_active) {
             QMutexLocker locker(&m_mutex); Q_UNUSED(locker);
             m_cond.wait(&m_mutex);
@@ -195,10 +197,15 @@ private:
             f.open(QFile::Append);
             while (!m_queue.isEmpty()) {
                 const QString &message = m_queue.dequeue();
-                f.write((currentDateTime.toString(Qt::ISODate) + " " + message).toUtf8() + "\n");
-                count++;
+                stringList.clear();
+                stringList << currentDateTime.toString(Qt::ISODate);
+                stringList << " ";
+                stringList << message;
+                stringList << "\n";
+                f.write(stringList.join("").toUtf8());
             }
         }
+        qInstallMessageHandler(0);
     }
 
     QMutex m_mutex;
@@ -207,6 +214,21 @@ private:
     QDir m_directory;
     volatile bool m_active;
 } g_loggerThread;
+
+class Finalizer : public QObject {
+    Q_OBJECT
+
+public:
+    Finalizer() : QObject(0) {}
+    ~Finalizer() {}
+
+public slots:
+    void finalize() {
+        g_loggerThread.stop();
+        BaseApplicationContext::terminate();
+    }
+
+} g_finalizer;
 
 void LoggerThread::delegateMessage(QtMsgType type, const QMessageLogContext &context, const QString &message)
 {
@@ -254,8 +276,8 @@ int main(int argc, char *argv[])
 
     QQuickWindow::setDefaultAlphaBuffer(applicationPreference.isTransparentWindowEnabled());
     QQmlApplicationEngine engine;
+    QObject::connect(&engine, &QQmlApplicationEngine::quit, &g_finalizer, &Finalizer::finalize);
     engine.rootContext()->setContextProperty("applicationPreference", &applicationPreference);
-    qInstallMessageHandler(&LoggerThread::delegateMessage);
     QThreadPool *threadPool = QThreadPool::globalInstance();
     g_loggerThread.setDirectory(loggingDirectory);
     threadPool->start(&g_loggerThread);
@@ -279,11 +301,7 @@ int main(int argc, char *argv[])
 #endif
     window->show();
 
-    int result = app.exec();
-    qInstallMessageHandler(0);
-    BaseApplicationContext::terminate();
-    g_loggerThread.stop();
-    threadPool->waitForDone();
-
-    return result;
+    return app.exec();
 }
+
+#include "main.moc"
