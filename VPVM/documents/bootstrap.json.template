@@ -1,0 +1,49 @@
+{
+    "project": {
+        "title": "This is a test project.",
+        "simulationPhysics": false,
+        "screenColor": "#ffffff",
+        "currentTimeIndex": 0
+    },
+    "grid": {
+        "visible": true
+    },
+    "audio": {
+        "source": "/path/to/audio.wav",
+        "volume": 1.0
+    },
+    "video": {
+        "source": "/path/to/video.mp4"
+    },
+    "camera": {
+        "motion": "/path/to/camera.vmd",
+        "fov": 30,
+        "distance": 100
+    },
+    "light": {
+        "color": "#aa0000"
+    },
+    "models": [
+        {
+            "path": "/path/to/model.x"
+        },
+        {
+            "path": "/path/to/model.pmd"
+            "motions": [
+                "/path/to/model.mvd"
+            ]
+        },
+        {
+            "path": "/path/to/model.pmx",
+            "motions": [
+                "/path/to/model.vmd"
+            ]
+        }
+    ],
+    "effects": [
+        {
+            "path": "/path/to/effect.glslfx"
+        }
+    ]
+}
+
