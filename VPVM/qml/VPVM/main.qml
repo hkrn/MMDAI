@@ -369,10 +369,20 @@ ApplicationWindow {
         onTriggered: scene.currentMotion.save(saveMotionDialog.getPathAs())
     }
     Action {
-        id: addKeyframesSelectedAction
-        text: qsTr("Selected Keyframe(s)")
-        tooltip: qsTr("Register all selected keyframe(s).")
-        shortcut: "Ctrl+I"
+        id: addSelectedBoneKeyframeAction
+        enabled: scene.currentMotion && scene.hasBoneSelected
+        text: qsTr("Selected Bone")
+        tooltip: qsTr("Register keyframe(s) of selected bone.")
+        shortcut: "Ctrl+I,B"
+        onTriggered: scene.currentMotion.addKeyframe(scene.currentModel.firstTargetBone, timeline.timeIndex)
+    }
+    Action {
+        id: addSelectedMorphKeyframeAction
+        enabled: scene.currentMotion && scene.hasMorphSelected
+        text: qsTr("Selected Morph")
+        tooltip: qsTr("Register keyframe(s) of selected morph.")
+        shortcut: "Ctrl+I,M"
+        onTriggered: scene.currentMotion.addKeyframe(scene.currentModel.firstTargetMorph, timeline.timeIndex)
     }
     Action {
         id: addAllKeyframesAction
@@ -834,6 +844,11 @@ ApplicationWindow {
             id: editMenu
             title: isOSX ? qsTr("Edit") : qsTr("&Edit")
             Menu {
+                title: qsTr("Register keyframes of")
+                MenuItem { action: addSelectedBoneKeyframeAction }
+                MenuItem { action: addSelectedMorphKeyframeAction }
+            }
+            Menu {
                 title: qsTr("Select keyframes of")
                 MenuItem { action: selectCurrentTimeIndexKeyframesAction }
             }
@@ -1184,8 +1199,10 @@ ApplicationWindow {
                                 scene.currentMotion.mergeKeyframes(keyframes, timeIndex, oldTimeIndex)
                                 __lastDraggingKeyframeIndex = 0
                             }
+                            /* Timeline -> Motion */
                             onKeyframesDidSelect: scene.currentMotion.selectedKeyframes = keyframes
                             onKeyframeWillAdd: {
+                                /* called by Timeline#markKeyframeAdded */
                                 var motion = scene.currentMotion
                                 if (motion) {
                                     motion.addKeyframe(opaque, timeIndex)
@@ -1251,6 +1268,7 @@ ApplicationWindow {
             }
             Scene {
                 id: scene
+                /* Motion -> Timeline */
                 function __handleMotionKeyframeDidAdd(keyframe) {
                     timeline.addKeyframe(keyframe)
                 }

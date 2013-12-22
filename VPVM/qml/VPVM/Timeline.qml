@@ -48,8 +48,6 @@ FocusScope {
     property int    fontPointSize: 10
     property int    iconPointSize: 14
     property string fontFamily: "sans-serif"
-    property string fontPointSizeText: fontPointSize + "px"
-    property string iconPointSizeText: iconPointSize + "px"
     property bool   enableInputEvent: false
 
     property int  __trackLabelWidth: 108
@@ -67,16 +65,13 @@ FocusScope {
     property real timeSeconds: 0
     property int  timeIndex: 0
     property real durationSeconds: 600
-    property int  durationTimeIndex: durationSeconds * framesPerSecond
     property real __timeScrollThumbPos: 0
     property real __tracksScrollThumbPos: 0
     property real __timeScrollX: 0
     property real timeScaleFactor: 1.0
     property real maximumTimeScaleFactor: 1.0
     property real minimumTimeScaleFactor: 0.01
-    property real __trackWidth: 200 * timeScaleFactor
     property real __tracksScrollY: 0
-    property bool hasSelectedKeyframes: __selectedKeyframes.length > 0
     property bool __draggingTime: false
     property bool __draggingTracksScrollThumb: false
     property bool __draggingTimeScrollThumb: false
@@ -89,6 +84,12 @@ FocusScope {
     property real __timeScrollThumbDragOffset: 0
     property real __tracksScrollThumbDragOffset: 0
     property alias backgroundImageSource : backgroundImage.source
+
+    readonly property string fontPointSizeText: fontPointSize + "px"
+    readonly property string iconPointSizeText: iconPointSize + "px"
+    readonly property int  durationTimeIndex: durationSeconds * framesPerSecond
+    readonly property real __trackWidth: 200 * timeScaleFactor
+    readonly property bool hasSelectedKeyframes: __selectedKeyframes.length > 0
 
     signal keyframeWillAdd(var opaque, int timeIndex);
     signal keyframesDidSelect(var keyframes);
