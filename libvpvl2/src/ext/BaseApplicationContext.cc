@@ -1130,6 +1130,7 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
 {
     pushAnnotationGroup("BaseApplicationContext#parseOffscreenSemantic", sharedFunctionResolverInstance());
 #if defined(VPVL2_LINK_NVFX)
+    (void) directoryRef;
     if (effectRef) {
         Array<IEffect::Pass *> passes;
         Array<IEffect::Technique *> techniques;
