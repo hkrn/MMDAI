@@ -46,6 +46,7 @@ import "FontAwesome.js" as FontAwesome
 ApplicationWindow {
     id: applicationWindow
     readonly property bool isOSX: Qt.platform.os === "osx"
+    property bool fullscreen: false
     minimumWidth: 960
     minimumHeight: 620
     title: "%1 - %2".arg(Qt.application.name).arg(scene.project.title)
@@ -752,6 +753,22 @@ ApplicationWindow {
         id: detachTimelineAction
         text: qsTr("Detach Timeline")
         tooltip: qsTr("Detach left timeline panel. If you want to attach again, you should click the close button.")
+    }
+    Action {
+        id: toggleEnableFullSceneAction
+        text: qsTr("Enable Full Scene Mode")
+        tooltip: qsTr("Expands Scene and Hides Timeline and Tabs.")
+        checkable: true
+        checked: fullscreen
+        onToggled: {
+            fullscreen = checked
+            propertyPanel.visible = !checked /* manually set visible of propertyPanel */
+        }
+    }
+    Action {
+        id: toggleDetachTimelineAction
+        text: qsTr("Toggle Attach/Detach Timeline")
+        tooltip: qsTr("Attach/Detach left timeline panel. If you want to attach again, you should click the close button.")
         checkable: true
         checked: scene.state === "detachedTimeline"
         onToggled: scene.state = checked ? "detachedTimeline" : "attachedTimeline"
@@ -760,8 +777,9 @@ ApplicationWindow {
         id: toggleVisiblePropertyPanelAction
         text: qsTr("Toggle Visible of Property Panel")
         tooltip: qsTr("Toggle visible of bottom property panel.")
+        enabled: !fullscreen
         checkable: true
-        checked: propertyPanel.visible
+        checked: enabled && propertyPanel.visible
         onToggled: {
             propertyPanel.visible = checked
             timeline.refresh()
@@ -949,7 +967,9 @@ ApplicationWindow {
         Menu {
             id: windowMenu
             title: isOSX ? qsTr("Window") : qsTr("&Window")
-            MenuItem { action: detachTimelineAction }
+            MenuItem { action: toggleEnableFullSceneAction }
+            MenuSeparator {}
+            MenuItem { action: toggleDetachTimelineAction }
             MenuItem { action: toggleVisiblePropertyPanelAction }
             MenuSeparator {}
             MenuItem { action: openAboutQtAction }
@@ -973,6 +993,7 @@ ApplicationWindow {
                 id: timelineContainer
                 width: 400
                 Layout.minimumWidth: 300
+                visible: !fullscreen
                 Rectangle {
                     id: timelineView
                     property bool initialized: false
@@ -1371,14 +1392,19 @@ ApplicationWindow {
                         name: "attachedTimeline"
                         StateChangeScript { script: timelineWindow.close() }
                         ParentChange { target: timelineView; parent: timelineContainer }
-                        PropertyChanges { target: timelineContainer; visible: true }
+                        PropertyChanges { target: timelineContainer; visible: !fullscreen }
                         StateChangeScript { script: timeline.refresh() }
                     },
                     State {
                         name: "detachedTimeline"
                         StateChangeScript { script: timelineWindow.show() }
                         ParentChange { target: timelineView; parent: windowedTimeline }
-                        PropertyChanges { target: timelineContainer; visible: false }
+                        PropertyChanges {
+                            target: timelineContainer
+                            width: 400
+                            height: applicationWindow.height
+                            visible: false
+                        }
                         StateChangeScript { script: timeline.refresh() }
                     }
                 ]
@@ -1405,6 +1431,7 @@ ApplicationWindow {
             height: 220
             color: systemPalette.window
             enabled: scene.isHUDAvailable
+            visible: !fullscreen
             TabView {
                 id: sceneTabView
                 readonly property int modelTabIndex : 0
