@@ -317,7 +317,7 @@ ApplicationWindow {
         id: loadPoseDialog
         nameFilters: [ qsTr("Model Pose File (*.vpd)") ]
         selectExisting: true
-        onAccepted: scene.project.loadPose(fileUrl)
+        onAccepted: scene.project.loadPose(fileUrl, scene.currentModel)
     }
     Action {
         id: loadPoseAction
