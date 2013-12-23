@@ -36,6 +36,7 @@
 */
 
 import qbs 1.0
+import qbs.TextFile
 
 Product {
     id: libvpvl2
@@ -80,7 +81,16 @@ Product {
     ]
     type: qbs.buildVariant === "debug" ? "dynamiclibrary" : "staticlibrary"
     name: "vpvl2"
-    version: "0.13.0"
+    version: {
+        var file = new TextFile(sourceDirectory + "/CMakeLists.txt", TextFile.ReadOnly), v = {}
+        while (!file.atEof()) {
+            var line = file.readLine()
+            if (line.match(/(VPVL2_VERSION_\w+)\s+(\d+)/)) {
+                v[RegExp.$1] = RegExp.$2
+            }
+        }
+        return [ v["VPVL2_VERSION_MAJOR"], v["VPVL2_VERSION_COMPAT"], v["VPVL2_VERSION_MINOR"] ].join(".")
+    }
     files: commonFiles
     cpp.defines: {
         var defines = [ "VPVL2_ENABLE_QT", "USE_FILE32API" ]
