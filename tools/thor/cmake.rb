@@ -43,14 +43,14 @@ module Mmdai
         cmake += " "
         build_path = get_build_path
         build_type = get_build_type
-        is_debug = build_type === :debug
+        is_debug = if build_type === :debug and !extra_options.key? :force_release then true else false end
         build_options.merge!({
           :build_shared_libs => (not build_options.key? :build_shared_libs and is_debug and not is_msvc?),
           :cmake_build_type => (is_debug ? "Debug" : "Release"),
           :cmake_install_prefix => "#{build_path}/#{INSTALL_ROOT_DIR}",
           :cmake_install_name_dir => "#{build_path}/#{INSTALL_ROOT_DIR}/lib",
         })
-        if build_type === :release and !extra_options.key? :no_visibility_flags and not is_msvc? then
+        if build_type === :release and not is_msvc? then
           add_cxx_flags "-fvisibility=hidden -fvisibility-inlines-hidden", build_options
         elsif build_type === :flascc then
           add_cc_flags "-fno-rtti -O4", build_options

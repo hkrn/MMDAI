@@ -193,7 +193,7 @@ typedef unsigned __int64 uint64_t;
 #endif
 #endif /* (defined(_MSC_VER) && _MSC_VER < 1600) */
 
-#if defined (WIN32)
+#if defined (VPVL2_OS_WINDOWS)
 #if defined(vpvl2_EXPORTS)
 #define VPVL2_API __declspec(dllexport)
 #elif defined(BUILD_SHARED_LIBS)
@@ -201,7 +201,7 @@ typedef unsigned __int64 uint64_t;
 #else
 #define VPVL2_API
 #endif /* defined(vpvl2_EXPORTS) */
-#else /* defined (_WIN32) */
+#else /* defined (VPVL2_OS_WINDOWS) */
 #if defined(__GNUC__) && __GNUC__ >= 4
 #define VPVL2_API __attribute__ ((visibility("default")))
 #else
@@ -227,8 +227,8 @@ namespace vpvl2 {
 static const int INFO = 0;
 static const int WARNING = 1;
 static const int ERROR = 2;
-QLoggingCategory &findLoggingBasicCategory(int level);
-QLoggingCategory &findLoggingVerboseCategory(int level);
+VPVL2_API QLoggingCategory &findLoggingBasicCategory(int level);
+VPVL2_API QLoggingCategory &findLoggingVerboseCategory(int level);
 }
 #define VPVL2_LOG(level, expr) qCDebug(vpvl2::findLoggingBasicCategory(level)).nospace() << expr
 #define VPVL2_VLOG(level, expr) qCDebug(vpvl2::findLoggingVerboseCategory(level)).nospace() << expr

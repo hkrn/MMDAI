@@ -149,7 +149,7 @@ public:
         vsize size;
         intptr_t opaque;
     };
-    class ModelContext {
+    class VPVL2_API ModelContext {
     public:
         typedef std::map<std::string, ITexture *> TextureRefCacheMap;
         ModelContext(BaseApplicationContext *applicationContextRef, Archive *archiveRef, const IString *directory);

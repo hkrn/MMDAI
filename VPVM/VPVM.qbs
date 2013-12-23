@@ -45,7 +45,7 @@ Application {
     property string libraryBuildDirectory: "build-" + qbs.buildVariant.toLowerCase()
     property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
     property string debugLibrarySuffix: qbs.enableDebugCode ? "d" : ""
-    property string assimpLibrarySuffix: debugLibrarySuffix.toUpperCase()
+    property string assimpLibrarySuffix: qbs.toolchain.contains("msvc") ? "" : debugLibrarySuffix.toUpperCase()
     property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + debugLibrarySuffix.toUpperCase()
     property var commonLibraries: [
         "AntTweakBar",
@@ -89,9 +89,13 @@ Application {
     name: "VPVM"
     version: "0.33.1"
     files: commonFiles
-    cpp.defines: [
-        "VPVL2_ENABLE_QT"
-    ]
+    cpp.defines: {
+        var defines = [ "VPVL2_ENABLE_QT" ]
+        if (qbs.enableDebugCode && qbs.toolchain.contains("msvc")) {
+            defines.push("BUILD_SHARED_LIBS")
+        }
+        return defines
+    }
     cpp.includePaths: commonIncludePaths
     cpp.libraryPaths: [
         "../AntTweakBar-src/lib",
@@ -123,12 +127,24 @@ Application {
     Group {
         condition: qbs.buildVariant === "release"
         name: "Application Resources for Release Build"
-        files: [ "qml/VPVM.qrc", "libav/libav.qrc" ]
+        files: {
+            var files = [ "qml/VPVM.qrc" ]
+            if (!qbs.toolchain.contains("msvc")) {
+                files.push("libav/libav.qrc")
+            }
+            return files
+        }
     }
     Group {
         condition: qbs.buildVariant === "debug"
         name: "Application Resources for Debug Build"
-        files: [ "qml/VPVM/*", "libav/libav.qrc" ]
+        files: {
+            var files = [ "qml/VPVM/*" ]
+            if (!qbs.toolchain.contains("msvc")) {
+                files.push("libav/libav.qrc")
+            }
+            return files
+        }
         qbs.install: true
         qbs.installDir: qbs.targetOS.contains("osx") ? FileInfo.joinPaths(applicationBundlePath, "Resources", "qml") : "qml"
     }

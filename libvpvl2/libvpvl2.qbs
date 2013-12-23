@@ -42,7 +42,7 @@ Product {
     property string libraryBuildDirectory: "build-" + qbs.buildVariant.toLowerCase()
     property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
     property string debugLibrarySuffix: qbs.enableDebugCode ? "d" : ""
-    property string assimpLibrarySuffix: debugLibrarySuffix.toUpperCase()
+    property string assimpLibrarySuffix: qbs.toolchain.contains("msvc") ? "" : debugLibrarySuffix.toUpperCase()
     property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + debugLibrarySuffix.toUpperCase()
     property var commonFiles: [
         "src/core/asset/*.cc",
@@ -76,17 +76,19 @@ Product {
         "BulletDynamics",
         "BulletCollision",
         "LinearMath",
-        "tbb",
-        "z"
+        "tbb"
     ]
     type: qbs.buildVariant === "debug" ? "dynamiclibrary" : "staticlibrary"
     name: "vpvl2"
     version: "0.13.0"
     files: commonFiles
-    cpp.defines: [
-        "VPVL2_ENABLE_QT",
-        "USE_FILE32API"
-    ]
+    cpp.defines: {
+        var defines = [ "VPVL2_ENABLE_QT", "USE_FILE32API" ]
+        if (qbs.enableDebugCode && qbs.toolchain.contains("msvc")) {
+            defines.push("vpvl2_EXPORTS")
+        }
+        return defines
+    }
     cpp.includePaths: [
         "include",
         "vendor/cl-1.2",
@@ -114,7 +116,7 @@ Product {
     Properties {
         condition: qbs.targetOS.contains("osx")
         type: qbs.buildVariant === "debug" ? "frameworkbundle" : "staticlibrary"
-        cpp.dynamicLibraries: commonLibraries
+        cpp.dynamicLibraries: commonLibraries.concat([ "z" ])
         cpp.frameworks: [
             "OpenGL",
             "OpenCL"
@@ -129,12 +131,13 @@ Product {
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
         cpp.dynamicLibraries: commonLibraries.concat([
             "libGLESv2" + debugLibrarySuffix,
-            "libEGL" + debugLibrarySuffix
+            "libEGL" + debugLibrarySuffix,
+            "zlibstatic" + debugLibrarySuffix
         ])
     }
     Properties {
         condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
-        cpp.dynamicLibraries: commonLibraries.concat("GL")
+        cpp.dynamicLibraries: commonLibraries.concat("z", "GL")
     }
     Group {
         condition: qbs.targetOS.contains("osx")

@@ -138,7 +138,11 @@ void VideoSurface::initialize()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#if defined(QT_OPENGL_ES_2)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.width(), size.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+#else
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, size.width(), size.height(), 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
+#endif
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 }
@@ -165,7 +169,11 @@ void VideoSurface::renderVideoFrame()
         if (localVideoFrame.map(QAbstractVideoBuffer::ReadOnly)) {
             bindProgram();
             glBindTexture(GL_TEXTURE_2D, m_textureHandle);
+#if defined(QT_OPENGL_ES_2)
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.width(), size.height(), GL_RGBA, GL_UNSIGNED_BYTE, localVideoFrame.bits());
+#else
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.width(), size.height(), GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, localVideoFrame.bits());
+#endif
             m_program->setUniformValue("mainTexture", 0);
             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
             glBindTexture(GL_TEXTURE_2D, 0);

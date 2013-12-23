@@ -10,8 +10,12 @@ class Assimp < Thor
   desc "build", "build assimp"
   method_options :flag => :boolean
   def build
+    extra_options = {}
+    if is_msvc? then
+      extra_options[:force_release] = true
+    end
     checkout
-    invoke_build
+    invoke_build extra_options
   end
 
   desc "clean", "delete built assimp libraries"

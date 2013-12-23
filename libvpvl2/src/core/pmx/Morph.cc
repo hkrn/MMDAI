@@ -515,7 +515,7 @@ Morph::~Morph()
 
 bool Morph::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
 {
-    int32 nmorphs, size;
+    int32 nmorphs = 0, size = 0;
     if (!internal::getTyped<int32>(ptr, rest, nmorphs)) {
         VPVL2_LOG(WARNING, "Invalid size of PMX morphs detected: size=" << nmorphs << " rest=" << rest);
         return false;
@@ -687,9 +687,9 @@ vsize Morph::estimateTotalSize(const Array<Morph *> &morphs, const Model::DataIn
 
 void Morph::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 {
-    uint8 *namePtr, *ptr = const_cast<uint8 *>(data), *start = ptr;
+    uint8 *namePtr = 0, *ptr = const_cast<uint8 *>(data), *start = ptr;
     vsize rest = SIZE_MAX;
-    int32 nNameSize;
+    int32 nNameSize = 0;
     internal::getText(ptr, rest, namePtr, nNameSize);
     IEncoding *encoding = info.encoding;
     internal::setStringDirect(encoding->toString(namePtr, nNameSize, info.codec), m_context->namePtr);
