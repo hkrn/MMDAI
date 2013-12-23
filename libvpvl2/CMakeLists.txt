@@ -5,7 +5,7 @@ project(libvpvl2)
 
 # library version setting
 set(VPVL2_VERSION_MAJOR 0)
-set(VPVL2_VERSION_COMPAT 12)
+set(VPVL2_VERSION_COMPAT 33)
 set(VPVL2_VERSION_MINOR 0)
 set(VPVL2_PROJECT_NAME "vpvl2")
 
