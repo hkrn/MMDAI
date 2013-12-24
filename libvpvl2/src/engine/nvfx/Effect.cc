@@ -125,13 +125,14 @@ static void appendShaderHeader(nvFX::IContainer *container, const IApplicationCo
             "#define vpvl2FXSaturate(v) clamp((v), 0.0, 1.0)\n"
             ;
     char appendingHeader[1024];
+    int version = resolver->query(IApplicationContext::FunctionResolver::kQueryShaderVersion);
     if (resolver->query(IApplicationContext::FunctionResolver::kQueryCoreProfile) != 0) {
         static const char kFormat[] = "#version %d core\n%s";
-        internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, resolver->query(IApplicationContext::FunctionResolver::kQueryShaderVersion), kAppendingShaderHeader);
+        internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, version, kAppendingShaderHeader);
     }
     else {
-        static const char kFormat[] = "#version 120\n%s";
-        internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, kAppendingShaderHeader);
+        static const char kFormat[] = "#version %d\n%s";
+        internal::snprintf(appendingHeader, sizeof(appendingHeader), kFormat, version, kAppendingShaderHeader);
     }
     int i = 0;
     while (nvFX::IShader *shader = container->findShader(i++)) {
