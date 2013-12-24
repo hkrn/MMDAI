@@ -65,6 +65,7 @@ public:
         : EffectEngine(renderEngineRef->sceneRef(), renderEngineRef->applicationContextRef()),
           drawRangeElementsBaseVertex(reinterpret_cast<PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC>(resolver->resolveSymbol("glDrawRangeElementsBaseVertex"))),
           drawRangeElements(reinterpret_cast<PFNGLDRAWRANGEELEMENTSPROC>(resolver->resolveSymbol("glDrawRangeElements"))),
+          drawElements(reinterpret_cast<PFNGLDRAWELEMENTSPROC>(resolver->resolveSymbol("glDrawElements"))),
           m_parentRenderEngineRef(renderEngineRef),
           m_drawType(kVertex)
     {
@@ -80,17 +81,22 @@ public:
 protected:
     typedef void (GLAPIENTRY * PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC) (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, void* indices, GLint basevertex);
     typedef void (GLAPIENTRY * PFNGLDRAWRANGEELEMENTSPROC) (GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid *indices);
+    typedef void (GLAPIENTRY * PFNGLDRAWELEMENTSPROC) (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
     PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC drawRangeElementsBaseVertex;
     PFNGLDRAWRANGEELEMENTSPROC drawRangeElements;
+    PFNGLDRAWELEMENTSPROC drawElements;
 
     void drawPrimitives(const DrawPrimitiveCommand &command) const {
         if (drawRangeElementsBaseVertex) {
             drawRangeElementsBaseVertex(command.mode, command.start, command.end, command.count, command.type,
                                         const_cast<uint8 *>(command.ptr) + command.offset * command.stride, 0);
         }
-        else {
+        else if (drawRangeElements) {
             drawRangeElements(command.mode, command.start, command.end, command.count,
                               command.type, command.ptr + command.offset * command.stride);
+        }
+        else {
+            drawElements(command.mode, command.count, command.type, command.ptr + command.offset * command.stride);
         }
     }
     void rebindVertexBundle() {
@@ -1070,7 +1076,7 @@ void PMXRenderEngine::updateMaterialParameters(const IMaterial *material, const 
     m_currentEffectEngineRef->spadd.setValue(renderMode == IMaterial::kAddTexture);
     m_currentEffectEngineRef->spsub.setValue(renderMode == IMaterial::kSubTexture);
     m_currentEffectEngineRef->useTexture.setValue(hasMainTexture);
-    m_currentEffectEngineRef->useToon.setValue(context.toonTextureRef);
+    m_currentEffectEngineRef->useToon.setValue(context.toonTextureRef ? true : false);
     m_currentEffectEngineRef->useSpheremap.setValue(hasSphereMap);
     if (material->index() == 0) {
         m_currentEffectEngineRef->controlObject.update(m_modelRef);
