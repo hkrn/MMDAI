@@ -933,7 +933,7 @@ IString *BaseApplicationContext::toUnicode(const uint8 *str) const
 
 void BaseApplicationContext::getViewport(Vector3 &value) const
 {
-    value.setValue(m_viewportRegion.z, m_viewportRegion.w, 1);
+    value.setValue(m_viewportRegion.z, m_viewportRegion.w, Scalar(1.0f));
 }
 
 void BaseApplicationContext::getMousePosition(Vector4 &value, MousePositionType type) const {
@@ -1082,9 +1082,9 @@ bool BaseApplicationContext::handleMouse(const glm::vec4 &value, MousePositionTy
     case kMouseRightPressPosition:
         return TwMouseButton(mouseAction, TW_MOUSE_RIGHT) != 0;
     case kMouseWheelPosition:
-        return TwMouseWheel(value.y) != 0;
+        return TwMouseWheel(int(value.y)) != 0;
     case kMouseCursorPosition:
-        return TwMouseMotion(value.x, value.y) != 0;
+        return TwMouseMotion(int(value.x), int(value.y)) != 0;
     default:
         return false;
     }
