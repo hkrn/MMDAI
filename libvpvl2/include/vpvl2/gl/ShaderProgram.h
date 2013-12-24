@@ -111,6 +111,7 @@ public:
             if (len > 0) {
                 m_message.resize(len);
                 getShaderInfoLog(shader, len, &len, &m_message[0]);
+                VPVL2_LOG(WARNING, "Cannot compile this shader: " << static_cast<const char *>(&m_message[0]));
             }
             deleteShader(shader);
             return false;
@@ -132,6 +133,7 @@ public:
             if (len > 0) {
                 m_message.resize(len);
                 getProgramInfoLog(m_program, len, &len, &m_message[0]);
+                VPVL2_LOG(WARNING, "Cannot link this program: " << static_cast<const char *>(&m_message[0]));
             }
             deleteProgram(m_program);
             return false;

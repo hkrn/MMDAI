@@ -1,5 +1,5 @@
 /* gui/grid.vsh */
-#ifdef GL_ES
+#if defined(GL_ES) || __VERSION__ >= 150\n"
 precision lowp float;
 #endif
 #if __VERSION__ < 130

@@ -1,4 +1,7 @@
 /* gui/handle.vsh */
+#if defined(GL_ES) || __VERSION__ >= 150\n"
+precision highp float;
+#endif
 #if __VERSION__ < 130
 #define in attribute
 #endif
