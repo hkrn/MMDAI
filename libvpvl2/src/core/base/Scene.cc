@@ -304,7 +304,6 @@ public:
     }
 
     void updateTransform() VPVL2_DECL_NOEXCEPT {
-        static const Vector3 kUnitX(1, 0, 0), kUnitY(0, 1, 0), kUnitZ(0, 0, 1);
         const Quaternion rotationX(kUnitX, btRadians(m_angle.x())),
                 rotationY(kUnitY, btRadians(m_angle.y())),
                 rotationZ(kUnitZ, btRadians(m_angle.z()));

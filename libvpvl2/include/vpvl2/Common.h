@@ -82,8 +82,11 @@ struct HashString : public btHashString {
 };
 
 static const Vector3 kZeroV3 = Vector3(0, 0, 0);
+static const Vector3 kUnitX = Vector3(1, 0, 0);
+static const Vector3 kUnitY = Vector3(0, 1, 0);
+static const Vector3 kUnitZ = Vector3(0, 0, 1);
 static const Vector4 kZeroV4 = Vector4(0, 0, 0, 0);
-static const Color    kZeroC = Vector4(0, 0, 0, 1);
+static const Color kZeroC = Vector4(0, 0, 0, 1);
 
 template<typename T>
 class Array {
