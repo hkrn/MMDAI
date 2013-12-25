@@ -1569,7 +1569,11 @@ void BaseApplicationContext::updateCameraMatrices()
     cameraRef->modelViewTransform().getOpenGLMatrix(matrix);
     const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
             &projection = m_hasDepthClamp ? glm::infinitePerspective(cameraRef->fov(), m_aspectRatio, cameraRef->znear())
-                                          : glm::tweakedInfinitePerspective(cameraRef->fov(), m_aspectRatio, cameraRef->znear());
+                                          : glm::perspectiveFov(cameraRef->fov(),
+                                                                glm::mediump_float(m_viewportRegion.z),
+                                                                glm::mediump_float(m_viewportRegion.w),
+                                                                cameraRef->znear(),
+                                                                cameraRef->zfar());
     setCameraMatrices(world, view, projection);
 }
 

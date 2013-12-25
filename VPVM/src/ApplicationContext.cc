@@ -299,8 +299,12 @@ bool ApplicationContext::uploadTextureQt(const QImage &image, const std::string 
     /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
     if (!image.isNull()) {
         const Vector3 size(image.width(), image.height(), 1);
-        static const gl::BaseSurface::Format kFormat(gl::kGL_BGRA, gl::kGL_RGBA8, gl::kGL_UNSIGNED_INT_8_8_8_8_REV, gl::Texture2D::kGL_TEXTURE_2D);
-        texturePtr = modelContext->createTexture(image.constBits(), kFormat, size, (flags & kGenerateTextureMipmap) != 0);
+#ifdef QT_OPENGL_ES_2
+        static gl::BaseSurface::Format kFormat(gl::kGL_RGBA, gl::kGL_RGBA, gl::kGL_UNSIGNED_BYTE, gl::Texture2D::kGL_TEXTURE_2D);
+        texturePtr = modelContext->createTexture(image.rgbSwapped().constBits(), kFormat, size, (flags & kGenerateTextureMipmap) != 0);
+#else
+        texturePtr = modelContext->createTexture(image.constBits(), defaultTextureFormat(), size, (flags & kGenerateTextureMipmap) != 0);
+#endif
         VPVL2_VLOG(2, "Created a texture: texture=" << texturePtr);
         return modelContext->storeTexture(key, flags, texturePtr);
     }

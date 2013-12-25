@@ -1,5 +1,5 @@
 /* gui/handle.fsh */
-#if defined(GL_ES) || __VERSION__ >= 150\n"
+#if defined(GL_ES) || __VERSION__ >= 150
 precision highp float;
 #endif
 #if __VERSION__ < 130

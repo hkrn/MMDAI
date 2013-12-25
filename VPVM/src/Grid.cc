@@ -100,11 +100,7 @@ public:
     }
     void setUniformValues(const QMatrix4x4 &matrix) {
         gl::GLfloat m[16] = { 0 };
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
         const float *source = matrix.constData();
-#else
-        const qreal *source = matrix.constData();
-#endif
         for (int i = 0; i < 16; i++) {
             m[i] = source[i];
         }
@@ -295,8 +291,8 @@ void Grid::bindVertexBundle(bool bundle)
                     reinterpret_cast<const uint8 *>(&v.color)
                     - reinterpret_cast<const uint8 *>(&v.position));
         functions.glVertexAttribPointer(PrivateShaderProgram::kColor, 3, GL_FLOAT, GL_FALSE, sizeof(v), offset);
-        m_program->enableAttributes();
         m_bundle->bind(gl::VertexBundle::kIndexBuffer, 0);
+        m_program->enableAttributes();
     }
 }
 
