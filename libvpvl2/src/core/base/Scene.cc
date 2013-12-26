@@ -308,6 +308,7 @@ public:
                 rotationY(kUnitY, btRadians(m_angle.y())),
                 rotationZ(kUnitZ, btRadians(m_angle.z()));
         m_transform.setIdentity();
+        /* rotation order is YPR (Yaw Pitch Roll) */
         m_transform.setRotation(rotationZ * rotationX * rotationY);
         m_transform.setOrigin((m_transform * -m_lookAt) - m_distance);
     }
