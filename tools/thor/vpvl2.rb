@@ -31,9 +31,9 @@ protected
       :vpvl2_enable_opencl => (is_darwin? and build_suite) ? true : false,
       :vpvl2_enable_openmp => false,
       :vpvl2_enable_extensions_archive => build_suite,
-      :vpvl2_enable_extensions_project => build_suite,
-      :vpvl2_enable_extensions_applicationcontext => true,
-      :vpvl2_enable_extensions_string => true,
+      :vpvl2_enable_extensions_project => true,
+      :vpvl2_enable_extensions_applicationcontext => build_suite,
+      :vpvl2_enable_extensions_string => build_suite,
       :vpvl2_enable_extensions_world => true,
       :vpvl2_enable_lazy_link => false,
       :vpvl2_enable_test => (build_suite and is_debug and not is_msvc?),
@@ -61,4 +61,3 @@ protected
 end
 
 end
-

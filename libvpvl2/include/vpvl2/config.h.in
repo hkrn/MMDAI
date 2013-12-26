@@ -136,6 +136,9 @@
 /* Enable application context class extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT
 
+/* Enable ICU based string class extension */
+#cmakedefine VPVL2_ENABLE_EXTENSIONS_STRING
+
 /* Enable Bullet Physics world class extension extension */
 #cmakedefine VPVL2_ENABLE_EXTENSIONS_WORLD
 

@@ -128,7 +128,7 @@ using namespace vpvl2::extensions;
 #ifdef VPVL2_ENABLE_QT
 #include <vpvl2/extensions/qt/Encoding.h>
 using namespace vpvl2::extensions::qt;
-#else
+#elif defined(VPVL2_ENABLE_EXTENSIONS_STRING)
 #include <vpvl2/extensions/icu4c/Encoding.h>
 using namespace vpvl2::extensions::icu4c;
 #endif
