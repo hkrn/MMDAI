@@ -1333,8 +1333,6 @@ void RenderTarget::synchronizeImplicitly()
         int flags = m_playing ? Scene::kUpdateAll : (Scene::kUpdateCamera | Scene::kUpdateRenderEngines);
         m_projectProxyRef->update(flags);
     }
-    window()->resetOpenGLState();
-    Scene::setRequiredOpenGLState();
 }
 
 void RenderTarget::initialize()
@@ -1609,6 +1607,8 @@ IGizmo *RenderTarget::orientationGizmo() const
 
 void RenderTarget::clearScene()
 {
+    window()->resetOpenGLState();
+    Scene::setRequiredOpenGLState();
     const QColor &color = m_projectProxyRef ? m_projectProxyRef->screenColor() : QColor(Qt::white);
     glClearColor(color.redF(), color.greenF(), color.blueF(), color.alphaF());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
