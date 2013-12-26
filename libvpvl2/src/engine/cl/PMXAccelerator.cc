@@ -123,24 +123,17 @@ struct PMXAccelerator::PrivateContext {
             const ::cl::Platform &platform = platforms[0];
             cl_context_properties properties[] = {
                 CL_CONTEXT_PLATFORM, (cl_context_properties)(platform)(),
+    #if !defined(VPVL2_OS_OSX)
+                CL_GL_CONTEXT_KHR, reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLContext()),
+    #endif
     #if defined(VPVL2_LINK_EGL)
-                CL_GL_CONTEXT_KHR,
-                reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLContext()),
-                CL_EGL_DISPLAY_KHR,
-                reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
+                CL_EGL_DISPLAY_KHR, reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
     #elif defined(VPVL2_OS_WINDOWS)
-                CL_GL_CONTEXT_KHR,
-                reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLContext()),
-                CL_WGL_HDC_KHR,
-                reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
+                CL_WGL_HDC_KHR, reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
     #elif defined(VPVL2_OS_OSX)
-                CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE,
-                reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
+                CL_CONTEXT_PROPERTY_USE_CGL_SHAREGROUP_APPLE, reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
     #elif defined(VPVL2_OS_LINUX)
-                CL_GL_CONTEXT_KHR,
-                reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLContext()),
-                CL_GLX_DISPLAY_KHR,
-                reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
+                CL_GLX_DISPLAY_KHR, reinterpret_cast<cl_context_properties>(Scene::opaqueCurrentPlatformOpenGLDevice()),
     #endif
                 0
             };
