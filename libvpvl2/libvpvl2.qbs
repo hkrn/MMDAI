@@ -76,8 +76,7 @@ Product {
         "BulletSoftBody",
         "BulletDynamics",
         "BulletCollision",
-        "LinearMath",
-        "tbb"
+        "LinearMath"
     ]
     type: qbs.buildVariant === "debug" ? "dynamiclibrary" : "staticlibrary"
     name: "vpvl2"
@@ -126,7 +125,7 @@ Product {
     Properties {
         condition: qbs.targetOS.contains("osx")
         type: qbs.buildVariant === "debug" ? "frameworkbundle" : "staticlibrary"
-        cpp.dynamicLibraries: commonLibraries.concat([ "z" ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "z", "tbb" ])
         cpp.frameworks: [
             "OpenGL",
             "OpenCL"
@@ -147,7 +146,7 @@ Product {
     }
     Properties {
         condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
-        cpp.dynamicLibraries: commonLibraries.concat("z", "GL")
+        cpp.dynamicLibraries: commonLibraries.concat([ "tbb", "z", "GL" ])
     }
     Group {
         condition: qbs.targetOS.contains("osx")
