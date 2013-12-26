@@ -18,7 +18,7 @@ class Glm < Thor
 
 protected
   def get_uri
-    "git://ogl-math.git.sourceforge.net/gitroot/ogl-math/ogl-math"
+    "https://github.com/g-truc/glm.git"
   end
 
   def get_directory_name
@@ -26,7 +26,7 @@ protected
   end
 
   def get_tag_name
-    "0.9.3.4"
+    "0.9.5.0"
   end
 
 end
