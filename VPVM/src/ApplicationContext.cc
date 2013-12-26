@@ -294,17 +294,20 @@ IApplicationContext::FunctionResolver *ApplicationContext::sharedFunctionResolve
     return g_functionResolverInstance;
 }
 
+#ifdef QT_OPENGL_ES_2
+gl::BaseSurface::Format ApplicationContext::defaultTextureFormat() const
+{
+    static gl::BaseSurface::Format kFormat(gl::kGL_RGBA, gl::kGL_RGBA, gl::kGL_UNSIGNED_BYTE, gl::Texture2D::kGL_TEXTURE_2D);
+    return kFormat;
+}
+#endif
+
 bool ApplicationContext::uploadTextureQt(const QImage &image, const std::string &key, int flags, ModelContext *modelContext, ITexture *&texturePtr)
 {
     /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
     if (!image.isNull()) {
         const Vector3 size(image.width(), image.height(), 1);
-#ifdef QT_OPENGL_ES_2
-        static gl::BaseSurface::Format kFormat(gl::kGL_RGBA, gl::kGL_RGBA, gl::kGL_UNSIGNED_BYTE, gl::Texture2D::kGL_TEXTURE_2D);
-        texturePtr = modelContext->createTexture(image.rgbSwapped().constBits(), kFormat, size, (flags & kGenerateTextureMipmap) != 0);
-#else
-        texturePtr = modelContext->createTexture(image.constBits(), defaultTextureFormat(), size, (flags & kGenerateTextureMipmap) != 0);
-#endif
+        texturePtr = modelContext->createTexture(image.rgbSwapped().constBits(), defaultTextureFormat(), size, (flags & kGenerateTextureMipmap) != 0);
         VPVL2_VLOG(2, "Created a texture: texture=" << texturePtr);
         return modelContext->storeTexture(key, flags, texturePtr);
     }

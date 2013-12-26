@@ -79,6 +79,9 @@ public:
     bool uploadTextureOpaque(const vpvl2::uint8 *data, vpvl2::vsize size, const std::string &key, int flags, ModelContext *context, vpvl2::ITexture *&texturePtr);
     bool uploadTextureOpaque(const std::string &path, int flags, ModelContext *context, vpvl2::ITexture *&texturePtr);
     FunctionResolver *sharedFunctionResolverInstance() const;
+#ifdef QT_OPENGL_ES_2
+    vpvl2::gl::BaseSurface::Format defaultTextureFormat() const;
+#endif
 
     bool uploadTextureQt(const QImage &image, const std::string &key, int flags, ModelContext *modelContext, vpvl2::ITexture *&texturePtr);
     void uploadEnqueuedModelProxies(ProjectProxy *projectProxy, QList<ModelProxyPair> &succeededModelProxies, QList<ModelProxyPair> &failedModelProxies);
