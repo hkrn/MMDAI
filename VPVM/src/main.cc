@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
     QApplication application(argc, argv);
     application.setApplicationDisplayName("VPVM");
     application.setApplicationName("VPVM");
-    application.setApplicationVersion("0.33.1");
+    application.setApplicationVersion("0.33.2");
     application.setOrganizationName("MMDAI Project");
     application.setOrganizationDomain("mmdai.github.com");
     QTranslator translator;
