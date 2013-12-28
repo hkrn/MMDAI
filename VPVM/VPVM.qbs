@@ -190,6 +190,7 @@ Application {
     }
     Properties {
         condition: qbs.toolchain.contains("msvc")
+        consoleApplication: false
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
         cpp.includePaths: commonIncludePaths.concat([
             "../alure-src/include/AL",
