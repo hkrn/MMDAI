@@ -32,7 +32,7 @@ protected
       :vpvl2_enable_openmp => false,
       :vpvl2_enable_extensions_archive => build_suite,
       :vpvl2_enable_extensions_project => true,
-      :vpvl2_enable_extensions_applicationcontext => build_suite,
+      :vpvl2_enable_extensions_applicationcontext => true,
       :vpvl2_enable_extensions_string => build_suite,
       :vpvl2_enable_extensions_world => true,
       :vpvl2_enable_lazy_link => false,
