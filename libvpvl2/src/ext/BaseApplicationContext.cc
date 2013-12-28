@@ -50,8 +50,7 @@
 #ifdef VPVL2_ENABLE_EXTENSION_ARCHIVE
 #include <vpvl2/extensions/Archive.h>
 #endif
-//#ifdef VPVL2_LINK_ATB
-#if 1
+#ifdef VPVL2_LINK_ATB
 #include <AntTweakBar.h>
 #else
 #define TW_CALL
