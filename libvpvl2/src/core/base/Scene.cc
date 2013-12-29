@@ -49,8 +49,10 @@
 #include "vpvl2/pmx/Model.h"
 #include "vpvl2/vmd/Motion.h"
 
-#ifdef VPVL2_ENABLE_OPENGL
-#ifdef VPVL2_OS_OSX
+#if defined(VPVL2_ENABLE_OPENGL)
+#if defined(VPVL2_OS_IOS)
+#include <OpenGLES/ES2/gl.h>
+#elif defined(VPVL2_OS_OSX)
 #include <OpenGL/gl.h>
 #else
 #include <GL/gl.h>
@@ -90,7 +92,7 @@ class PMXAccelerator;
 #if defined(VPVL2_OS_WINDOWS)
 /* wglGetCurrentContext and wglGetCurrentDC */
 #include <windows.h>
-#elif defined(VPVL2_OS_OSX)
+#elif defined(VPVL2_OS_OSX) && !defined(VPVL2_OS_IOS)
 /* for CGLGetCurrentContext and CGLGetShareGroup */
 #include <OpenGL/CGLCurrent.h>
 #include <OpenGL/CGLDevice.h>
@@ -703,7 +705,7 @@ void *Scene::opaqueCurrentPlatformOpenGLContext() VPVL2_DECL_NOEXCEPT
     return ::eglGetCurrentContext();
 #elif defined(VPVL2_OS_WINDOWS)
     return ::wglGetCurrentContext();
-#elif defined(VPVL2_OS_OSX)
+#elif defined(VPVL2_OS_OSX) && !defined(VPVL2_OS_IOS)
     return ::CGLGetCurrentContext();
 #elif defined(VPVL2_HAS_OPENGL_GLX)
     return ::glXGetCurrentContext();
@@ -720,7 +722,7 @@ void *Scene::opaqueCurrentPlatformOpenGLDevice() VPVL2_DECL_NOEXCEPT
     return ::eglGetCurrentDisplay();
 #elif defined(VPVL2_OS_WINDOWS)
     return ::wglGetCurrentDC();
-#elif defined(VPVL2_OS_OSX)
+#elif defined(VPVL2_OS_OSX) && !defined(VPVL2_OS_IOS)
     return ::CGLGetShareGroup(::CGLGetCurrentContext());
 #elif defined(VPVL2_HAS_OPENGL_GLX)
     return ::glXGetCurrentDisplay();

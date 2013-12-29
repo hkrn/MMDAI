@@ -265,6 +265,12 @@ static inline int readUnsignedIndex(uint8 *&ptr, vsize size)
     return result;
 }
 
+static void inline setPositionRaw(const float32 *input, Vector3 &output)
+{
+    VPVL2_DCHECK_NOTNULL(input);
+    output.setValue(input[0], input[1], input[2]);
+}
+
 static void inline setPosition(const float32 *input, Vector3 &output)
 {
     VPVL2_DCHECK_NOTNULL(input);
@@ -273,12 +279,6 @@ static void inline setPosition(const float32 *input, Vector3 &output)
 #else
     setPositionRaw(input, output);
 #endif
-}
-
-static void inline setPositionRaw(const float32 *input, Vector3 &output)
-{
-    VPVL2_DCHECK_NOTNULL(input);
-    output.setValue(input[0], input[1], input[2]);
 }
 
 static void inline getPosition(const Vector3 &input, float32 *output)

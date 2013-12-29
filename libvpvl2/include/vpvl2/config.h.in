@@ -49,6 +49,9 @@
 /* OS is Linux */
 #cmakedefine VPVL2_OS_LINUX
 
+/* OS is iOS */
+#cmakedefine VPVL2_OS_IOS
+
 /* OS is Android (Linux) */
 #cmakedefine VPVL2_OS_ANDROID
 
