@@ -200,6 +200,10 @@ typedef unsigned __int64 uint64_t;
 #endif
 #endif /* (defined(_MSC_VER) && _MSC_VER < 1600) */
 
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
+
 #if defined (VPVL2_OS_WINDOWS)
 #if defined(vpvl2_EXPORTS)
 #define VPVL2_API __declspec(dllexport)

@@ -49,10 +49,6 @@
 #include <cstring>
 #include <cstdarg>
 
-#ifndef __GNUC__
-#define __attribute__(x)
-#endif
-
 #ifdef VPVL2_OS_WINDOWS
 #include <windows.h>
 #endif
@@ -72,6 +68,7 @@ namespace internal
 
 static const int kCurrentVersion = VPVL2_VERSION;
 static const char *const kCurrentVersionString = VPVL2_VERSION_STRING;
+static const char *const kCurrentCommitRevisionString = VPVL2_COMMIT_REVISION;
 
 template<typename T>
 static inline void deleteObject(T *&object)
