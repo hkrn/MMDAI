@@ -108,7 +108,7 @@ Application {
     }
     cpp.includePaths: commonIncludePaths
     cpp.libraryPaths: [
-        "../AntTweakBar-src/lib",
+        "../AntTweakBar-src/lib/" + (qbs.toolchain.contains("msvc") && qbs.enableDebugCode ? "debug" : ""),
         "../tbb-src/lib",
         "../bullet-src/" + libraryInstallDirectory + "/lib",
         "../assimp-src/" + libraryInstallDirectory + "/lib",
@@ -139,6 +139,12 @@ Application {
         name: "Application Resources for Release Build"
         files: {
             var files = [ "qml/VPVM.qrc" ]
+            if (qbs.targetOS.contains("windows")) {
+                files.push("qt/win32.qrc")
+            }
+            else if (qbs.targetOS.contains("osx")) {
+                files.push("qt/osx.qrc")
+            }
             if (!qbs.toolchain.contains("msvc")) {
                 files.push("libav/libav.qrc")
             }
@@ -167,7 +173,6 @@ Application {
             "CFBundleShortVersionString": version
         })
         cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z" ])
-        files: qbs.enableDebugCode ? commonFiles : commonFiles.concat([ "qt/osx.qrc" ])
     }
     Properties {
         condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")

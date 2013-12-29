@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/qt">
-        <file alias="etc/qt.conf">osx/etc/qt.conf</file>
+        <file alias="etc/qt.conf">win32/etc/qt.conf</file>
     </qresource>
 </RCC>

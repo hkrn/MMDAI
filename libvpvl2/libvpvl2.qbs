@@ -131,7 +131,7 @@ Product {
         "../assimp-src/" + libraryInstallDirectory + "/lib",
         "../nvFX-src/" + libraryInstallDirectory + "/lib",
         "../zlib-src/" + libraryInstallDirectory + "/lib",
-        "../AntTweakBar-src/lib",
+        "../AntTweakBar-src/lib/" + (qbs.toolchain.contains("msvc") && qbs.enableDebugCode ? "debug" : ""),
         "../tbb-src/lib"
     ]
     Transformer {
@@ -173,10 +173,6 @@ Product {
         }
     }
     Properties {
-        condition: qbs.targetOS.contains("windows")
-        configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_WINDOWS", "VPVL2_LINK_ATB"])
-    }
-    Properties {
         condition: qbs.targetOS.contains("osx")
         configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_OSX", "VPVL2_ENABLE_OPENCL", "VPVL2_LINK_ATB", "VPVL2_LINK_INTEL_TBB"])
         type: qbs.buildVariant === "debug" ? "frameworkbundle" : "staticlibrary"
@@ -205,6 +201,7 @@ Product {
     }
     Properties {
         condition: qbs.toolchain.contains("msvc")
+        configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_WINDOWS", "VPVL2_ENABLE_GLES2", "VPVL2_LINK_ATB", "VPVL2_LINK_EGL"])
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
         cpp.dynamicLibraries: commonLibraries.concat([
                                                          "AntTweakBar",
