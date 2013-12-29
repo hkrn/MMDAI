@@ -108,6 +108,11 @@ const char *libraryVersionString() VPVL2_DECL_NOEXCEPT
     return internal::kCurrentVersionString;
 }
 
+const char *libraryCommitRevisionString() VPVL2_DECL_NOEXCEPT
+{
+    return internal::kCurrentCommitRevisionString;
+}
+
 void installLogger(const char *argv0, const char *logdir, int vlog)
 {
 #if defined(VPVL2_ENABLE_QT)
