@@ -60,6 +60,7 @@
 #define TwHandleErrors(callback)
 #define TwWindowSize(width, height)
 #define TwNewBar(barName) 0
+#define TwDeleteBar(bar)
 #define TwDeleteAllBars()
 #define TwSetParam(bar, varName, paramName, paramValueType, inValueCount, inValues)
 #define TwAddVarCB(bar, name, type, setCallback, getCallback, clientData, def)
