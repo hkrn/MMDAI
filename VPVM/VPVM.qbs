@@ -160,7 +160,7 @@ Application {
     }
     Properties {
         condition: qbs.targetOS.contains("osx")
-        cpp.frameworks: [ "OpenGL", "OpenCL" ]
+        cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL" ]
         cpp.infoPlistFile: "qt/osx/Info.plist"
         cpp.infoPlist: ({
             "CFBundleVersion": version,

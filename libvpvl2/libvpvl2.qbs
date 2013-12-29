@@ -62,13 +62,13 @@ Product {
         "src/ext/World.cc",
         "src/ext/XMLProject.cc",
         "include/**/*.h",
+        "include/vpvl2/config.h.in",
         "vendor/nvFX/*.cc",
         "vendor/SOIL/*.c",
         "vendor/minizip-1.1/*.c",
         "vendor/tinyxml2-1.0.11/*.cpp"
     ]
     property var commonLibraries: [
-        "AntTweakBar",
         "assimp" + assimpLibrarySuffix,
         "FxParser" + nvFXLibrarySuffix,
         "FxLibGL" + nvFXLibrarySuffix,
@@ -78,6 +78,18 @@ Product {
         "BulletCollision",
         "LinearMath"
     ]
+    property var commonConfigDefinitions: [
+        "VPVL2_ENABLE_OPENGL",
+        "VPVL2_COORDINATE_OPENGL",
+        "VPVL2_LINK_ASSIMP3",
+        "VPVL2_LINK_NVFX",
+        "VPVL2_ENABLE_EXTENSIONS_ARCHIVE",
+        "VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT",
+        "VPVL2_ENABLE_EXTENSIONS_PROJECT",
+        "VPVL2_ENABLE_EXTENSIONS_WORLD",
+        qbs.enableDebugCode ? "BUILD_SHARED_LIBS" : ""
+    ]
+    property var configDefinitions: commonConfigDefinitions
     type: qbs.buildVariant === "debug" ? "dynamiclibrary" : "staticlibrary"
     name: "vpvl2"
     version: {
@@ -99,13 +111,13 @@ Product {
         return defines
     }
     cpp.includePaths: [
+        buildDirectory,
         "include",
         "vendor/cl-1.2",
         "vendor/nvFX",
         "vendor/SOIL",
         "vendor/minizip-1.1",
         "vendor/tinyxml2-1.0.11",
-        libraryBuildDirectory + "/include",
         "../glm-src",
         "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
         "../assimp-src/" + libraryInstallDirectory + "/include",
@@ -122,31 +134,84 @@ Product {
         "../AntTweakBar-src/lib",
         "../tbb-src/lib"
     ]
+    Transformer {
+        inputs: "include/vpvl2/config.h.in"
+        Artifact {
+            fileName: "vpvl2/config.h"
+            fileTags: "vpvl2_config"
+        }
+        prepare: {
+            var command = new JavaScriptCommand()
+            var newConfigDefinitions = product.configDefinitions
+            command.description = "Proceeding " + input.fileName + "..."
+            command.highlight = "codegen"
+            command.configDefinitions = newConfigDefinitions
+            command.versionString = product.version
+            command.sourceCode = function() {
+                var inputFile = new TextFile(input.fileName)
+                var content = inputFile.readAll()
+                inputFile.close()
+                var outputFile = new TextFile(output.fileName, TextFile.WriteOnly)
+                for (var i in configDefinitions) {
+                    var value = configDefinitions[i]
+                    if (value) {
+                        var regexp = new RegExp("#cmakedefine\\s+" + value, "gm")
+                        content = content.replace(regexp, "#define " + value)
+                    }
+                }
+                var versionArray = versionString.split(/\./)
+                content = content.replace(/#cmakedefine\s+(\w+)/gm, "/* #undef $1 */")
+                content = content.replace(/@VPVL2_VERSION_MAJOR@/gm, versionArray[0])
+                content = content.replace(/@VPVL2_VERSION_COMPAT@/gm, versionArray[1])
+                content = content.replace(/@VPVL2_VERSION_MINOR@/gm, versionArray[2])
+                content = content.replace(/@VPVL2_VERSION@/gm, versionString)
+                outputFile.truncate()
+                outputFile.write(content)
+                outputFile.close()
+            }
+            return command
+        }
+    }
+    Properties {
+        condition: qbs.targetOS.contains("windows")
+        configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_WINDOWS", "VPVL2_LINK_ATB"])
+    }
     Properties {
         condition: qbs.targetOS.contains("osx")
+        configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_OSX", "VPVL2_ENABLE_OPENCL", "VPVL2_LINK_ATB", "VPVL2_LINK_INTEL_TBB"])
         type: qbs.buildVariant === "debug" ? "frameworkbundle" : "staticlibrary"
-        cpp.dynamicLibraries: commonLibraries.concat([ "z", "tbb" ])
-        cpp.frameworks: [
-            "OpenGL",
-            "OpenCL"
-        ]
+        cpp.dynamicLibraries: commonLibraries.concat([ "AntTweakBar", "tbb", "z" ])
+        cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL" ]
+    }
+    Properties {
+        condition: qbs.targetOS.contains("linux")
+        configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_LINUX", "VPVL2_LINK_ATB", "VPVL2_LINK_INTEL_TBB"])
+    }
+    Properties {
+        condition: qbs.targetOS.contains("ios")
+        configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_IOS"])
+    }
+    Properties {
+        condition: qbs.targetOS.contains("android")
+        configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_ANDROID"])
+    }
+    Properties {
+        condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
+        cpp.dynamicLibraries: commonLibraries.concat([ "AntTweakBar", "tbb", "z", "GL" ])
     }
     Properties {
         condition: qbs.toolchain.contains("mingw")
-        cpp.dynamicLibraries: commonLibraries.concat([ "OpenGL32" ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "AntTweakBar", "OpenGL32" ])
     }
     Properties {
         condition: qbs.toolchain.contains("msvc")
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
         cpp.dynamicLibraries: commonLibraries.concat([
-            "libGLESv2" + debugLibrarySuffix,
-            "libEGL" + debugLibrarySuffix,
-            "zlibstatic" + debugLibrarySuffix
-        ])
-    }
-    Properties {
-        condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
-        cpp.dynamicLibraries: commonLibraries.concat([ "tbb", "z", "GL" ])
+                                                         "AntTweakBar",
+                                                         "libGLESv2" + debugLibrarySuffix,
+                                                         "libEGL" + debugLibrarySuffix,
+                                                         "zlibstatic" + debugLibrarySuffix
+                                                     ])
     }
     Group {
         condition: qbs.targetOS.contains("osx")
