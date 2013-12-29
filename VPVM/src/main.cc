@@ -35,6 +35,7 @@
 
 */
 
+#include "vpvl2/config.h" /* vpvl2::libraryVersionString() and vpvl2::libraryCommitRevisionString() */
 #include "vpvl2/extensions/BaseApplicationContext.h"
 
 #include "Common.h"
@@ -124,11 +125,11 @@ public:
 
 private:
     void run() {
-        static const QString commitRevision = QStringLiteral(VPVL2_COMMIT_REVISION).split(" ").at(1);
+        static const QString commitRevision = QString(vpvl2::libraryCommitRevisionString()).split(" ").at(1);
         QStringList stringList;
         stringList.reserve(4);
         qInstallMessageHandler(&LoggerThread::delegateMessage);
-        qDebug("libvpvl2: version=%s commit=%s", VPVL2_VERSION_STRING, qPrintable(commitRevision));
+        qDebug("libvpvl2: version=%s commit=%s", vpvl2::libraryVersionString(), qPrintable(commitRevision));
         while (m_active) {
             QMutexLocker locker(&m_mutex); Q_UNUSED(locker);
             m_cond.wait(&m_mutex);
