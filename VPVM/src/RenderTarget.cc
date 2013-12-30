@@ -53,6 +53,7 @@
 
 #include <LinearMath/btIDebugDraw.h>
 #include <IGizmo.h>
+#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "ApplicationContext.h"

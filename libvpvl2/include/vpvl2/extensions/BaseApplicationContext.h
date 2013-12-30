@@ -53,10 +53,8 @@
 #include <vector>
 
 /* GLM */
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wshift-op-parentheses"
-#include <glm/glm.hpp>
-#pragma clang diagnostic pop
+#include <glm/vec4.hpp>
+#include <glm/mat4x4.hpp>
 
 /* Cg and ICU (i18n) */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
@@ -93,10 +91,6 @@ task_scheduler_init() {}
 };
 } /* namespace tbb */
 #endif
-
-namespace nv {
-class Timer;
-}
 
 namespace vpvl2 {
 class Factory;
@@ -268,10 +262,10 @@ public:
     int samplesMSAA() const;
     void setSamplesMSAA(int value);
     Scene *sceneRef() const;
-    void getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const;
-    void setCameraMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection);
-    void getLightMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const;
-    void setLightMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection);
+    void getCameraMatrices(glm::mat4 &world, glm::mat4 &view, glm::mat4 &projection) const;
+    void setCameraMatrices(const glm::mat4 &world, const glm::mat4 &view, const glm::mat4 &projection);
+    void getLightMatrices(glm::mat4 &world, glm::mat4 &view, glm::mat4 &projection) const;
+    void setLightMatrices(const glm::mat4 &world, const glm::mat4 &view, const glm::mat4 &projection);
     void updateCameraMatrices();
     glm::ivec4 viewportRegion() const;
     void setViewportRegion(const glm::ivec4 &value);
@@ -321,12 +315,12 @@ protected:
     IModel *m_currentModelRef;
     extensions::SimpleShadowMapSmartPtr m_shadowMap;
     gl::BaseSurface::Format m_renderColorFormat;
-    glm::mat4x4 m_lightWorldMatrix;
-    glm::mat4x4 m_lightViewMatrix;
-    glm::mat4x4 m_lightProjectionMatrix;
-    glm::mat4x4 m_cameraWorldMatrix;
-    glm::mat4x4 m_cameraViewMatrix;
-    glm::mat4x4 m_cameraProjectionMatrix;
+    glm::mat4 m_lightWorldMatrix;
+    glm::mat4 m_lightViewMatrix;
+    glm::mat4 m_lightProjectionMatrix;
+    glm::mat4 m_cameraWorldMatrix;
+    glm::mat4 m_cameraViewMatrix;
+    glm::mat4 m_cameraProjectionMatrix;
     glm::ivec4 m_viewportRegion;
     glm::mediump_float m_aspectRatio;
 

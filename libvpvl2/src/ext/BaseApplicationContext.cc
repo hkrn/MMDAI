@@ -86,6 +86,9 @@ typedef unsigned int ETwMouseAction;
 #include <sstream>
 #include <set>
 
+/* GLM */
+#include <glm/glm.hpp>
+
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wself-assign"
@@ -712,7 +715,7 @@ BaseSurface::Format BaseApplicationContext::defaultTextureFormat() const
 
 void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int flags) const
 {
-    glm::mat4x4 m(1);
+    glm::mat4 m(1);
     if (internal::hasFlagBits(flags, IApplicationContext::kShadowMatrix)) {
         if (internal::hasFlagBits(flags, IApplicationContext::kProjectionMatrix)) {
             m *= m_cameraProjectionMatrix;
@@ -736,7 +739,7 @@ void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int
                     }
                 }
             }
-            m *= glm::make_mat4x4(matrix);
+            m *= glm::make_mat4(matrix);
             m *= m_cameraWorldMatrix;
             m = glm::scale(m, glm::vec3(model->scaleFactor()));
         }
@@ -755,11 +758,11 @@ void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int
             transform.setRotation(model->worldOrientation());
             Scalar matrix[16];
             transform.getOpenGLMatrix(matrix);
-            m *= glm::make_mat4x4(matrix);
+            m *= glm::make_mat4(matrix);
             if (bone) {
                 transform = bone->worldTransform();
                 transform.getOpenGLMatrix(matrix);
-                m *= glm::make_mat4x4(matrix);
+                m *= glm::make_mat4(matrix);
             }
             m *= m_cameraWorldMatrix;
             m = glm::scale(m, glm::vec3(model->scaleFactor()));
@@ -1534,28 +1537,28 @@ Scene *BaseApplicationContext::sceneRef() const
     return m_sceneRef;
 }
 
-void BaseApplicationContext::getCameraMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const
+void BaseApplicationContext::getCameraMatrices(glm::mat4 &world, glm::mat4 &view, glm::mat4 &projection) const
 {
     world = m_cameraWorldMatrix;
     view = m_cameraViewMatrix;
     projection = m_cameraProjectionMatrix;
 }
 
-void BaseApplicationContext::setCameraMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection)
+void BaseApplicationContext::setCameraMatrices(const glm::mat4 &world, const glm::mat4 &view, const glm::mat4 &projection)
 {
     m_cameraWorldMatrix = world;
     m_cameraViewMatrix = view;
     m_cameraProjectionMatrix = projection;
 }
 
-void BaseApplicationContext::getLightMatrices(glm::mat4x4 &world, glm::mat4x4 &view, glm::mat4x4 &projection) const
+void BaseApplicationContext::getLightMatrices(glm::mat4 &world, glm::mat4 &view, glm::mat4 &projection) const
 {
     world = m_lightWorldMatrix;
     view = m_lightViewMatrix;
     projection = m_lightProjectionMatrix;
 }
 
-void BaseApplicationContext::setLightMatrices(const glm::mat4x4 &world, const glm::mat4x4 &view, const glm::mat4x4 &projection)
+void BaseApplicationContext::setLightMatrices(const glm::mat4 &world, const glm::mat4 &view, const glm::mat4 &projection)
 {
     m_lightWorldMatrix = world;
     m_lightViewMatrix = view;
@@ -1567,7 +1570,7 @@ void BaseApplicationContext::updateCameraMatrices()
     const ICamera *cameraRef = m_sceneRef->cameraRef();
     Scalar matrix[16];
     cameraRef->modelViewTransform().getOpenGLMatrix(matrix);
-    const glm::mat4x4 world, &view = glm::make_mat4x4(matrix),
+    const glm::mat4 world, &view = glm::make_mat4(matrix),
             &projection = m_hasDepthClamp ? glm::infinitePerspective(cameraRef->fov(), m_aspectRatio, cameraRef->znear())
                                           : glm::perspectiveFov(cameraRef->fov(),
                                                                 glm::mediump_float(m_viewportRegion.z),
