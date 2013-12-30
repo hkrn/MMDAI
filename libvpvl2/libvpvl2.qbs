@@ -210,6 +210,10 @@ Product {
                                                          "zlibstatic" + debugLibrarySuffix
                                                      ])
     }
+    Properties {
+        condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
+        cpp.dynamicLibraries: commonLibraries.concat([ "Xext", "X11", "tbb", "z", "GL" ])
+    }
     Group {
         condition: qbs.targetOS.contains("osx")
         name: "OSX Extension"

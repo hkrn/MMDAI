@@ -84,7 +84,7 @@ Application {
         "../libvpvl2/src/resources/resources.qrc"
     ]
     property var requiredSubmodules: [
-         "core", "gui", "widgets", "qml", "quick", "multimedia"
+        "core", "gui", "widgets", "qml", "quick", "multimedia", "network"
     ]
     type: (qbs.targetOS.contains("osx") && !qbs.enableDebugCode) ? "applicationbundle" : "application"
     name: "VPVM"
@@ -126,7 +126,7 @@ Application {
         qbs.installDir: qbs.targetOS.contains("osx") ? FileInfo.joinPaths(applicationBundlePath, "MacOS") : ""
     }
     Group {
-        name: "Translation Resources"
+        name: "Application Translation Resources"
         files: [
             "translations/*.qm",
             Qt.core.binPath + "/../translations/qt*.qm",
@@ -152,7 +152,6 @@ Application {
         }
     }
     Group {
-        condition: qbs.buildVariant === "debug"
         name: "Application Resources for Debug Build"
         files: {
             var files = [ "qml/VPVM/*" ]
@@ -161,7 +160,7 @@ Application {
             }
             return files
         }
-        qbs.install: true
+        qbs.install: qbs.buildVariant === "debug"
         qbs.installDir: qbs.targetOS.contains("osx") ? FileInfo.joinPaths(applicationBundlePath, "Resources", "qml") : "qml"
     }
     Properties {
@@ -169,49 +168,49 @@ Application {
         cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL" ]
         cpp.infoPlistFile: "qt/osx/Info.plist"
         cpp.infoPlist: ({
-            "CFBundleVersion": version,
-            "CFBundleShortVersionString": version
-        })
+                            "CFBundleVersion": version,
+                            "CFBundleShortVersionString": version
+                        })
         cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z" ])
     }
     Properties {
         condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
-        cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z", "GL"])
+        cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "Xext", "X11", "tbb", "z", "GL"])
         cpp.rpaths: [ "$ORIGIN/lib", "$ORIGIN" ]
         cpp.positionIndependentCode: true
     }
     Properties {
         condition: qbs.toolchain.contains("mingw")
         cpp.includePaths: commonIncludePaths.concat([
-            "../alure-src/include/AL",
-            "../openal-soft-src/" + libraryInstallDirectory + "/include/AL"
-        ])
+                                                        "../alure-src/include/AL",
+                                                        "../openal-soft-src/" + libraryInstallDirectory + "/include/AL"
+                                                    ])
         cpp.dynamicLibraries: commonLibraries.concat([
-            "alure32-static",
-            "OpenAL32",
-            "OpenGL32",
-            "zlibstatic" + debugLibrarySuffix
-        ])
+                                                         "alure32-static",
+                                                         "OpenAL32",
+                                                         "OpenGL32",
+                                                         "zlibstatic" + debugLibrarySuffix
+                                                     ])
     }
     Properties {
         condition: qbs.toolchain.contains("msvc")
         consoleApplication: false
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
         cpp.includePaths: commonIncludePaths.concat([
-            "../alure-src/include/AL",
-            "../openal-soft-src/" + libraryInstallDirectory + "/include/AL"
-        ])
+                                                        "../alure-src/include/AL",
+                                                        "../openal-soft-src/" + libraryInstallDirectory + "/include/AL"
+                                                    ])
         cpp.dynamicLibraries: commonLibraries.concat([
-            "alure32-static",
-            "OpenAL32",
-            "libGLESv2" + debugLibrarySuffix,
-            "libEGL" + debugLibrarySuffix,
-            "zlibstatic" + debugLibrarySuffix
-        ])
+                                                         "alure32-static",
+                                                         "OpenAL32",
+                                                         "libGLESv2" + debugLibrarySuffix,
+                                                         "libEGL" + debugLibrarySuffix,
+                                                         "zlibstatic" + debugLibrarySuffix
+                                                     ])
     }
     Group {
         condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
-        name: "Deploying Libraries"
+        name: "Application Depending Libraries"
         files: {
             var found = []
             var librarieTargets = commonLibraries.concat([ "openal", "tbb", "z", "vpvl2" ])
@@ -235,6 +234,35 @@ Application {
         }
         qbs.install: true
         qbs.installDir: "lib"
+    }
+    Group {
+        name: "QtQuick QML Resources"
+        condition: !qbs.targetOS.contains("osx")
+        files: [ Qt.core.binPath + "/../qml/QtQuick", Qt.core.binPath + "/../qml/QtQuick.2" ]
+        qbs.install: qbs.buildVariant === "release"
+        qbs.installDir: "qml"
+    }
+    Group {
+        name: "Qt plugins"
+        condition: !qbs.targetOS.contains("osx")
+        files: [
+            FileInfo.joinPaths(Qt.core.pluginPath, "accessible"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "audio"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "bearer"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "generic"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "iconengines"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "imageformats"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "mediaservice"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "platforminputcontexts"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "platforms"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "platformthemes"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "position"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "printsupport"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "sensorgestures"),
+            FileInfo.joinPaths(Qt.core.pluginPath, "sensors")
+        ]
+        qbs.install: qbs.buildVariant === "release"
+        qbs.installDir: "plugins"
     }
     Depends { name: "cpp" }
     Depends { name: "gizmo" }
