@@ -239,15 +239,17 @@ Application {
             var found = vpvm.findLibraries(commonLibraries.concat([ "OpenAL32", "AntTweakBar" ]),
                                            cpp.libraryPaths.concat([ "../openal-soft-src/" + libraryInstallDirectory + "/bin" ]),
                                            ".dll")
-            for (var i in requiredSubmodules) {
-                var requiredSubmodule = requiredSubmodules[i]
-                var name = requiredSubmodule.toUpperCase().charAt(0) + requiredSubmodule.substring(1)
-                found.push(FileInfo.joinPaths(Qt.core.binPath, "Qt5" + name + debugLibrarySuffix + ".dll"))
-            }
-            found.push(FileInfo.joinPaths(product.buildDirectory, "libvpvl2.so*"))
-            var thirdPartyLibraries = [ "d3dcompiler_46", "icu*" + debugLibrarySuffix, "libEGL" + debugLibrarySuffix, "libGLESv2" + debugLibrarySuffix ]
-            for (var i in thirdPartyLibraries) {
-                found.push(FileInfo.joinPaths(Qt.core.binPath, thirdPartyLibraries[i] + ".dll"))
+            if (qbs.toolchain.contains("msvc")) {
+                for (var i in requiredSubmodules) {
+                    var requiredSubmodule = requiredSubmodules[i]
+                    var name = requiredSubmodule.toUpperCase().charAt(0) + requiredSubmodule.substring(1)
+                    found.push(FileInfo.joinPaths(Qt.core.binPath, "Qt5" + name + debugLibrarySuffix + ".dll"))
+                }
+                found.push(FileInfo.joinPaths(product.buildDirectory, "libvpvl2.so*"))
+                var thirdPartyLibraries = [ "d3dcompiler_46", "icu*" + debugLibrarySuffix, "libEGL" + debugLibrarySuffix, "libGLESv2" + debugLibrarySuffix ]
+                for (var i in thirdPartyLibraries) {
+                    found.push(FileInfo.joinPaths(Qt.core.binPath, thirdPartyLibraries[i] + ".dll"))
+                }
             }
             return found
         }
