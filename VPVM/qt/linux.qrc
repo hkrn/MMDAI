@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/qt">
+        <file alias="etc/qt.conf">linux/etc/qt.conf</file>
+    </qresource>
+</RCC>

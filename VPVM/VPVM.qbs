@@ -145,6 +145,9 @@ Application {
             else if (qbs.targetOS.contains("osx")) {
                 files.push("qt/osx.qrc")
             }
+            else if (qbs.targetOS.contains("linux")) {
+                files.push("qt/linux.qrc")
+            }
             if (!qbs.toolchain.contains("msvc")) {
                 files.push("libav/libav.qrc")
             }
@@ -222,6 +225,9 @@ Application {
                     var libraryFilePath = FileInfo.joinPaths(libraryPath, "*" + libraryTarget + ".so*")
                     found.push(libraryFilePath)
                 }
+            }
+            if (qbs.targetOS.contains("linux")) {
+                requiredSubmodules.push("dbus")
             }
             for (var i in requiredSubmodules) {
                 var requiredSubmodule = requiredSubmodules[i]
