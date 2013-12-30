@@ -39,6 +39,7 @@ import qbs 1.0
 import qbs.File
 import qbs.FileInfo
 import qbs.TextFile
+import "VPVM.qbs.js" as vpvm
 
 Application {
     id: VPVM
@@ -215,17 +216,7 @@ Application {
         condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
         name: "Application Depending Libraries"
         files: {
-            var found = []
-            var librarieTargets = commonLibraries.concat([ "openal", "tbb", "z", "vpvl2" ])
-            var libraryPaths = cpp.libraryPaths
-            for (var i in libraryPaths) {
-                var libraryPath = libraryPaths[i]
-                for (var j in librarieTargets) {
-                    var libraryTarget = librarieTargets[j]
-                    var libraryFilePath = FileInfo.joinPaths(libraryPath, "*" + libraryTarget + ".so*")
-                    found.push(libraryFilePath)
-                }
-            }
+            var found = vpvm.findLibraries(commonLibraries.concat([ "openal", "tbb", "z" ]), cpp.libraryPaths, ".so*")
             if (qbs.targetOS.contains("linux")) {
                 requiredSubmodules.push("dbus")
             }
@@ -240,6 +231,27 @@ Application {
         }
         qbs.install: true
         qbs.installDir: "lib"
+    }
+    Group {
+        condition: qbs.toolchain.contains("msvc")
+        name: "Application Depending Libraries for MSVC"
+        files: {
+            var found = vpvm.findLibraries(commonLibraries.concat([ "OpenAL32", "AntTweakBar" ]),
+                                           cpp.libraryPaths.concat([ "../openal-soft-src/" + libraryInstallDirectory + "/bin" ]),
+                                           ".dll")
+            for (var i in requiredSubmodules) {
+                var requiredSubmodule = requiredSubmodules[i]
+                var name = requiredSubmodule.toUpperCase().charAt(0) + requiredSubmodule.substring(1)
+                found.push(FileInfo.joinPaths(Qt.core.binPath, "Qt5" + name + debugLibrarySuffix + ".dll"))
+            }
+            found.push(FileInfo.joinPaths(product.buildDirectory, "libvpvl2.so*"))
+            var thirdPartyLibraries = [ "d3dcompiler_46", "icu*" + debugLibrarySuffix, "libEGL" + debugLibrarySuffix, "libGLESv2" + debugLibrarySuffix ]
+            for (var i in thirdPartyLibraries) {
+                found.push(FileInfo.joinPaths(Qt.core.binPath, thirdPartyLibraries[i] + ".dll"))
+            }
+            return found
+        }
+        qbs.install: true
     }
     Group {
         name: "QtQuick QML Resources"
