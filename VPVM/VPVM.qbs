@@ -245,22 +245,28 @@ Application {
     Group {
         name: "Qt plugins"
         condition: !qbs.targetOS.contains("osx")
-        files: [
-            FileInfo.joinPaths(Qt.core.pluginPath, "accessible"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "audio"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "bearer"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "generic"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "iconengines"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "imageformats"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "mediaservice"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "platforminputcontexts"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "platforms"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "platformthemes"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "position"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "printsupport"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "sensorgestures"),
-            FileInfo.joinPaths(Qt.core.pluginPath, "sensors")
-        ]
+        files: {
+            var plugins = [
+                        "accessible",
+                        "bearer",
+                        "iconengines",
+                        "imageformats",
+                        "mediaservice",
+                        "platforms",
+                        "position",
+                        "printsupport",
+                        "sensorgestures",
+                        "sensors"
+                    ]
+            if (!qbs.targetOS.contains("windows")) {
+                plugins.push("audio")
+                if (!qbs.targetOS.contains("osx")) {
+                    plugins.push("generic", "platforminputcontexts", "platformthemes")
+                }
+            }
+            return plugins.map(function(item){ return FileInfo.joinPaths(Qt.core.pluginPath, item) })
+        }
+        excludeFiles: [ "**/q*d.dll", "**/*.pdb" ]
         qbs.install: qbs.buildVariant === "release"
         qbs.installDir: "plugins"
     }
