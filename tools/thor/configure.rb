@@ -21,6 +21,7 @@ module Mmdai
           run_msvc_build build_options, build_path, extra_options
         else
           cflags = extra_options[:extra_cflags] || []
+          cflags.push("-mmacosx-version-min=10.6")
           configure = "CFLAGS=\"#{cflags.join(' ')}\" CXXFLAGS=\"#{cflags.join(' ')}\" " + configure
           configure += " --prefix=#{build_path}/#{INSTALL_ROOT_DIR}"
           inside build_path do

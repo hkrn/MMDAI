@@ -62,9 +62,8 @@ module Mmdai
         else
           build_options[:library_output_path] = "#{build_path}/lib"
         end
-        if is_darwin? and build_type === :release then
-          add_cc_flags " -F/Library/Frameworks -mmacosx-version-min=10.5", build_options
-          build_options[:cmake_osx_architectures] = "i386;x86_64"
+        if is_darwin? then
+          add_cc_flags " -F/Library/Frameworks -mmacosx-version-min=10.6", build_options
         end
         [ "ANDROID_NATIVE_API_LEVEL", "ANDROID_NDK", "ANDROID_TOOLCHAIN_NAME", "CMAKE_TOOLCHAIN_FILE" ].each do |key|
           if ENV.key? key then
@@ -107,11 +106,13 @@ module Mmdai
 
       def add_cc_flags(cflags, build_options)
         build_options[:cmake_c_flags] ||= cflags
+        build_options[:cmake_c_flags] += cflags
         add_cxx_flags(cflags, build_options)
       end
 
       def add_cxx_flags(cflags, build_options)
-        build_options[:cmake_cxx_flags] ||= cflags
+        build_options[:cmake_cxx_flags] ||= ""
+        build_options[:cmake_cxx_flags] += cflags
       end
 
     end
