@@ -46,7 +46,7 @@ import "FontAwesome.js" as FontAwesome
 ApplicationWindow {
     id: applicationWindow
     readonly property bool isOSX: Qt.platform.os === "osx"
-    property bool fullscreen: false
+    property bool isFullSceneMode: false
     minimumWidth: 960
     minimumHeight: 620
     title: "%1 - %2".arg(Qt.application.name).arg(scene.project.title)
@@ -759,9 +759,9 @@ ApplicationWindow {
         text: qsTr("Enable Full Scene Mode")
         tooltip: qsTr("Expands Scene and Hides Timeline and Tabs.")
         checkable: true
-        checked: fullscreen
+        checked: isFullSceneMode
         onToggled: {
-            fullscreen = checked
+            isFullSceneMode = checked
             propertyPanel.visible = !checked /* manually set visible of propertyPanel */
         }
     }
@@ -777,7 +777,7 @@ ApplicationWindow {
         id: toggleVisiblePropertyPanelAction
         text: qsTr("Toggle Visible of Property Panel")
         tooltip: qsTr("Toggle visible of bottom property panel.")
-        enabled: !fullscreen
+        enabled: !isFullSceneMode
         checkable: true
         checked: enabled && propertyPanel.visible
         onToggled: {
@@ -822,6 +822,7 @@ ApplicationWindow {
     SystemPalette { id: systemPalette }
     color: systemPalette.window
     statusBar: StatusBar {
+        visible: !isFullSceneMode
         Label {
             id: statusBarLabel
             Layout.fillWidth: true
@@ -993,7 +994,7 @@ ApplicationWindow {
                 id: timelineContainer
                 width: 400
                 Layout.minimumWidth: 300
-                visible: !fullscreen
+                visible: !isFullSceneMode
                 Rectangle {
                     id: timelineView
                     property bool initialized: false
@@ -1392,7 +1393,7 @@ ApplicationWindow {
                         name: "attachedTimeline"
                         StateChangeScript { script: timelineWindow.close() }
                         ParentChange { target: timelineView; parent: timelineContainer }
-                        PropertyChanges { target: timelineContainer; visible: !fullscreen }
+                        PropertyChanges { target: timelineContainer; visible: !isFullSceneMode }
                         StateChangeScript { script: timeline.refresh() }
                     },
                     State {
@@ -1431,7 +1432,7 @@ ApplicationWindow {
             height: 220
             color: systemPalette.window
             enabled: scene.isHUDAvailable
-            visible: !fullscreen
+            visible: !isFullSceneMode
             TabView {
                 id: sceneTabView
                 readonly property int modelTabIndex : 0
