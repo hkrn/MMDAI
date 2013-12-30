@@ -2,6 +2,8 @@
 #include <vpvl2/extensions/BaseApplicationContext.h> /* BaseApplicationContext::initializeOnce */
 #include <vpvl2/extensions/icu4c/Encoding.h>
 
+#include <stdio.h>
+
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
