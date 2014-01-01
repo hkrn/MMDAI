@@ -43,8 +43,9 @@
 #include <QQuaternion>
 #include <QString>
 #include <QVector3D>
+
 #include <vpvl2/Common.h>
-#include <glm/glm.hpp>
+#include <glm/mat4x4.hpp>
 
 namespace vpvl2 {
 class IString;

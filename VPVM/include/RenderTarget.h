@@ -48,9 +48,10 @@
 #include <QQueue>
 #include <QQuickItem>
 #include <QQmlPropertyMap>
+
 #include <vpvl2/extensions/FPSCounter.h>
 #include <vpvl2/extensions/StringMap.h>
-#include <glm/glm.hpp>
+#include <glm/mat4x4.hpp>
 
 #include "ModelProxy.h"
 

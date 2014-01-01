@@ -42,6 +42,8 @@
 
 #include <QCoreApplication>
 #include <QDir>
+
+#include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 using namespace vpvl2;
