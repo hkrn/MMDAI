@@ -39,7 +39,7 @@ protected
   def get_build_options(build_type, extra_options)
     return {
       :assimp_enable_boost_workaround => true,
-      :assimp_build_static_lib => (build_type === :release),
+      :assimp_build_static_lib => (not will_built_as_dll?),
       :assimp_build_assimp_tools => false,
       :assimp_build_samples => false,
       :assimp_build_tests => false

@@ -38,7 +38,7 @@ protected
       :vpvl2_enable_lazy_link => false,
       :vpvl2_enable_test => (build_suite and is_debug and not is_msvc?),
       :vpvl2_link_assimp3 => build_suite,
-      :vpvl2_link_atb => true,
+      :vpvl2_link_atb => false,
       :vpvl2_link_egl => is_msvc?,
       :vpvl2_link_glew => true,
       :vpvl2_link_glfw => (build_suite and is_debug),

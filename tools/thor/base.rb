@@ -20,6 +20,7 @@ module Mmdai
           when "debug" then :debug
           when "emscripten" then :emscripten
           when "flascc" then :flascc
+          when "ios" then :ios
           when "nacl" then :nacl
           when "vs2012" then :vs2012
           when "vs2010" then :vs2010
@@ -58,8 +59,10 @@ module Mmdai
         run "make #{argument}"
       end
 
-      def ninja_or_make(argument = nil)
-        if is_ninja? then
+      def run_build(argument = nil)
+        if get_build_type === :ios then
+          run "xcodebuild"
+        elsif is_ninja? then
           run "ninja #{argument}"
         elsif is_msvc? then
           run "msbuild /m:4 /t:Release"
@@ -78,7 +81,7 @@ module Mmdai
       end
 
       def is_darwin?
-        return /^darwin/.match RbConfig::CONFIG["target_os"]
+        return /^darwin/.match(RbConfig::CONFIG["target_os"]) && (get_build_type != :ios)
       end
 
       def is_executable?
@@ -102,11 +105,9 @@ module Mmdai
       def need_opengl_es?()
         case get_build_type
         when :android then
-          return true
-        when :flascc then
-          return true
         when :emscripten then
-          return true
+        when :flascc then
+        when :ios then
         when :nacl then
           return true
         end

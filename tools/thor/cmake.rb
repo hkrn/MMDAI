@@ -15,14 +15,14 @@ module Mmdai
         cmake = get_cmake build_options, extra_options
         inside get_build_path do
           run cmake
-          ninja_or_make
-          ninja_or_make "install"
+          run_build
+          run_build "install"
         end
       end
 
       def start_clean(arch = false)
         inside get_build_path do
-          ninja_or_make "clean"
+          run_build "clean"
           FileUtils.rmtree [
             'CMakeCache.txt',
             'CMakeFiles',
@@ -43,10 +43,9 @@ module Mmdai
         cmake += " "
         build_path = get_build_path
         build_type = get_build_type
-        is_debug = if build_type === :debug and !extra_options.key? :force_release then true else false end
         build_options.merge!({
-          :build_shared_libs => (not build_options.key? :build_shared_libs and is_debug and not is_msvc?),
-          :cmake_build_type => (is_debug ? "Debug" : "Release"),
+          :build_shared_libs => will_built_as_dll?(build_options, extra_options),
+          :cmake_build_type => (is_debug_build?(extra_options) ? "Debug" : "Release"),
           :cmake_install_prefix => "#{build_path}/#{INSTALL_ROOT_DIR}",
           :cmake_install_name_dir => "#{build_path}/#{INSTALL_ROOT_DIR}/lib",
         })
@@ -65,7 +64,14 @@ module Mmdai
         if is_darwin? then
           add_cc_flags " -F/Library/Frameworks -mmacosx-version-min=10.6", build_options
         end
-        [ "ANDROID_NATIVE_API_LEVEL", "ANDROID_NDK", "ANDROID_TOOLCHAIN_NAME", "CMAKE_TOOLCHAIN_FILE" ].each do |key|
+        envvars = [
+          "ANDROID_NATIVE_API_LEVEL",
+          "ANDROID_NDK",
+          "ANDROID_TOOLCHAIN_NAME",
+          "CMAKE_TOOLCHAIN_FILE",
+          "IOS_PLATFORM"
+        ]
+        envvars.each do |key|
           if ENV.key? key then
             build_options[key.downcase.to_sym] = ENV[key]
           end
@@ -94,6 +100,8 @@ module Mmdai
           cmake += "-G \"Visual Studio 11\" "
         elsif build_type === :vs2010 then
           cmake += "-G \"Visual Studio 10\" "
+        elsif build_type === :ios then
+          cmake += "-G Xcode "
         end
         cmake += ".."
         return cmake
@@ -115,9 +123,16 @@ module Mmdai
         build_options[:cmake_cxx_flags] += cflags
       end
 
+      def is_debug_build?(extra_options = {})
+        return get_build_type === :debug && !extra_options.key?(:force_release)
+      end
+
+      def will_built_as_dll?(build_options = {}, extra_options = {})
+        return !build_options.key?(:build_shared_libs) && is_debug_build?(extra_options) && !is_msvc? && get_build_type != :ios
+      end
+
     end
 
   end
 
 end
-
