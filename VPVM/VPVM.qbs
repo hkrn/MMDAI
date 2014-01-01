@@ -43,14 +43,13 @@ import "VPVM.qbs.js" as vpvm
 
 Application {
     id: VPVM
-    property string applicationBundlePath: "VPVM.app/Contents"
-    property string libraryBuildDirectory: "build-" + qbs.buildVariant.toLowerCase()
-    property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
-    property string debugLibrarySuffix: qbs.enableDebugCode ? "d" : ""
-    property string assimpLibrarySuffix: qbs.toolchain.contains("msvc") ? "" : debugLibrarySuffix.toUpperCase()
-    property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + debugLibrarySuffix.toUpperCase()
-    property var commonLibraries: [
-        "AntTweakBar",
+    readonly property string applicationBundlePath: "VPVM.app/Contents"
+    readonly property string libraryBuildDirectory: "build-" + qbs.buildVariant.toLowerCase()
+    readonly property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
+    readonly property string debugLibrarySuffix: qbs.enableDebugCode ? "d" : ""
+    readonly property string assimpLibrarySuffix: qbs.toolchain.contains("msvc") ? "" : debugLibrarySuffix.toUpperCase()
+    readonly property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + debugLibrarySuffix.toUpperCase()
+    readonly property var commonLibraries: [
         "assimp" + assimpLibrarySuffix,
         "FxParser" + nvFXLibrarySuffix,
         "FxLibGL" + nvFXLibrarySuffix,
@@ -60,7 +59,7 @@ Application {
         "BulletCollision",
         "LinearMath"
     ]
-    property var commonIncludePaths: [
+    readonly property var commonIncludePaths: [
         "include",
         "../libvpvl2/include",
         "../libvpvl2/" + libraryBuildDirectory + "/include",
@@ -78,13 +77,13 @@ Application {
         "../openal-soft-src/" + libraryInstallDirectory + "/include",
         "../icu4c-src/" + libraryInstallDirectory + "/include"
     ]
-    property var commonFiles: [
+    readonly property var commonFiles: [
         "src/*.cc",
         "include/*.h",
         "licenses/licenses.qrc",
         "../libvpvl2/src/resources/resources.qrc"
     ]
-    property var requiredSubmodules: [
+    readonly property var requiredSubmodules: [
         "core", "gui", "widgets", "qml", "quick", "multimedia", "network"
     ]
     type: (qbs.targetOS.contains("osx") && !qbs.enableDebugCode) ? "applicationbundle" : "application"
@@ -109,7 +108,6 @@ Application {
     }
     cpp.includePaths: commonIncludePaths
     cpp.libraryPaths: [
-        "../AntTweakBar-src/lib/" + (qbs.toolchain.contains("msvc") && qbs.enableDebugCode ? "debug" : ""),
         "../tbb-src/lib",
         "../bullet-src/" + libraryInstallDirectory + "/lib",
         "../assimp-src/" + libraryInstallDirectory + "/lib",
@@ -176,6 +174,7 @@ Application {
                             "CFBundleShortVersionString": version
                         })
         cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z" ])
+        cpp.minimumOsxVersion: "10.6"
     }
     Properties {
         condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
@@ -236,7 +235,7 @@ Application {
         condition: qbs.toolchain.contains("msvc")
         name: "Application Depending Libraries for MSVC"
         files: {
-            var found = vpvm.findLibraries(commonLibraries.concat([ "OpenAL32", "AntTweakBar" ]),
+            var found = vpvm.findLibraries(commonLibraries.concat([ "OpenAL32" ]),
                                            cpp.libraryPaths.concat([ "../openal-soft-src/" + libraryInstallDirectory + "/bin" ]),
                                            ".dll")
             if (qbs.toolchain.contains("msvc")) {
@@ -273,15 +272,17 @@ Application {
                         "imageformats",
                         "mediaservice",
                         "platforms",
-                        "position",
                         "printsupport",
                         "sensorgestures",
                         "sensors"
                     ]
-            if (!qbs.targetOS.contains("windows")) {
-                plugins.push("audio")
-                if (!qbs.targetOS.contains("osx")) {
-                    plugins.push("generic", "platforminputcontexts", "platformthemes")
+            if (!qbs.targetOS.contains("ios")) {
+                plugins.push("position")
+                if (!qbs.targetOS.contains("windows")) {
+                    plugins.push("audio")
+                    if (!qbs.targetOS.contains("osx")) {
+                        plugins.push("generic", "platforminputcontexts", "platformthemes")
+                    }
                 }
             }
             return plugins.map(function(item){ return FileInfo.joinPaths(Qt.core.pluginPath, item) })
@@ -293,6 +294,10 @@ Application {
     Depends { name: "cpp" }
     Depends { name: "gizmo" }
     Depends { name: "vpvl2" }
+    Depends {
+        name: "AntTweakBar"
+        condition: !qbs.targetOS.contains("ios")
+    }
     Depends {
         name: "Qt"
         submodules: requiredSubmodules

@@ -40,9 +40,9 @@ import qbs 1.0
 Project {
     name: "MMDAI"
     references: [
+        "AntTweakBar-src/AntTweakBar.qbs",
         "libgizmo-src/libgizmo.qbs",
         "libvpvl2/libvpvl2.qbs",
         "VPVM/VPVM.qbs"
     ]
 }
-

@@ -40,12 +40,12 @@ import qbs.TextFile
 
 Product {
     id: libvpvl2
-    property string libraryBuildDirectory: "build-" + qbs.buildVariant.toLowerCase()
-    property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
-    property string debugLibrarySuffix: qbs.enableDebugCode ? "d" : ""
-    property string assimpLibrarySuffix: qbs.toolchain.contains("msvc") ? "" : debugLibrarySuffix.toUpperCase()
-    property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + debugLibrarySuffix.toUpperCase()
-    property var commonFiles: [
+    readonly property string libraryBuildDirectory: "build-" + qbs.buildVariant.toLowerCase()
+    readonly property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
+    readonly property string debugLibrarySuffix: qbs.enableDebugCode ? "d" : ""
+    readonly property string assimpLibrarySuffix: qbs.toolchain.contains("msvc") ? "" : debugLibrarySuffix.toUpperCase()
+    readonly property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + debugLibrarySuffix.toUpperCase()
+    readonly property var commonFiles: [
         "src/core/asset/*.cc",
         "src/core/base/*.cc",
         "src/core/internal/*.cc",
@@ -68,7 +68,7 @@ Product {
         "vendor/minizip-1.1/*.c",
         "vendor/tinyxml2-1.0.11/*.cpp"
     ]
-    property var commonLibraries: [
+    readonly property var commonLibraries: [
         "assimp" + assimpLibrarySuffix,
         "FxParser" + nvFXLibrarySuffix,
         "FxLibGL" + nvFXLibrarySuffix,
@@ -78,7 +78,7 @@ Product {
         "BulletCollision",
         "LinearMath"
     ]
-    property var commonConfigDefinitions: [
+    readonly property var commonConfigDefinitions: [
         "VPVL2_ENABLE_OPENGL",
         "VPVL2_COORDINATE_OPENGL",
         "VPVL2_LINK_ASSIMP3",
@@ -89,7 +89,7 @@ Product {
         "VPVL2_ENABLE_EXTENSIONS_WORLD",
         qbs.enableDebugCode ? "BUILD_SHARED_LIBS" : ""
     ]
-    property var configDefinitions: commonConfigDefinitions
+    readonly property var configDefinitions: commonConfigDefinitions
     type: qbs.buildVariant === "debug" ? "dynamiclibrary" : "staticlibrary"
     name: "vpvl2"
     version: {
@@ -131,7 +131,6 @@ Product {
         "../assimp-src/" + libraryInstallDirectory + "/lib",
         "../nvFX-src/" + libraryInstallDirectory + "/lib",
         "../zlib-src/" + libraryInstallDirectory + "/lib",
-        "../AntTweakBar-src/lib/" + (qbs.toolchain.contains("msvc") && qbs.enableDebugCode ? "debug" : ""),
         "../tbb-src/lib"
     ]
     Transformer {
@@ -174,10 +173,11 @@ Product {
     }
     Properties {
         condition: qbs.targetOS.contains("osx")
-        configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_OSX", "VPVL2_ENABLE_OPENCL", "VPVL2_LINK_ATB", "VPVL2_LINK_INTEL_TBB"])
+        configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_OSX", "VPVL2_LINK_ATB", "VPVL2_ENABLE_OPENCL", "VPVL2_LINK_INTEL_TBB"])
         type: qbs.buildVariant === "debug" ? "frameworkbundle" : "staticlibrary"
-        cpp.dynamicLibraries: commonLibraries.concat([ "AntTweakBar", "tbb", "z" ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "tbb", "z" ])
         cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL" ]
+        cpp.minimumOsxVersion: "10.6"
     }
     Properties {
         condition: qbs.targetOS.contains("linux")
@@ -193,22 +193,17 @@ Product {
     }
     Properties {
         condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
-        cpp.dynamicLibraries: commonLibraries.concat([ "AntTweakBar", "tbb", "z", "GL" ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "tbb", "z", "GL" ])
     }
     Properties {
         condition: qbs.toolchain.contains("mingw")
-        cpp.dynamicLibraries: commonLibraries.concat([ "AntTweakBar", "OpenGL32" ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "OpenGL32" ])
     }
     Properties {
         condition: qbs.toolchain.contains("msvc")
         configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_WINDOWS", "VPVL2_ENABLE_GLES2", "VPVL2_LINK_ATB", "VPVL2_LINK_EGL"])
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
-        cpp.dynamicLibraries: commonLibraries.concat([
-                                                         "AntTweakBar",
-                                                         "libGLESv2" + debugLibrarySuffix,
-                                                         "libEGL" + debugLibrarySuffix,
-                                                         "zlibstatic" + debugLibrarySuffix
-                                                     ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "libGLESv2" + debugLibrarySuffix, "libEGL" + debugLibrarySuffix, "zlibstatic" + debugLibrarySuffix ])
     }
     Properties {
         condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
@@ -220,6 +215,10 @@ Product {
         files: [ "src/engine/cl/*.cc" ]
     }
     Depends { name: "cpp" }
+    Depends {
+        name: "AntTweakBar"
+        condition: !qbs.targetOS.contains("ios")
+    }
     Depends {
         name: "Qt"
         submodules: [ "core", "gui" ]
