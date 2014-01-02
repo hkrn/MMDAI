@@ -62,6 +62,7 @@ ApplicationWindow {
         height = applicationPreference.windowRect.height
     }
     function exitApplication() {
+        scene.state = "suspend"
         applicationPreference.windowRectChanged.disconnect(updateWindowRect)
         applicationPreference.windowRect.x = x
         applicationPreference.windowRect.y = y
