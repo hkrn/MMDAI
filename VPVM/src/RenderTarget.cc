@@ -493,7 +493,7 @@ private:
         const Vector3 &origin = boneRef->worldTransform().getOrigin(), &delta = boneRef->destinationOrigin() - origin;
         if (boneRef->isInteractive() && !delta.isZero()) {
             static const glm::vec3 kGLMUnitY(0, 1, 0);
-            const glm::vec3 scale(delta.length()), normal(glm::normalize(glm::vec3(delta.x(), delta.y(), delta.z())));
+            const glm::vec3 scale(1, delta.length(), 1), normal(glm::normalize(glm::vec3(delta.x(), delta.y(), delta.z())));
             const glm::mat4 matrix(glm::scale(glm::toMat4(glm::rotation(kGLMUnitY, normal)), scale));
             Vector3 color(Util::toColor(Qt::blue));
             Transform transform(Transform::getIdentity());
@@ -745,9 +745,9 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::projectDidCreate, this, &RenderTarget::prepareUploadingModelsInProject);
     connect(value, &ProjectProxy::projectWillLoad, this, &RenderTarget::disconnectProjectSignals);
     connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::prepareUploadingModelsInProject);
-    connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::synchronizeExplicitly);
+    connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::render);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmo);
-    connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::synchronizeExplicitly);
+    connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::render);
     connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::currentTimeIndexChanged, this, &RenderTarget::seekMediaFromProject);
     connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::resetCurrentTimeIndex);
@@ -1144,6 +1144,14 @@ void RenderTarget::updateGizmo()
     }
 }
 
+void RenderTarget::updateModelBones()
+{
+    if (m_modelDrawer) {
+        m_modelDrawer->markDirty();
+        render();
+    }
+}
+
 void RenderTarget::seekMediaFromProject()
 {
     Q_ASSERT(m_projectProxyRef);
@@ -1189,7 +1197,7 @@ void RenderTarget::toggleGridVisible()
 
 void RenderTarget::draw()
 {
-    Q_ASSERT(m_applicationContext);
+    Q_ASSERT(m_applicationContext && window());
     if (m_projectProxyRef) {
         emit renderWillPerform();
         drawShadowMap();
@@ -1220,10 +1228,9 @@ void RenderTarget::draw()
 void RenderTarget::drawOffscreenForImage()
 {
     Q_ASSERT(window());
-    QQuickWindow *win = window();
-    disconnect(win, &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForImage);
-    connect(win, &QQuickWindow::frameSwapped, this, &RenderTarget::writeExportedImage);
-    QOpenGLFramebufferObject fbo(m_exportSize, ApplicationContext::framebufferObjectFormat(win));
+    disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForImage);
+    connect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::writeExportedImage);
+    QOpenGLFramebufferObject fbo(m_exportSize, ApplicationContext::framebufferObjectFormat(window()));
     drawOffscreen(&fbo);
     m_exportImage = fbo.toImage();
 }
@@ -1231,14 +1238,13 @@ void RenderTarget::drawOffscreenForImage()
 void RenderTarget::drawOffscreenForVideo()
 {
     Q_ASSERT(window());
-    QQuickWindow *win = window();
     EncodingTask *encodingTaskRef = encodingTask();
-    QOpenGLFramebufferObject *fbo = encodingTaskRef->generateFramebufferObject(win);
+    QOpenGLFramebufferObject *fbo = encodingTaskRef->generateFramebufferObject(window());
     drawOffscreen(fbo);
     if (qFuzzyIsNull(m_projectProxyRef->differenceTimeIndex(m_currentTimeIndex))) {
         encodingTaskRef->setEstimatedFrameCount(m_currentTimeIndex);
-        disconnect(win, &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForVideo);
-        connect(win, &QQuickWindow::frameSwapped, this, &RenderTarget::launchEncodingTask);
+        disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForVideo);
+        connect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::launchEncodingTask);
     }
     else {
         const qreal &currentTimeIndex = m_currentTimeIndex;
@@ -1344,9 +1350,8 @@ void RenderTarget::synchronizeImplicitly()
 void RenderTarget::initialize()
 {
     Q_ASSERT(window());
-    QQuickWindow *win = window();
     if (!Scene::isInitialized()) {
-        bool isCoreProfile = win->format().profile() == QSurfaceFormat::CoreProfile;
+        bool isCoreProfile = window()->format().profile() == QSurfaceFormat::CoreProfile;
         m_applicationContext.reset(new ApplicationContext(m_projectProxyRef, &m_config, isCoreProfile));
         connect(m_applicationContext.data(), &ApplicationContext::fileDidChange, this, &RenderTarget::handleFileChange);
         Scene::initialize(m_applicationContext->sharedFunctionResolverInstance());
@@ -1355,12 +1360,11 @@ void RenderTarget::initialize()
         emit graphicsDeviceChanged();
         m_applicationContext->initializeOpenGLContext(false);
         m_grid->load(m_applicationContext->sharedFunctionResolverInstance());
-        m_applicationContext->setViewportRegion(glm::ivec4(0, 0, win->width(), win->height()));
-        QOpenGLContext *contextRef = win->openglContext();
-        connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, m_projectProxyRef, &ProjectProxy::reset, Qt::DirectConnection);
-        connect(contextRef, &QOpenGLContext::aboutToBeDestroyed, this, &RenderTarget::release, Qt::DirectConnection);
+        m_applicationContext->setViewportRegion(glm::ivec4(0, 0, window()->width(), window()->height()));
+        connect(window()->openglContext(), &QOpenGLContext::aboutToBeDestroyed, m_projectProxyRef, &ProjectProxy::reset, Qt::DirectConnection);
+        connect(window()->openglContext(), &QOpenGLContext::aboutToBeDestroyed, this, &RenderTarget::release, Qt::DirectConnection);
         toggleRunning(true);
-        disconnect(win, &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initialize);
+        disconnect(window(), &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initialize);
         emit initializedChanged();
         m_renderTimer.start();
     }
@@ -1441,6 +1445,7 @@ void RenderTarget::performUploadingEnqueuedModels()
         VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded" << (pair.second ? " from the project." : "."));
         connect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateGizmo);
+        connect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateModelBones);
         emit uploadingModelDidSucceed(modelProxy, pair.second);
     }
     foreach (const ApplicationContext::ModelProxyPair &pair, failedModelProxies) {
