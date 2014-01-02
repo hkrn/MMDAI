@@ -144,6 +144,9 @@ private:
                 stringList << message;
                 stringList << "\n";
                 f.write(stringList.join("").toUtf8());
+#if !defined(QT_NO_DEBUG)
+                fprintf(stderr, "%s", stringList.join("").toUtf8().constData());
+#endif
             }
         }
         qInstallMessageHandler(0);
