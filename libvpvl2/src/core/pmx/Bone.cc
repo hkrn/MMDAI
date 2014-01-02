@@ -1002,7 +1002,7 @@ Vector3 Bone::origin() const
 
 Vector3 Bone::destinationOrigin() const
 {
-    if (IBone *boneRef = m_context->destinationOriginBoneRef) {
+    if (const IBone *boneRef = m_context->destinationOriginBoneRef) {
         return boneRef->worldTransform().getOrigin();
     }
     else {

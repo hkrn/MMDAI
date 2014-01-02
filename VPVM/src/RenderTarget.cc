@@ -55,6 +55,7 @@
 #include <IGizmo.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include "ApplicationContext.h"
 #include "BoneRefObject.h"
@@ -76,6 +77,22 @@ using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::qt;
 
 namespace {
+
+static const Vector3 kBoneVertices[] = {
+    Vector3(0.0f,  1.0f,  0.0f),  // top
+    Vector3(0.0f,  0.0f,  0.0f),  // bottom
+    Vector3(0.0f,  0.1f,  -0.1f), // front
+    Vector3(0.1f,  0.1f,  0.0f),  // right
+    Vector3(0.0f,  0.1f,  0.1f),  // back
+    Vector3(-0.1f,  0.1f,  0.0f), // left
+};
+static const int kBoneIndices[] = {
+    0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 2, // top
+    1, 2, 3, 1, 3, 4, 1, 4, 5, 1, 5, 2  // bottom
+};
+
+static const int kNumBoneVertices = sizeof(kBoneVertices) / sizeof(kBoneVertices[0]);
+static const int kNumBoneIndices = sizeof(kBoneIndices) / sizeof(kBoneIndices[0]);
 
 static IApplicationContext::MousePositionType convertMousePositionType(int button)
 {
@@ -315,7 +332,8 @@ public:
         : QObject(parent),
           m_currentModelRef(0),
           m_currentBoneRef(0),
-          m_nvertices(0)
+          m_nvertices(0),
+          m_nindices(0)
     {
     }
     ~ModelDrawer() {
@@ -330,8 +348,8 @@ public:
             m_program->bindAttributeLocation("inColor", 1);
             m_program->link();
             Q_ASSERT(m_program->isLinked());
-            allocateBuffer(m_vbo);
-            allocateBuffer(m_cbo);
+            allocateBuffer(QOpenGLBuffer::VertexBuffer, QOpenGLBuffer::DynamicDraw, m_vbo);
+            allocateBuffer(QOpenGLBuffer::IndexBuffer, QOpenGLBuffer::DynamicDraw, m_ibo);
             m_vao.reset(new QOpenGLVertexArrayObject());
             if (m_vao->create()) {
                 m_vao->bind();
@@ -342,76 +360,49 @@ public:
     }
     void setModelProxyRef(const ModelProxy *value) {
         const QList<BoneRefObject *> &allBones = value ? value->allBoneRefs() : QList<BoneRefObject *>();
-        const size_t reserve = allBones.size() * 2;
         const BoneRefObject *currentBoneRef = value ? value->firstTargetBone() : 0;
-        QColor color;
-        QVector3D colorVertex;
+        QVarLengthArray<Vertex> vertices;
+        QVarLengthArray<int> indices;
+        bool proceed;
+        vertices.reserve(allBones.size() * kNumBoneVertices);
+        indices.reserve(allBones.size() * kNumBoneIndices);
         if (value && m_currentModelRef != value) {
-            QVarLengthArray<QVector3D> vertices, colors;
-            vertices.reserve(reserve);
-            colors.reserve(reserve);
             removeModelRef(m_currentModelRef);
             connect(value, &ModelProxy::targetBonesDidCommitTransform, this, &ModelDrawer::updateModel);
+            int offset = 0;
             foreach (const BoneRefObject *bone, allBones) {
                 const IBone *boneRef = bone->data();
                 connect(bone, &BoneRefObject::localTranslationChanged, this, &ModelDrawer::updateModel);
                 connect(bone, &BoneRefObject::localOrientationChanged, this, &ModelDrawer::updateModel);
-                if (boneRef->isInteractive()) {
-                    const QVector3D &destination = Util::fromVector3(boneRef->destinationOrigin());
-                    const QVector3D &origin = Util::fromVector3(boneRef->worldTransform().getOrigin());
-                    if (value->firstTargetBone() == bone) {
-                        color = QColor(Qt::red);
+                updateBoneVertices(boneRef, value->firstTargetBone() == bone, vertices, proceed);
+                if (proceed) {
+                    int newOffset = kNumBoneVertices * offset;
+                    for (int i = 0; i < kNumBoneIndices; i++) {
+                        int value = kBoneIndices[i] + newOffset;
+                        indices.append(value);
                     }
-                    else if (boneRef->hasInverseKinematics()) {
-                        color = QColor(Qt::yellow);
-                    }
-                    else {
-                        color = QColor(Qt::blue);
-                    }
-                    colorVertex.setX(color.redF());
-                    colorVertex.setY(color.greenF());
-                    colorVertex.setZ(color.blueF());
-                    vertices.append(origin);
-                    vertices.append(destination);
-                    colors.append(colorVertex);
-                    colors.append(colorVertex);
+                    offset++;
                 }
             }
             m_vbo->bind();
             m_vbo->allocate(vertices.data(), vertices.size() * sizeof(vertices[0]));
             m_vbo->release();
-            m_cbo->bind();
-            m_cbo->allocate(colors.data(), colors.size() * sizeof(colors[0]));
-            m_cbo->release();
+            m_ibo->bind();
+            m_ibo->allocate(indices.data(), indices.size() * sizeof(indices[0]));
+            m_ibo->release();
             m_nvertices = vertices.size();
+            m_nindices = indices.size();
             m_currentModelRef = value;
             m_currentBoneRef = 0;
         }
         else if (m_currentBoneRef != currentBoneRef) {
-            QVarLengthArray<QVector3D> colors;
-            colors.reserve(reserve);
             foreach (const BoneRefObject *bone, allBones) {
                 const IBone *boneRef = bone->data();
-                if (boneRef->isInteractive()) {
-                    if (value->firstTargetBone() == bone) {
-                        color = QColor(Qt::red);
-                    }
-                    else if (boneRef->hasInverseKinematics()) {
-                        color = QColor(Qt::yellow);
-                    }
-                    else {
-                        color = QColor(Qt::blue);
-                    }
-                    colorVertex.setX(color.redF());
-                    colorVertex.setY(color.greenF());
-                    colorVertex.setZ(color.blueF());
-                    colors.append(colorVertex);
-                    colors.append(colorVertex);
-                }
+                updateBoneVertices(boneRef, value->firstTargetBone() == bone, vertices, proceed);
             }
-            m_cbo->bind();
-            m_cbo->allocate(colors.data(), colors.size() * sizeof(colors[0]));
-            m_cbo->release();
+            m_vbo->bind();
+            m_vbo->write(0, vertices.data(), vertices.size() * sizeof(vertices[0]));
+            m_vbo->release();
             m_currentBoneRef = currentBoneRef;
         }
     }
@@ -424,7 +415,7 @@ public:
     void draw() {
         bindProgram();
         m_program->setUniformValue("modelViewProjectionMatrix", m_modelViewProjectionMatrix);
-        glDrawArrays(GL_LINES, 0, m_nvertices);
+        glDrawElements(GL_TRIANGLES, m_nindices, GL_UNSIGNED_INT, 0);
         releaseProgram();
     }
     void removeModelRef(const ModelProxy *modelProxyRef) {
@@ -444,62 +435,44 @@ public slots:
     void updateModel() {
         Q_ASSERT(m_currentModelRef);
         const QList<BoneRefObject *> &allBones = m_currentModelRef->allBoneRefs();
-        const size_t reserve = allBones.size() * 2;
-        QVarLengthArray<QVector3D> vertices, colors;
-        QColor color;
-        QVector3D colorVertex;
-        vertices.reserve(reserve);
-        colors.reserve(reserve);
+        QVarLengthArray<Vertex> vertices;
+        bool proceed;
+        vertices.reserve(allBones.size());
         foreach (const BoneRefObject *bone, allBones) {
             const IBone *boneRef = bone->data();
-            if (boneRef->isInteractive()) {
-                const QVector3D &destination = Util::fromVector3(boneRef->destinationOrigin());
-                const QVector3D &origin = Util::fromVector3(boneRef->worldTransform().getOrigin());
-                if (m_currentModelRef->firstTargetBone() == bone) {
-                    color = QColor(Qt::red);
-                }
-                else if (boneRef->hasInverseKinematics()) {
-                    color = QColor(Qt::yellow);
-                }
-                else {
-                    color = QColor(Qt::blue);
-                }
-                colorVertex.setX(color.redF());
-                colorVertex.setY(color.greenF());
-                colorVertex.setZ(color.blueF());
-                vertices.append(origin);
-                vertices.append(destination);
-                colors.append(colorVertex);
-                colors.append(colorVertex);
-            }
+            updateBoneVertices(boneRef, m_currentBoneRef == bone, vertices, proceed);
         }
         m_vbo->bind();
         m_vbo->write(0, vertices.data(), vertices.size() * sizeof(vertices[0]));
         m_vbo->release();
-        m_cbo->bind();
-        m_cbo->write(0, colors.data(), colors.size() * sizeof(colors[0]));
-        m_cbo->release();
         m_nvertices = vertices.size();
     }
 
 private:
-    static void allocateBuffer(QScopedPointer<QOpenGLBuffer> &buffer) {
-        buffer.reset(new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer));
+    struct Vertex {
+        Vector3 position;
+        Vector3 color;
+    };
+
+    static void allocateBuffer(QOpenGLBuffer::Type type, QOpenGLBuffer::UsagePattern usage, QScopedPointer<QOpenGLBuffer> &buffer) {
+        buffer.reset(new QOpenGLBuffer(type));
         buffer->create();
         buffer->bind();
-        buffer->setUsagePattern(QOpenGLBuffer::DynamicDraw);
+        buffer->setUsagePattern(usage);
         buffer->release();
     }
     void bindAttributeBuffers() {
         m_program->enableAttributeArray(0);
         m_program->enableAttributeArray(1);
         m_vbo->bind();
-        m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3);
-        m_cbo->bind();
-        m_program->setAttributeBuffer(1, GL_FLOAT, 0, 3);
+        m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(Vertex));
+        m_program->setAttributeBuffer(1, GL_FLOAT, 16, 3, sizeof(Vertex));
+        m_ibo->bind();
     }
     void bindProgram() {
+        glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         m_program->bind();
         if (m_vao->isCreated()) {
             m_vao->bind();
@@ -513,13 +486,46 @@ private:
             m_vao->release();
         }
         else {
+            m_ibo->release();
             m_vbo->release();
-            m_cbo->release();
             m_program->disableAttributeArray(0);
             m_program->disableAttributeArray(1);
         }
         m_program->release();
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+    }
+    void updateBoneVertices(const IBone *boneRef, bool selected, QVarLengthArray<Vertex> &vertices, bool &proceed) const {
+        const Vector3 &origin = boneRef->worldTransform().getOrigin(), &delta = boneRef->destinationOrigin() - origin;
+        if (boneRef->isInteractive() && !delta.isZero()) {
+            static const glm::vec3 kGLMUnitY(0, 1, 0);
+            const glm::vec3 scale(delta.length()), normal(glm::normalize(glm::vec3(delta.x(), delta.y(), delta.z())));
+            const glm::mat4 matrix(glm::scale(glm::toMat4(glm::rotation(kGLMUnitY, normal)), scale));
+            Vector3 color(Util::toColor(Qt::blue));
+            Transform transform(Transform::getIdentity());
+            transform.setFromOpenGLMatrix(glm::value_ptr(matrix));
+            transform.setOrigin(origin);
+            if (selected) {
+                color = Util::toColor(Qt::red);
+            }
+            else if (boneRef->hasFixedAxes()) {
+                color = Util::toColor(QColor(255, 0, 255)); /* purple */
+            }
+            else if (boneRef->hasInverseKinematics()) {
+                color = Util::toColor(Qt::yellow);
+            }
+            Vertex v;
+            for (int i = 0; i < kNumBoneVertices; i++) {
+                v.position = transform * kBoneVertices[i];
+                v.color = color;
+                vertices.append(v);
+            }
+            proceed = true;
+        }
+        else {
+            proceed = false;
+        }
     }
 
     const ModelProxy *m_currentModelRef;
@@ -527,9 +533,10 @@ private:
     QScopedPointer<QOpenGLShaderProgram> m_program;
     QScopedPointer<QOpenGLVertexArrayObject> m_vao;
     QScopedPointer<QOpenGLBuffer> m_vbo;
-    QScopedPointer<QOpenGLBuffer> m_cbo;
+    QScopedPointer<QOpenGLBuffer> m_ibo;
     QMatrix4x4 m_modelViewProjectionMatrix;
     int m_nvertices;
+    int m_nindices;
 };
 
 const QVector3D RenderTarget::kDefaultShadowMapSize = QVector3D(1024, 1024, 1);
