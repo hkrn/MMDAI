@@ -53,7 +53,7 @@ ApplicationWindow {
 
     function __handleApplicationStateChange() {
         var state = Qt.application.state
-        scene.state = Qt.ApplicationActive ? scene.lastState : "suspend"
+        scene.state = Qt.ApplicationActive ? scene.lastStateAtSuspend : "suspend"
     }
     function updateWindowRect() {
         x = applicationPreference.windowRect.x

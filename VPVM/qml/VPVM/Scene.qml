@@ -65,7 +65,7 @@ Item {
     property int baseIconPointSize : 48
     property bool isHUDAvailable : true
     property real offsetY : 0
-    property string lastState: "stop"
+    property string lastStateAtSuspend: "stop"
     property var __keycode2closures : ({})
     signal toggleTimelineVisible()
     signal toggleTimelineWindowed()
@@ -217,8 +217,8 @@ Item {
             PropertyChanges { target: scene; isHUDAvailable: false }
             StateChangeScript {
                 script: {
-                    audioEngine.play()
                     standbyRenderTimer.stop()
+                    audioEngine.play()
                 }
             }
         },
@@ -233,8 +233,9 @@ Item {
             StateChangeScript {
                 script: {
                     audioEngine.stop()
-                    standbyRenderTimer.start()
+                    renderTargetAnimation.stop()
                     renderTarget.lastTimeIndex = projectDocument.currentTimeIndex
+                    standbyRenderTimer.start()
                 }
             }
         },
@@ -248,7 +249,6 @@ Item {
                     projectDocument.rewind()
                     renderTarget.render()
                     standbyRenderTimer.start()
-                    audioEngine.stopping = false
                 }
             }
         },
@@ -258,6 +258,7 @@ Item {
             StateChangeScript {
                 script: {
                     renderTargetAnimation.stop()
+                    renderTarget.lastTimeIndex = projectDocument.currentTimeIndex
                     projectDocument.rewind()
                     renderTarget.render()
                 }
@@ -268,13 +269,13 @@ Item {
             PropertyChanges { target: scene; isHUDAvailable: false }
             StateChangeScript {
                 script: {
-                    renderTargetAnimation.stop()
+                    audioEngine.stop()
                     standbyRenderTimer.stop()
-                    lastState = state
                 }
             }
         }
     ]
+    onStateChanged: lastStateAtSuspend = state
 
     VPVM.Project {
         id: projectDocument
