@@ -331,9 +331,9 @@ public:
     ModelDrawer(QObject *parent = 0)
         : QObject(parent),
           m_currentModelRef(0),
-          m_currentBoneRef(0),
           m_nvertices(0),
-          m_nindices(0)
+          m_nindices(0),
+          m_dirty(false)
     {
     }
     ~ModelDrawer() {
@@ -360,7 +360,6 @@ public:
     }
     void setModelProxyRef(const ModelProxy *value) {
         const QList<BoneRefObject *> &allBones = value ? value->allBoneRefs() : QList<BoneRefObject *>();
-        const BoneRefObject *currentBoneRef = value ? value->firstTargetBone() : 0;
         QVarLengthArray<Vertex> vertices;
         QVarLengthArray<int> indices;
         bool proceed;
@@ -368,12 +367,12 @@ public:
         indices.reserve(allBones.size() * kNumBoneIndices);
         if (value && m_currentModelRef != value) {
             removeModelRef(m_currentModelRef);
-            connect(value, &ModelProxy::targetBonesDidCommitTransform, this, &ModelDrawer::updateModel);
+            connect(value, &ModelProxy::targetBonesDidCommitTransform, this, &ModelDrawer::markDirty);
             int offset = 0;
             foreach (const BoneRefObject *bone, allBones) {
                 const IBone *boneRef = bone->data();
-                connect(bone, &BoneRefObject::localTranslationChanged, this, &ModelDrawer::updateModel);
-                connect(bone, &BoneRefObject::localOrientationChanged, this, &ModelDrawer::updateModel);
+                connect(bone, &BoneRefObject::localTranslationChanged, this, &ModelDrawer::markDirty);
+                connect(bone, &BoneRefObject::localOrientationChanged, this, &ModelDrawer::markDirty);
                 updateBoneVertices(boneRef, value->firstTargetBone() == bone, vertices, proceed);
                 if (proceed) {
                     int newOffset = kNumBoneVertices * offset;
@@ -393,17 +392,6 @@ public:
             m_nvertices = vertices.size();
             m_nindices = indices.size();
             m_currentModelRef = value;
-            m_currentBoneRef = 0;
-        }
-        else if (m_currentBoneRef != currentBoneRef) {
-            foreach (const BoneRefObject *bone, allBones) {
-                const IBone *boneRef = bone->data();
-                updateBoneVertices(boneRef, value->firstTargetBone() == bone, vertices, proceed);
-            }
-            m_vbo->bind();
-            m_vbo->write(0, vertices.data(), vertices.size() * sizeof(vertices[0]));
-            m_vbo->release();
-            m_currentBoneRef = currentBoneRef;
         }
     }
     const ModelProxy *currentModelProxyRef() const {
@@ -418,12 +406,29 @@ public:
         glDrawElements(GL_TRIANGLES, m_nindices, GL_UNSIGNED_INT, 0);
         releaseProgram();
     }
+    void update() {
+        if (m_dirty && m_currentModelRef) {
+            const QList<BoneRefObject *> &allBones = m_currentModelRef->allBoneRefs();
+            QVarLengthArray<Vertex> vertices;
+            bool proceed;
+            vertices.reserve(allBones.size());
+            foreach (const BoneRefObject *bone, allBones) {
+                const IBone *boneRef = bone->data();
+                updateBoneVertices(boneRef, m_currentModelRef->firstTargetBone() == bone, vertices, proceed);
+            }
+            m_vbo->bind();
+            m_vbo->write(0, vertices.data(), vertices.size() * sizeof(vertices[0]));
+            m_vbo->release();
+            m_nvertices = vertices.size();
+            m_dirty = false;
+        }
+    }
     void removeModelRef(const ModelProxy *modelProxyRef) {
         if (modelProxyRef) {
-            disconnect(modelProxyRef, &ModelProxy::targetBonesDidCommitTransform, this, &ModelDrawer::updateModel);
+            disconnect(modelProxyRef, &ModelProxy::targetBonesDidCommitTransform, this, &ModelDrawer::markDirty);
             foreach (const BoneRefObject *bone, modelProxyRef->allBoneRefs()) {
-                disconnect(bone, &BoneRefObject::localTranslationChanged, this, &ModelDrawer::updateModel);
-                disconnect(bone, &BoneRefObject::localOrientationChanged, this, &ModelDrawer::updateModel);
+                disconnect(bone, &BoneRefObject::localTranslationChanged, this, &ModelDrawer::markDirty);
+                disconnect(bone, &BoneRefObject::localOrientationChanged, this, &ModelDrawer::markDirty);
             }
             if (modelProxyRef == m_currentModelRef) {
                 m_currentModelRef = 0;
@@ -432,20 +437,8 @@ public:
     }
 
 public slots:
-    void updateModel() {
-        Q_ASSERT(m_currentModelRef);
-        const QList<BoneRefObject *> &allBones = m_currentModelRef->allBoneRefs();
-        QVarLengthArray<Vertex> vertices;
-        bool proceed;
-        vertices.reserve(allBones.size());
-        foreach (const BoneRefObject *bone, allBones) {
-            const IBone *boneRef = bone->data();
-            updateBoneVertices(boneRef, m_currentBoneRef == bone, vertices, proceed);
-        }
-        m_vbo->bind();
-        m_vbo->write(0, vertices.data(), vertices.size() * sizeof(vertices[0]));
-        m_vbo->release();
-        m_nvertices = vertices.size();
+    void markDirty() {
+        m_dirty = true;
     }
 
 private:
@@ -529,7 +522,6 @@ private:
     }
 
     const ModelProxy *m_currentModelRef;
-    const BoneRefObject *m_currentBoneRef;
     QScopedPointer<QOpenGLShaderProgram> m_program;
     QScopedPointer<QOpenGLVertexArrayObject> m_vao;
     QScopedPointer<QOpenGLBuffer> m_vbo;
@@ -537,6 +529,7 @@ private:
     QMatrix4x4 m_modelViewProjectionMatrix;
     int m_nvertices;
     int m_nindices;
+    volatile bool m_dirty;
 };
 
 const QVector3D RenderTarget::kDefaultShadowMapSize = QVector3D(1024, 1024, 1);
@@ -1323,6 +1316,9 @@ void RenderTarget::synchronizeExplicitly()
     if (m_projectProxyRef) {
         m_projectProxyRef->update(Scene::kUpdateAll | Scene::kForceUpdateAllMorphs);
     }
+    if (m_modelDrawer) {
+        m_modelDrawer->update();
+    }
     draw();
 }
 
@@ -1693,8 +1689,9 @@ void RenderTarget::drawModelBones()
     if (!m_playing && m_editMode == SelectMode && currentModelRef && currentModelRef->isVisible()) {
         if (!m_modelDrawer) {
             m_modelDrawer.reset(new ModelDrawer());
-            connect(m_projectProxyRef, &ProjectProxy::undoDidPerform, m_modelDrawer.data(), &RenderTarget::ModelDrawer::updateModel);
-            connect(m_projectProxyRef, &ProjectProxy::redoDidPerform, m_modelDrawer.data(), &RenderTarget::ModelDrawer::updateModel);
+            connect(m_projectProxyRef, &ProjectProxy::currentTimeIndexChanged, m_modelDrawer.data(), &RenderTarget::ModelDrawer::markDirty);
+            connect(m_projectProxyRef, &ProjectProxy::undoDidPerform, m_modelDrawer.data(), &RenderTarget::ModelDrawer::markDirty);
+            connect(m_projectProxyRef, &ProjectProxy::redoDidPerform, m_modelDrawer.data(), &RenderTarget::ModelDrawer::markDirty);
             m_modelDrawer->initialize();
             m_modelDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
             m_modelDrawer->setModelProxyRef(currentModelRef);
