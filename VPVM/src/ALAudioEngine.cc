@@ -71,6 +71,7 @@ ALAudioEngine::~ALAudioEngine()
 void ALAudioEngine::play()
 {
     if (!m_source.isEmpty()) {
+        /* play if the timer is not started else do nothing */
         if (!m_timerID) {
             alurePlaySource(m_audioSource, &ALAudioEngine::stopCallback, this);
             m_timerID = startTimer(0);
@@ -85,6 +86,7 @@ void ALAudioEngine::play()
 void ALAudioEngine::stop()
 {
     if (!m_source.isEmpty()) {
+        /* stop if the timer is active else do nothing */
         if (m_timerID) {
             alureStopSource(m_audioSource, AL_FALSE);
             killTimer(m_timerID);
