@@ -1194,6 +1194,8 @@ void RenderTarget::draw()
         emit renderWillPerform();
         drawShadowMap();
         updateViewport();
+        window()->resetOpenGLState();
+        Scene::setRequiredOpenGLState();
         clearScene();
         if (m_videoSurface) {
             m_videoSurface->initialize();
@@ -1611,8 +1613,6 @@ IGizmo *RenderTarget::orientationGizmo() const
 
 void RenderTarget::clearScene()
 {
-    window()->resetOpenGLState();
-    Scene::setRequiredOpenGLState();
     const QColor &color = m_projectProxyRef ? m_projectProxyRef->screenColor() : QColor(Qt::white);
     glClearColor(color.redF(), color.greenF(), color.blueF(), color.alphaF());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);

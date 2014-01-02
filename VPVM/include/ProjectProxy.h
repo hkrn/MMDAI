@@ -68,7 +68,6 @@ class LightRefObject;
 class ModelProxy;
 class MorphRefObject;
 class MotionProxy;
-class RenderTarget;
 class WorldProxy;
 
 class QUndoGroup;
