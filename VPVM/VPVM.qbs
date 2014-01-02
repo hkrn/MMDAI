@@ -102,7 +102,7 @@ Application {
     cpp.defines: {
         var defines = [ "VPVL2_ENABLE_QT" ]
         if (qbs.enableDebugCode && qbs.toolchain.contains("msvc")) {
-            defines.push("BUILD_SHARED_LIBS")
+            defines.push("BUILD_SHARED_LIBS", "TW_STATIC", "TW_NO_LIB_PRAGMA")
         }
         return defines
     }
@@ -188,12 +188,7 @@ Application {
                                                         "../alure-src/include/AL",
                                                         "../openal-soft-src/" + libraryInstallDirectory + "/include/AL"
                                                     ])
-        cpp.dynamicLibraries: commonLibraries.concat([
-                                                         "alure32-static",
-                                                         "OpenAL32",
-                                                         "OpenGL32",
-                                                         "zlibstatic" + debugLibrarySuffix
-                                                     ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "alure32-static",  "OpenAL32", "OpenGL32", "zlibstatic" + debugLibrarySuffix ])
     }
     Properties {
         condition: qbs.toolchain.contains("msvc")
@@ -203,13 +198,7 @@ Application {
                                                         "../alure-src/include/AL",
                                                         "../openal-soft-src/" + libraryInstallDirectory + "/include/AL"
                                                     ])
-        cpp.dynamicLibraries: commonLibraries.concat([
-                                                         "alure32-static",
-                                                         "OpenAL32",
-                                                         "libGLESv2" + debugLibrarySuffix,
-                                                         "libEGL" + debugLibrarySuffix,
-                                                         "zlibstatic" + debugLibrarySuffix
-                                                     ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "alure32-static", "OpenAL32", "libGLESv2" + debugLibrarySuffix, "libEGL" + debugLibrarySuffix, "zlibstatic" + debugLibrarySuffix, "user32" ])
     }
     Group {
         condition: qbs.targetOS.contains("unix") && !qbs.targetOS.contains("osx")

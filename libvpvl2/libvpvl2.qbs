@@ -106,7 +106,7 @@ Product {
     cpp.defines: {
         var defines = [ "VPVL2_ENABLE_QT", "USE_FILE32API" ]
         if (qbs.enableDebugCode && qbs.toolchain.contains("msvc")) {
-            defines.push("vpvl2_EXPORTS")
+            defines.push("vpvl2_EXPORTS", "TW_STATIC", "TW_NO_LIB_PRAGMA")
         }
         return defines
     }
@@ -199,7 +199,7 @@ Product {
         condition: qbs.toolchain.contains("msvc")
         configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_WINDOWS", "VPVL2_ENABLE_GLES2", "VPVL2_LINK_ATB", "VPVL2_LINK_EGL"])
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
-        cpp.dynamicLibraries: commonLibraries.concat([ "libGLESv2" + debugLibrarySuffix, "libEGL" + debugLibrarySuffix, "zlibstatic" + debugLibrarySuffix ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "libGLESv2" + debugLibrarySuffix, "libEGL" + debugLibrarySuffix, "zlibstatic" + debugLibrarySuffix, "user32" ])
     }
     Properties {
         condition: qbs.targetOS.contains("unix") && !qbs.targetOS.contains("osx")
