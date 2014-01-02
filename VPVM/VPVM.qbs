@@ -100,9 +100,9 @@ Application {
     }
     files: commonFiles
     cpp.defines: {
-        var defines = [ "VPVL2_ENABLE_QT" ]
+        var defines = [ "VPVL2_ENABLE_QT", "TW_STATIC", "TW_NO_LIB_PRAGMA" ]
         if (qbs.enableDebugCode && qbs.toolchain.contains("msvc")) {
-            defines.push("BUILD_SHARED_LIBS", "TW_STATIC", "TW_NO_LIB_PRAGMA")
+            defines.push("BUILD_SHARED_LIBS")
         }
         return defines
     }
