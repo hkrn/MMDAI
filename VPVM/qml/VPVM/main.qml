@@ -468,6 +468,7 @@ ApplicationWindow {
         id: exportImageAction
         text: qsTr("Export Image")
         tooltip: qsTr("Export current scene as an image.")
+        shortcut: qsTr("Ctrl+P")
         onTriggered: scene.exportImage(exportImageDialog.getPathAs(), exportTab.size)
     }
     SaveDialog {
