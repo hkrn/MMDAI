@@ -177,7 +177,7 @@ Application {
         cpp.minimumOsxVersion: "10.6"
     }
     Properties {
-        condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
+        condition: qbs.targetOS.contains("unix") && !qbs.targetOS.contains("osx")
         cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "Xext", "X11", "tbb", "z", "GL"])
         cpp.rpaths: [ "$ORIGIN/lib", "$ORIGIN" ]
         cpp.positionIndependentCode: true
@@ -212,7 +212,7 @@ Application {
                                                      ])
     }
     Group {
-        condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
+        condition: qbs.targetOS.contains("unix") && !qbs.targetOS.contains("osx")
         name: "Application Depending Libraries"
         files: {
             var found = vpvm.findLibraries(commonLibraries.concat([ "openal", "tbb", "z" ]), cpp.libraryPaths, ".so*")

@@ -48,7 +48,7 @@ protected
       :vpvl2_link_qt => build_suite,
       :vpvl2_link_regal => false,
       :vpvl2_link_sdl2 => (build_suite and is_debug),
-      :vpvl2_link_sfml => (build_suite and is_debug),
+      :vpvl2_link_sfml => false, # (build_suite and is_debug),
       :vpvl2_link_vpvl => false
     }
     return config

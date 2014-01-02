@@ -192,10 +192,6 @@ Product {
         configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_ANDROID"])
     }
     Properties {
-        condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
-        cpp.dynamicLibraries: commonLibraries.concat([ "tbb", "z", "GL" ])
-    }
-    Properties {
         condition: qbs.toolchain.contains("mingw")
         cpp.dynamicLibraries: commonLibraries.concat([ "OpenGL32" ])
     }
@@ -206,7 +202,7 @@ Product {
         cpp.dynamicLibraries: commonLibraries.concat([ "libGLESv2" + debugLibrarySuffix, "libEGL" + debugLibrarySuffix, "zlibstatic" + debugLibrarySuffix ])
     }
     Properties {
-        condition: !qbs.targetOS.contains("osx") && !qbs.targetOS.contains("windows")
+        condition: qbs.targetOS.contains("unix") && !qbs.targetOS.contains("osx")
         cpp.dynamicLibraries: commonLibraries.concat([ "Xext", "X11", "tbb", "z", "GL" ])
     }
     Group {
