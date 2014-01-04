@@ -8,9 +8,9 @@ precision lowp float;
 #else
 out vec4 outPixelColor;
 #endif
-in vec3 outColor;
+in vec4 outColor;
 
 void main() {
-    outPixelColor = vec4(outColor, 1.0);
+    outPixelColor = outColor;
 }
 

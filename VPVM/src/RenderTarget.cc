@@ -344,8 +344,8 @@ public:
             m_program.reset(new QOpenGLShaderProgram());
             m_program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":shaders/gui/grid.vsh");
             m_program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":shaders/gui/grid.fsh");
-            m_program->bindAttributeLocation("inPosition", 0);
-            m_program->bindAttributeLocation("inColor", 1);
+            m_program->bindAttributeLocation("inPosition", kPositionAttribute);
+            m_program->bindAttributeLocation("inColor", kColorAttribute);
             m_program->link();
             Q_ASSERT(m_program->isLinked());
             allocateBuffer(QOpenGLBuffer::VertexBuffer, QOpenGLBuffer::DynamicDraw, m_vbo);
@@ -446,6 +446,11 @@ private:
         Vector3 position;
         Vector3 color;
     };
+    enum VertexType {
+        kPositionAttribute,
+        kColorAttribute
+    };
+    static const float kOpacity;
 
     static void allocateBuffer(QOpenGLBuffer::Type type, QOpenGLBuffer::UsagePattern usage, QScopedPointer<QOpenGLBuffer> &buffer) {
         buffer.reset(new QOpenGLBuffer(type));
@@ -455,17 +460,16 @@ private:
         buffer->release();
     }
     void bindAttributeBuffers() {
-        m_program->enableAttributeArray(0);
-        m_program->enableAttributeArray(1);
+        m_program->enableAttributeArray(kPositionAttribute);
+        m_program->enableAttributeArray(kColorAttribute);
         m_vbo->bind();
-        m_program->setAttributeBuffer(0, GL_FLOAT, 0, 3, sizeof(Vertex));
-        m_program->setAttributeBuffer(1, GL_FLOAT, 16, 3, sizeof(Vertex));
+        m_program->setAttributeBuffer(kPositionAttribute, GL_FLOAT, 0, 3, sizeof(Vertex));
+        m_program->setAttributeBuffer(kColorAttribute, GL_FLOAT, 16, 4, sizeof(Vertex));
         m_ibo->bind();
     }
     void bindProgram() {
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         m_program->bind();
         if (m_vao->isCreated()) {
             m_vao->bind();
@@ -481,11 +485,10 @@ private:
         else {
             m_ibo->release();
             m_vbo->release();
-            m_program->disableAttributeArray(0);
-            m_program->disableAttributeArray(1);
+            m_program->disableAttributeArray(kPositionAttribute);
+            m_program->disableAttributeArray(kColorAttribute);
         }
         m_program->release();
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
     }
@@ -512,6 +515,7 @@ private:
             for (int i = 0; i < kNumBoneVertices; i++) {
                 v.position = transform * kBoneVertices[i];
                 v.color = color;
+                v.color.setW(kOpacity);
                 vertices.append(v);
             }
             proceed = true;
@@ -532,6 +536,7 @@ private:
     volatile bool m_dirty;
 };
 
+const float RenderTarget::ModelDrawer::kOpacity = 0.25;
 const QVector3D RenderTarget::kDefaultShadowMapSize = QVector3D(1024, 1024, 1);
 
 RenderTarget::RenderTarget(QQuickItem *parent)

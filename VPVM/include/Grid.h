@@ -103,6 +103,7 @@ private:
             : position(p),
               color(c.redF(), c.greenF(), c.blueF())
         {
+            color.setW(1);
         }
         vpvl2::Vector3 position;
         vpvl2::Vector3 color;

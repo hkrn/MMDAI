@@ -56,8 +56,8 @@ using namespace vpvl2::extensions::qt;
 class Grid::PrivateShaderProgram : public gl::ShaderProgram {
 public:
     enum VertexType {
-        kPosition,
-        kColor
+        kPositionAttribute,
+        kColorAttribute
     };
 
     PrivateShaderProgram(IApplicationContext::FunctionResolver *resolver)
@@ -80,8 +80,8 @@ public:
         }
     }
     bool link() {
-        bindAttribLocation(m_program, kPosition, "inPosition");
-        bindAttribLocation(m_program, kColor, "inColor");
+        bindAttribLocation(m_program, kPositionAttribute, "inPosition");
+        bindAttribLocation(m_program, kColorAttribute, "inColor");
         bool ok = ShaderProgram::link();
         if (ok) {
             m_modelViewProjectionMatrix = getUniformLocation(m_program, "modelViewProjectionMatrix");
@@ -90,13 +90,13 @@ public:
     }
     void enableAttributes() {
         QOpenGLFunctions functions(QOpenGLContext::currentContext());
-        functions.glEnableVertexAttribArray(kPosition);
-        functions.glEnableVertexAttribArray(kColor);
+        functions.glEnableVertexAttribArray(kPositionAttribute);
+        functions.glEnableVertexAttribArray(kColorAttribute);
     }
     void disableAttributes() {
         QOpenGLFunctions functions(QOpenGLContext::currentContext());
-        functions.glDisableVertexAttribArray(kPosition);
-        functions.glDisableVertexAttribArray(kColor);
+        functions.glDisableVertexAttribArray(kPositionAttribute);
+        functions.glDisableVertexAttribArray(kColorAttribute);
     }
     void setUniformValues(const QMatrix4x4 &matrix) {
         gl::GLfloat m[16] = { 0 };
@@ -286,11 +286,11 @@ void Grid::bindVertexBundle(bool bundle)
         QOpenGLFunctions functions(QOpenGLContext::currentContext());
         m_bundle->bind(gl::VertexBundle::kVertexBuffer, 0);
         static const Vertex v;
-        functions.glVertexAttribPointer(PrivateShaderProgram::kPosition, 3, GL_FLOAT, GL_FALSE, sizeof(v), 0);
+        functions.glVertexAttribPointer(PrivateShaderProgram::kPositionAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(v), 0);
         const uint8 *offset = reinterpret_cast<const uint8 *>(
                     reinterpret_cast<const uint8 *>(&v.color)
                     - reinterpret_cast<const uint8 *>(&v.position));
-        functions.glVertexAttribPointer(PrivateShaderProgram::kColor, 3, GL_FLOAT, GL_FALSE, sizeof(v), offset);
+        functions.glVertexAttribPointer(PrivateShaderProgram::kColorAttribute, 4, GL_FLOAT, GL_FALSE, sizeof(v), offset);
         m_bundle->bind(gl::VertexBundle::kIndexBuffer, 0);
         m_program->enableAttributes();
     }
