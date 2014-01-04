@@ -1205,10 +1205,10 @@ void RenderTarget::draw()
     Q_ASSERT(m_applicationContext && window());
     if (m_projectProxyRef) {
         emit renderWillPerform();
-        drawShadowMap();
-        updateViewport();
         window()->resetOpenGLState();
         Scene::setRequiredOpenGLState();
+        drawShadowMap();
+        updateViewport();
         clearScene();
         if (m_videoSurface) {
             m_videoSurface->initialize();
