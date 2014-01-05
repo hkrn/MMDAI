@@ -533,6 +533,7 @@ void ProjectProxy::internalAddModel(ModelProxy *value, bool selected, bool isPro
 void ProjectProxy::internalDeleteModel(ModelProxy *value, bool emitSignal)
 {
     if (value && m_instance2ModelProxyRefs.contains(value->data())) {
+        QMutexLocker locker(&m_mutex); Q_UNUSED(locker);
         if (emitSignal) {
             emit modelWillRemove(value);
         }

@@ -40,6 +40,7 @@
 
 #include <QColor>
 #include <QHash>
+#include <QMutex>
 #include <QObject>
 #include <QPoint>
 #include <QQmlListProperty>
@@ -317,6 +318,7 @@ private:
     QList<MotionProxy *> m_motionProxies;
     QList<QObject *> m_parentModelProxyRefs;
     QList<QObject *> m_parentModelBoneRefs;
+    QMutex m_mutex;
     QUrl m_fileUrl;
     QString m_title;
     QColor m_screenColor;
