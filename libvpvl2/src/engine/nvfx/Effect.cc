@@ -227,9 +227,9 @@ struct Effect::NvFXPass : IEffect::Pass {
         return valueRef->getName();
     }
     void setState() {
-        pushAnnotationGroup(std::string("NvFXPass#setState name=").append(name()).c_str(), effectRef->applicationContextRef()->sharedFunctionResolverInstance());
+        pushAnnotationGroup(std::string("NvFXPass#setState name=").append(name()).c_str(), effectRef->applicationContextRef());
         valueRef->execute(&info);
-        popAnnotationGroup(effectRef->applicationContextRef()->sharedFunctionResolverInstance());
+        popAnnotationGroup(effectRef->applicationContextRef());
     }
     void resetState() {
         valueRef->unbindProgram();
@@ -249,7 +249,7 @@ struct Effect::NvFXPass : IEffect::Pass {
         }
     }
     void setupOverrides(const Array<Pass *> &passes) {
-        pushAnnotationGroup(std::string("NvFXPass#setupOverrides name=").append(name()).c_str(), effectRef->applicationContextRef()->sharedFunctionResolverInstance());
+        pushAnnotationGroup(std::string("NvFXPass#setupOverrides name=").append(name()).c_str(), effectRef->applicationContextRef());
         if (passes.count() > 0) {
             Array<nvFX::IPass *> overridePasses;
             castPasses(passes, overridePasses);
@@ -261,16 +261,16 @@ struct Effect::NvFXPass : IEffect::Pass {
                 internalBindAttributes(passRef);
             }
         }
-        popAnnotationGroup(effectRef->applicationContextRef()->sharedFunctionResolverInstance());
+        popAnnotationGroup(effectRef->applicationContextRef());
     }
     void releaseOverrides(const Array<Pass *> &passes) {
-        pushAnnotationGroup(std::string("NvFXPass#releaseOverrides name=").append(name()).c_str(), effectRef->applicationContextRef()->sharedFunctionResolverInstance());
+        pushAnnotationGroup(std::string("NvFXPass#releaseOverrides name=").append(name()).c_str(), effectRef->applicationContextRef());
         if (passes.count() > 0) {
             Array<nvFX::IPass *> castedPasses;
             castPasses(passes, castedPasses);
             valueRef->releaseOverrides(&castedPasses[0], castedPasses.count());
         }
-        popAnnotationGroup(effectRef->applicationContextRef()->sharedFunctionResolverInstance());
+        popAnnotationGroup(effectRef->applicationContextRef());
     }
 
     const Effect *effectRef;
@@ -500,7 +500,7 @@ struct Effect::NvFXTechnique : IEffect::Technique {
         }
     }
     void setOverridePass(Pass *pass) {
-        pushAnnotationGroup(std::string("NvFXTechnique#setOverridePass name=").append(name()).c_str(), effectRef->applicationContextRef()->sharedFunctionResolverInstance());
+        pushAnnotationGroup(std::string("NvFXTechnique#setOverridePass name=").append(name()).c_str(), effectRef->applicationContextRef());
         if (const NvFXPass *v = static_cast<const NvFXPass *>(pass)) {
             int overrideID = v->info.overrideID;
             valueRef->setActiveProgramLayer(overrideID);
@@ -509,7 +509,7 @@ struct Effect::NvFXTechnique : IEffect::Technique {
             EffectContext::disableMessageCallback();
             for (int i = 0; i < npasses; i++) {
                 nvFX::IPassEx *passEx = m_passes[i]->valueRef->getExInterface();
-                pushAnnotationGroup(std::string("NvFXTechnique#setProgramUniforms name=").append(passEx->getName()).c_str(), effectRef->applicationContextRef()->sharedFunctionResolverInstance());
+                pushAnnotationGroup(std::string("NvFXTechnique#setProgramUniforms name=").append(passEx->getName()).c_str(), effectRef->applicationContextRef());
                 if (nvFX::IProgramPipeline *pipeline = passEx->getProgramPipeline(overrideID)) {
                     int index = 0;
                     while (nvFX::IProgram *program = pipeline->getShaderProgram(index++)) {
@@ -519,14 +519,14 @@ struct Effect::NvFXTechnique : IEffect::Technique {
                 else if (nvFX::IProgram *program = passEx->getProgram(overrideID)) {
                     setProgramUniforms(program, container, false);
                 }
-                popAnnotationGroup(effectRef->applicationContextRef()->sharedFunctionResolverInstance());
+                popAnnotationGroup(effectRef->applicationContextRef());
             }
             EffectContext::enableMessageCallback();
         }
         else {
             valueRef->setActiveProgramLayer(0);
         }
-        popAnnotationGroup(effectRef->applicationContextRef()->sharedFunctionResolverInstance());
+        popAnnotationGroup(effectRef->applicationContextRef());
     }
     void setProgramUniforms(nvFX::IProgram *program, nvFX::IContainer *container, bool isPipeline) {
         int index = 0;
@@ -996,32 +996,38 @@ void Effect::setEnabled(bool value)
 
 bool Effect::recompileFromFile(const char *filePath)
 {
+    pushAnnotationGroupWithName("Effect#recompileFromFile");
     nvFX::IContainer *container = nvFX::IContainer::create();
+    bool ret = false;
     if (nvFX::loadEffectFromFile(container, filePath)) {
         VPVL2_VLOG(1, "Recompiled the effect succeeded: " << filePath);
         release();
         resetEffect(container);
-        return true;
+        ret = true;
     }
     else {
         VPVL2_LOG(WARNING, "Recompiling the effect failed: " << filePath);
         nvFX::IContainer::destroy(container);
-        return false;
     }
+    gl::popAnnotationGroup(m_applicationContextRef);
+    return ret;
 }
 
 bool Effect::recompileFromSource(const char *source, int /* length */)
 {
+    pushAnnotationGroupWithName("Effect#recompileFromSource");
     nvFX::IContainer *container = nvFX::IContainer::create();
+    bool ret = false;
     if (nvFX::loadEffect(container, source)) {
         release();
         resetEffect(container);
-        return true;
+        ret = true;
     }
     else {
         nvFX::IContainer::destroy(container);
-        return false;
     }
+    gl::popAnnotationGroup(m_applicationContextRef);
+    return ret;
 }
 
 bool Effect::isDirty() const
@@ -1046,21 +1052,25 @@ IApplicationContext *Effect::applicationContextRef() const
 
 void Effect::release()
 {
-    m_enabled = false;
-    const int numAnnotationHash = m_annotationRefsHash.count();
-    for (int i = 0; i < numAnnotationHash; i++) {
-        NvFXAnnotationHash **hash = m_annotationRefsHash.value(i);
-        (*hash)->releaseAll();
+    if (m_container) {
+        pushAnnotationGroupWithName("Effect#release");
+        m_enabled = false;
+        const int numAnnotationHash = m_annotationRefsHash.count();
+        for (int i = 0; i < numAnnotationHash; i++) {
+            NvFXAnnotationHash **hash = m_annotationRefsHash.value(i);
+            (*hash)->releaseAll();
+        }
+        m_annotationRefsHash.releaseAll();
+        m_techniques.releaseAll();
+        m_parameters.releaseAll();
+        m_renderColorTargetIndices.clear();
+        m_offscreenRenderTargets.clear();
+        m_interactiveParameters.clear();
+        internal::deleteObject(m_parentFrameBufferObject);
+        nvFX::IContainer::destroy(m_container);
+        m_container = 0;
+        gl::popAnnotationGroup(m_applicationContextRef);
     }
-    m_annotationRefsHash.releaseAll();
-    m_techniques.releaseAll();
-    m_parameters.releaseAll();
-    m_renderColorTargetIndices.clear();
-    m_offscreenRenderTargets.clear();
-    m_interactiveParameters.clear();
-    internal::deleteObject(m_parentFrameBufferObject);
-    nvFX::IContainer::destroy(m_container);
-    m_container = 0;
 }
 
 IEffect::Annotation *Effect::cacheAnnotationRef(nvFX::IAnnotation *annotation, const char *name) const
@@ -1106,7 +1116,7 @@ IEffect::Technique *Effect::cacheTechniqueRef(nvFX::ITechnique *technique) const
         techniqueRef = *techniquePtr;
     }
     else {
-        pushAnnotationGroup(std::string("Effect#cacheTechniqueRef name=").append(technique->getName()).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+        pushAnnotationGroup(std::string("Effect#cacheTechniqueRef name=").append(technique->getName()).c_str(), m_applicationContextRef);
         VPVL2_VLOG(2, "Validating a technique: " << technique->getName());
         if (technique->validate()) {
             internalBindAttributes(technique);
@@ -1117,7 +1127,7 @@ IEffect::Technique *Effect::cacheTechniqueRef(nvFX::ITechnique *technique) const
         else {
             VPVL2_VLOG(2, "Validation is failed and cannot use this technique");
         }
-        popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
+        popAnnotationGroup(m_applicationContextRef);
     }
     return techniqueRef;
 }
@@ -1131,6 +1141,13 @@ void Effect::resetEffect(nvFX::IContainer *container)
         container->setName(reinterpret_cast<const char *>(m_name->toByteArray()));
     }
     appendShaderHeader(container, m_applicationContextRef->sharedFunctionResolverInstance());
+}
+
+void Effect::pushAnnotationGroupWithName(const char *message)
+{
+    char buffer[1024];
+    internal::snprintf(buffer, sizeof(buffer), "%s name=%s", message, internal::cstr(m_name, "(null)"));
+    gl::pushAnnotationGroup(buffer, m_applicationContextRef);
 }
 
 } /* namespace nvfx */

@@ -123,6 +123,7 @@ private:
     Parameter *cacheParameterRef(nvFX::IUniform *parameter) const;
     Technique *cacheTechniqueRef(nvFX::ITechnique *technique) const;
     void resetEffect(nvFX::IContainer *container);
+    void pushAnnotationGroupWithName(const char *message);
 
     typedef PointerHash<HashString, NvFXAnnotation> NvFXAnnotationHash;
     mutable PointerArray<NvFXParameter> m_parameters;
