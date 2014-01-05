@@ -1555,7 +1555,8 @@ void RenderTarget::resetMediaPlayer()
 
 void RenderTarget::prepareUploadingModelsInProject()
 {
-    connect(this, &RenderTarget::enqueuedModelsDidUpload, this, &RenderTarget::activateProject);
+    /* must use Qt::DirectConnection to release OpenGL resources and recreate shadowmap */
+    connect(this, &RenderTarget::enqueuedModelsDidUpload, this, &RenderTarget::activateProject, Qt::DirectConnection);
     /* must use Qt::DirectConnection due to VideoSurface contains OpenGL resources */
     connect(this, &RenderTarget::enqueuedModelsDidUpload, this, &RenderTarget::releaseVideoSurface, Qt::DirectConnection);
     commitUploadingModels();
