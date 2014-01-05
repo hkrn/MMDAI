@@ -145,10 +145,10 @@ void EncodingTask::stop()
 
 void EncodingTask::release()
 {
+    QFile::remove(m_encoderFilePath);
     m_process.reset();
     m_workerDir.reset();
     m_fbo.reset();
-    m_executable.reset();
     m_estimatedFrameCount = 0;
 }
 
@@ -172,37 +172,62 @@ void EncodingTask::handleReadyRead()
 void EncodingTask::handleStateChanged()
 {
     QProcess::ProcessState state = m_process->state();
-    if (m_lastState != state && m_lastState == QProcess::Running && state == QProcess::NotRunning) {
-        QProcess::ExitStatus status = m_process->exitStatus();
-        VPVL2_VLOG(1, "Finished encoding task: code=" << m_process->exitCode() << " status=" << status);
-        m_estimatedFrameCount = 0;
-        emit encodeDidFinish(status == QProcess::NormalExit);
+    if (m_lastState != state) {
+        if (m_lastState == QProcess::Starting && state == QProcess::Running) {
+            QFile::remove(m_encoderFilePath);
+        }
+        else if (m_lastState == QProcess::Running && state == QProcess::NotRunning) {
+            QProcess::ExitStatus status = m_process->exitStatus();
+            VPVL2_VLOG(1, "Finished encoding task: code=" << m_process->exitCode() << " status=" << status);
+            QFile::remove(m_encoderFilePath);
+            m_workerDir.reset();
+            m_estimatedFrameCount = 0;
+            emit encodeDidFinish(status == QProcess::NormalExit);
+        }
     }
     m_lastState = state;
+}
+
+void EncodingTask::handleError(QProcess::ProcessError error)
+{
+    QFile::remove(m_encoderFilePath);
+    VPVL2_LOG(ERROR, "Error happened at encoding: error=" << error << " message=" << m_process->errorString().toStdString());
+    emit encodeDidFinish(false);
 }
 
 void EncodingTask::launch()
 {
     stop();
     QStringList arguments;
-    m_executable.reset(QTemporaryFile::createLocalFile(":libav/avconv"));
-    m_executable->setPermissions(QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
-    const QString &executablePath = m_executable->fileName();
-    getArguments(arguments);
-    m_process.reset(new QProcess(this));
-    m_process->setArguments(arguments);
-    m_process->setProgram(executablePath);
-    m_process->setProcessChannelMode(QProcess::MergedChannels);
-    /* disable color output from standard output */
-    QStringList environments = m_process->environment();
-    environments << "AV_LOG_FORCE_NOCOLOR" << "1";
-    m_process->setEnvironment(environments);
-    connect(m_process.data(), &QProcess::started, this, &EncodingTask::handleStarted);
-    connect(m_process.data(), &QProcess::readyRead, this, &EncodingTask::handleReadyRead);
-    connect(m_process.data(), &QProcess::stateChanged, this, &EncodingTask::handleStateChanged);
-    m_process->start();
-    VPVL2_VLOG(1, "executable=" << m_process->program().toStdString() << " arguments=" << arguments.join(" ").toStdString());
-    VPVL2_VLOG(2, "Waiting for starting encoding task");
+    QScopedPointer<QTemporaryFile> file(new QTemporaryFile());
+    file->open();
+    m_encoderFilePath = file->fileName();
+    file.reset();
+    if (QFile::copy(":libav/avconv", m_encoderFilePath)) {
+        qDebug() << QFile::permissions(m_encoderFilePath);
+        QFile::setPermissions(m_encoderFilePath, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
+        getArguments(arguments);
+        m_process.reset(new QProcess(this));
+        m_process->setArguments(arguments);
+        m_process->setProgram(m_encoderFilePath);
+        m_process->setProcessChannelMode(QProcess::MergedChannels);
+        m_process->setWorkingDirectory(m_workerDir->path());
+        /* disable color output from standard output */
+        QStringList environments = m_process->environment();
+        environments << "AV_LOG_FORCE_NOCOLOR" << "1";
+        m_process->setEnvironment(environments);
+        connect(m_process.data(), &QProcess::started, this, &EncodingTask::handleStarted);
+        connect(m_process.data(), &QProcess::readyRead, this, &EncodingTask::handleReadyRead);
+        connect(m_process.data(), &QProcess::stateChanged, this, &EncodingTask::handleStateChanged);
+        connect(m_process.data(), SIGNAL(error(QProcess::ProcessError)), this, SLOT(handleError(QProcess::ProcessError)));
+        m_process->start();
+        VPVL2_VLOG(1, "executable=" << m_process->program().toStdString() << " arguments=" << arguments.join(" ").toStdString());
+        VPVL2_VLOG(2, "Waiting for starting encoding task");
+    }
+    else {
+        VPVL2_LOG(ERROR, "Cannot start encoder due to failed copying");
+        emit encodeDidFinish(false);
+    }
 }
 
 void EncodingTask::getArguments(QStringList &arguments)

@@ -47,7 +47,6 @@
 class QOpenGLFramebufferObject;
 class QQuickWindow;
 class QTemporaryDir;
-class QTemporaryFile;
 
 class EncodingTask : public QObject
 {
@@ -72,9 +71,11 @@ public:
     void stop();
     void release();
 
+public slots:
     void handleStarted();
     void handleReadyRead();
     void handleStateChanged();
+    void handleError(QProcess::ProcessError error);
     void launch();
 
 signals:
@@ -88,9 +89,9 @@ private:
     QScopedPointer<QProcess> m_process;
     QScopedPointer<QOpenGLFramebufferObject> m_fbo;
     QScopedPointer<QTemporaryDir> m_workerDir;
-    QScopedPointer<QTemporaryFile> m_executable;
     QProcess::ProcessState m_lastState;
     QDir m_workerDirPath;
+    QString m_encoderFilePath;
     QString m_workerId;
     QSize m_size;
     QString m_title;
