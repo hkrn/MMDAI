@@ -86,9 +86,8 @@ Product {
         "VPVL2_ENABLE_EXTENSIONS_ARCHIVE",
         "VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT",
         "VPVL2_ENABLE_EXTENSIONS_PROJECT",
-        "VPVL2_ENABLE_EXTENSIONS_WORLD",
-        qbs.enableDebugCode ? "BUILD_SHARED_LIBS" : ""
-    ]
+        "VPVL2_ENABLE_EXTENSIONS_WORLD"
+    ].concat(qbs.enableDebugCode ? [ "VPVL2_ENABLE_DEBUG_ANNOTATIONS", "BUILD_SHARED_LIBS" ] : [])
     readonly property var configDefinitions: commonConfigDefinitions
     type: qbs.buildVariant === "debug" ? "dynamiclibrary" : "staticlibrary"
     name: "vpvl2"
