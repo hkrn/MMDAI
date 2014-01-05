@@ -1618,9 +1618,9 @@ void BaseApplicationContext::createShadowMap(const Vector3 &size)
             m_shadowMap.reset(new SimpleShadowMap(resolver, vsize(size.x()), vsize(size.y())));
             m_shadowMap->create();
             popAnnotationGroup(this);
-            m_sceneRef->setShadowMapRef(m_shadowMap.get());
             VPVL2_VLOG(1, "data=" << m_shadowMap->textureRef()->data());
         }
+        m_sceneRef->setShadowMapRef(m_shadowMap.get());
     }
     else {
         m_sceneRef->setShadowMapRef(0);
