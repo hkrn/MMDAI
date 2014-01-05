@@ -506,7 +506,10 @@ private:
                 color = Util::toColor(Qt::red);
             }
             else if (boneRef->hasFixedAxes()) {
-                color = Util::toColor(QColor(255, 0, 255)); /* purple */
+                color = Util::toColor(Qt::magenta);
+            }
+            else if (boneRef->hasLocalAxes()) {
+                color = Util::toColor(Qt::cyan);
             }
             else if (boneRef->hasInverseKinematics()) {
                 color = Util::toColor(Qt::yellow);
