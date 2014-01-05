@@ -8,7 +8,7 @@ group: navigation
 
 ざっくりとした使い方は「["MMDAI2 使い方"](http://ch.nicovideo.jp/MMDAI/blomaga/ar37961)」を見るとよいかもしれません。ヘルプが必要な場合は「[互助会の発足](http://ch.nicovideo.jp/MMDAI/blomaga/ar140129)」を参照。
 
-VPVM 0.33.2
+VPVM 0.33.3
 -------------
 
 開発版の公開版です
@@ -16,21 +16,22 @@ VPVM 0.33.2
  - ドキュメントは今のところ [github 上の manual.rst](https://github.com/hkrn/MMDAI/blob/master/VPVM/documents/manual.rst) にあります
  - MMDAI2 0.30.0 とは使い方と UI が大きく異なるので注意
 
-### [OSX 版をダウンロード](http://www8092ui.sakura.ne.jp/projects/VPVM/binaries/VPVM-osx-0.33.2.zip)
+### [OSX 版をダウンロード](http://www8092ui.sakura.ne.jp/projects/VPVM/binaries/VPVM-osx-0.33.3.zip)
 
  - OSX 10\.7 以上が必要です
  - 64bit 版のみ
 
-### [Linux 版をダウンロード](http://www8092ui.sakura.ne.jp/projects/VPVM/binaries/VPVM-linux-0.33.2.zip)
+### [Linux 版をダウンロード](http://www8092ui.sakura.ne.jp/projects/VPVM/binaries/VPVM-linux-0.33.3.zip)
 
  - Ubuntu Linux 12.04 でビルドされています。OpenGL 2.1 以上に対応するグラボが必要です。
  - 32bit 版のみ
 
-### [Windows 版をダウンロード](http://www8092ui.sakura.ne.jp/projects/VPVM/binaries/VPVM-win32-0.33.2.zip)
+### [Windows 版をダウンロード](http://www8092ui.sakura.ne.jp/projects/VPVM/binaries/VPVM-win32-0.33.3.zip)
 
  - DirectX9 以上に対応するグラボが必要です。
  - Windows Vista 以上が必要です。Windows XP では動かないはず
  - 32bit 版のみ
+ - 現時点での実装上の制約として動画出力が出来ません
 
 MMDAI2 0.30.0
 -------------
