@@ -234,21 +234,8 @@
     <string>${EXECUTABLE_NAME}</string>
     <key>CFBundleIdentifier</key>
     <string>com.github.mmdai.${PRODUCT_NAME}</string>
-    <key>CFBundleVersion</key>
-    <string>0.33.1</string>
-    <key>CFBundleShortVersionString</key>
-    <string>0.33.1</string>
     <key>CFBundleGetInfoString</key>
     <string>VPVM (a.k.a MMDAI2) is an application to create/edit motion like MikuMikuDance (MMD)</string>
-    <key>LSArchitecturePriority</key>
-    <array>
-      <string>x86_64</string>
-      <string>i386</string>
-    </array>
-    <key>LSMinimumSystemVersionByArchitecture</key>
-    <dict>
-      <key>x86_64</key>
-      <string>10.7</string>
-    </dict>
   </dict>
 </plist>
+
