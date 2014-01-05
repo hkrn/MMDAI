@@ -542,7 +542,7 @@ void ProjectProxy::internalDeleteModel(ModelProxy *value, bool emitSignal)
             value->resetTargets();
             setCurrentModel(0);
         }
-        deleteMotion(value->childMotion(), false);
+        deleteMotion(value->childMotion(), !emitSignal);
         m_worldProxy->leaveWorld(value);
         setDirty(true);
         m_modelProxies.removeOne(value);
