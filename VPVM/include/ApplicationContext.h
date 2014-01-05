@@ -87,6 +87,7 @@ public:
     void uploadEnqueuedModelProxies(ProjectProxy *projectProxy, QList<ModelProxyPair> &succeededModelProxies, QList<ModelProxyPair> &failedModelProxies);
     void uploadEnqueuedEffects(ProjectProxy *projectProxy, QList<ModelProxy *> &succeededEffects, QList<ModelProxy *> &failedEffects);
     QList<ModelProxy *> deleteEnqueuedModelProxies(ProjectProxy *projectProxy);
+    void deleteAllModelProxies(ProjectProxy *projectProxy);
     void enqueueUploadingModel(ModelProxy *model, bool isProject);
     void enqueueUploadingEffect(ModelProxy *model);
     void enqueueDeletingModelProxy(ModelProxy *model);
@@ -101,6 +102,7 @@ signals:
 private:
     void addTextureWatch(const vpvl2::IModel *modelRef, const ModelContext &context);
     void removeTextureWatch(const vpvl2::IModel *modelRef);
+    void deleteModelProxy(ModelProxy *modelProxy, ProjectProxy *projectProxyRef);
 
     QFileSystemWatcher m_fileSystemWatcher;
     QHash<const vpvl2::IModel *, BaseApplicationContext::ModelContext::TextureRefCacheMap> m_textureCacheRefs;

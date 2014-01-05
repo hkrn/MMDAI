@@ -393,28 +393,20 @@ void ApplicationContext::uploadEnqueuedEffects(ProjectProxy *projectProxy, QList
 QList<ModelProxy *> ApplicationContext::deleteEnqueuedModelProxies(ProjectProxy *projectProxy)
 {
     QList<ModelProxy *> deletedModelProxies;
-    XMLProject *projectRef = projectProxy->projectInstanceRef();
     while (!m_deletingModels.isEmpty()) {
         ModelProxy *modelProxy = m_deletingModels.dequeue();
-        IModel *modelRef = modelProxy->data();
-        /* Failed loading effect will have null IRenderEngine instance case  */
-        if (IRenderEngine *engine = projectRef->findRenderEngine(modelRef)) {
-            const QString &filePath = QString::fromStdString(findModelFilePath(modelRef));
-            if (!filePath.isEmpty()) {
-                m_filePath2EffectRefs.remove(filePath);
-                m_fileSystemWatcher.removePath(filePath);
-            }
-            removeTextureWatch(modelRef);
-            projectRef->removeModel(modelRef);
-            engine->release();
-            delete engine;
-        }
-        else {
-            projectRef->removeModel(modelRef);
-        }
+        deleteModelProxy(modelProxy, projectProxy);
         deletedModelProxies.append(modelProxy);
     }
     return deletedModelProxies;
+}
+
+void ApplicationContext::deleteAllModelProxies(ProjectProxy *projectProxy)
+{
+    foreach (ModelProxy *modelProxy, projectProxy->modelProxies()) {
+        projectProxy->internalDeleteModel(modelProxy, false);
+        deleteModelProxy(modelProxy, projectProxy);
+    }
 }
 
 void ApplicationContext::enqueueUploadingModel(ModelProxy *model, bool isProject)
@@ -498,5 +490,26 @@ void ApplicationContext::removeTextureWatch(const IModel *modelRef)
             m_fileSystemWatcher.removePath(filePath);
         }
         m_textureCacheRefs.remove(modelRef);
+    }
+}
+
+void ApplicationContext::deleteModelProxy(ModelProxy *modelProxy, ProjectProxy *projectProxyRef)
+{
+    IModel *modelRef = modelProxy->data();
+    /* Failed loading effect will have null IRenderEngine instance case  */
+    XMLProject *projectRef = projectProxyRef->projectInstanceRef();
+    if (IRenderEngine *engine = projectRef->findRenderEngine(modelRef)) {
+        const QString &filePath = QString::fromStdString(findModelFilePath(modelRef));
+        if (!filePath.isEmpty()) {
+            m_filePath2EffectRefs.remove(filePath);
+            m_fileSystemWatcher.removePath(filePath);
+        }
+        removeTextureWatch(modelRef);
+        projectRef->removeModel(modelRef);
+        engine->release();
+        delete engine;
+    }
+    else {
+        projectRef->removeModel(modelRef);
     }
 }

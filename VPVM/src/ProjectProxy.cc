@@ -530,10 +530,12 @@ void ProjectProxy::internalAddModel(ModelProxy *value, bool selected, bool isPro
     }
 }
 
-void ProjectProxy::internalDeleteModel(ModelProxy *value)
+void ProjectProxy::internalDeleteModel(ModelProxy *value, bool emitSignal)
 {
     if (value && m_instance2ModelProxyRefs.contains(value->data())) {
-        emit modelWillRemove(value);
+        if (emitSignal) {
+            emit modelWillRemove(value);
+        }
         value->releaseBindings();
         if (m_currentModelRef == value) {
             value->resetTargets();
@@ -545,7 +547,9 @@ void ProjectProxy::internalDeleteModel(ModelProxy *value)
         m_modelProxies.removeOne(value);
         m_instance2ModelProxyRefs.remove(value->data());
         m_uuid2ModelProxyRefs.remove(value->uuid());
-        emit modelDidRemove(value);
+        if (emitSignal) {
+            emit modelDidRemove(value);
+        }
     }
 }
 

@@ -232,7 +232,7 @@ public slots:
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
     void internalAddModel(ModelProxy *value, bool selected, bool isProject);
-    void internalDeleteModel(ModelProxy *value);
+    void internalDeleteModel(ModelProxy *value, bool emitSignal = true);
     void internalCreateAsync();
     void internalLoadAsync();
     void update(int flags);

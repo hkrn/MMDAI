@@ -1380,8 +1380,9 @@ void RenderTarget::releaseOpenGLResources()
 {
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
     disconnect(m_applicationContext.data(), &ApplicationContext::fileDidChange, this, &RenderTarget::handleFileChange);
-    m_currentGizmoRef = 0;
+    m_applicationContext->deleteAllModelProxies(m_projectProxyRef);
     m_applicationContext->release();
+    m_currentGizmoRef = 0;
     m_translationGizmo.reset();
     m_orientationGizmo.reset();
     m_modelDrawer.reset();
