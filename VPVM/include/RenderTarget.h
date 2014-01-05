@@ -226,7 +226,7 @@ private slots:
     void synchronizeMotionState();
     void synchronizeImplicitly();
     void initialize();
-    void release();
+    void releaseOpenGLResources();
     void enqueueUploadingModel(ModelProxy *model, bool isProject);
     void enqueueUploadingEffect(ModelProxy *model);
     void enqueueDeletingModel(ModelProxy *model);
@@ -259,7 +259,10 @@ private:
     EncodingTask *encodingTask() const;
     IGizmo *translationGizmo() const;
     IGizmo *orientationGizmo() const;
+    void resetOpenGLStates();
     void clearScene();
+    void drawVideoFrame();
+    void drawGrid();
     void drawShadowMap();
     void drawScene();
     void drawDebug();

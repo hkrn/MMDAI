@@ -1208,17 +1208,13 @@ void RenderTarget::draw()
     Q_ASSERT(m_applicationContext && window());
     if (m_projectProxyRef) {
         emit renderWillPerform();
-        window()->resetOpenGLState();
-        Scene::setRequiredOpenGLState();
+        resetOpenGLStates();
         drawShadowMap();
         updateViewport();
         clearScene();
-        if (m_videoSurface) {
-            m_videoSurface->initialize();
-            m_videoSurface->renderVideoFrame();
-        }
+        drawVideoFrame();
         m_applicationContext->saveDirtyEffects();
-        m_grid->draw(m_viewProjectionMatrix);
+        drawGrid();
         drawScene();
         drawDebug();
         drawModelBones();
@@ -1361,6 +1357,7 @@ void RenderTarget::initialize()
     if (!Scene::isInitialized()) {
         bool isCoreProfile = window()->format().profile() == QSurfaceFormat::CoreProfile;
         m_applicationContext.reset(new ApplicationContext(m_projectProxyRef, &m_config, isCoreProfile));
+        gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
         connect(m_applicationContext.data(), &ApplicationContext::fileDidChange, this, &RenderTarget::handleFileChange);
         Scene::initialize(m_applicationContext->sharedFunctionResolverInstance());
         m_graphicsDevice.reset(new GraphicsDevice());
@@ -1370,26 +1367,30 @@ void RenderTarget::initialize()
         m_grid->load(m_applicationContext->sharedFunctionResolverInstance());
         m_applicationContext->setViewportRegion(glm::ivec4(0, 0, window()->width(), window()->height()));
         connect(window()->openglContext(), &QOpenGLContext::aboutToBeDestroyed, m_projectProxyRef, &ProjectProxy::reset, Qt::DirectConnection);
-        connect(window()->openglContext(), &QOpenGLContext::aboutToBeDestroyed, this, &RenderTarget::release, Qt::DirectConnection);
+        connect(window()->openglContext(), &QOpenGLContext::aboutToBeDestroyed, this, &RenderTarget::releaseOpenGLResources, Qt::DirectConnection);
         toggleRunning(true);
         disconnect(window(), &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initialize);
         emit initializedChanged();
         m_renderTimer.start();
+        gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
     }
 }
 
-void RenderTarget::release()
+void RenderTarget::releaseOpenGLResources()
 {
+    gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
     disconnect(m_applicationContext.data(), &ApplicationContext::fileDidChange, this, &RenderTarget::handleFileChange);
     m_currentGizmoRef = 0;
     m_applicationContext->release();
     m_translationGizmo.reset();
     m_orientationGizmo.reset();
     m_modelDrawer.reset();
+    m_debugDrawer.reset();
+    m_grid.reset();
     if (m_videoSurface) {
         m_videoSurface->release();
     }
-    m_grid.reset();
+    gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
 }
 
 void RenderTarget::enqueueUploadingModel(ModelProxy *model, bool isProject)
@@ -1446,6 +1447,7 @@ void RenderTarget::performUploadingEnqueuedModels()
 {
     Q_ASSERT(window() && m_applicationContext);
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedModels);
+    gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
     QList<ApplicationContext::ModelProxyPair> succeededModelProxies, failedModelProxies;
     m_applicationContext->uploadEnqueuedModelProxies(m_projectProxyRef, succeededModelProxies, failedModelProxies);
     foreach (const ApplicationContext::ModelProxyPair &pair, succeededModelProxies) {
@@ -1462,12 +1464,14 @@ void RenderTarget::performUploadingEnqueuedModels()
         emit uploadingModelDidFail(modelProxy, pair.second);
     }
     emit enqueuedModelsDidUpload();
+    gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
 }
 
 void RenderTarget::performUploadingEnqueuedEffects()
 {
     Q_ASSERT(window() && m_applicationContext);
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedEffects);
+    gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
     QList<ModelProxy *> succeededEffects, failedEffects;
     m_applicationContext->uploadEnqueuedEffects(m_projectProxyRef, succeededEffects, failedEffects);
     foreach (ModelProxy *modelProxy, succeededEffects) {
@@ -1479,6 +1483,7 @@ void RenderTarget::performUploadingEnqueuedEffects()
         emit uploadingEffectDidFail(modelProxy);
     }
     emit enqueuedEffectsDidUpload();
+    gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
 }
 
 void RenderTarget::performDeletingEnqueuedModels()
@@ -1487,6 +1492,7 @@ void RenderTarget::performDeletingEnqueuedModels()
     if (QQuickWindow *win = window()) {
         disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::performDeletingEnqueuedModels);
     }
+    gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
     const QList<ModelProxy *> &deletedModelProxies = m_applicationContext->deleteEnqueuedModelProxies(m_projectProxyRef);
     foreach (ModelProxy *modelProxy, deletedModelProxies) {
         VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is scheduled to be delete from RenderTarget and will be deleted");
@@ -1495,12 +1501,14 @@ void RenderTarget::performDeletingEnqueuedModels()
         modelProxy->deleteLater();
     }
     emit enqueuedModelsDidDelete();
+    gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
 }
 
 void RenderTarget::performUpdatingLight()
 {
     Q_ASSERT(window() && m_applicationContext && m_projectProxyRef);
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUpdatingLight);
+    gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
     const LightRefObject *light = m_projectProxyRef->light();
     const qreal &shadowDistance = light->shadowDistance();
     const Vector3 &direction = light->data()->direction(),
@@ -1520,6 +1528,7 @@ void RenderTarget::performUpdatingLight()
     else {
         scene->setShadowMapRef(0);
     }
+    gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
 }
 
 void RenderTarget::disconnectProjectSignals()
@@ -1539,8 +1548,10 @@ void RenderTarget::releaseVideoSurface()
     disconnect(this, &RenderTarget::enqueuedModelsDidUpload, this, &RenderTarget::releaseVideoSurface);
     connect(this, &RenderTarget::videoSurfaceDidRelease, this, &RenderTarget::resetMediaPlayer);
     if (m_videoSurface) {
+        gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
         m_videoSurface->release();
         emit videoSurfaceDidRelease();
+        gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
     }
 }
 
@@ -1625,6 +1636,14 @@ IGizmo *RenderTarget::orientationGizmo() const
     return m_orientationGizmo.data();
 }
 
+void RenderTarget::resetOpenGLStates()
+{
+    gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
+    window()->resetOpenGLState();
+    Scene::setRequiredOpenGLState();
+    gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
+}
+
 void RenderTarget::clearScene()
 {
     const QColor &color = m_projectProxyRef ? m_projectProxyRef->screenColor() : QColor(Qt::white);
@@ -1632,10 +1651,29 @@ void RenderTarget::clearScene()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
+void RenderTarget::drawVideoFrame()
+{
+    if (m_videoSurface) {
+        gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
+        m_videoSurface->initialize();
+        m_videoSurface->renderVideoFrame();
+        gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
+    }
+}
+
+void RenderTarget::drawGrid()
+{
+    gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
+    m_grid->draw(m_viewProjectionMatrix);
+    gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
+}
+
 void RenderTarget::drawShadowMap()
 {
+    gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
     m_applicationContext->renderShadowMap();
     m_applicationContext->renderOffscreen();
+    gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
 }
 
 void RenderTarget::drawScene()
@@ -1648,6 +1686,7 @@ void RenderTarget::drawScene()
                                          enginesForPostProcess,
                                          nextPostEffects);
     const bool isProjectiveShadow = m_projectProxyRef->light()->shadowType() == LightRefObject::ProjectiveShadow;
+    gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
     for (int i = enginesForPostProcess.count() - 1; i >= 0; i--) {
         IRenderEngine *engine = enginesForPostProcess[i];
         engine->preparePostProcess();
@@ -1669,6 +1708,7 @@ void RenderTarget::drawScene()
         IEffect *const *nextPostEffect = nextPostEffects[engine];
         engine->performPostProcess(*nextPostEffect);
     }
+    gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
 }
 
 void RenderTarget::drawDebug()
@@ -1676,6 +1716,7 @@ void RenderTarget::drawDebug()
     Q_ASSERT(m_projectProxyRef);
     WorldProxy *worldProxy = m_projectProxyRef->world();
     if (worldProxy->isDebugEnabled() && worldProxy->simulationType() != WorldProxy::DisableSimulation) {
+        gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
         if (!m_debugDrawer) {
             m_debugDrawer.reset(new DebugDrawer());
             m_debugDrawer->initialize();
@@ -1693,6 +1734,7 @@ void RenderTarget::drawDebug()
         }
         worldProxy->debugDraw();
         m_debugDrawer->flush();
+        gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
     }
 }
 
@@ -1701,6 +1743,7 @@ void RenderTarget::drawModelBones()
     Q_ASSERT(m_projectProxyRef);
     ModelProxy *currentModelRef = m_projectProxyRef->currentModel();
     if (!m_playing && m_editMode == SelectMode && currentModelRef && currentModelRef->isVisible()) {
+        gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
         if (!m_modelDrawer) {
             m_modelDrawer.reset(new ModelDrawer());
             connect(m_projectProxyRef, &ProjectProxy::currentTimeIndexChanged, m_modelDrawer.data(), &RenderTarget::ModelDrawer::markDirty);
@@ -1712,18 +1755,22 @@ void RenderTarget::drawModelBones()
         }
         m_modelDrawer->setModelProxyRef(currentModelRef);
         m_modelDrawer->draw();
+        gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
     }
 }
 
 void RenderTarget::drawCurrentGizmo()
 {
     if (!m_playing && m_currentGizmoRef) {
+        gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
         m_currentGizmoRef->Draw();
+        gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
     }
 }
 
 void RenderTarget::drawOffscreen(QOpenGLFramebufferObject *fbo)
 {
+    gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
     m_applicationContext->setViewportRegion(glm::ivec4(0, 0, fbo->width(), fbo->height()));
     Scene::setRequiredOpenGLState();
     drawShadowMap();
@@ -1734,6 +1781,7 @@ void RenderTarget::drawOffscreen(QOpenGLFramebufferObject *fbo)
     drawScene();
     m_applicationContext->setViewportRegion(glm::ivec4(m_viewport.x(), m_viewport.y(), m_viewport.width(), m_viewport.height()));
     QOpenGLFramebufferObject::bindDefault();
+    gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
 }
 
 void RenderTarget::updateViewport()
@@ -1742,6 +1790,7 @@ void RenderTarget::updateViewport()
     int w = m_viewport.width(), h = m_viewport.height();
     if (isDirty()) {
         glm::mat4 cameraWorld, cameraView, cameraProjection;
+        gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext->sharedFunctionResolverInstance());
         m_applicationContext->setViewportRegion(glm::ivec4(m_viewport.x(), m_viewport.y(), w, h));
         m_applicationContext->updateCameraMatrices();
         m_applicationContext->getCameraMatrices(cameraWorld, cameraView, cameraProjection);
@@ -1762,6 +1811,7 @@ void RenderTarget::updateViewport()
         emit viewMatrixChanged();
         emit projectionMatrixChanged();
         setDirty(false);
+        gl::popAnnotationGroup(m_applicationContext->sharedFunctionResolverInstance());
     }
     glViewport(m_viewport.x(), m_viewport.y(), w, h);
 }

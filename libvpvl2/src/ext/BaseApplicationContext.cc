@@ -584,7 +584,7 @@ void BaseApplicationContext::release()
 {
     pushAnnotationGroup("BaseApplicationContext#release", sharedFunctionResolverInstance());
     TwDeleteAllBars();
-    m_shadowMap.reset();
+    releaseShadowMap();
     m_currentModelRef = 0;
 #ifdef VPVl2_ENABLE_NVIDIA_CG
     m_offscreenTextures.releaseAll();
@@ -1389,6 +1389,7 @@ void BaseApplicationContext::createEffectParameterUIWidgets(IEffect *effectRef)
 void BaseApplicationContext::renderEffectParameterUIWidgets()
 {
     if (m_effectRef2ParameterUIs.count() > 0) {
+        pushAnnotationGroup("BaseApplicationContext#renderEffectParameterUIWidgets", sharedFunctionResolverInstance());
         const int numDirtyEffects = m_dirtyEffects.count();
         for (int i = 0; i < numDirtyEffects; i++) {
             IEffect *effectRef = m_dirtyEffects[i];
@@ -1396,6 +1397,7 @@ void BaseApplicationContext::renderEffectParameterUIWidgets()
             createEffectParameterUIWidgets(effectRef);
         }
         TwDraw();
+        popAnnotationGroup(sharedFunctionResolverInstance());
     }
 }
 
@@ -1599,31 +1601,37 @@ void BaseApplicationContext::setViewportRegion(const glm::ivec4 &viewport)
 
 void BaseApplicationContext::createShadowMap(const Vector3 &size)
 {
-    const FunctionResolver *resolver = sharedFunctionResolverInstance();
-    const char *kRequiredExtensions[] = {
+    static const char *kRequiredExtensions[] = {
         "ARB_texture_rg",
         "ARB_framebuffer_object",
         "ARB_depth_buffer_float",
         0
     };
+    const FunctionResolver *resolver = sharedFunctionResolverInstance();
     bool isSelfShadowSupported =
             resolver->query(IApplicationContext::FunctionResolver::kQueryVersion) >= gl::makeVersion(3, 2) ||
             hasAllExtensions(kRequiredExtensions, resolver);
-    if (isSelfShadowSupported && !size.isZero() &&
-            !(m_shadowMap.get() && (m_shadowMap->size() - size).fuzzyZero())) {
-        pushAnnotationGroup("BaseApplicationContext#createShadowMap", sharedFunctionResolverInstance());
-        m_shadowMap.reset(new SimpleShadowMap(resolver, vsize(size.x()), vsize(size.y())));
-        m_shadowMap->create();
-        popAnnotationGroup(sharedFunctionResolverInstance());
+    if (isSelfShadowSupported) {
+        bool isSame = m_shadowMap.get() && (m_shadowMap->size() - size).fuzzyZero();
+        if (!size.isZero() && !isSame) {
+            pushAnnotationGroup("BaseApplicationContext#createShadowMap", sharedFunctionResolverInstance());
+            m_shadowMap.reset(new SimpleShadowMap(resolver, vsize(size.x()), vsize(size.y())));
+            m_shadowMap->create();
+            popAnnotationGroup(sharedFunctionResolverInstance());
+            m_sceneRef->setShadowMapRef(m_shadowMap.get());
+            VPVL2_VLOG(1, "data=" << m_shadowMap->textureRef()->data());
+        }
     }
-    m_sceneRef->setShadowMapRef(m_shadowMap.get());
+    else {
+        m_sceneRef->setShadowMapRef(0);
+    }
 }
 
 void BaseApplicationContext::releaseShadowMap()
 {
     pushAnnotationGroup("BaseApplicationContext#releaseShadowMap", sharedFunctionResolverInstance());
-    m_shadowMap.reset();
     m_sceneRef->setShadowMapRef(0);
+    m_shadowMap.reset();
     popAnnotationGroup(sharedFunctionResolverInstance());
 }
 
