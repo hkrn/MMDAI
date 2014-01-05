@@ -354,7 +354,7 @@ bool BaseApplicationContext::ModelContext::storeTexture(const std::string &key, 
     VPVL2_DCHECK(!key.empty());
     bool ok = textureRef != 0;
     if (textureRef) {
-        pushAnnotationGroup("BaseApplicationContext::ModelContext#cacheTexture", m_applicationContextRef->sharedFunctionResolverInstance());
+        pushAnnotationGroup("BaseApplicationContext::ModelContext#cacheTexture", m_applicationContextRef);
         textureRef->bind();
         textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAG_FILTER, int(BaseTexture::kGL_LINEAR));
         textureRef->setParameter(BaseTexture::kGL_TEXTURE_MIN_FILTER, int(BaseTexture::kGL_LINEAR));
@@ -368,7 +368,7 @@ bool BaseApplicationContext::ModelContext::storeTexture(const std::string &key, 
         textureRef->unbind();
         annotateObject(BaseTexture::kGL_TEXTURE, textureRef->data(), ("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
         addTextureCache(key, textureRef);
-        popAnnotationGroup(m_applicationContextRef->sharedFunctionResolverInstance());
+        popAnnotationGroup(m_applicationContextRef);
     }
     return ok;
 }
@@ -582,7 +582,7 @@ BaseApplicationContext::~BaseApplicationContext()
 
 void BaseApplicationContext::release()
 {
-    pushAnnotationGroup("BaseApplicationContext#release", sharedFunctionResolverInstance());
+    pushAnnotationGroup("BaseApplicationContext#release", this);
     TwDeleteAllBars();
     releaseShadowMap();
     m_currentModelRef = 0;
@@ -599,7 +599,7 @@ void BaseApplicationContext::release()
     m_effectRef2Paths.clear();
     m_effectRef2ParameterUIs.clear();
     m_effectCaches.releaseAll();
-    popAnnotationGroup(sharedFunctionResolverInstance());
+    popAnnotationGroup(this);
 }
 
 bool BaseApplicationContext::uploadTexture(const IString *name, int flags, void *userData, ITexture *&texturePtr)
@@ -1131,7 +1131,7 @@ FrameBufferObject *BaseApplicationContext::findFrameBufferObjectByRenderTarget(c
 
 void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IString *directoryRef)
 {
-    pushAnnotationGroup("BaseApplicationContext#parseOffscreenSemantic", sharedFunctionResolverInstance());
+    pushAnnotationGroup("BaseApplicationContext#parseOffscreenSemantic", this);
 #if defined(VPVL2_LINK_NVFX)
     (void) directoryRef;
     if (effectRef) {
@@ -1225,12 +1225,12 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
         }
     }
 #endif
-    popAnnotationGroup(sharedFunctionResolverInstance());
+    popAnnotationGroup(this);
 }
 
 void BaseApplicationContext::renderOffscreen()
 {
-    pushAnnotationGroup("BaseApplicationContext#renderOffscreen", sharedFunctionResolverInstance());
+    pushAnnotationGroup("BaseApplicationContext#renderOffscreen", this);
 #if defined(VPVL2_LINK_NVFX)
     Array<IEffect::Pass *> passes;
     Array<IRenderEngine *> engines;
@@ -1352,7 +1352,7 @@ void BaseApplicationContext::renderOffscreen()
         engine->setEffect(*effect, IEffect::kAutoDetection, 0);
     }
 #endif
-    popAnnotationGroup(sharedFunctionResolverInstance());
+    popAnnotationGroup(this);
 }
 
 void BaseApplicationContext::createEffectParameterUIWidgets(IEffect *effectRef)
@@ -1389,7 +1389,7 @@ void BaseApplicationContext::createEffectParameterUIWidgets(IEffect *effectRef)
 void BaseApplicationContext::renderEffectParameterUIWidgets()
 {
     if (m_effectRef2ParameterUIs.count() > 0) {
-        pushAnnotationGroup("BaseApplicationContext#renderEffectParameterUIWidgets", sharedFunctionResolverInstance());
+        pushAnnotationGroup("BaseApplicationContext#renderEffectParameterUIWidgets", this);
         const int numDirtyEffects = m_dirtyEffects.count();
         for (int i = 0; i < numDirtyEffects; i++) {
             IEffect *effectRef = m_dirtyEffects[i];
@@ -1397,7 +1397,7 @@ void BaseApplicationContext::renderEffectParameterUIWidgets()
             createEffectParameterUIWidgets(effectRef);
         }
         TwDraw();
-        popAnnotationGroup(sharedFunctionResolverInstance());
+        popAnnotationGroup(this);
     }
 }
 
@@ -1415,7 +1415,7 @@ void BaseApplicationContext::saveDirtyEffects()
 
 IEffect *BaseApplicationContext::createEffectRef(const std::string &path)
 {
-    pushAnnotationGroup("BaseApplicationContext#createEffectRef", sharedFunctionResolverInstance());
+    pushAnnotationGroup("BaseApplicationContext#createEffectRef", this);
     IEffect *effectRef = 0;
     const HashString key(path.c_str());
     if (IEffect *const *value = m_effectCaches.find(key)) {
@@ -1447,7 +1447,7 @@ IEffect *BaseApplicationContext::createEffectRef(const std::string &path)
             VPVL2_LOG(WARNING, "Cannot compile an effect: " << path);
         }
     }
-    popAnnotationGroup(sharedFunctionResolverInstance());
+    popAnnotationGroup(this);
     return effectRef;
 }
 
@@ -1614,10 +1614,10 @@ void BaseApplicationContext::createShadowMap(const Vector3 &size)
     if (isSelfShadowSupported) {
         bool isSame = m_shadowMap.get() && (m_shadowMap->size() - size).fuzzyZero();
         if (!size.isZero() && !isSame) {
-            pushAnnotationGroup("BaseApplicationContext#createShadowMap", sharedFunctionResolverInstance());
+            pushAnnotationGroup("BaseApplicationContext#createShadowMap", this);
             m_shadowMap.reset(new SimpleShadowMap(resolver, vsize(size.x()), vsize(size.y())));
             m_shadowMap->create();
-            popAnnotationGroup(sharedFunctionResolverInstance());
+            popAnnotationGroup(this);
             m_sceneRef->setShadowMapRef(m_shadowMap.get());
             VPVL2_VLOG(1, "data=" << m_shadowMap->textureRef()->data());
         }
@@ -1629,16 +1629,16 @@ void BaseApplicationContext::createShadowMap(const Vector3 &size)
 
 void BaseApplicationContext::releaseShadowMap()
 {
-    pushAnnotationGroup("BaseApplicationContext#releaseShadowMap", sharedFunctionResolverInstance());
+    pushAnnotationGroup("BaseApplicationContext#releaseShadowMap", this);
     m_sceneRef->setShadowMapRef(0);
     m_shadowMap.reset();
-    popAnnotationGroup(sharedFunctionResolverInstance());
+    popAnnotationGroup(this);
 }
 
 void BaseApplicationContext::renderShadowMap()
 {
     if (SimpleShadowMap *shadowMapRef = m_shadowMap.get()) {
-        pushAnnotationGroup("BaseApplicationContext#renderShadowMap", sharedFunctionResolverInstance());
+        pushAnnotationGroup("BaseApplicationContext#renderShadowMap", this);
         shadowMapRef->bind();
         const Vector3 &size = shadowMapRef->size();
         viewport(0, 0, GLsizei(size.x()), GLsizei(size.y()));
@@ -1651,7 +1651,7 @@ void BaseApplicationContext::renderShadowMap()
             engine->renderZPlot();
         }
         shadowMapRef->unbind();
-        popAnnotationGroup(sharedFunctionResolverInstance());
+        popAnnotationGroup(this);
     }
 }
 

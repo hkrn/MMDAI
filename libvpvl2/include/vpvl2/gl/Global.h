@@ -191,6 +191,11 @@ static inline void pushAnnotationGroup(const char * message, const IApplicationC
     }
 }
 
+static inline void pushAnnotationGroup(const char * message, const IApplicationContext *context)
+{
+    pushAnnotationGroup(message, context->sharedFunctionResolverInstance());
+}
+
 static inline void popAnnotationGroup(const IApplicationContext::FunctionResolver *resolver)
 {
     if (resolver->hasExtension("KHR_debug")) {
@@ -201,6 +206,11 @@ static inline void popAnnotationGroup(const IApplicationContext::FunctionResolve
         typedef void (GLAPIENTRY * PFNGLPOPGROUPMARKEREXTPROC) (void);
         reinterpret_cast<PFNGLPOPGROUPMARKEREXTPROC>(resolver->resolveSymbol("glPopGroupMarkerEXT"))();
     }
+}
+
+static inline void popAnnotationGroup(const IApplicationContext *context)
+{
+    popAnnotationGroup(context->sharedFunctionResolverInstance());
 }
 
 static inline void annotateObject(GLenum identifier, GLuint name, const char *label, const IApplicationContext::FunctionResolver *resolver)
@@ -233,7 +243,9 @@ static inline void annotateString(const char *message, const IApplicationContext
 
 #else
 
+static inline void pushAnnotationGroup(const char * /* message */, const IApplicationContext * /* context */) {}
 static inline void pushAnnotationGroup(const char * /* message */, const IApplicationContext::FunctionResolver * /* resolver */) {}
+static inline void popAnnotationGroup(const IApplicationContext * /* context */) {}
 static inline void popAnnotationGroup(const IApplicationContext::FunctionResolver * /* resolver */) {}
 static inline void annotateObject(GLenum /* identifier */, GLuint /* name */, const char * /* label */, const IApplicationContext::FunctionResolver * /* resolver */) {}
 static inline void annotateString(const char * /* message */, const IApplicationContext::FunctionResolver * /* resolver */) {}
