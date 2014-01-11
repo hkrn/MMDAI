@@ -155,11 +155,7 @@ void registerQmlTypes()
 int main(int argc, char *argv[])
 {
     QApplication application(argc, argv);
-    application.setApplicationDisplayName("VPVM");
-    application.setApplicationName("VPVM");
-    application.setApplicationVersion("0.33.3");
-    application.setOrganizationName("MMDAI Project");
-    application.setOrganizationDomain("mmdai.github.com");
+    setApplicationDescription("VPVM", application);
     QTranslator translator;
     translator.load(QLocale::system(), "VPVM", ".", Util::resourcePath("translations"), ".qm");
     application.installTranslator(&translator);
@@ -190,20 +186,7 @@ int main(int argc, char *argv[])
 #else
     engine.load(Util::resourcePath("qml/main.qml"));
 #endif
-
-    QQuickWindow *window = qobject_cast<QQuickWindow *>(engine.rootObjects().value(0));
-    Q_ASSERT(window);
-    QSurfaceFormat format = window->format();
-    format.setSamples(applicationPreference.samples());
-#if 0
-    format.setVersion(3, 2);
-    format.setProfile(QSurfaceFormat::CoreProfile);
-#endif
-    window->setFormat(format);
-#ifdef Q_OS_MACX
-    window->setFlags(window->flags() | Qt::WindowFullscreenButtonHint);
-#endif
-    window->show();
+    displayApplicationWindow(engine.rootObjects().value(0), applicationPreference.samples());
 
     int result = application.exec();
     g_loggingThread.stop();
