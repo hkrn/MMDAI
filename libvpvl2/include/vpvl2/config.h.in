@@ -177,7 +177,7 @@
     VPVL2_VERSION_MINOR)
 
 #define VPVL2_VERSION_STRING "@VPVL2_VERSION@"
-#define VPVL2_COMMIT_REVISION "$Id$"
+#define VPVL2_COMMIT_REVISION "@VPVL2_COMMIT_REVISION@"
 
 /* _MSC_VER < 1300 (= Visual Studio 6) doesn't support */
 #if (defined(_MSC_VER) && _MSC_VER < 1600)

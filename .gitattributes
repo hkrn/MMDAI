@@ -1,2 +1,2 @@
-config.h ident
-config.h.in ident
+CMakeLists.txt ident
+

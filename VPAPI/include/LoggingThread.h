@@ -97,11 +97,10 @@ public:
 
 private:
     void run() {
-        static const QString commitRevision = QString(vpvl2::libraryCommitRevisionString()).split(" ").at(1);
         QStringList stringList;
         stringList.reserve(4);
         qInstallMessageHandler(&LoggingThread::delegateMessage);
-        qDebug("libvpvl2: version=%s commit=%s", vpvl2::libraryVersionString(), qPrintable(commitRevision));
+        qDebug("libvpvl2: version=%s commit=%s", vpvl2::libraryVersionString(), vpvl2::libraryCommitRevisionString());
         while (m_active) {
             QMutexLocker locker(&m_mutex); Q_UNUSED(locker);
             m_cond.wait(&m_mutex);

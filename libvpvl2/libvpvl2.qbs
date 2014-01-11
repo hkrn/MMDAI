@@ -157,12 +157,17 @@ Product {
                         content = content.replace(regexp, "#define " + value)
                     }
                 }
-                var versionArray = versionString.split(/\./)
+                var file = new TextFile(product.sourceDirectory + "/CMakeLists.txt", TextFile.ReadOnly), cmakeVariables = {}
+                while (!file.atEof()) {
+                    var line = file.readLine()
+                    if (line.match(/(VPVL2_COMMIT_REVISION)_ID\s+"\$Id:\s+(\w+)\s+\$"/) ||
+                            line.match(/(VPVL2_VERSION_\w+)\s+(\d+)/)) {
+                        cmakeVariables[RegExp.$1] = RegExp.$2
+                    }
+                }
                 content = content.replace(/#cmakedefine\s+(\w+)/gm, "/* #undef $1 */")
-                content = content.replace(/@VPVL2_VERSION_MAJOR@/gm, versionArray[0])
-                content = content.replace(/@VPVL2_VERSION_COMPAT@/gm, versionArray[1])
-                content = content.replace(/@VPVL2_VERSION_MINOR@/gm, versionArray[2])
                 content = content.replace(/@VPVL2_VERSION@/gm, versionString)
+                content = content.replace(/@(VPVL2_\w+)@/gm, function(match, p1) { return cmakeVariables[p1] })
                 outputFile.truncate()
                 outputFile.write(content)
                 outputFile.close()
