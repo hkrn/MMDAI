@@ -72,6 +72,9 @@ public:
 public slots:
     void markDirty();
 
+signals:
+    void modelDidMarkDirty();
+
 private:
     struct Vertex {
         vpvl2::Vector3 position;

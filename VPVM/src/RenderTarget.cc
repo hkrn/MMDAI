@@ -1222,6 +1222,7 @@ void RenderTarget::performUploadingEnqueuedModels()
     foreach (const ApplicationContext::ModelProxyPair &pair, succeededModelProxies) {
         ModelProxy *modelProxy = pair.first;
         VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded" << (pair.second ? " from the project." : "."));
+        connect(modelProxy, &ModelProxy::targetBonesDidCommitTransform, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateModelBones);
@@ -1518,6 +1519,7 @@ void RenderTarget::drawModelBones()
             connect(m_projectProxyRef, &ProjectProxy::currentTimeIndexChanged, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
             connect(m_projectProxyRef, &ProjectProxy::undoDidPerform, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
             connect(m_projectProxyRef, &ProjectProxy::redoDidPerform, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
+            connect(m_modelDrawer.data(), &SkeletonDrawer::modelDidMarkDirty, this, &RenderTarget::render);
             m_modelDrawer->initialize();
             m_modelDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
             m_modelDrawer->setModelProxyRef(currentModelRef);

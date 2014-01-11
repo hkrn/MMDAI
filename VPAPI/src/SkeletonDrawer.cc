@@ -195,6 +195,7 @@ void SkeletonDrawer::removeModelRef(const ModelProxy *modelProxyRef)
 void SkeletonDrawer::markDirty()
 {
     m_dirty = true;
+    emit modelDidMarkDirty();
 }
 
 const float SkeletonDrawer::kOpacity = 0.25;
