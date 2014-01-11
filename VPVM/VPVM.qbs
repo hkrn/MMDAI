@@ -68,7 +68,6 @@ Application {
         "../glm-src",
         "../alure-src/include",
         "../libgizmo-src/inc",
-        "../AntTweakBar-src/include",
         "../openal-soft-src/" + libraryInstallDirectory + "/include"
     ]
     readonly property var commonFiles: [
