@@ -1010,8 +1010,10 @@ void ProjectProxy::deleteMotion(MotionProxy *value, bool fromDestructor)
             modelProxy->setChildMotion(0, !fromDestructor);
             value->data()->setParentModelRef(0);
         }
-        m_undoGroup->removeStack(m_motion2UndoStacks.value(value));
+        QUndoStack *stack = m_motion2UndoStacks.value(value);
+        m_undoGroup->removeStack(stack);
         m_motion2UndoStacks.remove(value);
+        stack->clear();
         m_motionProxies.removeOne(value);
         m_instance2MotionProxyRefs.remove(value->data());
         m_uuid2MotionProxyRefs.remove(value->uuid());
@@ -1323,15 +1325,17 @@ void ProjectProxy::release(bool fromDestructor)
 {
     VPVL2_VLOG(1, "The project will be released");
     reset();
-    m_undoGroup.reset(new QUndoGroup());
     internalDeleteAllMotions(fromDestructor);
+    m_undoGroup.reset(fromDestructor ? 0 : new QUndoGroup());
     /* copy motion proxies because m_modelProxies will be mutated using removeOne */
     QList<ModelProxy *> modelProxies = m_modelProxies;
     foreach (ModelProxy *modelProxy, modelProxies) {
         internalDeleteModel(modelProxy);
     }
     m_project->setWorldRef(0);
-    connect(m_undoGroup.data(), &QUndoGroup::canUndoChanged, this, &ProjectProxy::canUndoChanged);
-    connect(m_undoGroup.data(), &QUndoGroup::canRedoChanged, this, &ProjectProxy::canRedoChanged);
+    if (!fromDestructor) {
+        connect(m_undoGroup.data(), &QUndoGroup::canUndoChanged, this, &ProjectProxy::canUndoChanged);
+        connect(m_undoGroup.data(), &QUndoGroup::canRedoChanged, this, &ProjectProxy::canRedoChanged);
+    }
     emit projectDidRelease();
 }
