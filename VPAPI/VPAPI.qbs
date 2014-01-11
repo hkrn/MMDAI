@@ -37,53 +37,33 @@
 
 import qbs 1.0
 
-Application {
+StaticLibrary {
     id: VPAPI
     readonly property string libraryBuildDirectory: "build-" + qbs.buildVariant.toLowerCase()
     readonly property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
-    readonly property var commonFiles: [
+    name: "VPAPI"
+    files: [
         "src/*.cc",
         "include/*.h"
     ]
-    readonly property var commonIncludePaths: [
+    cpp.includePaths: [
         "include",
         "../libvpvl2/include",
         "../libvpvl2/" + libraryBuildDirectory + "/include",
         "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
         "../glm-src"
     ]
-    readonly property var requiredSubmodules: [
-        "core", "gui", "widgets", "qml", "quick", "multimedia", "network"
-    ]
-    type: "staticlibrary"
-    name: "VPAPI"
-    files: commonFiles
-    cpp.includePaths: commonIncludePaths
-    cpp.defines: {
-        var defines = [ "VPVL2_ENABLE_QT", "TW_STATIC", "TW_NO_LIB_PRAGMA" ]
-        if (qbs.enableDebugCode && qbs.toolchain.contains("msvc")) {
-            defines.push("BUILD_SHARED_LIBS")
-        }
-        return defines
-    }
+    cpp.defines: [ "VPVL2_ENABLE_QT", "TW_STATIC", "TW_NO_LIB_PRAGMA" ]
     Properties {
         condition: qbs.targetOS.contains("osx")
         cpp.minimumOsxVersion: "10.6"
     }
     Properties {
-        condition: qbs.targetOS.contains("unix") && !qbs.targetOS.contains("osx")
-        cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "Xext", "X11", "tbb", "z", "GL"])
-        cpp.rpaths: [ "$ORIGIN/lib", "$ORIGIN" ]
-        cpp.positionIndependentCode: true
-    }
-    Properties {
         condition: qbs.toolchain.contains("msvc")
         consoleApplication: false
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
-        cpp.includePaths: commonIncludePaths.concat([ "../alure-src/include/AL", "../openal-soft-src/" + libraryInstallDirectory + "/include/AL" ])
-        cpp.dynamicLibraries: commonLibraries.concat([ "alure32-static", "OpenAL32", "libGLESv2" + debugLibrarySuffix, "libEGL" + debugLibrarySuffix, "zlibstatic" + debugLibrarySuffix, "user32" ])
     }
     Depends { name: "cpp" }
     Depends { name: "vpvl2" }
-    Depends { name: "Qt"; submodules: requiredSubmodules }
+    Depends { name: "Qt"; submodules: [ "core", "gui", "qml", "quick" ] }
 }

@@ -38,11 +38,11 @@
 #include "vpvl2/config.h" /* vpvl2::libraryVersionString() and vpvl2::libraryCommitRevisionString() */
 #include "vpvl2/extensions/BaseApplicationContext.h"
 
-#include "Common.h"
 #include <QtQuick>
 #include <QApplication>
 #include <QCommandLineParser>
 
+#include "Common.h"
 #include "ALAudioContext.h"
 #include "ALAudioEngine.h"
 #include "BoneKeyframeRefObject.h"
@@ -105,24 +105,6 @@ private:
     const QCommandLineParser *m_parser;
     QCommandLineOption m_json;
 };
-
-static void prepareRegal()
-{
-    static const QByteArray kRegalEnableVariables[] = {
-        "REGAL_EMULATION",
-        0
-    };
-    static const QByteArray kRegalDisableVariables[] = {
-        "REGAL_NO_EMULATION",
-        0
-    };
-    for (int i = 0; !kRegalEnableVariables[i].isNull(); i++) {
-        qputenv(kRegalEnableVariables[i], "1");
-    }
-    for (int i = 0; !kRegalDisableVariables[i].isNull(); i++) {
-        qputenv(kRegalEnableVariables[i], "0");
-    }
-}
 
 static QObject *createALAudioContext(QQmlEngine *engine, QJSEngine *scriptEngine)
 {
