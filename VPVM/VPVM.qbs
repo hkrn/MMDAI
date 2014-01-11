@@ -67,6 +67,7 @@ Application {
         "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
         "../glm-src",
         "../alure-src/include",
+        "../tbb-src/include",
         "../libgizmo-src/inc",
         "../openal-soft-src/" + libraryInstallDirectory + "/include"
     ]

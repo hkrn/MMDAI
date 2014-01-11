@@ -51,6 +51,7 @@ StaticLibrary {
         "include",
         "../libvpvl2/include",
         "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
+        "../tbb-src/include",
         "../glm-src"
     ]
     cpp.defines: [ "VPVL2_ENABLE_QT", "TW_STATIC", "TW_NO_LIB_PRAGMA" ]
