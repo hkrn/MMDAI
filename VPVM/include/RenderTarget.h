@@ -71,6 +71,7 @@ class QOpenGLShaderProgram;
 class QOpenGLVertexArrayObject;
 class QTemporaryDir;
 class ProjectProxy;
+class SharingService;
 class SkeletonDrawer;
 class VideoSurface;
 class IGizmo;
@@ -168,10 +169,11 @@ public:
 public slots:
     Q_INVOKABLE void update();
     Q_INVOKABLE void render();
-    Q_INVOKABLE void exportImage(const QUrl &fileUrl, const QSize &size);
+    Q_INVOKABLE void exportImage(const QUrl &fileUrl, const QSize &size, bool checkFileUrl = true);
     Q_INVOKABLE void exportVideo(const QUrl &fileUrl, const QSize &size, const QString &videoType, const QString &frameImageType);
     Q_INVOKABLE void cancelExportingVideo();
     Q_INVOKABLE void loadJson(const QUrl &fileUrl);
+    Q_INVOKABLE void share(const QString &serviceName);
     void resetCurrentTimeIndex();
     void resetLastTimeIndex();
 
@@ -207,6 +209,7 @@ signals:
     void renderWillPerform();
     void renderDidPerform();
     void videoFrameDidSave(const qreal &current, const qreal &duration);
+    void offscreenImageDidExport();
     void encodeDidBegin();
     void encodeDidProceed(quint64 proceed, quint64 estimated);
     void encodeDidFinish(bool isNormalExit);
@@ -252,6 +255,7 @@ private slots:
     void handleFileChange(const QString &filePath);
     void consumeFileChangeQueue();
     void toggleGridVisible();
+    void handleShare();
 
 private:
     class DebugDrawer;
@@ -282,6 +286,7 @@ private:
     mutable QScopedPointer<QMediaPlayer> m_mediaPlayer;
     QScopedPointer<Grid> m_grid;
     QScopedPointer<GraphicsDevice> m_graphicsDevice;
+    QScopedPointer<SharingService> m_sharingService;
     QElapsedTimer m_renderTimer;
     QQueue<QString> m_fileChangeQueue;
     QMutex m_fileChangeQueueMutex;

@@ -72,6 +72,8 @@
 #include "WorldProxy.h"
 #include "VideoSurface.h"
 
+#include "SharingService.h"
+
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::qt;
@@ -745,10 +747,10 @@ void RenderTarget::render()
     connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::synchronizeExplicitly, Qt::DirectConnection);
 }
 
-void RenderTarget::exportImage(const QUrl &fileUrl, const QSize &size)
+void RenderTarget::exportImage(const QUrl &fileUrl, const QSize &size, bool checkFileUrl)
 {
     Q_ASSERT(window());
-    if (fileUrl.isEmpty() || !fileUrl.isValid()) {
+    if (checkFileUrl && (fileUrl.isEmpty() || !fileUrl.isValid())) {
         /* do nothing if url is empty or invalid */
         VPVL2_VLOG(2, "fileUrl is empty or invalid: url=" << fileUrl.toString().toStdString());
         return;
@@ -865,6 +867,14 @@ void RenderTarget::loadJson(const QUrl &fileUrl)
     }
 }
 
+void RenderTarget::share(const QString &serviceName)
+{
+    exportImage(QUrl(), QSize(), false);
+    connect(this, &RenderTarget::offscreenImageDidExport, this, &RenderTarget::handleShare);
+    m_sharingService.reset(new SharingService());
+    m_sharingService->setServiceName(serviceName);
+}
+
 void RenderTarget::resetCurrentTimeIndex()
 {
     m_currentTimeIndex = 0;
@@ -971,6 +981,13 @@ void RenderTarget::toggleGridVisible()
     m_grid->setVisible(m_projectProxyRef->isGridVisible());
 }
 
+void RenderTarget::handleShare()
+{
+    disconnect(this, &RenderTarget::offscreenImageDidExport, this, &RenderTarget::handleShare);
+    m_sharingService->showPostForm(m_exportImage);
+    m_exportImage.save("/Users/hkrn/test.bmp");
+}
+
 void RenderTarget::draw()
 {
     Q_ASSERT(m_applicationContext && window());
@@ -1001,10 +1018,13 @@ void RenderTarget::drawOffscreenForImage()
 {
     Q_ASSERT(window());
     disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForImage);
-    connect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::writeExportedImage);
+    if (m_exportLocation.isValid()) {
+        connect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::writeExportedImage);
+    }
     QOpenGLFramebufferObject fbo(m_exportSize, ApplicationContext::framebufferObjectFormat(window()));
     drawOffscreen(&fbo);
     m_exportImage = fbo.toImage();
+    emit offscreenImageDidExport();
 }
 
 void RenderTarget::drawOffscreenForVideo()

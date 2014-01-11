@@ -210,6 +210,9 @@ Item {
     function setRange(from, to) {
         renderTargetAnimation.setRange(from, to)
     }
+    function share(serviceName) {
+        renderTarget.share(serviceName)
+    }
 
     states: [
         State {

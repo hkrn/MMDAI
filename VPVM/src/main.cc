@@ -66,6 +66,7 @@
 #include "Preference.h"
 #include "RenderTarget.h"
 #include "ProjectProxy.h"
+#include "SharingService.h"
 #include "UIAuxHelper.h"
 #include "Util.h"
 #include "WorldProxy.h"
@@ -179,6 +180,7 @@ int main(int argc, char *argv[])
     QQmlContext *rootContext = engine.rootContext();
     rootContext->setContextProperty("applicationPreference", &applicationPreference);
     rootContext->setContextProperty("applicationBootstrapOption", &applicationBootstrapOption);
+    rootContext->setContextProperty("applicationShareableServiceNames", SharingService::availableServiceNames());
     g_loggingThread.setDirectory(loggingDirectory);
     QThreadPool::globalInstance()->start(&g_loggingThread);
 #ifdef QT_NO_DEBUG

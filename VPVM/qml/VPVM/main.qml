@@ -169,6 +169,7 @@ ApplicationWindow {
         id: newMotionAction
         tooltip: qsTr("Create a new motion to the current model. If the model is bound to the exist motion, it will be deleted and undone.")
         text: qsTr("New Motion")
+        // FIXME: implement this
     }
     FileDialog {
         id: loadProjectDialog
@@ -839,14 +840,14 @@ ApplicationWindow {
             MenuItem { action: newMotionAction }
             MenuSeparator {}
             MenuItem { action: loadProjectAction }
+            MenuItem { action: loadPoseAction }
+            MenuItem { action: loadAudioAction }
+            MenuItem { action: loadVideoAction }
+            MenuSeparator {}
             MenuItem { action: addModelAction }
             MenuItem { action: addEffectAction; visible: applicationPreference.effectEnabled }
             MenuItem { action: setModelMotionAction }
             MenuItem { action: setCameraMotionAction }
-            MenuItem { action: loadPoseAction }
-            MenuSeparator {}
-            MenuItem { action: loadAudioAction }
-            MenuItem { action: loadVideoAction }
             MenuSeparator {}
             MenuItem { action: saveProjectAction }
             MenuItem { action: saveProjectAsAction }
@@ -855,6 +856,20 @@ ApplicationWindow {
             MenuSeparator {}
             MenuItem { action: exportImageAction }
             MenuItem { action: exportVideoAction }
+            MenuSeparator { visible: applicationShareableServiceNames.length > 0 }
+            Menu {
+                id: shareMenu
+                title: qsTr("Share")
+                Instantiator {
+                    model: applicationShareableServiceNames
+                    MenuItem {
+                        text: applicationShareableServiceNames[index]
+                        onTriggered: scene.share(text)
+                    }
+                    onObjectAdded: shareMenu.insertItem(index, object)
+                    onObjectRemoved: shareMenu.removeItem(object)
+                }
+            }
             MenuSeparator { visible: exitApplicationMenuItem.visible }
             MenuItem {
                 id: exitApplicationMenuItem
