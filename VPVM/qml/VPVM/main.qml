@@ -46,6 +46,7 @@ import "FontAwesome.js" as FontAwesome
 ApplicationWindow {
     id: applicationWindow
     readonly property bool isOSX: Qt.platform.os === "osx"
+    readonly property int applicationLayoutAnchorMargin : 10
     property bool isFullSceneMode: false
     minimumWidth: 960
     minimumHeight: 620
@@ -118,7 +119,7 @@ ApplicationWindow {
         height: 80
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 10
+            anchors.margins: applicationLayoutAnchorMargin
             Layout.alignment: Qt.AlignCenter
             Text {
                 Layout.fillWidth: true
@@ -1430,7 +1431,7 @@ ApplicationWindow {
             property int rotationDecimalPrecision: 3
             Layout.minimumHeight: 220
             Layout.maximumHeight: 400
-            anchors.margins: 10
+            anchors.margins: applicationLayoutAnchorMargin
             height: 220
             color: systemPalette.window
             enabled: scene.isHUDAvailable
@@ -1442,7 +1443,7 @@ ApplicationWindow {
                 readonly property int lightTabIndex : 2
                 readonly property int timelineTabIndex : 3
                 anchors.fill: parent
-                anchors.margins: parent.anchors.margins
+                anchors.margins: applicationLayoutAnchorMargin
                 ModelTab { id: modelTab }
                 CameraTab { id: cameraTab }
                 LightTab { id: lightTab }

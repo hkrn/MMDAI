@@ -45,6 +45,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #include <QtCore>
 #include <QtGui>
@@ -168,7 +169,7 @@ public:
     inline QString errorString() const { return m_errorString; }
     inline bool isRunning() const { return m_running; }
 
-//private:
+    //private:
     void run() {
         QFile file(m_fileUrl.toLocalFile());
         if (file.open(QFile::ReadOnly)) {
@@ -479,10 +480,10 @@ void ProjectProxy::ray(qreal x, qreal y, int width, int height)
     const Transform &transform = camera->modelViewTransform();
     float m[16];
     transform.getOpenGLMatrix(m);
-    const glm::mat4 &worldView = glm::make_mat4(m);
-    const glm::mat4 &projection = glm::perspective(camera->fov(), width / glm::mediump_float(height), 0.1f, 100000.0f);
-    const glm::vec3 &cnear = glm::unProject(glm::vec3(win, 0), worldView, projection, viewport);
-    const glm::vec3 &cfar = glm::unProject(glm::vec3(win, 1), worldView, projection, viewport);
+    const glm::mat4 &worldView = glm::make_mat4(m),
+            &projection = glm::perspectiveFov(camera->fov(), glm::mediump_float(width), glm::mediump_float(height), camera->znear(), camera->zfar());
+    const glm::vec3 &cnear = glm::unProject(glm::vec3(win, 0), worldView, projection, viewport),
+            &cfar = glm::unProject(glm::vec3(win, 1), worldView, projection, viewport);
     const Vector3 from(cnear.x, cnear.y, cnear.z), to(cfar.x, cfar.y, cfar.z);
     if (BoneRefObject *bone = m_worldProxy->ray(from, to)) {
         m_currentModelRef->selectBone(bone);

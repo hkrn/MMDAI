@@ -61,21 +61,15 @@ Application {
     ]
     readonly property var commonIncludePaths: [
         "include",
+        "../VPAPI/include",
         "../libvpvl2/include",
         "../libvpvl2/" + libraryBuildDirectory + "/include",
-        "../libvpvl2/vendor/cl-1.2",
-        "../libvpvl2/vendor/nvFX",
-        "../libvpvl2/vendor/tinyxml2-1.0.11",
         "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
-        "../assimp-src/" + libraryInstallDirectory + "/include",
-        "../nvFX-src/" + libraryInstallDirectory + "/include",
-        "../tbb-src/include",
         "../glm-src",
         "../alure-src/include",
         "../libgizmo-src/inc",
         "../AntTweakBar-src/include",
-        "../openal-soft-src/" + libraryInstallDirectory + "/include",
-        "../icu4c-src/" + libraryInstallDirectory + "/include"
+        "../openal-soft-src/" + libraryInstallDirectory + "/include"
     ]
     readonly property var commonFiles: [
         "src/*.cc",
@@ -168,6 +162,7 @@ Application {
     Properties {
         condition: qbs.targetOS.contains("osx")
         cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL" ]
+        cpp.weakFrameworks: [ "Social" ]
         cpp.infoPlistFile: "qt/osx/Info.plist"
         cpp.infoPlist: ({
                             "CFBundleVersion": version,
@@ -280,15 +275,15 @@ Application {
         qbs.install: qbs.buildVariant === "release"
         qbs.installDir: "plugins"
     }
+    Group {
+        name: "OSX Extensions"
+        condition: qbs.targetOS.contains("osx")
+        files: [ "src/*.mm" ]
+    }
     Depends { name: "cpp" }
     Depends { name: "gizmo" }
     Depends { name: "vpvl2" }
-    Depends {
-        name: "AntTweakBar"
-        condition: !qbs.targetOS.contains("ios")
-    }
-    Depends {
-        name: "Qt"
-        submodules: requiredSubmodules
-    }
+    Depends { name: "VPAPI" }
+    Depends { name: "AntTweakBar"; condition: !qbs.targetOS.contains("ios") }
+    Depends { name: "Qt"; submodules: requiredSubmodules }
 }

@@ -57,6 +57,7 @@
 #include "LightKeyframeRefObject.h"
 #include "LightMotionTrack.h"
 #include "LightRefObject.h"
+#include "LoggingThread.h"
 #include "ModelProxy.h"
 #include "MorphKeyframeRefObject.h"
 #include "MorphMotionTrack.h"
@@ -72,92 +73,6 @@
 using namespace vpvl2::extensions;
 
 namespace {
-
-class LoggerThread : public QRunnable {
-public:
-    static const QString &toString(QtMsgType type) {
-        switch (type) {
-        case QtDebugMsg: {
-            static QString s("info");
-            return s;
-        }
-        case QtWarningMsg: {
-            static QString s("warning");
-            return s;
-        }
-        case QtCriticalMsg: {
-            static QString s("error");
-            return s;
-        }
-        case QtFatalMsg: {
-            static QString s("fatal");
-            return s;
-        }
-        default: {
-            static QString s("unknown");
-            return s;
-        }
-        }
-    }
-    static void delegateMessage(QtMsgType type, const QMessageLogContext &context, const QString &message);
-
-    LoggerThread()
-        : m_active(true)
-    {
-        setAutoDelete(false);
-    }
-    ~LoggerThread() {
-    }
-
-    void post(const QString &message) {
-        QMutexLocker locker(&m_mutex); Q_UNUSED(locker);
-        m_queue.enqueue(message);
-        m_cond.wakeAll();
-    }
-    void stop() {
-        QMutexLocker locker(&m_mutex); Q_UNUSED(locker);
-        m_active = false;
-        m_cond.wakeAll();
-    }
-    void setDirectory(const QString &value) {
-        m_directory = value;
-    }
-
-private:
-    void run() {
-        static const QString commitRevision = QString(vpvl2::libraryCommitRevisionString()).split(" ").at(1);
-        QStringList stringList;
-        stringList.reserve(4);
-        qInstallMessageHandler(&LoggerThread::delegateMessage);
-        qDebug("libvpvl2: version=%s commit=%s", vpvl2::libraryVersionString(), qPrintable(commitRevision));
-        while (m_active) {
-            QMutexLocker locker(&m_mutex); Q_UNUSED(locker);
-            m_cond.wait(&m_mutex);
-            const QDateTime &currentDateTime = QDateTime::currentDateTime();
-            QFile f(m_directory.absoluteFilePath("%1.log").arg(currentDateTime.toString("yyyyMMdd")));
-            f.open(QFile::Append);
-            while (!m_queue.isEmpty()) {
-                const QString &message = m_queue.dequeue();
-                stringList.clear();
-                stringList << currentDateTime.toString(Qt::ISODate);
-                stringList << " ";
-                stringList << message;
-                stringList << "\n";
-                f.write(stringList.join("").toUtf8());
-#if !defined(QT_NO_DEBUG)
-                fprintf(stderr, "%s", stringList.join("").toUtf8().constData());
-#endif
-            }
-        }
-        qInstallMessageHandler(0);
-    }
-
-    QMutex m_mutex;
-    QWaitCondition m_cond;
-    QQueue<QString> m_queue;
-    QDir m_directory;
-    volatile bool m_active;
-} g_loggerThread;
 
 class ApplicationBootstrapOption : public QObject {
     Q_OBJECT
@@ -190,19 +105,6 @@ private:
     const QCommandLineParser *m_parser;
     QCommandLineOption m_json;
 };
-
-void LoggerThread::delegateMessage(QtMsgType type, const QMessageLogContext &context, const QString &message)
-{
-    Q_UNUSED(type);
-    Q_UNUSED(context);
-#if !defined(QT_NO_DEBUG)
-    /* supress warnings of Invalid font from Context2D */
-    if (message.startsWith("Context2D:")) {
-        return;
-    }
-#endif
-    g_loggerThread.post(QString("[%1] %4 in %2 at line %3").arg(toString(type)).arg(context.function).arg(context.line).arg(message));
-}
 
 static void prepareRegal()
 {
@@ -299,8 +201,8 @@ int main(int argc, char *argv[])
     QQmlContext *rootContext = engine.rootContext();
     rootContext->setContextProperty("applicationPreference", &applicationPreference);
     rootContext->setContextProperty("applicationBootstrapOption", &applicationBootstrapOption);
-    g_loggerThread.setDirectory(loggingDirectory);
-    QThreadPool::globalInstance()->start(&g_loggerThread);
+    g_loggingThread.setDirectory(loggingDirectory);
+    QThreadPool::globalInstance()->start(&g_loggingThread);
 #ifdef QT_NO_DEBUG
     engine.load(QUrl("qrc:///qml/VPVM/main.qml"));
 #else
@@ -322,7 +224,7 @@ int main(int argc, char *argv[])
     window->show();
 
     int result = application.exec();
-    g_loggerThread.stop();
+    g_loggingThread.stop();
     BaseApplicationContext::terminate();
 
     return result;

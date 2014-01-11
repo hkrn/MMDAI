@@ -528,7 +528,7 @@ Item {
             }
         }
         onReleased: renderTarget.handleMouseRelease(mouse.x, mouse.y, mouse.button)
-        onClicked: projectDocument.ray(mouse.x, mouse.y, width, height)
+        onDoubleClicked: projectDocument.ray(mouse.x, mouse.y, width, height)
         onWheel: {
             var delta = wheel.pixelDelta
             if (!renderTarget.handleMouseWheel(delta.x, delta.y)) {
