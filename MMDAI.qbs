@@ -43,6 +43,7 @@ Project {
         "AntTweakBar-src/AntTweakBar.qbs",
         "libgizmo-src/libgizmo.qbs",
         "libvpvl2/libvpvl2.qbs",
+        "VPAPI/VPAPI.qbs",
         "VPVM/VPVM.qbs"
     ]
 }

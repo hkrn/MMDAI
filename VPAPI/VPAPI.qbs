@@ -47,9 +47,9 @@ StaticLibrary {
         "include/*.h"
     ]
     cpp.includePaths: [
+        buildDirectory,
         "include",
         "../libvpvl2/include",
-        "../libvpvl2/" + libraryBuildDirectory + "/include",
         "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
         "../glm-src"
     ]

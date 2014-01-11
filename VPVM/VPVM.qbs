@@ -60,10 +60,10 @@ Application {
         "LinearMath"
     ]
     readonly property var commonIncludePaths: [
+        buildDirectory,
         "include",
         "../VPAPI/include",
         "../libvpvl2/include",
-        "../libvpvl2/" + libraryBuildDirectory + "/include",
         "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
         "../glm-src",
         "../alure-src/include",
@@ -92,13 +92,7 @@ Application {
         return [ v["VPVL2_VERSION_MAJOR"], v["VPVL2_VERSION_COMPAT"], "3" ].join(".")
     }
     files: commonFiles
-    cpp.defines: {
-        var defines = [ "VPVL2_ENABLE_QT", "TW_STATIC", "TW_NO_LIB_PRAGMA" ]
-        if (qbs.enableDebugCode && qbs.toolchain.contains("msvc")) {
-            defines.push("BUILD_SHARED_LIBS")
-        }
-        return defines
-    }
+    cpp.defines: [ "VPVL2_ENABLE_QT", "TW_STATIC", "TW_NO_LIB_PRAGMA" ]
     cpp.includePaths: commonIncludePaths
     cpp.libraryPaths: [
         "../tbb-src/lib",
@@ -218,8 +212,8 @@ Application {
         condition: qbs.toolchain.contains("msvc")
         name: "Application Depending Libraries for MSVC"
         files: {
-            var found = vpvm.findLibraries(commonLibraries.concat([ "OpenAL32" ]),
-                                           cpp.libraryPaths.concat([ "../openal-soft-src/" + libraryInstallDirectory + "/bin" ]),
+            var found = vpvm.findLibraries(commonLibraries.concat([ "OpenAL32", "vpvl2" ]),
+                                           cpp.libraryPaths.concat([ "../openal-soft-src/" + libraryInstallDirectory + "/bin", buildDirectory ]),
                                            ".dll")
             if (qbs.toolchain.contains("msvc")) {
                 for (var i in requiredSubmodules) {
@@ -280,9 +274,9 @@ Application {
         files: [ "src/*.mm" ]
     }
     Depends { name: "cpp" }
-    Depends { name: "gizmo" }
-    Depends { name: "vpvl2" }
-    Depends { name: "VPAPI" }
     Depends { name: "AntTweakBar"; condition: !qbs.targetOS.contains("ios") }
+    Depends { name: "gizmo" }
+    Depends { name: "VPAPI" }
+    Depends { name: "vpvl2" }
     Depends { name: "Qt"; submodules: requiredSubmodules }
 }
