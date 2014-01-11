@@ -1569,6 +1569,7 @@ void RenderTarget::drawOffscreen(QOpenGLFramebufferObject *fbo)
     fbo->bind();
     glViewport(0, 0, fbo->width(), fbo->height());
     clearScene();
+    drawGrid();
     drawScene();
     m_applicationContext->setViewportRegion(glm::ivec4(m_viewport.x(), m_viewport.y(), m_viewport.width(), m_viewport.height()));
     QOpenGLFramebufferObject::bindDefault();

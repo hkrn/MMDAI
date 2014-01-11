@@ -860,6 +860,7 @@ ApplicationWindow {
             Menu {
                 id: shareMenu
                 title: qsTr("Share")
+                visible: applicationShareableServiceNames.length > 0
                 Instantiator {
                     model: applicationShareableServiceNames
                     MenuItem {

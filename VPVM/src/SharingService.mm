@@ -45,14 +45,16 @@
 QStringList SharingService::availableServiceNames()
 {
     QStringList serviceNames;
-    NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(0, 0)];
-    NSArray *sharingItems = [[NSArray alloc] initWithObjects:@"test", image, nil];
-    NSArray *services = [NSSharingService sharingServicesForItems:sharingItems];
-    [image release];
-    [sharingItems release];
-    for (NSSharingService *service in services) {
-        if ([service canPerformWithItems:nil]) {
-            serviceNames << QString([[service menuItemTitle] UTF8String]);
+    if (QSysInfo::macVersion() >= QSysInfo::MV_10_8) {
+        NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(0, 0)];
+        NSArray *sharingItems = [[NSArray alloc] initWithObjects:@"test", image, nil];
+        NSArray *services = [NSSharingService sharingServicesForItems:sharingItems];
+        [image release];
+        [sharingItems release];
+        for (NSSharingService *service in services) {
+            if ([service canPerformWithItems:nil]) {
+                serviceNames << QString([[service menuItemTitle] UTF8String]);
+            }
         }
     }
     return serviceNames;
@@ -76,7 +78,7 @@ void SharingService::showPostForm(const QImage &image)
     QTemporaryFile file;
     if (!m_serviceName.isNull() && file.open()) {
         image.save(&file, "BMP");
-        NSString *text = [[NSString alloc] initWithFormat:@"#MMDAI"];
+        NSString *text = [[NSString alloc] initWithFormat:@"#VPVM"];
         NSString *filePath = [[NSString alloc] initWithUTF8String:file.fileName().toUtf8().constData()];
         NSImage *attachImage = [[NSImage alloc] initWithContentsOfFile:filePath];
         NSArray *sharingItems = [[NSArray alloc] initWithObjects:text, attachImage, nil];
