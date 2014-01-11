@@ -71,6 +71,7 @@ class QOpenGLShaderProgram;
 class QOpenGLVertexArrayObject;
 class QTemporaryDir;
 class ProjectProxy;
+class SkeletonDrawer;
 class VideoSurface;
 class IGizmo;
 
@@ -254,7 +255,6 @@ private slots:
 
 private:
     class DebugDrawer;
-    class ModelDrawer;
     QMediaPlayer *mediaPlayer() const;
     EncodingTask *encodingTask() const;
     IGizmo *translationGizmo() const;
@@ -275,7 +275,7 @@ private:
     QScopedPointer<ApplicationContext> m_applicationContext;
     mutable QScopedPointer<DebugDrawer> m_debugDrawer;
     mutable QScopedPointer<EncodingTask> m_encodingTask;
-    mutable QScopedPointer<ModelDrawer> m_modelDrawer;
+    mutable QScopedPointer<SkeletonDrawer> m_modelDrawer;
     mutable QScopedPointer<VideoSurface> m_videoSurface;
     mutable QScopedPointer<IGizmo> m_translationGizmo;
     mutable QScopedPointer<IGizmo> m_orientationGizmo;
