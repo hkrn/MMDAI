@@ -26,7 +26,7 @@ protected
   end
 
   def get_tag_name
-    "0.9.5.0"
+    "0.9.5.1"
   end
 
 end
