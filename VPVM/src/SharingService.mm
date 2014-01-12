@@ -42,18 +42,24 @@
 #include <QTemporaryFile>
 #import <AppKit/AppKit.h>
 
+namespace {
+
+const NSString *kInitialMessageText = @"#MMDAI2ss";
+
+}
+
 QStringList SharingService::availableServiceNames()
 {
     QStringList serviceNames;
     if (QSysInfo::macVersion() >= QSysInfo::MV_10_8) {
         NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(0, 0)];
-        NSArray *sharingItems = [[NSArray alloc] initWithObjects:@"test", image, nil];
+        NSArray *sharingItems = [[NSArray alloc] initWithObjects:kInitialMessageText, image, nil];
         NSArray *services = [NSSharingService sharingServicesForItems:sharingItems];
         [image release];
         [sharingItems release];
         for (NSSharingService *service in services) {
             if ([service canPerformWithItems:nil]) {
-                serviceNames << QString([[service menuItemTitle] UTF8String]);
+                serviceNames << QString([service.title UTF8String]);
             }
         }
     }
@@ -77,19 +83,17 @@ void SharingService::showPostForm(const QImage &image)
 {
     QTemporaryFile file;
     if (!m_serviceName.isNull() && file.open()) {
-        image.save(&file, "BMP");
-        NSString *text = [[NSString alloc] initWithFormat:@"#VPVM"];
+        image.save(&file, "TIFF");
         NSString *filePath = [[NSString alloc] initWithUTF8String:file.fileName().toUtf8().constData()];
         NSImage *attachImage = [[NSImage alloc] initWithContentsOfFile:filePath];
-        NSArray *sharingItems = [[NSArray alloc] initWithObjects:text, attachImage, nil];
+        NSArray *sharingItems = [[NSArray alloc] initWithObjects:kInitialMessageText, attachImage, nil];
         [filePath release];
         [attachImage release];
-        [text release];
         NSSharingService *serviceObjectRef = nil;
         NSString *serviceName = [[NSString alloc] initWithUTF8String:m_serviceName.toUtf8().constData()];
         NSArray *services = [NSSharingService sharingServicesForItems:sharingItems];
         for (NSSharingService *service in services) {
-            if ([serviceName isEqualToString:service.menuItemTitle]) {
+            if ([serviceName isEqualToString:service.title]) {
                 serviceObjectRef = service;
             }
         }
