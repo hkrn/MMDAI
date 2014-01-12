@@ -809,6 +809,12 @@ ApplicationWindow {
         onTriggered: VPVM.UIAuxHelper.openAboutQt()
     }
     Action {
+        id: updateApplicationAction
+        text: qsTr("Check for Updates...")
+        tooltip: qsTr("Check updates of %1.").arg(Qt.application.name)
+        onTriggered: VPVM.Updater.checkForUpdate()
+    }
+    Action {
         id: exitApplicationAction
         text: qsTr("&Exit")
         tooltip: qsTr("Exit this application.")
@@ -998,8 +1004,9 @@ ApplicationWindow {
             id: helpMenu
             title: isOSX ? qsTr("Help") : qsTr("&Help")
             MenuItem { action: openGlobalPreferenceAction }
-            MenuSeparator {}
+            MenuSeparator { visible: !isOSX }
             MenuItem { action: openAboutAction }
+            MenuItem { visible: VPVM.Updater.available; action: updateApplicationAction }
         }
     }
 

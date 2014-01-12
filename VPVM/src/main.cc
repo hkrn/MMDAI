@@ -68,6 +68,7 @@
 #include "ProjectProxy.h"
 #include "SharingService.h"
 #include "UIAuxHelper.h"
+#include "Updater.h"
 #include "Util.h"
 #include "WorldProxy.h"
 
@@ -121,6 +122,13 @@ static QObject *createUIAuxHelper(QQmlEngine *engine, QJSEngine *scriptEngine)
     return value;
 }
 
+static QObject *createUpdater(QQmlEngine *engine, QJSEngine *scriptEngine)
+{
+    Q_UNUSED(scriptEngine);
+    QObject *value = new Updater(engine);
+    return value;
+}
+
 void registerQmlTypes()
 {
     qmlRegisterSingletonType<ALAudioContext>("com.github.mmdai.VPVM", 1, 0, "ALAudioContext", createALAudioContext);
@@ -147,6 +155,7 @@ void registerQmlTypes()
     qmlRegisterUncreatableType<Preference>("com.github.mmdai.VPVM", 1, 0, "Preference", "");
     qmlRegisterUncreatableType<WorldProxy>("com.github.mmdai.VPVM", 1, 0, "World", "");
     qmlRegisterSingletonType<UIAuxHelper>("com.github.mmdai.VPVM", 1, 0, "UIAuxHelper", createUIAuxHelper);
+    qmlRegisterSingletonType<Updater>("com.github.mmdai.VPVM", 1, 0, "Updater", createUpdater);
     qmlRegisterType<RenderTarget>("com.github.mmdai.VPVM", 1, 0, "RenderTarget");
     qmlRegisterType<ProjectProxy>("com.github.mmdai.VPVM", 1, 0, "Project");
 }

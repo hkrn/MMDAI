@@ -51,7 +51,7 @@ const NSString *kInitialMessageText = @"#MMDAI2ss";
 QStringList SharingService::availableServiceNames()
 {
     QStringList serviceNames;
-    if (QSysInfo::macVersion() >= QSysInfo::MV_10_8) {
+    if (NSClassFromString(@"NSSharingService") != nil) {
         NSImage *image = [[NSImage alloc] initWithSize:NSMakeSize(0, 0)];
         NSArray *sharingItems = [[NSArray alloc] initWithObjects:kInitialMessageText, image, nil];
         NSArray *services = [NSSharingService sharingServicesForItems:sharingItems];
@@ -82,7 +82,7 @@ void SharingService::setServiceName(const QString &value)
 void SharingService::showPostForm(const QImage &image)
 {
     QTemporaryFile file;
-    if (!m_serviceName.isNull() && file.open()) {
+    if (NSClassFromString(@"NSSharingService") != nil && !m_serviceName.isNull() && file.open()) {
         image.save(&file, "TIFF");
         NSString *filePath = [[NSString alloc] initWithUTF8String:file.fileName().toUtf8().constData()];
         NSImage *attachImage = [[NSImage alloc] initWithContentsOfFile:filePath];

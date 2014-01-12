@@ -49,6 +49,7 @@ Application {
     readonly property string debugLibrarySuffix: qbs.enableDebugCode ? "d" : ""
     readonly property string assimpLibrarySuffix: qbs.toolchain.contains("msvc") ? "" : debugLibrarySuffix.toUpperCase()
     readonly property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + debugLibrarySuffix.toUpperCase()
+    readonly property string sparkleFrameworkBasePath: "../Sparkle-src/build/Release"
     readonly property var commonLibraries: [
         "assimp" + assimpLibrarySuffix,
         "FxParser" + nvFXLibrarySuffix,
@@ -77,6 +78,11 @@ Application {
         "licenses/licenses.qrc",
         "../libvpvl2/src/resources/resources.qrc"
     ]
+    readonly property var commonDefiles: [
+        "VPVL2_ENABLE_QT",
+        "TW_STATIC",
+        "TW_NO_LIB_PRAGMA"
+    ]
     readonly property var requiredSubmodules: [
         "core", "gui", "widgets", "qml", "quick", "multimedia", "network"
     ]
@@ -93,7 +99,7 @@ Application {
         return [ v["VPVL2_VERSION_MAJOR"], v["VPVL2_VERSION_COMPAT"], "3" ].join(".")
     }
     files: commonFiles
-    cpp.defines: [ "VPVL2_ENABLE_QT", "TW_STATIC", "TW_NO_LIB_PRAGMA" ]
+    cpp.defines: commonDefiles
     cpp.includePaths: commonIncludePaths
     cpp.libraryPaths: [
         "../tbb-src/lib",
@@ -155,15 +161,16 @@ Application {
     }
     Properties {
         condition: qbs.targetOS.contains("osx")
-        cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL" ]
-        cpp.weakFrameworks: [ "Social" ]
+        cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL", "Sparkle" ]
+        cpp.frameworkPaths: [ sparkleFrameworkBasePath ]
+        cpp.weakFrameworks: File.exists(sparkleFrameworkBasePath + "/Sparkle.framework") ? [ "Sparkle.framework" ] : []
+        cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z" ])
+        cpp.minimumOsxVersion: "10.6"
         cpp.infoPlistFile: "qt/osx/Info.plist"
         cpp.infoPlist: ({
                             "CFBundleVersion": version,
                             "CFBundleShortVersionString": version
                         })
-        cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z" ])
-        cpp.minimumOsxVersion: "10.6"
     }
     Properties {
         condition: qbs.targetOS.contains("unix") && !qbs.targetOS.contains("osx")
