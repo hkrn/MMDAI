@@ -39,7 +39,9 @@
 #define GRID_H_
 
 #include <vpvl2/IApplicationContext.h>
-#include <glm/gtc/type_ptr.hpp>
+
+#define GLM_FORCE_RADIANS
+#include <glm/mat4x4.hpp>
 
 #include <QColor>
 #include <QVector4D>

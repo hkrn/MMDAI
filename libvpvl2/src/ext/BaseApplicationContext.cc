@@ -88,6 +88,11 @@ typedef unsigned int ETwMouseAction;
 
 /* GLM */
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_access.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/transform2.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -109,13 +114,6 @@ typedef unsigned int ETwMouseAction;
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-
-/* GLM */
-#include <glm/gtc/matrix_access.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/transform2.hpp>
-#include <glm/gtx/string_cast.hpp>
 
 /* Cg and ICU */
 #if defined(VPVL2_LINK_NVFX)
@@ -1573,8 +1571,8 @@ void BaseApplicationContext::updateCameraMatrices()
     Scalar matrix[16];
     cameraRef->modelViewTransform().getOpenGLMatrix(matrix);
     const glm::mat4 world, &view = glm::make_mat4(matrix),
-            &projection = m_hasDepthClamp ? glm::infinitePerspective(cameraRef->fov(), m_aspectRatio, cameraRef->znear())
-                                          : glm::perspectiveFov(cameraRef->fov(),
+            &projection = m_hasDepthClamp ? glm::infinitePerspective(glm::radians(cameraRef->fov()), m_aspectRatio, cameraRef->znear())
+                                          : glm::perspectiveFov(glm::radians(cameraRef->fov()),
                                                                 glm::mediump_float(m_viewportRegion.z),
                                                                 glm::mediump_float(m_viewportRegion.w),
                                                                 cameraRef->znear(),

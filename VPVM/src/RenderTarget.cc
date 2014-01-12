@@ -53,8 +53,10 @@
 
 #include <LinearMath/btIDebugDraw.h>
 #include <IGizmo.h>
-#include <glm/glm.hpp>
+
+/* GLM_FORCE_RADIANS is defined at vpvl2/extensions/BaseApplicationContext.h */
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include "ApplicationContext.h"
 #include "BoneRefObject.h"
