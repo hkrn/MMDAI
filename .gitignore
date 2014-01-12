@@ -19,10 +19,11 @@ glfw-*
 gli-*
 glm-*
 gmock-*
+glsl-optimizer-*
 glyph
 gtest-*
 gwen-*
-hlslxc-*
+HLSLCrossCompiler-*
 hts_engine_API-*
 icu4c-*
 IslandWind
@@ -48,6 +49,7 @@ SDLMain.*
 SDL2-*
 SDL_image-*
 SFML2-*
+Sparkle-*
 tbb-*
 tinyxml2-*
 tufao-*
