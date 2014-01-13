@@ -59,7 +59,7 @@ class BoneRefObject : public QObject
     Q_PROPERTY(QString name READ name NOTIFY nameChanged FINAL)
     Q_PROPERTY(QVector3D localTranslation READ localTranslation WRITE setLocalTranslation NOTIFY localTranslationChanged FINAL)
     Q_PROPERTY(QQuaternion localOrientation READ localOrientation WRITE setLocalOrientation NOTIFY localOrientationChanged FINAL)
-    Q_PROPERTY(QVector3D localEulerOrientation READ localEulerOrientation WRITE setLocalEulerOrientation FINAL)
+    Q_PROPERTY(QVector3D localEulerOrientation READ localEulerOrientation WRITE setLocalEulerOrientation NOTIFY localOrientationChanged FINAL)
     Q_PROPERTY(QVector3D originLocalTranslation READ originLocalTranslation NOTIFY originLocalTranslationChanged FINAL)
     Q_PROPERTY(QQuaternion originLocalOrientation READ originLocalOrientation NOTIFY originLocalOrientationChanged FINAL)
     Q_PROPERTY(int index READ index CONSTANT FINAL)
