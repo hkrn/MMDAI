@@ -38,7 +38,6 @@
 #include "Updater.h"
 
 #import <Foundation/Foundation.h>
-#import <Sparkle/Sparkle.h>
 
 Updater::Updater(QObject *parent)
     : QObject(parent)
@@ -56,5 +55,8 @@ bool Updater::isAvailable()
 
 void Updater::checkForUpdate()
 {
-    [[SUUpdater sharedUpdater] checkForUpdatesInBackground];
+    Class updaterClass = NSClassFromString(@"SUUpdater");
+    if (updaterClass != nil) {
+        [[updaterClass sharedUpdater] checkForUpdatesInBackground];
+    }
 }
