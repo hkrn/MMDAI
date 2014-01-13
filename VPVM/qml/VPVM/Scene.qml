@@ -378,6 +378,9 @@ Item {
         function __handleTargetBonesDidBeginTransform() {
             renderTarget.playing = true
         }
+        function __handleTargetBonesDidDiscardTransform() {
+            renderTarget.playing = false
+        }
         function __handleTargetBonesDidCommitTransform() {
             renderTarget.playing = false
             var bones = currentModel.targetBones, timeIndex = projectDocument.currentTimeIndex
@@ -429,6 +432,7 @@ Item {
         onUploadingModelDidSucceed: {
             model.targetBonesDidBeginTransform.connect(__handleTargetBonesDidBeginTransform)
             model.targetBonesDidCommitTransform.connect(__handleTargetBonesDidCommitTransform)
+            model.targetBonesDidDiscardTransform.connect(__handleTargetBonesDidDiscardTransform)
             model.transformTypeChanged.connect(__handleTransformTypeChanged)
             model.boneDidSelect.connect(__handleBoneDidSelect)
             model.morphDidSelect.connect(__handleMorphDidSelect)

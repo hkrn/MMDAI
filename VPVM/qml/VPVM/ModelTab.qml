@@ -371,11 +371,9 @@ Tab {
                 decimals: propertyPanel.positionDecimalPrecision
                 value: enabled ? scene.currentModel.firstTargetBone.localTranslation : Qt.vector3d(0, 0, 0)
                 resettable: true
-                onHoveredChanged: {
-                    if (enabled) {
-                        hovered ? scene.currentModel.beginTranslate(0) : scene.currentModel.endTranslate()
-                    }
-                }
+                onActiveFocusOnSpinBoxChanged: activeFocusOnSpinBox ? scene.currentModel.beginTransform(0) : scene.currentModel.discardTransform()
+                onEditingFinished: scene.currentModel.commitTransform()
+                onResetDidTrigger: resetBoneXYZAxesTranslationAction.trigger()
             }
             AxesSpinBox {
                 id: boneOrientationAxesSpinBox
@@ -389,11 +387,9 @@ Tab {
                 decimals: propertyPanel.rotationDecimalPrecision
                 value: enabled ? scene.currentModel.firstTargetBone.localEulerOrientation : Qt.vector3d(0, 0, 0)
                 resettable: true
-                onHoveredChanged: {
-                    if (enabled) {
-                        hovered ? scene.currentModel.beginRotate(0) : scene.currentModel.endRotate()
-                    }
-                }
+                onActiveFocusOnSpinBoxChanged: activeFocusOnSpinBox ? scene.currentModel.beginTransform(0) : scene.currentModel.discardTransform()
+                onEditingFinished: scene.currentModel.commitTransform()
+                onResetDidTrigger: resetBoneOrientationAction.trigger()
             }
             RowLayout {
                 id: modelMorphGroup

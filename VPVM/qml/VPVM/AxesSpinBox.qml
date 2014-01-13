@@ -48,10 +48,18 @@ GroupBox {
     property string labelX: "X"
     property string labelY: "Y"
     property string labelZ: "Z"
-    property bool hovered
+    property bool activeFocusOnSpinBox: false
+    property bool hovered: false
     property bool resettable: false
     property var value
     signal resetDidTrigger()
+    signal editingFinished()
+    Component.onCompleted: {
+        spinboxX.editingFinished.connect(editingFinished)
+        spinboxY.editingFinished.connect(editingFinished)
+        spinboxZ.editingFinished.connect(editingFinished)
+    }
+    onResetDidTrigger: value.x = value.y = value.z = spinboxX.value = spinboxY.value = spinboxZ.value = 0
     onValueChanged: {
         spinboxX.value = value.x
         spinboxY.value = value.y
@@ -69,7 +77,12 @@ GroupBox {
             value: axesSpinBox.value ? axesSpinBox.value.x : 0
             onHoveredChanged: axesSpinBox.hovered = hovered
             onValueChanged: if (hovered) axesSpinBox.value.x = value
-            onActiveFocusChanged: if (!activeFocus) axesSpinBox.value.x = value
+            onActiveFocusChanged: {
+                axesSpinBox.activeFocusOnSpinBox = activeFocus
+                if (!activeFocus) {
+                    axesSpinBox.value.x = value
+                }
+            }
         }
         Label { text: axesSpinBox.labelY }
         SpinBox {
@@ -81,7 +94,12 @@ GroupBox {
             value: axesSpinBox.value ? axesSpinBox.value.y : 0
             onHoveredChanged: axesSpinBox.hovered = hovered
             onValueChanged: if (hovered) axesSpinBox.value.y = value
-            onActiveFocusChanged: if (!activeFocus) axesSpinBox.value.y = value
+            onActiveFocusChanged: {
+                axesSpinBox.activeFocusOnSpinBox = activeFocus
+                if (!activeFocus) {
+                    axesSpinBox.value.y = value
+                }
+            }
         }
         Label { text: axesSpinBox.labelZ }
         SpinBox {
@@ -93,7 +111,12 @@ GroupBox {
             value: axesSpinBox.value ? axesSpinBox.value.z : 0
             onHoveredChanged: axesSpinBox.hovered = hovered
             onValueChanged: if (hovered) axesSpinBox.value.z = value
-            onActiveFocusChanged: if (!activeFocus) axesSpinBox.value.z = value
+            onActiveFocusChanged: {
+                axesSpinBox.activeFocusOnSpinBox = activeFocus
+                if (!activeFocus) {
+                    axesSpinBox.value.z = value
+                }
+            }
         }
         Button {
             visible: axesSpinBox.resettable
