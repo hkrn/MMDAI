@@ -49,7 +49,7 @@ Application {
     readonly property string debugLibrarySuffix: qbs.enableDebugCode ? "d" : ""
     readonly property string assimpLibrarySuffix: qbs.toolchain.contains("msvc") ? "" : debugLibrarySuffix.toUpperCase()
     readonly property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + debugLibrarySuffix.toUpperCase()
-    readonly property string sparkleFrameworkBasePath: "../Sparkle-src/build/Release"
+    readonly property string sparkleFrameworkBasePath: sourceDirectory + "/../Sparkle-src/build/Release"
     readonly property var commonLibraries: [
         "assimp" + assimpLibrarySuffix,
         "FxParser" + nvFXLibrarySuffix,
@@ -60,8 +60,7 @@ Application {
         "BulletCollision",
         "LinearMath"
     ]
-    readonly property var commonIncludePaths: [
-        buildDirectory,
+    readonly property var commonIncludePaths: [ buildDirectory ].concat([
         "include",
         "../VPAPI/include",
         "../libvpvl2/include",
@@ -71,13 +70,13 @@ Application {
         "../tbb-src/include",
         "../libgizmo-src/inc",
         "../openal-soft-src/" + libraryInstallDirectory + "/include"
-    ]
+    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) }))
     readonly property var commonFiles: [
         "src/*.cc",
         "include/*.h",
         "licenses/licenses.qrc",
         "../libvpvl2/src/resources/resources.qrc"
-    ]
+    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
     readonly property var commonDefiles: [
         "VPVL2_ENABLE_QT",
         "TW_STATIC",
@@ -110,7 +109,7 @@ Application {
         "../openal-soft-src/" + libraryInstallDirectory + "/lib",
         "../icu4c-src/" + libraryInstallDirectory + "/lib",
         "../zlib-src/" + libraryInstallDirectory + "/lib"
-    ]
+    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
     Qt.quick.qmlDebugging: qbs.enableDebugCode
     Group {
         name: "Application"
@@ -144,7 +143,7 @@ Application {
             if (!qbs.toolchain.contains("msvc")) {
                 files.push("libav/libav.qrc")
             }
-            return files
+            return files.map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
         }
     }
     Group {
@@ -154,16 +153,22 @@ Application {
             if (!qbs.toolchain.contains("msvc")) {
                 files.push("libav/libav.qrc")
             }
-            return files
+            return files.map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
         }
         qbs.install: qbs.buildVariant === "debug"
         qbs.installDir: qbs.targetOS.contains("osx") ? FileInfo.joinPaths(applicationBundlePath, "Resources", "qml") : "qml"
     }
     Properties {
         condition: qbs.targetOS.contains("osx")
-        cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL", "Sparkle" ]
+        cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL" ]
         cpp.frameworkPaths: [ sparkleFrameworkBasePath ]
-        cpp.weakFrameworks: File.exists(sparkleFrameworkBasePath + "/Sparkle.framework") ? [ "Sparkle.framework" ] : []
+        cpp.weakFrameworks: {
+            var frameworks = []
+            if (File.exists(sparkleFrameworkBasePath + "/Sparkle.framework")) {
+                frameworks.push("Sparkle")
+            }
+            return frameworks
+        }
         cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z" ])
         cpp.minimumOsxVersion: "10.6"
         cpp.infoPlistFile: "qt/osx/Info.plist"
@@ -183,7 +188,7 @@ Application {
         cpp.includePaths: commonIncludePaths.concat([
                                                         "../alure-src/include/AL",
                                                         "../openal-soft-src/" + libraryInstallDirectory + "/include/AL"
-                                                    ])
+                                                    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) }))
         cpp.dynamicLibraries: commonLibraries.concat([ "alure32-static",  "OpenAL32", "OpenGL32", "zlibstatic" + debugLibrarySuffix ])
     }
     Properties {
@@ -193,7 +198,7 @@ Application {
         cpp.includePaths: commonIncludePaths.concat([
                                                         "../alure-src/include/AL",
                                                         "../openal-soft-src/" + libraryInstallDirectory + "/include/AL"
-                                                    ])
+                                                    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) }))
         cpp.dynamicLibraries: commonLibraries.concat([ "alure32-static", "OpenAL32", "libGLESv2" + debugLibrarySuffix, "libEGL" + debugLibrarySuffix, "zlibstatic" + debugLibrarySuffix, "user32" ])
     }
     Group {
@@ -221,7 +226,8 @@ Application {
         name: "Application Depending Libraries for MSVC"
         files: {
             var found = vpvm.findLibraries(commonLibraries.concat([ "OpenAL32", "vpvl2" ]),
-                                           cpp.libraryPaths.concat([ "../openal-soft-src/" + libraryInstallDirectory + "/bin", buildDirectory ]),
+                                           cpp.libraryPaths.concat([ "../openal-soft-src/" + libraryInstallDirectory + "/bin", buildDirectory ]
+                                                                   .map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })),
                                            ".dll")
             if (qbs.toolchain.contains("msvc")) {
                 for (var i in requiredSubmodules) {
@@ -242,7 +248,7 @@ Application {
     Group {
         name: "QtQuick QML Resources"
         condition: !qbs.targetOS.contains("osx")
-        files: [ Qt.core.binPath + "/../qml/QtQuick", Qt.core.binPath + "/../qml/QtQuick.2" ]
+        files: [ "QtQuick", "QtQuick.2" ].map(function(path){ return FileInfo.joinPaths(Qt.core.binPath, "../qml", path) })
         qbs.install: qbs.buildVariant === "release"
         qbs.installDir: "qml"
     }
@@ -279,7 +285,7 @@ Application {
     Group {
         name: "OSX Extensions"
         condition: qbs.targetOS.contains("osx")
-        files: [ "src/*.mm" ]
+        files: [ "src/*.mm" ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
     }
     Depends { name: "cpp" }
     Depends { name: "AntTweakBar"; condition: !qbs.targetOS.contains("ios") }

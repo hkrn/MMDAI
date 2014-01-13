@@ -36,6 +36,7 @@
 */
 
 import qbs 1.0
+import qbs.FileInfo
 
 StaticLibrary {
     id: VPAPI
@@ -45,15 +46,14 @@ StaticLibrary {
     files: [
         "src/*.cc",
         "include/*.h"
-    ]
-    cpp.includePaths: [
-        buildDirectory,
+    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
+    cpp.includePaths: [ buildDirectory ].concat([
         "include",
         "../libvpvl2/include",
         "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
         "../tbb-src/include",
         "../glm-src"
-    ]
+    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) }))
     cpp.defines: [ "VPVL2_ENABLE_QT", "TW_STATIC", "TW_NO_LIB_PRAGMA" ]
     Properties {
         condition: qbs.targetOS.contains("osx")
