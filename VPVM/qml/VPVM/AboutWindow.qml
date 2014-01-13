@@ -75,36 +75,42 @@ ApplicationWindow {
         anchors.fill: parent
         anchors.margins: 10
         ColumnLayout {
-            Label {
-                Layout.fillWidth: true
-                font.pointSize: 20
-                text: "%1 (version=%2 arguments=%3)".arg(Qt.application.name).arg(Qt.application.version).arg((Qt.application.argument || []).join(" "))
-            }
-            Label {
-                Layout.fillWidth: true
-                text: qsTr("%1 is an open source software that is distributed under 3-Clauses BSD license (same as libvpvl2) and %1 also uses below open source softwares and libraries.").arg(Qt.application.name)
-                wrapMode: Text.WordWrap
+            Text {
+                text: "<font size=5>%1 %2</font> (revision=%3)".arg(Qt.application.name).arg(Qt.application.version).arg(applicationBootstrapOption.commitRevision)
+                textFormat: Text.RichText
             }
             TabView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Tab {
                     title: "List"
+                    anchors.fill: parent
                     anchors.margins: 10
-                    TableView {
-                        id: licenseTable
-                        sortIndicatorVisible: true
-                        TableViewColumn { role: "display"; title: "Name"; width: 225 }
-                        TableViewColumn { role: "license"; title: "License"; width: 125 }
-                        TableViewColumn { role: "url"; title: "URL"; width: 300 }
-                        model: licenseTableModel
-                        onDoubleClicked: Qt.openUrlExternally(licenseTableModel.get(row).url)
-                        onCurrentRowChanged: licenseTableModel.currentRow = currentRow
+                    ColumnLayout {
+                        Label {
+                            id: descriptionLabel
+                            Layout.fillWidth: true
+                            text: qsTr("%1 is an open source software that is distributed under 3-Clauses BSD license (same as libvpvl2) and %1 also uses below open source softwares and libraries.").arg(Qt.application.name)
+                            wrapMode: Text.WordWrap
+                        }
+                        TableView {
+                            id: licenseTable
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            sortIndicatorVisible: true
+                            TableViewColumn { role: "display"; title: "Name"; width: 225 }
+                            TableViewColumn { role: "license"; title: "License"; width: 125 }
+                            TableViewColumn { role: "url"; title: "URL"; width: 300 }
+                            model: licenseTableModel
+                            onDoubleClicked: Qt.openUrlExternally(licenseTableModel.get(row).url)
+                            onCurrentRowChanged: licenseTableModel.currentRow = currentRow
+                        }
                     }
                 }
                 Tab {
                     id: licenseTextTab
                     title: qsTr("License")
+                    anchors.fill: parent
                     anchors.margins: 10
                     TextArea {
                         id: licenseTextArea
