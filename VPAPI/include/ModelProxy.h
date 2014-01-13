@@ -89,6 +89,7 @@ class ModelProxy : public QObject
     Q_PROPERTY(TransformType transformType READ transformType WRITE setTransformType NOTIFY transformTypeChanged FINAL)
     Q_PROPERTY(QVector3D translation READ translation WRITE setTranslation NOTIFY translationChanged FINAL)
     Q_PROPERTY(QQuaternion orientation READ orientation WRITE setOrientation NOTIFY orientationChanged FINAL)
+    Q_PROPERTY(QVector3D eulerOrientation READ eulerOrientation WRITE setEulerOrientation FINAL)
     Q_PROPERTY(ProjectProxy::LanguageType language READ language WRITE setLanguage NOTIFY languageChanged)
     Q_PROPERTY(qreal scaleFactor READ scaleFactor WRITE setScaleFactor NOTIFY scaleFactorChanged FINAL)
     Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged FINAL)
@@ -152,6 +153,8 @@ public:
     void setTranslation(const QVector3D &value);
     QQuaternion orientation() const;
     void setOrientation(const QQuaternion &value);
+    QVector3D eulerOrientation() const;
+    void setEulerOrientation(const QVector3D &value);
     qreal scaleFactor() const;
     void setScaleFactor(qreal value);
     qreal edgeWidth() const;

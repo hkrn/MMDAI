@@ -604,6 +604,24 @@ void ModelProxy::setOrientation(const QQuaternion &value)
     }
 }
 
+QVector3D ModelProxy::eulerOrientation() const
+{
+    Scalar yaw, pitch, roll;
+    Matrix3x3 matrix(m_model->worldOrientation());
+    matrix.getEulerZYX(yaw, pitch, roll);
+    return QVector3D(qRadiansToDegrees(roll), qRadiansToDegrees(pitch), qRadiansToDegrees(yaw));
+}
+
+void ModelProxy::setEulerOrientation(const QVector3D &value)
+{
+    if (!qFuzzyCompare(eulerOrientation(), value)) {
+        Quaternion rotation(Quaternion::getIdentity());
+        rotation.setEulerZYX(qDegreesToRadians(value.z()), qDegreesToRadians(value.y()), qDegreesToRadians(value.x()));
+        m_model->setWorldOrientation(rotation);
+        emit orientationChanged();
+    }
+}
+
 qreal ModelProxy::scaleFactor() const
 {
     return static_cast<qreal>(m_model->scaleFactor());
