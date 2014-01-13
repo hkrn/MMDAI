@@ -68,6 +68,8 @@ ApplicationWindow {
         ListElement { name: "Regal"; display: "Regal"; license: "2-Clauses BSD"; url: "https://github.com/p3/regal/" }
         ListElement { name: "timelinejs"; display: "timeline.js"; license: "MIT"; url: "https://github.com/vorg/timeline.js/" }
         ListElement { name: "FontAwesome"; display: "Font Awesome"; license: "SIL OFL 1.1"; url: "https://github.com/fort-awesome/" }
+        ListElement { name: "Sparkle"; display: "Sparkle"; license: "MIT"; url: "http://sparkle.andymatuschak.org" }
+        ListElement { name: "WinSparkle"; display: "WinSparkle"; license: "MIT"; url: "https://www.winsparkle.org" }
     }
     RowLayout {
         anchors.fill: parent

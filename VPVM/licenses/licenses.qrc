@@ -16,8 +16,10 @@
         <file alias="MMDAgent">MMDAgent.txt</file>
         <file alias="nvFX">nvFX.txt</file>
         <file alias="Regal">Regal.txt</file>
+        <file alias="Sparkle">Sparkle.txt</file>
         <file alias="TBB">TBB.txt</file>
         <file alias="timelinejs">timelinejs.txt</file>
+        <file alias="WinSparkle">WinSparkle.txt</file>
         <file alias="zlib">zlib.txt</file>
     </qresource>
 </RCC>
