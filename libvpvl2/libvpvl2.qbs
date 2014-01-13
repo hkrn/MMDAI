@@ -36,6 +36,7 @@
 */
 
 import qbs 1.0
+import qbs.FileInfo
 import qbs.TextFile
 
 Product {
@@ -67,7 +68,7 @@ Product {
         "vendor/SOIL/*.c",
         "vendor/minizip-1.1/*.c",
         "vendor/tinyxml2-1.0.11/*.cpp"
-    ]
+    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
     readonly property var commonLibraries: [
         "assimp" + assimpLibrarySuffix,
         "FxParser" + nvFXLibrarySuffix,
@@ -109,8 +110,7 @@ Product {
         }
         return defines
     }
-    cpp.includePaths: [
-        buildDirectory,
+    cpp.includePaths: [ buildDirectory ].concat([
         "include",
         "vendor/cl-1.2",
         "vendor/nvFX",
@@ -124,16 +124,16 @@ Product {
         "../zlib-src/" + libraryInstallDirectory + "/include",
         "../AntTweakBar-src/include",
         "../tbb-src/include"
-    ]
+    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) }))
     cpp.libraryPaths: [
         "../bullet-src/" + libraryInstallDirectory + "/lib",
         "../assimp-src/" + libraryInstallDirectory + "/lib",
         "../nvFX-src/" + libraryInstallDirectory + "/lib",
         "../zlib-src/" + libraryInstallDirectory + "/lib",
         "../tbb-src/lib"
-    ]
+    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
     Transformer {
-        inputs: "include/vpvl2/config.h.in"
+        inputs: sourceDirectory + "/include/vpvl2/config.h.in"
         Artifact {
             fileName: "vpvl2/config.h"
             fileTags: "vpvl2_config"
@@ -203,7 +203,7 @@ Product {
         condition: qbs.toolchain.contains("msvc")
         configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_WINDOWS", "VPVL2_ENABLE_GLES2", "VPVL2_LINK_ATB", "VPVL2_LINK_EGL"])
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
-        cpp.dynamicLibraries: commonLibraries.concat([ "libGLESv2" + debugLibrarySuffix, "libEGL" + debugLibrarySuffix, "zlibstatic" + debugLibrarySuffix, "user32" ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "libGLESv2", "libEGL", "zlibstatic" ].map(function(item){ return item + debugLibrarySuffix })).condcat([ "user32" ])
     }
     Properties {
         condition: qbs.targetOS.contains("unix") && !qbs.targetOS.contains("osx")
@@ -212,7 +212,7 @@ Product {
     Group {
         condition: qbs.targetOS.contains("osx")
         name: "OSX Extension"
-        files: [ "src/engine/cl/*.cc" ]
+        files: [ "src/engine/cl/*.cc" ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
     }
     Depends { name: "cpp" }
     Depends {
@@ -224,4 +224,3 @@ Product {
         submodules: [ "core", "gui" ]
     }
 }
-

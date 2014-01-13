@@ -248,7 +248,7 @@ private slots:
     void activateProject();
     void markDirty();
     void updateGizmo();
-    void updateModelBones();
+    void updateGizmoAndRender();
     void seekMediaFromProject();
     void handleAudioDecoderError(QAudioDecoder::Error error);
     void handleMediaPlayerError(QMediaPlayer::Error error);

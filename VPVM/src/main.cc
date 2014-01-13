@@ -80,6 +80,7 @@ class ApplicationBootstrapOption : public QObject {
     Q_OBJECT
 
 public:
+    Q_PROPERTY(QString commitRevision READ commitRevision CONSTANT FINAL)
     Q_PROPERTY(QUrl json READ json CONSTANT FINAL)
     Q_PROPERTY(bool hasJson READ hasJson CONSTANT FINAL)
 
@@ -96,6 +97,9 @@ public:
     ~ApplicationBootstrapOption() {
     }
 
+    QString commitRevision() const {
+        return vpvl2::libraryCommitRevisionString();
+    }
     QUrl json() const {
         return QUrl::fromLocalFile(m_parser->value(m_json));
     }

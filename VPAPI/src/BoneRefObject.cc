@@ -129,6 +129,23 @@ void BoneRefObject::setLocalOrientation(const QQuaternion &value)
     setRawLocalOrientation(Util::toQuaternion(value));
 }
 
+QVector3D BoneRefObject::localEulerOrientation() const
+{
+    Scalar yaw, pitch, roll;
+    Matrix3x3 matrix(rawLocalOrientation());
+    matrix.getEulerZYX(yaw, pitch, roll);
+    return QVector3D(qRadiansToDegrees(roll), qRadiansToDegrees(pitch), qRadiansToDegrees(yaw));
+}
+
+void BoneRefObject::setLocalEulerOrientation(const QVector3D &value)
+{
+    if (!qFuzzyCompare(localEulerOrientation(), value)) {
+        Quaternion rotation(Quaternion::getIdentity());
+        rotation.setEulerZYX(qDegreesToRadians(value.z()), qDegreesToRadians(value.y()), qDegreesToRadians(value.x()));
+        setRawLocalOrientation(rotation);
+    }
+}
+
 QVector3D BoneRefObject::originLocalTranslation() const
 {
     return m_originTranslation;

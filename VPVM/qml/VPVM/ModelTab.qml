@@ -255,7 +255,7 @@ Tab {
                 maximumValue: propertyPanel.maximumRotaitonValue
                 stepSize: propertyPanel.rotationStepSize
                 decimals: propertyPanel.rotationDecimalPrecision
-                value: scene.currentModel ? scene.currentModel.orientation : Qt.vector3d(0, 0, 0)
+                value: scene.currentModel ? scene.currentModel.eulerOrientation : Qt.vector3d(0, 0, 0)
                 resettable: true
             }
         }
@@ -387,7 +387,7 @@ Tab {
                 maximumValue: propertyPanel.maximumRotaitonValue
                 stepSize: propertyPanel.rotationStepSize
                 decimals: propertyPanel.rotationDecimalPrecision
-                value: enabled ? scene.currentModel.firstTargetBone.localOrientation : Qt.vector3d(0, 0, 0)
+                value: enabled ? scene.currentModel.firstTargetBone.localEulerOrientation : Qt.vector3d(0, 0, 0)
                 resettable: true
                 onHoveredChanged: {
                     if (enabled) {

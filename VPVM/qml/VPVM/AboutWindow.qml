@@ -68,41 +68,49 @@ ApplicationWindow {
         ListElement { name: "Regal"; display: "Regal"; license: "2-Clauses BSD"; url: "https://github.com/p3/regal/" }
         ListElement { name: "timelinejs"; display: "timeline.js"; license: "MIT"; url: "https://github.com/vorg/timeline.js/" }
         ListElement { name: "FontAwesome"; display: "Font Awesome"; license: "SIL OFL 1.1"; url: "https://github.com/fort-awesome/" }
+        ListElement { name: "Sparkle"; display: "Sparkle"; license: "MIT"; url: "http://sparkle.andymatuschak.org" }
+        ListElement { name: "WinSparkle"; display: "WinSparkle"; license: "MIT"; url: "https://www.winsparkle.org" }
     }
     RowLayout {
         anchors.fill: parent
         anchors.margins: 10
         ColumnLayout {
-            Label {
-                Layout.fillWidth: true
-                font.pointSize: 20
-                text: "%1 (version=%2 arguments=%3)".arg(Qt.application.name).arg(Qt.application.version).arg((Qt.application.argument || []).join(" "))
-            }
-            Label {
-                Layout.fillWidth: true
-                text: qsTr("%1 is an open source software that is distributed under 3-Clauses BSD license (same as libvpvl2) and %1 also uses below open source softwares and libraries.").arg(Qt.application.name)
-                wrapMode: Text.WordWrap
+            Text {
+                text: "<font size=5>%1 %2</font> (revision=%3)".arg(Qt.application.name).arg(Qt.application.version).arg(applicationBootstrapOption.commitRevision)
+                textFormat: Text.RichText
             }
             TabView {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Tab {
                     title: "List"
+                    anchors.fill: parent
                     anchors.margins: 10
-                    TableView {
-                        id: licenseTable
-                        sortIndicatorVisible: true
-                        TableViewColumn { role: "display"; title: "Name"; width: 225 }
-                        TableViewColumn { role: "license"; title: "License"; width: 125 }
-                        TableViewColumn { role: "url"; title: "URL"; width: 300 }
-                        model: licenseTableModel
-                        onDoubleClicked: Qt.openUrlExternally(licenseTableModel.get(row).url)
-                        onCurrentRowChanged: licenseTableModel.currentRow = currentRow
+                    ColumnLayout {
+                        Label {
+                            id: descriptionLabel
+                            Layout.fillWidth: true
+                            text: qsTr("%1 is an open source software that is distributed under 3-Clauses BSD license (same as libvpvl2) and %1 also uses below open source softwares and libraries.").arg(Qt.application.name)
+                            wrapMode: Text.WordWrap
+                        }
+                        TableView {
+                            id: licenseTable
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            sortIndicatorVisible: true
+                            TableViewColumn { role: "display"; title: "Name"; width: 225 }
+                            TableViewColumn { role: "license"; title: "License"; width: 125 }
+                            TableViewColumn { role: "url"; title: "URL"; width: 300 }
+                            model: licenseTableModel
+                            onDoubleClicked: Qt.openUrlExternally(licenseTableModel.get(row).url)
+                            onCurrentRowChanged: licenseTableModel.currentRow = currentRow
+                        }
                     }
                 }
                 Tab {
                     id: licenseTextTab
                     title: qsTr("License")
+                    anchors.fill: parent
                     anchors.margins: 10
                     TextArea {
                         id: licenseTextArea

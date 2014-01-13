@@ -525,10 +525,8 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::projectDidCreate, this, &RenderTarget::prepareUploadingModelsInProject);
     connect(value, &ProjectProxy::projectWillLoad, this, &RenderTarget::disconnectProjectSignals);
     connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::prepareUploadingModelsInProject);
-    connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::render);
-    connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmo);
-    connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::render);
-    connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmo);
+    connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmoAndRender);
+    connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmoAndRender);
     connect(value, &ProjectProxy::currentTimeIndexChanged, this, &RenderTarget::seekMediaFromProject);
     connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::resetCurrentTimeIndex);
     connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::resetLastTimeIndex);
@@ -916,7 +914,9 @@ void RenderTarget::updateGizmo()
         setSnapGizmoStepSize(m_snapStepSize);
         if (const BoneRefObject *boneProxy = modelProxy->firstTargetBone()) {
             const IBone *boneRef = boneProxy->data();
-            Transform transform(boneRef->localOrientation(), boneRef->localTranslation());
+            const IModel *modelRef = modelProxy->data();
+            Transform transform(boneRef->localOrientation() * modelRef->worldOrientation(),
+                                boneRef->localTranslation() + modelRef->worldTranslation());
             Scalar rawMatrix[16];
             transform.getOpenGLMatrix(rawMatrix);
             for (int i = 0; i < 16; i++) {
@@ -932,12 +932,10 @@ void RenderTarget::updateGizmo()
     }
 }
 
-void RenderTarget::updateModelBones()
+void RenderTarget::updateGizmoAndRender()
 {
-    if (m_modelDrawer) {
-        m_modelDrawer->markDirty();
-        render();
-    }
+    updateGizmo();
+    render();
 }
 
 void RenderTarget::seekMediaFromProject()
@@ -1241,13 +1239,22 @@ void RenderTarget::performUploadingEnqueuedModels()
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
     QList<ApplicationContext::ModelProxyPair> succeededModelProxies, failedModelProxies;
     m_applicationContext->uploadEnqueuedModelProxies(m_projectProxyRef, succeededModelProxies, failedModelProxies);
+    if (!m_modelDrawer) {
+        m_modelDrawer.reset(new SkeletonDrawer());
+        connect(m_projectProxyRef, &ProjectProxy::currentTimeIndexChanged, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
+        connect(m_projectProxyRef, &ProjectProxy::undoDidPerform, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
+        connect(m_projectProxyRef, &ProjectProxy::redoDidPerform, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
+        m_modelDrawer->initialize();
+        m_modelDrawer->setViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
+    }
     foreach (const ApplicationContext::ModelProxyPair &pair, succeededModelProxies) {
         ModelProxy *modelProxy = pair.first;
         VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded" << (pair.second ? " from the project." : "."));
         connect(modelProxy, &ModelProxy::targetBonesDidCommitTransform, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
+        connect(modelProxy, &ModelProxy::translationChanged, this, &RenderTarget::updateGizmo);
+        connect(modelProxy, &ModelProxy::orientationChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateGizmo);
-        connect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateModelBones);
         emit uploadingModelDidSucceed(modelProxy, pair.second);
     }
     foreach (const ApplicationContext::ModelProxyPair &pair, failedModelProxies) {
@@ -1536,18 +1543,10 @@ void RenderTarget::drawModelBones()
     ModelProxy *currentModelRef = m_projectProxyRef->currentModel();
     if (!m_playing && m_editMode == SelectMode && currentModelRef && currentModelRef->isVisible()) {
         gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
-        if (!m_modelDrawer) {
-            m_modelDrawer.reset(new SkeletonDrawer());
-            connect(m_projectProxyRef, &ProjectProxy::currentTimeIndexChanged, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
-            connect(m_projectProxyRef, &ProjectProxy::undoDidPerform, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
-            connect(m_projectProxyRef, &ProjectProxy::redoDidPerform, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
-            connect(m_modelDrawer.data(), &SkeletonDrawer::modelDidMarkDirty, this, &RenderTarget::render);
-            m_modelDrawer->initialize();
-            m_modelDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
+        if (m_modelDrawer) {
             m_modelDrawer->setModelProxyRef(currentModelRef);
+            m_modelDrawer->draw();
         }
-        m_modelDrawer->setModelProxyRef(currentModelRef);
-        m_modelDrawer->draw();
         gl::popAnnotationGroup(m_applicationContext.data());
     }
 }
@@ -1595,7 +1594,7 @@ void RenderTarget::updateViewport()
             m_debugDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
         }
         if (m_modelDrawer) {
-            m_modelDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
+            m_modelDrawer->setViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
         }
         IGizmo *translationGizmoRef = translationGizmo(), *orientationGizmoRef = orientationGizmo();
         translationGizmoRef->SetScreenDimension(w, h);
