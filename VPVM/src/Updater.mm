@@ -49,7 +49,7 @@ Updater::~Updater()
 {
 }
 
-bool Updater::isAvailable()
+bool Updater::isAvailable() const
 {
     return NSClassFromString(@"SUUpdater") != nil;
 }

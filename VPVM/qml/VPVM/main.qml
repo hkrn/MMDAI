@@ -1005,8 +1005,8 @@ ApplicationWindow {
             title: isOSX ? qsTr("Help") : qsTr("&Help")
             MenuItem { action: openGlobalPreferenceAction }
             MenuSeparator { visible: !isOSX }
-            MenuItem { action: openAboutAction }
             MenuItem { visible: VPVM.Updater.available; action: updateApplicationAction }
+            MenuItem { action: openAboutAction }
         }
     }
 

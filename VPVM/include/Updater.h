@@ -49,7 +49,7 @@ public:
     Updater(QObject *parent = 0);
     ~Updater();
 
-    bool isAvailable();
+    bool isAvailable() const;
     Q_INVOKABLE void checkForUpdate();
 };
 
