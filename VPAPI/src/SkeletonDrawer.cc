@@ -193,6 +193,7 @@ void SkeletonDrawer::removeModelRef(const ModelProxy *modelProxyRef)
 {
     if (modelProxyRef) {
         disconnect(modelProxyRef, &ModelProxy::targetBonesDidCommitTransform, this, &SkeletonDrawer::markDirty);
+        disconnect(modelProxyRef, &ModelProxy::firstTargetBoneChanged, this, &SkeletonDrawer::markDirty);
         foreach (const BoneRefObject *bone, modelProxyRef->allBoneRefs()) {
             disconnect(bone, &BoneRefObject::localTranslationChanged, this, &SkeletonDrawer::markDirty);
             disconnect(bone, &BoneRefObject::localOrientationChanged, this, &SkeletonDrawer::markDirty);

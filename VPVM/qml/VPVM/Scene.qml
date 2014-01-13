@@ -608,12 +608,12 @@ Item {
         iconPointSize: baseIconPointSize
         visible: isHUDAvailable
         onAxisTypeSet: projectDocument.currentModel.axisType = value
-        onBeginTranslate: projectDocument.currentModel.beginTranslate(delta)
+        onBeginTranslate: projectDocument.currentModel.beginTransform(delta)
         onTranslate: projectDocument.currentModel.translate(delta)
-        onEndTranslate: projectDocument.currentModel.endTranslate()
-        onBeginRotate: projectDocument.currentModel.beginRotate(delta)
+        onEndTranslate: projectDocument.currentModel.commitTransform()
+        onBeginRotate: projectDocument.currentModel.beginTransform(delta)
         onRotate:  projectDocument.currentModel.rotate(delta)
-        onEndRotate: projectDocument.currentModel.endRotate()
+        onEndRotate: projectDocument.currentModel.commitTransform()
     }
     TransformMode {
         id: transformMode

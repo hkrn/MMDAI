@@ -194,6 +194,7 @@ signals:
     void targetBonesDidBeginTransform();
     void targetBonesDidTranslate();
     void targetBonesDidRotate();
+    void targetBonesDidDiscardTransform();
     void targetBonesDidCommitTransform();
     void boneDidSelect(BoneRefObject *bone);
     void morphDidSelect(MorphRefObject *morph);
@@ -205,12 +206,11 @@ signals:
 public slots:
     Q_INVOKABLE void selectOpaqueObject(QObject *value);
     Q_INVOKABLE void selectBone(BoneRefObject *value);
-    Q_INVOKABLE void beginTranslate(qreal startY);
+    Q_INVOKABLE void beginTransform(qreal startY);
     Q_INVOKABLE void translate(qreal value);
-    Q_INVOKABLE void endTranslate();
-    Q_INVOKABLE void beginRotate(qreal startY);
     Q_INVOKABLE void rotate(qreal angle);
-    Q_INVOKABLE void endRotate();
+    Q_INVOKABLE void discardTransform();
+    Q_INVOKABLE void commitTransform();
     Q_INVOKABLE void resetTargets();
     Q_INVOKABLE void release();
     Q_INVOKABLE void refresh();

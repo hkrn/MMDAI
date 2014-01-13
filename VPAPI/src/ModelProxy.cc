@@ -176,7 +176,7 @@ void ModelProxy::selectBone(BoneRefObject *value)
     emit boneDidSelect(value);
 }
 
-void ModelProxy::beginTranslate(qreal startY)
+void ModelProxy::beginTransform(qreal startY)
 {
     saveTransformState();
     m_baseY = startY;
@@ -238,22 +238,6 @@ void ModelProxy::translate(qreal value)
         }
         emit targetBonesDidTranslate();
     }
-}
-
-void ModelProxy::endTranslate()
-{
-    clearTransformState();
-    m_baseY = 0;
-    m_moving = false;
-    emit targetBonesDidCommitTransform();
-}
-
-void ModelProxy::beginRotate(qreal startY)
-{
-    saveTransformState();
-    m_baseY = startY;
-    m_moving = true;
-    emit targetBonesDidBeginTransform();
 }
 
 void ModelProxy::rotate(qreal angle)
@@ -331,7 +315,15 @@ void ModelProxy::rotate(qreal angle)
     }
 }
 
-void ModelProxy::endRotate()
+void ModelProxy::discardTransform()
+{
+    clearTransformState();
+    m_baseY = 0;
+    m_moving = false;
+    emit targetBonesDidDiscardTransform();
+}
+
+void ModelProxy::commitTransform()
 {
     clearTransformState();
     m_baseY = 0;

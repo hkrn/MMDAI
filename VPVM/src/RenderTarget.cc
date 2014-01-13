@@ -356,10 +356,8 @@ bool RenderTarget::handleMousePress(int x, int y, int button)
             Q_ASSERT(modelProxy);
             switch (m_editMode) {
             case RotateMode:
-                modelProxy->beginRotate(0);
-                break;
             case MoveMode:
-                modelProxy->beginTranslate(0);
+                modelProxy->beginTransform(0);
                 break;
             case SelectMode:
             default:
@@ -415,10 +413,8 @@ bool RenderTarget::handleMouseRelease(int x, int y, int button)
             Q_ASSERT(modelProxy);
             switch (m_editMode) {
             case RotateMode:
-                modelProxy->endRotate();
-                break;
             case MoveMode:
-                modelProxy->endTranslate();
+                modelProxy->commitTransform();
                 break;
             case SelectMode:
             default:
@@ -1251,6 +1247,7 @@ void RenderTarget::performUploadingEnqueuedModels()
         ModelProxy *modelProxy = pair.first;
         VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded" << (pair.second ? " from the project." : "."));
         connect(modelProxy, &ModelProxy::targetBonesDidCommitTransform, this, &RenderTarget::updateGizmo);
+        connect(modelProxy, &ModelProxy::targetBonesDidCommitTransform, this, &RenderTarget::render);
         connect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::translationChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::orientationChanged, this, &RenderTarget::updateGizmo);
