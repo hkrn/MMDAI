@@ -64,7 +64,7 @@ public:
     void initialize();
     void setModelProxyRef(const ModelProxy *value);
     const ModelProxy *currentModelProxyRef() const;
-    void setModelViewProjectionMatrix(const QMatrix4x4 &value);
+    void setViewProjectionMatrix(const QMatrix4x4 &value);
     void draw();
     void update();
     void removeModelRef(const ModelProxy *modelProxyRef);
@@ -97,7 +97,7 @@ private:
     QScopedPointer<QOpenGLVertexArrayObject> m_vao;
     QScopedPointer<QOpenGLBuffer> m_vbo;
     QScopedPointer<QOpenGLBuffer> m_ibo;
-    QMatrix4x4 m_modelViewProjectionMatrix;
+    QMatrix4x4 m_viewProjectionMatrix;
     int m_nvertices;
     int m_nindices;
     volatile bool m_dirty;

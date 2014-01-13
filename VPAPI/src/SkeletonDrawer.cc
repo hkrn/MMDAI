@@ -116,6 +116,7 @@ void SkeletonDrawer::setModelProxyRef(const ModelProxy *value)
     if (value && m_currentModelRef != value) {
         removeModelRef(m_currentModelRef);
         connect(value, &ModelProxy::targetBonesDidCommitTransform, this, &SkeletonDrawer::markDirty);
+        connect(value, &ModelProxy::firstTargetBoneChanged, this, &SkeletonDrawer::markDirty);
         int offset = 0;
         foreach (const BoneRefObject *bone, allBones) {
             const IBone *boneRef = bone->data();
@@ -148,15 +149,23 @@ const ModelProxy *SkeletonDrawer::currentModelProxyRef() const
     return m_currentModelRef;
 }
 
-void SkeletonDrawer::setModelViewProjectionMatrix(const QMatrix4x4 &value)
+void SkeletonDrawer::setViewProjectionMatrix(const QMatrix4x4 &value)
 {
-    m_modelViewProjectionMatrix = value;
+    m_viewProjectionMatrix = value;
 }
 
 void SkeletonDrawer::draw()
 {
     bindProgram();
-    m_program->setUniformValue("modelViewProjectionMatrix", m_modelViewProjectionMatrix);
+    QMatrix4x4 worldMatrix;
+    if (m_currentModelRef) {
+        const IModel *modelRef = m_currentModelRef->data();
+        const Vector3 &translation = modelRef->worldTranslation();
+        const Quaternion &orientation = modelRef->worldOrientation();
+        worldMatrix.translate(translation.x(), translation.y(), translation.z());
+        worldMatrix.rotate(QQuaternion(orientation.w(), orientation.x(), orientation.y(), orientation.z()));
+    }
+    m_program->setUniformValue("modelViewProjectionMatrix", m_viewProjectionMatrix * worldMatrix);
     glDrawElements(GL_TRIANGLES, m_nindices, GL_UNSIGNED_INT, 0);
     releaseProgram();
 }
