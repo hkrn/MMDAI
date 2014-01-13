@@ -18,7 +18,7 @@ MMDAI/VPVM (a.k.a MMDAI2) のダウンロードが可能です。
 
 ### [マニュアル](manual/VPVM/)
 
-今のところ VPVM のマニュアルのみあります。もっとざっくりとした、しかしあまり期待のできない説明は「["MMDAI2 使い方"](http://ch.nicovideo.jp/MMDAI/blomaga/ar37961)」を参照。
+今のところ MMDAI2 0.30.0 のマニュアルが置かれています。[VPVM 0.33.4 は github 上にあります。](https://github.com/hkrn/MMDAI/wiki/VPVM)もっとざっくりとした、しかしあまり期待のできない説明は「["MMDAI2 使い方"](http://ch.nicovideo.jp/MMDAI/blomaga/ar37961)」を参照。
 
 ### [コミュニティ](http://com.nicovideo.jp/community/co1393234)
 

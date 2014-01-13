@@ -13,7 +13,7 @@ VPVM 0.33.4
 
 開発版の公開版です
 
- - ドキュメントは今のところ [github 上の manual.rst](https://github.com/hkrn/MMDAI/blob/master/VPVM/documents/manual.rst) にあります
+ - [ドキュメントは今のところ github 上にあります](https://github.com/hkrn/MMDAI/wiki/VPVM)
  - MMDAI2 0.30.0 とは使い方と UI が大きく異なるので注意
 
 ### [OSX 版をダウンロード](http://www8092ui.sakura.ne.jp/projects/VPVM/binaries/VPVM-osx-0.33.4.zip)
