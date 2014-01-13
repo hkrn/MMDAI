@@ -68,7 +68,7 @@ Product {
         "vendor/SOIL/*.c",
         "vendor/minizip-1.1/*.c",
         "vendor/tinyxml2-1.0.11/*.cpp"
-    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
+    ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x) })
     readonly property var commonLibraries: [
         "assimp" + assimpLibrarySuffix,
         "FxParser" + nvFXLibrarySuffix,
@@ -124,14 +124,13 @@ Product {
         "../zlib-src/" + libraryInstallDirectory + "/include",
         "../AntTweakBar-src/include",
         "../tbb-src/include"
-    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) }))
-    cpp.libraryPaths: [
-        "../bullet-src/" + libraryInstallDirectory + "/lib",
-        "../assimp-src/" + libraryInstallDirectory + "/lib",
-        "../nvFX-src/" + libraryInstallDirectory + "/lib",
-        "../zlib-src/" + libraryInstallDirectory + "/lib",
-        "../tbb-src/lib"
-    ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
+    ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x) }))
+    cpp.libraryPaths: [ "../tbb-src/lib" ].concat([
+        "../bullet-src",
+        "../assimp-src",
+        "../nvFX-src",
+        "../zlib-src",
+    ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x, libraryInstallDirectory, "lib") }))
     Transformer {
         inputs: sourceDirectory + "/include/vpvl2/config.h.in"
         Artifact {
@@ -203,7 +202,7 @@ Product {
         condition: qbs.toolchain.contains("msvc")
         configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_WINDOWS", "VPVL2_ENABLE_GLES2", "VPVL2_LINK_ATB", "VPVL2_LINK_EGL"])
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
-        cpp.dynamicLibraries: commonLibraries.concat([ "libGLESv2", "libEGL", "zlibstatic" ].map(function(item){ return item + debugLibrarySuffix })).condcat([ "user32" ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "user32" ]).concat([ "libGLESv2", "libEGL", "zlibstatic" ].map(function(x){ return x + debugLibrarySuffix }))
     }
     Properties {
         condition: qbs.targetOS.contains("unix") && !qbs.targetOS.contains("osx")
@@ -212,7 +211,7 @@ Product {
     Group {
         condition: qbs.targetOS.contains("osx")
         name: "OSX Extension"
-        files: [ "src/engine/cl/*.cc" ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
+        files: [ "src/engine/cl/*.cc" ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x) })
     }
     Depends { name: "cpp" }
     Depends {
