@@ -521,6 +521,7 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::projectDidCreate, this, &RenderTarget::prepareUploadingModelsInProject);
     connect(value, &ProjectProxy::projectWillLoad, this, &RenderTarget::disconnectProjectSignals);
     connect(value, &ProjectProxy::projectDidLoad, this, &RenderTarget::prepareUploadingModelsInProject);
+    connect(value, &ProjectProxy::modelBoneDidReset, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmoAndRender);
     connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmoAndRender);
     connect(value, &ProjectProxy::currentTimeIndexChanged, this, &RenderTarget::seekMediaFromProject);
@@ -1238,6 +1239,7 @@ void RenderTarget::performUploadingEnqueuedModels()
     if (!m_modelDrawer) {
         m_modelDrawer.reset(new SkeletonDrawer());
         connect(m_projectProxyRef, &ProjectProxy::currentTimeIndexChanged, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
+        connect(m_projectProxyRef, &ProjectProxy::modelBoneDidReset, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
         connect(m_projectProxyRef, &ProjectProxy::undoDidPerform, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
         connect(m_projectProxyRef, &ProjectProxy::redoDidPerform, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
         m_modelDrawer->initialize();
@@ -1247,7 +1249,9 @@ void RenderTarget::performUploadingEnqueuedModels()
         ModelProxy *modelProxy = pair.first;
         VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded" << (pair.second ? " from the project." : "."));
         connect(modelProxy, &ModelProxy::targetBonesDidCommitTransform, this, &RenderTarget::updateGizmo);
+        connect(modelProxy, &ModelProxy::targetBonesDidDiscardTransform, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::targetBonesDidCommitTransform, this, &RenderTarget::render);
+        connect(modelProxy, &ModelProxy::targetBonesDidDiscardTransform, this, &RenderTarget::render);
         connect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::translationChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::orientationChanged, this, &RenderTarget::updateGizmo);

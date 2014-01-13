@@ -258,6 +258,7 @@ signals:
     void effectDidAdd(ModelProxy *model);
     void poseDidLoad(ModelProxy *model);
     void modelBoneDidPick(BoneRefObject *bone);
+    void modelBoneDidReset(BoneRefObject *bone, ResetBoneType type);
     void effectDidCommitUploading();
     void modelDidCommitUploading();
     void modelDidCommitDeleting();

@@ -849,6 +849,7 @@ void ProjectProxy::resetBone(BoneRefObject *bone, ResetBoneType type)
             motionProxy->updateKeyframe(bone, static_cast<qint64>(m_currentTimeIndex));
             VPVL2_VLOG(2, "reset TYPE=BONE name=" << bone->name().toStdString() << " type=" << type);
         }
+        emit modelBoneDidReset(bone, type);
     }
     else if (m_currentModelRef) {
         if (MotionProxy *motionProxy = m_currentModelRef->childMotion()) {
@@ -863,6 +864,7 @@ void ProjectProxy::resetBone(BoneRefObject *bone, ResetBoneType type)
                 stack->push(command.take());
                 VPVL2_VLOG(2, "resetAll TYPE=BONE");
             }
+            emit modelBoneDidReset(0, type);
         }
     }
 }
