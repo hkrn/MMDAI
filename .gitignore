@@ -59,6 +59,7 @@ VPVM*.png
 VPVM.desktop
 VPVM*.json
 Win32
+WinSparkle-*
 zlib-*
 *.a
 *.build
