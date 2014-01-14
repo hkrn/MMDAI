@@ -1,6 +1,6 @@
 /**
 
- Copyright (c) 2010-2014  hkrn
+ Copyright (c) 2010-2013  hkrn
 
  All rights reserved.
 
@@ -726,7 +726,7 @@ GraphicsDevice *RenderTarget::graphicsDevice() const
 void RenderTarget::handleWindowChange(QQuickWindow *window)
 {
     if (window) {
-        connect(window, &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initialize, Qt::DirectConnection);
+        connect(window, &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initializeOpenGLContext, Qt::DirectConnection);
         connect(window, &QQuickWindow::frameSwapped, this, &RenderTarget::synchronizeImplicitly, Qt::DirectConnection);
         window->setClearBeforeRendering(false);
     }
@@ -1136,7 +1136,7 @@ void RenderTarget::synchronizeImplicitly()
     }
 }
 
-void RenderTarget::initialize()
+void RenderTarget::initializeOpenGLContext()
 {
     Q_ASSERT(window());
     if (!Scene::isInitialized()) {
@@ -1154,7 +1154,7 @@ void RenderTarget::initialize()
         connect(window()->openglContext(), &QOpenGLContext::aboutToBeDestroyed, m_projectProxyRef, &ProjectProxy::reset, Qt::DirectConnection);
         connect(window()->openglContext(), &QOpenGLContext::aboutToBeDestroyed, this, &RenderTarget::releaseOpenGLResources, Qt::DirectConnection);
         toggleRunning(true);
-        disconnect(window(), &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initialize);
+        disconnect(window(), &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initializeOpenGLContext);
         emit initializedChanged();
         m_renderTimer.start();
         gl::popAnnotationGroup(m_applicationContext.data());

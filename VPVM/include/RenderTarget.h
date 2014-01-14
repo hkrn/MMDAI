@@ -229,7 +229,7 @@ private slots:
     void synchronizeExplicitly();
     void synchronizeMotionState();
     void synchronizeImplicitly();
-    void initialize();
+    void initializeOpenGLContext();
     void releaseOpenGLResources();
     void enqueueUploadingModel(ModelProxy *model, bool isProject);
     void enqueueUploadingEffect(ModelProxy *model);
