@@ -64,6 +64,11 @@ StaticLibrary {
         consoleApplication: false
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
     }
+    Group {
+        name: "OSX Extensions"
+        condition: qbs.targetOS.contains("osx")
+        files: [ "src/*.mm" ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x) })
+    }
     Depends { name: "cpp" }
     Depends { name: "vpvl2" }
     Depends { name: "Qt"; submodules: [ "core", "gui", "qml", "quick" ] }
