@@ -104,7 +104,7 @@ Product {
     }
     files: commonFiles
     cpp.defines: {
-        var defines = [ "VPVL2_ENABLE_QT", "USE_FILE32API", "TW_STATIC", "TW_NO_LIB_PRAGMA" ]
+        var defines = [ "VPVL2_ENABLE_QT", "USE_FILE32API", "TW_STATIC", "TW_NO_LIB_PRAGMA", "STBI_NO_STDIO", "STBI_NO_WRITE" ]
         if (qbs.enableDebugCode && qbs.toolchain.contains("msvc")) {
             defines.push("vpvl2_EXPORTS")
         }

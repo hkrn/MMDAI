@@ -83,6 +83,7 @@ endif()
 
 # ApplicationContext extension
 if(VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT)
+  add_definitions(-DSTBI_NO_STDIO -DSTBI_NO_WRITE)
   set(SOIL_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/vendor/SOIL")
   file(GLOB vpvl2_sources_soil "${SOIL_ROOT}/*.c")
   file(GLOB vpvl2_headers_soil "${SOIL_ROOT}/*.h")
