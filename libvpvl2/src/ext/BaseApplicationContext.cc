@@ -86,6 +86,18 @@ typedef unsigned int ETwMouseAction;
 #include <sstream>
 #include <set>
 
+#ifdef VPVL2_LINK_ASSIMP3
+#include <assimp/DefaultLogger.hpp>
+#else
+namespace Assimp {
+struct LogStream;
+struct Logger {};
+struct DefaultLogger {
+    static void set(Logger * /* logger */) {}
+};
+}
+#endif
+
 /* GLM */
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_access.hpp>
@@ -255,6 +267,31 @@ private:
     }
 
     VPVL2_MAKE_STATIC_CLASS(EffectParameterUIBuilder)
+};
+
+struct AssimpLogger : Assimp::Logger {
+    AssimpLogger() {
+    }
+    ~AssimpLogger() {
+    }
+    bool attachStream(Assimp::LogStream * /* pStream */, unsigned int /* severity */) {
+        return true;
+    }
+    bool detatchStream(Assimp::LogStream * /* pStream */, unsigned int /* severity */) {
+        return true;
+    }
+    void OnDebug(const char *message) {
+        VPVL2_VLOG(2, message);
+    }
+    void OnInfo(const char *message) {
+        VPVL2_VLOG(1, message);
+    }
+    void OnWarn(const char *message) {
+        VPVL2_LOG(WARNING, message);
+    }
+    void OnError(const char *message) {
+        VPVL2_LOG(ERROR, message);
+    }
 };
 
 static inline const char *DebugMessageSourceToString(vpvl2::gl::GLenum value)
@@ -508,6 +545,7 @@ bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdi
     FreeImage_Initialise();
     installLogger(argv0, logdir, vlog);
     TwHandleErrors(&EffectParameterUIBuilder::handleError);
+    Assimp::DefaultLogger::set(new AssimpLogger());
     return Encoding::initializeOnce();
 }
 
@@ -516,6 +554,7 @@ void BaseApplicationContext::terminate()
     FreeImage_DeInitialise();
     TwTerminate();
     uninstallLogger();
+    Assimp::DefaultLogger::set(0);
     Scene::terminate();
 }
 
@@ -573,8 +612,10 @@ void BaseApplicationContext::initializeOpenGLContext(bool enableDebug)
 
 BaseApplicationContext::~BaseApplicationContext()
 {
+    m_configRef = 0;
+    m_sceneRef = 0;
     m_encodingRef = 0;
-    /* m_samplesMSAA must not set zero at #release(), it causes multiple post effect will be lost */
+    m_currentModelRef = 0;
     m_samplesMSAA = 0;
 }
 
