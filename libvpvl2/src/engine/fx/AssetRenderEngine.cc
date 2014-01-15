@@ -694,14 +694,14 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
         color.setValue(ambient.r, ambient.g, ambient.b, ambient.a);
     }
     else {
-        color.setValue(0, 0, 0, 1);
+        color.setValue(1, 1, 1, 1);
     }
     m_currentEffectEngineRef->emissive.setGeometryColor(color);
     if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
         color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a * m_modelRef->opacity());
     }
     else {
-        color.setValue(0, 0, 0, m_modelRef->opacity());
+        color.setValue(1, 1, 1, m_modelRef->opacity());
     }
     m_currentEffectEngineRef->ambient.setGeometryColor(color);
     m_currentEffectEngineRef->diffuse.setGeometryColor(color);
@@ -710,7 +710,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
         color.setValue(specular.r / kDivide, specular.g / kDivide, specular.b / kDivide, specular.a);
     }
     else {
-        color.setValue(0, 0, 0, 1);
+        color.setValue(1, 1, 1, 1);
     }
     m_currentEffectEngineRef->specular.setGeometryColor(color);
     float shininess = 0, strength = 0;
