@@ -41,7 +41,7 @@ import qbs.FileInfo
 import qbs.TextFile
 import "VPVM.qbs.js" as vpvm
 
-Application {
+CppApplication {
     id: VPVM
     readonly property string applicationBundlePath: "VPVM.app/Contents"
     readonly property string libraryBuildDirectory: "build-" + qbs.buildVariant.toLowerCase()
@@ -286,7 +286,6 @@ Application {
         condition: qbs.targetOS.contains("osx")
         files: [ "src/*.mm" ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x) })
     }
-    Depends { name: "cpp" }
     Depends { name: "AntTweakBar"; condition: !qbs.targetOS.contains("ios") }
     Depends { name: "gizmo" }
     Depends { name: "VPAPI" }

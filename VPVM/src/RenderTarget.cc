@@ -69,12 +69,11 @@
 #include "RenderTarget.h"
 #include "ModelProxy.h"
 #include "ProjectProxy.h"
+#include "SharingService.h"
 #include "SkeletonDrawer.h"
 #include "Util.h"
 #include "WorldProxy.h"
 #include "VideoSurface.h"
-
-#include "SharingService.h"
 
 using namespace vpvl2;
 using namespace vpvl2::extensions;

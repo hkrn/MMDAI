@@ -64,8 +64,8 @@
 #include "MorphRefObject.h"
 #include "MotionProxy.h"
 #include "Preference.h"
-#include "RenderTarget.h"
 #include "ProjectProxy.h"
+#include "RenderTarget.h"
 #include "SharingService.h"
 #include "UIAuxHelper.h"
 #include "Updater.h"
@@ -160,8 +160,8 @@ void registerQmlTypes()
     qmlRegisterUncreatableType<WorldProxy>("com.github.mmdai.VPVM", 1, 0, "World", "");
     qmlRegisterSingletonType<UIAuxHelper>("com.github.mmdai.VPVM", 1, 0, "UIAuxHelper", createUIAuxHelper);
     qmlRegisterSingletonType<Updater>("com.github.mmdai.VPVM", 1, 0, "Updater", createUpdater);
-    qmlRegisterType<RenderTarget>("com.github.mmdai.VPVM", 1, 0, "RenderTarget");
     qmlRegisterType<ProjectProxy>("com.github.mmdai.VPVM", 1, 0, "Project");
+    qmlRegisterType<RenderTarget>("com.github.mmdai.VPVM", 1, 0, "RenderTarget");
 }
 
 }
