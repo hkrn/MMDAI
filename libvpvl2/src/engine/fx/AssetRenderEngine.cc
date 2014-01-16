@@ -710,7 +710,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
         color.setValue(specular.r / kDivide, specular.g / kDivide, specular.b / kDivide, specular.a);
     }
     else {
-        color.setValue(1, 1, 1, 1);
+        color.setValue(0, 0, 0, 1);
     }
     m_currentEffectEngineRef->specular.setGeometryColor(color);
     float shininess = 0, strength = 0;
