@@ -50,6 +50,12 @@
 using namespace vpvl2;
 using namespace vpvl2::extensions::qt;
 
+const QColor Util::kRed = QColor(0xff, 0x41, 0x36);
+const QColor Util::kGreen = QColor(0x2e, 0xcc, 0x40);
+const QColor Util::kBlue = QColor(0x00, 0x74, 0xd9);
+const QColor Util::kYellow = QColor(0xff, 0xdc, 0x00);
+const QColor Util::kGray = QColor(0xaa, 0xaa, 0xaa);
+
 QString Util::toQString(const IString *value)
 {
     return value ? static_cast<const String *>(value)->value() : QString();

@@ -41,6 +41,9 @@ import com.github.mmdai.VPVM 1.0 as VPVM
 Grid {
     id: transformHandleSet
     readonly property string fontFamilyName: "FontAwesome"
+    readonly property color unitXColor: "#ff4136"
+    readonly property color unitYColor: "#2ecc40"
+    readonly property color unitZColor: "#0074d9"
     property int iconPointSize : 48
     signal axisTypeSet(int value)
     signal beginTranslate(real delta)
@@ -67,7 +70,7 @@ Grid {
         id: translateX
         font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize; }
         axisType: VPVM.Model.AxisX
-        axisColor: "red"
+        axisColor: unitXColor
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
         onBeginTranslate: transformHandleSet.beginTranslate(delta)
         onTranslate: transformHandleSet.translate(delta)
@@ -77,7 +80,7 @@ Grid {
         id: translateY
         font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
         axisType: VPVM.Model.AxisY
-        axisColor: "green"
+        axisColor: unitYColor
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
         onBeginTranslate: transformHandleSet.beginTranslate(delta)
         onTranslate: transformHandleSet.translate(delta)
@@ -87,7 +90,7 @@ Grid {
         id: translateZ
         font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
         axisType: VPVM.Model.AxisZ
-        axisColor: "blue"
+        axisColor: unitZColor
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
         onBeginTranslate: transformHandleSet.beginTranslate(delta)
         onTranslate: transformHandleSet.translate(delta)
@@ -97,7 +100,7 @@ Grid {
         id: rotateX
         font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
         axisType: VPVM.Model.AxisX
-        axisColor: "red"
+        axisColor: unitXColor
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
         onBeginRotate: transformHandleSet.beginRotate(delta)
         onRotate: transformHandleSet.rotate(delta)
@@ -107,7 +110,7 @@ Grid {
         id: rotateY
         font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
         axisType: VPVM.Model.AxisY
-        axisColor: "green"
+        axisColor: unitYColor
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
         onBeginRotate: transformHandleSet.beginRotate(delta)
         onRotate: transformHandleSet.rotate(delta)
@@ -117,7 +120,7 @@ Grid {
         id: rotateZ
         font { family: transformHandleSet.fontFamilyName; pointSize: transformHandleSet.iconPointSize }
         axisType: VPVM.Model.AxisZ
-        axisColor: "blue"
+        axisColor: unitZColor
         onAxisTypeSet: transformHandleSet.axisTypeSet(value)
         onBeginRotate: transformHandleSet.beginRotate(delta)
         onRotate: transformHandleSet.rotate(delta)

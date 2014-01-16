@@ -38,6 +38,7 @@
 #include "Common.h"
 #include "Grid.h"
 #include "ProjectProxy.h"
+#include "Util.h"
 
 #include <QOpenGLFunctions>
 #include <QMatrix4x4>
@@ -114,10 +115,10 @@ private:
 Grid::Grid(QObject *parent)
     : QObject(parent),
       m_size(50.0, 50.0, 50.0, 5.0),
-      m_lineColor(127, 127, 127),
-      m_axisXColor(255, 0, 0),
-      m_axisYColor(0, 255, 0),
-      m_axisZColor(0, 0, 255),
+      m_lineColor(Util::kGray),
+      m_axisXColor(Util::kRed),
+      m_axisYColor(Util::kGreen),
+      m_axisZColor(Util::kBlue),
       m_nindices(0),
       m_visible(true)
 {

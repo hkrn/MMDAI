@@ -53,6 +53,12 @@ class IString;
 
 class Util {
 public:
+    static const QColor kRed;
+    static const QColor kGreen;
+    static const QColor kBlue;
+    static const QColor kYellow;
+    static const QColor kGray;
+
     static QString toQString(const vpvl2::IString *value);
     static bool equalsString(const QString lhs, const vpvl2::IString *rhs);
     static QMatrix4x4 fromMatrix4(const glm::mat4 &value);

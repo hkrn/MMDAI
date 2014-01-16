@@ -42,6 +42,8 @@ Column {
     readonly property string defaultNullModelName : qsTr("(null)")
     readonly property string defaultNullBoneName : qsTr("(null)")
     readonly property string defaultNullMorphlName : qsTr("(null)")
+    readonly property color labelColor: "#0074d9"
+    readonly property color textColor: "#ff4136"
     property int fontPointSize : 16
     property alias currentModelName: modelNameLabel.text
     property alias currentBoneName: boneNameLabel.text
@@ -49,39 +51,39 @@ Column {
     Row {
         Text {
             font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
-            color: "blue"
+            color: infoPanel.labelColor
             text: qsTr("Model: ")
         }
         Text {
             id: modelNameLabel
             font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
-            color: "red"
+            color: infoPanel.textColor
             text: defaultNullModelName
         }
     }
     Row {
         Text {
             font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
-            color: "blue"
+            color: infoPanel.labelColor
             text: qsTr("Bone: ")
         }
         Text {
             id: boneNameLabel
             font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
-            color: "red"
+            color: infoPanel.textColor
             text: defaultNullBoneName
         }
     }
     Row {
         Text {
             font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
-            color: "blue"
+            color: infoPanel.labelColor
             text: qsTr("Morph: ")
         }
         Text {
             id: morphNameLabel
             font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
-            color: "red"
+            color: infoPanel.textColor
             text: defaultNullMorphlName
         }
     }

@@ -43,13 +43,13 @@ Row {
     property alias value: fpsLabel.text
     Text {
         font { family: applicationPreference.fontFamily; pointSize: fpsCountPanel.fontPointSize }
-        color: "blue"
+        color: infoPanel.labelColor
         text: qsTr("FPS: ")
     }
     Text {
         id: fpsLabel
         font { family: applicationPreference.fontFamily; pointSize: fpsCountPanel.fontPointSize }
-        color: "red"
+        color: infoPanel.textColor
         text: "N/A"
     }
 }

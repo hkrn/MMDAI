@@ -267,12 +267,12 @@ void SkeletonDrawer::updateBoneVertices(const IBone *boneRef, bool selected, QVa
         static const glm::vec3 kGLMUnitY(0, 1, 0);
         const glm::vec3 scale(1, delta.length(), 1), normal(glm::normalize(glm::vec3(delta.x(), delta.y(), delta.z())));
         const glm::mat4 matrix(glm::scale(glm::toMat4(glm::rotation(kGLMUnitY, normal)), scale));
-        Vector3 color(Util::toColor(Qt::blue));
+        Vector3 color(Util::toColor(Util::kBlue));
         Transform transform(Transform::getIdentity());
         transform.setFromOpenGLMatrix(glm::value_ptr(matrix));
         transform.setOrigin(origin);
         if (selected) {
-            color = Util::toColor(Qt::red);
+            color = Util::toColor(Util::kRed);
         }
         else if (boneRef->hasFixedAxes()) {
             color = Util::toColor(Qt::magenta);
@@ -281,7 +281,7 @@ void SkeletonDrawer::updateBoneVertices(const IBone *boneRef, bool selected, QVa
             color = Util::toColor(Qt::cyan);
         }
         else if (boneRef->hasInverseKinematics()) {
-            color = Util::toColor(Qt::yellow);
+            color = Util::toColor(Util::kYellow);
         }
         Vertex v;
         for (int i = 0; i < kNumBoneVertices; i++) {

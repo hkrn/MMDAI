@@ -566,7 +566,7 @@ Item {
         id: playingPanel
         anchors { top: renderTarget.top; left: renderTarget.left; margins: scene.__cornerMarginSize }
         font { family: applicationPreference.fontFamily; pointSize: baseFontPointSize }
-        color: "red"
+        color: infoPanel.textColor
         text: qsTr("Playing %1 of %2 frames").arg(Math.floor(renderTarget.currentTimeIndex)).arg(projectDocument.durationTimeIndex)
         visible: scene.playing
     }
@@ -574,7 +574,7 @@ Item {
         id: encodingPanel
         anchors { top: renderTarget.top; left: renderTarget.left; margins: scene.__cornerMarginSize }
         font { family: applicationPreference.fontFamily; pointSize: baseFontPointSize }
-        color: "red"
+        color: infoPanel.textColor
         text: qsTr("Encoding...")
         visible: scene.encoding
     }
