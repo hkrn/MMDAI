@@ -17,6 +17,8 @@
         <file>VPVM/LightTab.qml</file>
         <file>VPVM/main.qml</file>
         <file>VPVM/ModelTab.qml</file>
+        <file>VPVM/MotionCreateablesList.qml</file>
+        <file>VPVM/MotionCreateablesListModel.qml</file>
         <file>VPVM/NotificationArea.qml</file>
         <file>VPVM/ProjectPreference.qml</file>
         <file>VPVM/RotationButton.qml</file>

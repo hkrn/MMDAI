@@ -373,7 +373,7 @@ Item {
     }
     VPVM.RenderTarget {
         id: renderTarget
-        readonly property rect defaultViewportSetting: Qt.rect(scene.x, scene.offsetY, scene.width, scene.height)
+        readonly property rect defaultViewportSetting: Qt.rect(scene.x, scene.y + scene.offsetY, scene.width, scene.height)
         property real sceneFPS : 60
         function __handleTargetBonesDidBeginTransform() {
             renderTarget.playing = true
