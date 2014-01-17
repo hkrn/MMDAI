@@ -923,7 +923,9 @@ ModelProxy *ProjectProxy::loadModel(const QUrl &fileUrl, const QUuid &uuid, bool
         qApp->processEvents(QEventLoop::AllEvents);
     }
     if (IModel *model = task->takeModel()) {
-        modelProxy = createModelProxy(model, uuid, fileUrl, skipConfirm);
+        IModel::Type type = model->type();
+        bool newSkipConfirm = skipConfirm || (type != IModel::kPMDModel && type != IModel::kPMXModel);
+        modelProxy = createModelProxy(model, uuid, fileUrl, newSkipConfirm);
     }
     else {
         setErrorString(task->errorString());
