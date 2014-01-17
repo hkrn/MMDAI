@@ -35,7 +35,6 @@
 
 */
 
-#include "vpvl2/config.h" /* vpvl2::libraryVersionString() and vpvl2::libraryCommitRevisionString() */
 #include "vpvl2/extensions/BaseApplicationContext.h"
 
 #include <QtQuick>
@@ -43,6 +42,7 @@
 #include <QCommandLineParser>
 
 #include "Common.h"
+#include "Application.h"
 #include "ALAudioContext.h"
 #include "ALAudioEngine.h"
 #include "BoneKeyframeRefObject.h"
@@ -75,42 +75,6 @@
 using namespace vpvl2::extensions;
 
 namespace {
-
-class ApplicationBootstrapOption : public QObject {
-    Q_OBJECT
-
-public:
-    Q_PROPERTY(QString commitRevision READ commitRevision CONSTANT FINAL)
-    Q_PROPERTY(QUrl json READ json CONSTANT FINAL)
-    Q_PROPERTY(bool hasJson READ hasJson CONSTANT FINAL)
-
-    ApplicationBootstrapOption(QCommandLineParser *parser)
-        : QObject(0),
-          m_parser(parser),
-          m_json(QStringList() << "j" << "json", "Configuration JSON from <file> to load at startup.", "file")
-    {
-        parser->setApplicationDescription(QApplication::tr("VPVM (a.k.a MMDAI2) is an application to create/edit motion like MikuMikuDance (MMD)"));
-        parser->addHelpOption();
-        parser->addVersionOption();
-        parser->addOption(m_json);
-    }
-    ~ApplicationBootstrapOption() {
-    }
-
-    QString commitRevision() const {
-        return vpvl2::libraryCommitRevisionString();
-    }
-    QUrl json() const {
-        return QUrl::fromLocalFile(m_parser->value(m_json));
-    }
-    bool hasJson() const {
-        return m_parser->isSet(m_json);
-    }
-
-private:
-    const QCommandLineParser *m_parser;
-    QCommandLineOption m_json;
-};
 
 static QObject *createALAudioContext(QQmlEngine *engine, QJSEngine *scriptEngine)
 {
@@ -168,15 +132,13 @@ void registerQmlTypes()
 
 int main(int argc, char *argv[])
 {
-    QApplication application(argc, argv);
+    QCommandLineParser parser;
+    parser.setApplicationDescription(QApplication::tr("VPVM (a.k.a MMDAI2) is an application to create/edit motion like MikuMikuDance (MMD)"));
+    Application application(&parser, argc, argv);
     setApplicationDescription("VPVM", application);
     QTranslator translator;
     translator.load(QLocale::system(), "VPVM", ".", Util::resourcePath("translations"), ".qm");
     application.installTranslator(&translator);
-
-    QCommandLineParser parser;
-    ApplicationBootstrapOption applicationBootstrapOption(&parser);
-    parser.process(application);
 
     Preference applicationPreference;
     const QString &loggingDirectory = applicationPreference.initializeLoggingDirectory();
@@ -192,7 +154,7 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     QQmlContext *rootContext = engine.rootContext();
     rootContext->setContextProperty("applicationPreference", &applicationPreference);
-    rootContext->setContextProperty("applicationBootstrapOption", &applicationBootstrapOption);
+    rootContext->setContextProperty("applicationBootstrapOption", &application);
     rootContext->setContextProperty("applicationShareableServiceNames", SharingService::availableServiceNames());
     g_loggingThread.setDirectory(loggingDirectory);
     QThreadPool::globalInstance()->start(&g_loggingThread);
@@ -209,5 +171,3 @@ int main(int argc, char *argv[])
 
     return result;
 }
-
-#include "main.moc"
