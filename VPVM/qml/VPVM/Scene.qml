@@ -64,6 +64,7 @@ Item {
     property int baseFontPointSize : 16
     property int baseIconPointSize : 48
     property bool isHUDAvailable : true
+    property real offsetX : 0
     property real offsetY : 0
     property string lastStateAtSuspend: "stop"
     property var __keycode2closures : ({})
@@ -373,7 +374,7 @@ Item {
     }
     VPVM.RenderTarget {
         id: renderTarget
-        readonly property rect defaultViewportSetting: Qt.rect(scene.x, scene.y + scene.offsetY, scene.width, scene.height)
+        readonly property rect defaultViewportSetting: Qt.rect(scene.x + offsetX, scene.y + scene.offsetY, scene.width, scene.height)
         property real sceneFPS : 60
         function __handleTargetBonesDidBeginTransform() {
             renderTarget.playing = true

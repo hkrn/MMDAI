@@ -1206,7 +1206,8 @@ ApplicationWindow {
                     motion.timeIndexDidChange.connect(__handleMotionTimeIndexDidChange)
                 }
                 Layout.fillWidth: true
-                offsetY: applicationWindow.height - height
+                offsetX: 0
+                offsetY: statusBar.height * statusBar.visible + propertyPanel.height * propertyPanel.visible
                 project.onProjectDidCreate: motionCreateablesListModel.updateModels()
                 project.onProjectDidLoad: {
                     var model = scene.currentModel
