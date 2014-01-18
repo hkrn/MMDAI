@@ -69,6 +69,39 @@ public:
         kMVDMotion,
         kMaxMotionType
     };
+    enum Error {
+        kNoError,
+        /* Common */
+        kInvalidHeaderError,
+        kInvalidSignatureError,
+        kInvalidVersionError,
+        /* VOCALOID Motion Data */
+        kVMDInvalidBoneKeyframesSizeError = 100,
+        kVMDInvalidBoneKeyframesError,
+        kVMDInvalidMorphKeyframesSizeError,
+        kVMDInvalidMorphKeyframesError,
+        kVMDInvalidCameraKeyframesSizeError,
+        kVMDInvalidCameraKeyframesError,
+        kVMDInvalidLightKeyframesSizeError,
+        kVMDInvalidLightKeyframesError,
+        kVMDInvalidShadowKeyframesSizeError,
+        kVMDInvalidShadowKeyframesError,
+        kVMDInvalidModelKeyframesSizeError,
+        kVMDInvalidModelKeyframesError,
+        /* Motion Vector Data */
+        kMVDInvalidEncodingError = 200,
+        kMVDSectionHeaderError,
+        kMVDNameListSectionDataError,
+        kMVDBoneSectionDataError,
+        kMVDMorphSectionDataError,
+        kMVDModelSectionDataError,
+        kMVDAssetSectionDataError,
+        kMVDEffectSectionDataError,
+        kMVDCameraSectionDataError,
+        kMVDLightSectionDataError,
+        kMVDProjectSectionDataError,
+        kMaxErrors
+    };
 
     virtual ~IMotion() {}
 
@@ -111,6 +144,8 @@ public:
      * @sa save
      */
     virtual vsize estimateSize() const = 0;
+
+    virtual Error error() const = 0;
 
     /**
      * モーションが依存するモデルのポインタを返します.

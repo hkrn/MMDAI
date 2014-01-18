@@ -66,30 +66,6 @@ namespace vmd
 class VPVL2_API Motion VPVL2_DECL_FINAL : public IMotion
 {
 public:
-
-    /**
-      * Type of parsing errors.
-      */
-    enum Error
-    {
-        kNoError,
-        kInvalidHeaderError,
-        kInvalidSignatureError,
-        kBoneKeyframesSizeError,
-        kBoneKeyframesError,
-        kMorphKeyframesSizeError,
-        kMorphKeyframesError,
-        kCameraKeyframesSizeError,
-        kCameraKeyframesError,
-        kLightKeyframesSizeError,
-        kLightKeyframesError,
-        kShadowKeyframesSizeError,
-        kShadowKeyframesError,
-        kModelKeyframesSizeError,
-        kModelKeyframesError,
-        kMaxErrors
-    };
-
     struct DataInfo
     {
         const uint8 *basePtr;

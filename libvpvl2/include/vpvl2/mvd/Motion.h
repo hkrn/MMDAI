@@ -62,20 +62,6 @@ class ProjectSection;
 class VPVL2_API Motion VPVL2_DECL_FINAL : public IMotion
 {
 public:
-
-    /**
-      * Type of parsing errors.
-      */
-    enum Error
-    {
-        kNoError,
-        kInvalidHeaderError,
-        kInvalidSignatureError,
-        kInvalidVersionError,
-        kInvalidEncodingError,
-        kMaxErrors
-    };
-
     enum SectionType {
         kNameListSection = 0,
         kBoneSection     = 16,

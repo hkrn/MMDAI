@@ -175,13 +175,13 @@ bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
     int32 nBoneKeyframes = 0;
     if (!internal::getTyped<int32>(ptr, rest, nBoneKeyframes)) {
         VPVL2_LOG(WARNING, "Invalid VMD bone keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nBoneKeyframes << " rest=" << rest);
-        m_context->error = kBoneKeyframesSizeError;
+        m_context->error = kVMDInvalidBoneKeyframesSizeError;
         return false;
     }
     info.boneKeyframePtr = ptr;
     if (!internal::validateSize(ptr, BoneKeyframe::strideSize(), nBoneKeyframes, rest)) {
         VPVL2_LOG(WARNING, "Invalid VMD bone keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nBoneKeyframes << " rest=" << rest);
-        m_context->error = kBoneKeyframesError;
+        m_context->error = kVMDInvalidBoneKeyframesError;
         return false;
     }
     info.boneKeyframeCount = nBoneKeyframes;
@@ -191,13 +191,13 @@ bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
     int32 nMorphKeyframes = 0;
     if (!internal::getTyped<int32>(ptr, rest, nMorphKeyframes)) {
         VPVL2_LOG(WARNING, "Invalid VMD morph keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nMorphKeyframes << " rest=" << rest);
-        m_context->error = kMorphKeyframesSizeError;
+        m_context->error = kVMDInvalidMorphKeyframesSizeError;
         return false;
     }
     info.morphKeyframePtr = ptr;
     if (!internal::validateSize(ptr, MorphKeyframe::strideSize(), nMorphKeyframes, rest)) {
         VPVL2_LOG(WARNING, "Invalid VMD morph keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nMorphKeyframes << " rest=" << rest);
-        m_context->error = kMorphKeyframesError;
+        m_context->error = kVMDInvalidMorphKeyframesError;
         return false;
     }
     info.morphKeyframeCount = nMorphKeyframes;
@@ -207,7 +207,7 @@ bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
     int32 nCameraKeyframes = 0;
     if (!internal::getTyped<int32>(ptr, rest, nCameraKeyframes)) {
         VPVL2_LOG(WARNING, "Invalid VMD camera keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nCameraKeyframes << " rest=" << rest);
-        m_context->error = kCameraKeyframesSizeError;
+        m_context->error = kVMDInvalidCameraKeyframesSizeError;
         return false;
     }
     info.cameraKeyframePtr = ptr;
@@ -215,7 +215,7 @@ bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
     vsize cameraKeyframeStrideSize = CameraKeyframe::strideSize();
     if (!internal::validateSize(ptr, cameraKeyframeStrideSize, nCameraKeyframes, rest)) {
         VPVL2_LOG(WARNING, "Invalid VMD camera keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nCameraKeyframes << " rest=" << rest);
-        m_context->error = kCameraKeyframesError;
+        m_context->error = kVMDInvalidCameraKeyframesError;
         return false;
     }
     info.cameraKeyframeCount = nCameraKeyframes;
@@ -230,13 +230,13 @@ bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
     // Light key frame
     int32 nLightKeyframes = 0;
     if (!internal::getTyped<int32>(ptr, rest, nLightKeyframes)) {
-        m_context->error = kLightKeyframesSizeError;
+        m_context->error = kVMDInvalidLightKeyframesSizeError;
         return false;
     }
     info.lightKeyframePtr = ptr;
     if (!internal::validateSize(ptr, LightKeyframe::strideSize(), nLightKeyframes, rest)) {
         VPVL2_LOG(WARNING, "Invalid VMD light keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nLightKeyframes << " rest=" << rest);
-        m_context->error = kCameraKeyframesError;
+        m_context->error = kVMDInvalidCameraKeyframesError;
         return false;
     }
     info.lightKeyframeCount = nLightKeyframes;
@@ -248,7 +248,7 @@ bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
     int32 nSelfShadowKeyframes = 0;
     if (!internal::getTyped<int32>(ptr, rest, nSelfShadowKeyframes)) {
         VPVL2_LOG(WARNING, "Invalid VMD self shadow keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nSelfShadowKeyframes << " rest=" << rest);
-        m_context->error = kShadowKeyframesSizeError;
+        m_context->error = kVMDInvalidShadowKeyframesSizeError;
         return false;
     }
     info.selfShadowKeyframeCount = nSelfShadowKeyframes;
@@ -257,7 +257,7 @@ bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
     }
     if (!internal::validateSize(ptr, ProjectKeyframe::strideSize(), nSelfShadowKeyframes, rest)) {
         VPVL2_LOG(WARNING, "Invalid VMD self shadow keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nSelfShadowKeyframes << " rest=" << rest);
-        m_context->error = kShadowKeyframesError;
+        m_context->error = kVMDInvalidShadowKeyframesError;
         return false;
     }
     info.selfShadowKeyframePtr = ptr;
@@ -266,13 +266,13 @@ bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
     int32 nModelKeyframes;
     if (!internal::getTyped<int32>(ptr, rest, nModelKeyframes)) {
         VPVL2_LOG(WARNING, "Invalid VMD model keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nModelKeyframes << " rest=" << rest);
-        m_context->error = kModelKeyframesSizeError;
+        m_context->error = kVMDInvalidModelKeyframesSizeError;
         return false;
     }
     info.modelKeyframePtr = ptr;
     if (!ModelKeyframe::preparse(ptr, rest, nModelKeyframes)) {
         VPVL2_LOG(WARNING, "Invalid VMD model keyframes detected: " << static_cast<const void*>(ptr) << " size=" << nModelKeyframes << " rest=" << rest);
-        m_context->error = kModelKeyframesError;
+        m_context->error = kVMDInvalidModelKeyframesError;
         return false;
     }
     info.modelKeyframeCount = nModelKeyframes;
