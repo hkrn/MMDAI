@@ -50,6 +50,11 @@
 #include "vpvl2/gl/VertexBundleLayout.h"
 
 #include <map>
+#if defined(VPVL2_LINK_ASSIMP3)
+#include <assimp/scene.h>
+#elif defined(VPVL2_LINK_ASSIMP)
+#include <assimp/aiScene.h>
+#endif
 
 namespace vpvl2
 {

@@ -40,6 +40,7 @@
 #define VPVL2_IMODEL_H_
 
 #include "vpvl2/IEncoding.h"
+#include "vpvl2/IProgressReporter.h"
 #include "vpvl2/IVertex.h"
 
 class btDiscreteDynamicsWorld;
@@ -1047,6 +1048,10 @@ public:
      * @param value
      */
     virtual void removeVertex(IVertex *value) = 0;
+
+    virtual IProgressReporter *progressReporterRef() const = 0;
+
+    virtual void setProgressReporterRef(IProgressReporter *value) = 0;
 };
 
 } /* namespace vpvl2 */

@@ -208,8 +208,9 @@ namespace vpvl2
 
 struct Factory::PrivateContext
 {
-    PrivateContext(IEncoding *encodingRef)
-        : encoding(encodingRef),
+    PrivateContext(IEncoding *encodingRef, IProgressReporter *progressReporter)
+        : encodingRef(encodingRef),
+          progressReporterRef(progressReporter),
           motionPtr(0),
           mvdPtr(0),
           mvdBoneKeyframe(0),
@@ -238,7 +239,7 @@ struct Factory::PrivateContext
     }
 
     mvd::Motion *createMVDFromVMD(vmd::Motion *source) const {
-        mvd::Motion *motion = mvdPtr = new mvd::Motion(source->parentModelRef(), encoding);
+        mvd::Motion *motion = mvdPtr = new mvd::Motion(source->parentModelRef(), encodingRef);
         const int nBoneKeyframes = source->countKeyframes(IKeyframe::kBoneKeyframe);
         QuadWord value;
         Array<IKeyframe *> boneKeyframes, cameraKeyframes, lightKeyframes, morphKeyframes;
@@ -317,13 +318,13 @@ struct Factory::PrivateContext
         return motion;
     }
     vmd::Motion *createVMDFromMVD(mvd::Motion *source) const {
-        vmd::Motion *motion = vmdPtr = new vmd::Motion(source->parentModelRef(), encoding);
+        vmd::Motion *motion = vmdPtr = new vmd::Motion(source->parentModelRef(), encodingRef);
         const int nBoneKeyframes = source->countKeyframes(IKeyframe::kBoneKeyframe);
         QuadWord value;
         Array<IKeyframe *> boneKeyframes, cameraKeyframes, lightKeyframes, morphKeyframes;
         boneKeyframes.reserve(nBoneKeyframes);
         for (int i = 0; i < nBoneKeyframes; i++) {
-            vmd::BoneKeyframe *keyframeTo = vmdBoneKeyframe = new vmd::BoneKeyframe(encoding);
+            vmd::BoneKeyframe *keyframeTo = vmdBoneKeyframe = new vmd::BoneKeyframe(encodingRef);
             const IBoneKeyframe *keyframeFrom = source->findBoneKeyframeRefAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
@@ -381,7 +382,7 @@ struct Factory::PrivateContext
         const int nMorphKeyframes = source->countKeyframes(IKeyframe::kMorphKeyframe);
         morphKeyframes.reserve(nMorphKeyframes);
         for (int i = 0; i < nMorphKeyframes; i++) {
-            vmd::MorphKeyframe *keyframeTo = vmdMorphKeyframe = new vmd::MorphKeyframe(encoding);
+            vmd::MorphKeyframe *keyframeTo = vmdMorphKeyframe = new vmd::MorphKeyframe(encodingRef);
             const IMorphKeyframe *keyframeFrom = source->findMorphKeyframeRefAt(i);
             keyframeTo->setTimeIndex(keyframeFrom->timeIndex());
             keyframeTo->setName(keyframeFrom->name());
@@ -397,7 +398,8 @@ struct Factory::PrivateContext
         return motion;
     }
 
-    IEncoding *encoding;
+    IEncoding *encodingRef;
+    IProgressReporter *progressReporterRef;
     IMotion *motionPtr;
     mutable mvd::Motion *mvdPtr;
     mutable mvd::BoneKeyframe *mvdBoneKeyframe;
@@ -449,8 +451,8 @@ IMaterial *Factory::sharedNullMaterialRef()
     return NullMaterial::sharedReference();
 }
 
-Factory::Factory(IEncoding *encoding)
-    : m_context(new PrivateContext(encoding))
+Factory::Factory(IEncoding *encoding, IProgressReporter *progressReporter)
+    : m_context(new PrivateContext(encoding, progressReporter))
 {
 }
 
@@ -461,20 +463,28 @@ Factory::~Factory()
 
 IModel *Factory::newModel(IModel::Type type) const
 {
+    IModel *modelRef = 0;
     switch (type) {
     case IModel::kAssetModel:
-        return new asset::Model(m_context->encoding);
+        modelRef = new asset::Model(m_context->encodingRef);
+        break;
     case IModel::kPMDModel:
 #ifdef VPVL2_LINK_VPVL
-        return new pmd::Model(m_context->encoding);
+        modelRef = new pmd::Model(m_context->encoding);
 #else
-        return new pmd2::Model(m_context->encoding);
+        modelRef = new pmd2::Model(m_context->encodingRef);
 #endif
+        break;
     case IModel::kPMXModel:
-        return new pmx::Model(m_context->encoding);
+        modelRef = new pmx::Model(m_context->encodingRef);
+        break;
     default:
-        return 0;
+        break;
     }
+    if (m_context->progressReporterRef) {
+        modelRef->setProgressReporterRef(m_context->progressReporterRef);
+    }
+    return modelRef;
 }
 
 IModel *Factory::createModel(const uint8 *data, vsize size, bool &ok) const
@@ -488,9 +498,9 @@ IMotion *Factory::newMotion(IMotion::Type type, IModel *modelRef) const
 {
     switch (type) {
     case IMotion::kVMDMotion:
-        return new vmd::Motion(modelRef, m_context->encoding);
+        return new vmd::Motion(modelRef, m_context->encodingRef);
     case IMotion::kMVDMotion:
-        return new mvd::Motion(modelRef, m_context->encoding);
+        return new mvd::Motion(modelRef, m_context->encodingRef);
     default:
         return 0;
     }
@@ -510,7 +520,7 @@ IBoneKeyframe *Factory::createBoneKeyframe(const IMotion *motion) const
         case IMotion::kMVDMotion:
             return new mvd::BoneKeyframe(static_cast<const mvd::Motion *>(motion));
         case IMotion::kVMDMotion:
-            return new vmd::BoneKeyframe(m_context->encoding);
+            return new vmd::BoneKeyframe(m_context->encodingRef);
         default:
             break;
         }
@@ -581,7 +591,7 @@ IMorphKeyframe *Factory::createMorphKeyframe(const IMotion *motion) const
         case IMotion::kMVDMotion:
             return new mvd::MorphKeyframe(static_cast<const mvd::Motion *>(motion));
         case IMotion::kVMDMotion:
-            return new vmd::MorphKeyframe(m_context->encoding);
+            return new vmd::MorphKeyframe(m_context->encodingRef);
         default:
             break;
         }

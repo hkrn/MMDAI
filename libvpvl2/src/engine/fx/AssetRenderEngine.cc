@@ -45,6 +45,12 @@
 #include "vpvl2/gl/VertexBundle.h"
 #include "vpvl2/gl/VertexBundleLayout.h"
 
+#if defined(VPVL2_LINK_ASSIMP3)
+#include <assimp/scene.h>
+#elif defined(VPVL2_LINK_ASSIMP)
+#include <assimp/aiScene.h>
+#endif
+
 namespace vpvl2
 {
 namespace fx

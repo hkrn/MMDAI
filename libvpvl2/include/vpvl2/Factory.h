@@ -70,7 +70,7 @@ public:
     static IBone *sharedNullBoneRef();
     static IMaterial *sharedNullMaterialRef();
 
-    explicit Factory(IEncoding *encoding);
+    explicit Factory(IEncoding *encoding, IProgressReporter *progressReporter = 0);
     ~Factory();
 
     /**

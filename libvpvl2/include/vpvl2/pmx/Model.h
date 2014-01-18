@@ -261,6 +261,8 @@ public:
     void removeRigidBody(IRigidBody *value);
     void removeSoftBody(ISoftBody *value);
     void removeVertex(IVertex *value);
+    IProgressReporter *progressReporterRef() const;
+    void setProgressReporterRef(IProgressReporter *value);
     int addTexture(const IString *value);
 
 private:

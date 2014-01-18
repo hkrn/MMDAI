@@ -51,17 +51,14 @@
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #if defined(VPVL2_LINK_ASSIMP3)
 #include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-#include <assimp/scene.h>
 #elif defined(VPVL2_LINK_ASSIMP)
 #include <assimp/assimp.hpp>
-#include <assimp/aiPostProcess.h>
-#include <assimp/aiScene.h>
 #endif
 #pragma clang diagnostic pop
 #endif
 
 class btDiscreteDynamicsWorld;
+struct aiNode;
 
 namespace vpvl2
 {
@@ -174,6 +171,8 @@ public:
     void removeMorph(IMorph *value);
     void removeRigidBody(IRigidBody *value);
     void removeVertex(IVertex *value);
+    IProgressReporter *progressReporterRef() const;
+    void setProgressReporterRef(IProgressReporter *value);
 
 #if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
     const aiScene *aiScenePtr() const { return m_scene; }
@@ -198,6 +197,7 @@ private:
     IBone *m_rootBoneRef;
     IBone *m_scaleBoneRef;
     IMorph *m_opacityMorphRef;
+    IProgressReporter *m_progressReporterRef;
     mutable PointerArray<IBone> m_bones;
     mutable PointerArray<ILabel> m_labels;
     mutable PointerArray<IMaterial> m_materials;

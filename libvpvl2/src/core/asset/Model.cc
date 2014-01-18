@@ -39,6 +39,16 @@
 #include "vpvl2/asset/Model.h"
 #include "vpvl2/internal/ModelHelper.h"
 
+#if defined(VPVL2_LINK_ASSIMP3)
+#include <assimp/ProgressHandler.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
+#elif defined(VPVL2_LINK_ASSIMP)
+#include <assimp/assimp.hpp>
+#include <assimp/aiPostProcess.h>
+#include <assimp/aiScene.h>
+#endif
+
 namespace {
 
 #if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
@@ -535,8 +545,27 @@ private:
     Vector3 m_texcoord;
     int m_index;
 };
-#endif
 
+class ProgressReporter : public Assimp::ProgressHandler {
+public:
+    ProgressReporter(IProgressReporter *reporterRef)
+        : m_progressReporterRef(reporterRef)
+    {
+    }
+    ~ProgressReporter() {}
+
+    bool Update(float percentage) {
+        if (m_progressReporterRef) {
+            m_progressReporterRef->reportProgress(percentage);
+        }
+        return true;
+    }
+
+private:
+    IProgressReporter *m_progressReporterRef;
+};
+
+#endif
 }
 
 namespace vpvl2
@@ -558,6 +587,7 @@ Model::Model(IEncoding *encoding)
       m_rootBoneRef(0),
       m_scaleBoneRef(0),
       m_opacityMorphRef(0),
+      m_progressReporterRef(0),
       m_aabbMax(kZeroV3),
       m_aabbMin(kZeroV3),
       m_position(kZeroV3),
@@ -579,6 +609,7 @@ Model::~Model()
     m_rootBoneRef = 0;
     m_scaleBoneRef = 0;
     m_opacityMorphRef = 0;
+    m_progressReporterRef = 0;
     m_bones.releaseAll();
     m_labels.releaseAll();
     m_materials.releaseAll();
@@ -603,8 +634,10 @@ Model::~Model()
 bool Model::load(const uint8 *data, vsize size)
 {
 #if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
-    int flags = aiProcessPreset_TargetRealtime_Quality | aiProcess_FlipUVs;
+    int flags = aiProcessPreset_TargetRealtime_Fast | aiProcess_FlipUVs;
+    m_importer.SetProgressHandler(new ProgressReporter(m_progressReporterRef));
     m_scene = m_importer.ReadFileFromMemory(data, size, flags, ".x");
+    m_importer.SetProgressHandler(0);
     const int nbones = m_bones.count();
     for (int i = 0; i < nbones; i++) {
         IBone *bone = m_bones[i];
@@ -964,6 +997,16 @@ void Model::removeRigidBody(IRigidBody * /* value */)
 void Model::removeVertex(IVertex * /* value */)
 {
     /* do nothing */
+}
+
+IProgressReporter *Model::progressReporterRef() const
+{
+    return m_progressReporterRef;
+}
+
+void Model::setProgressReporterRef(IProgressReporter *value)
+{
+    m_progressReporterRef = value;
 }
 
 #if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)

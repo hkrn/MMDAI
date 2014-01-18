@@ -485,6 +485,7 @@ struct Model::PrivateContext {
           encodingRef(encodingRef),
           parentModelRef(0),
           parentBoneRef(0),
+          progressReporterRef(0),
           namePtr(0),
           englishNamePtr(0),
           commentPtr(0),
@@ -725,6 +726,11 @@ struct Model::PrivateContext {
             ptr += size;
         }
     }
+    void reportProgress(float value) const {
+        if (progressReporterRef) {
+            progressReporterRef->reportProgress(value);
+        }
+    }
 
     void loadIKConstraint() {
         const int nbones = bones.count();
@@ -760,6 +766,7 @@ struct Model::PrivateContext {
     IEncoding *encodingRef;
     IModel *parentModelRef;
     IBone *parentBoneRef;
+    IProgressReporter *progressReporterRef;
     IString *namePtr;
     IString *englishNamePtr;
     IString *commentPtr;
@@ -934,19 +941,33 @@ bool Model::load(const uint8 *data, vsize size)
     DataInfo info;
     internal::zerofill(&info, sizeof(info));
     if (preparse(data, size, info)) {
+#define VPVL2_CALCULATE_PROGRESS_PERCENTAGE(value) (value / 14.0)
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(1));
         m_context->release();
         m_context->parseNamesAndComments(info);
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(2));
         m_context->parseVertices(info);
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(3));
         m_context->parseIndices(info);
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(4));
         m_context->parseMaterials(info);
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(5));
         m_context->parseBones(info);
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(6));
         m_context->parseIKConstraints(info);
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(7));
         m_context->parseMorphs(info);
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(8));
         m_context->parseLabels(info);
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(9));
         m_context->parseCustomToonTextures(info);
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(10));
         m_context->parseRigidBodies(info);
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(11));
         m_context->parseJoints(info);
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(12));
         m_context->loadIKConstraint();
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(13));
         if (!Material::loadMaterials(m_context->materials, m_context->customToonTextures, m_context->indices.count())
                 || !Vertex::loadVertices(m_context->vertices, m_context->bones)
                 || !Morph::loadMorphs(m_context->morphs, m_context->vertices)
@@ -956,7 +977,9 @@ bool Model::load(const uint8 *data, vsize size)
             m_context->dataInfo.error = info.error;
             return false;
         }
+        m_context->reportProgress(VPVL2_CALCULATE_PROGRESS_PERCENTAGE(14));
         m_context->dataInfo = info;
+#undef VPVL2_CALCULATE_PROGRESS_PERCENTAGE
         return true;
     }
     else {
@@ -1799,6 +1822,16 @@ void Model::removeRigidBody(IRigidBody *value)
 void Model::removeVertex(IVertex *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->vertices);
+}
+
+IProgressReporter *Model::progressReporterRef() const
+{
+    return m_context->progressReporterRef;
+}
+
+void Model::setProgressReporterRef(IProgressReporter *value)
+{
+    m_context->progressReporterRef = value;
 }
 
 void Model::getIndexBuffer(IndexBuffer *&indexBuffer) const

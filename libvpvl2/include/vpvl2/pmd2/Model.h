@@ -200,6 +200,8 @@ public:
     void removeMorph(IMorph *value);
     void removeRigidBody(IRigidBody *value);
     void removeVertex(IVertex *value);
+    IProgressReporter *progressReporterRef() const;
+    void setProgressReporterRef(IProgressReporter *value);
 
     const PointerArray<Vertex> &vertices() const;
     const Array<int> &indices() const;
