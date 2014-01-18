@@ -268,11 +268,13 @@ void SkeletonDrawer::updateBoneVertices(const IBone *boneRef, bool selected, QVa
         const glm::vec3 scale(1, delta.length(), 1), normal(glm::normalize(glm::vec3(delta.x(), delta.y(), delta.z())));
         const glm::mat4 matrix(glm::scale(glm::toMat4(glm::rotation(kGLMUnitY, normal)), scale));
         Vector3 color(Util::toColor(Util::kBlue));
+        Scalar opacity(kOpacity);
         Transform transform(Transform::getIdentity());
         transform.setFromOpenGLMatrix(glm::value_ptr(matrix));
         transform.setOrigin(origin);
         if (selected) {
             color = Util::toColor(Util::kRed);
+            opacity = 1.0;
         }
         else if (boneRef->hasFixedAxes()) {
             color = Util::toColor(Qt::magenta);
@@ -287,7 +289,7 @@ void SkeletonDrawer::updateBoneVertices(const IBone *boneRef, bool selected, QVa
         for (int i = 0; i < kNumBoneVertices; i++) {
             v.position = transform * kBoneVertices[i];
             v.color = color;
-            v.color.setW(kOpacity);
+            v.color.setW(opacity);
             vertices.append(v);
         }
         proceed = true;
