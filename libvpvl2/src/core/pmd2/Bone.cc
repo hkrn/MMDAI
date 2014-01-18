@@ -388,7 +388,7 @@ Vector3 Bone::origin() const
 
 Vector3 Bone::destinationOrigin() const
 {
-    return m_context->childBoneRef ? m_context->childBoneRef->origin() : kZeroV3;
+    return m_context->childBoneRef ? m_context->childBoneRef->worldTransform().getOrigin() : kZeroV3;
 }
 
 Vector3 Bone::localTranslation() const
