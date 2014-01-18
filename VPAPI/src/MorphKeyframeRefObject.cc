@@ -87,11 +87,13 @@ QObject *MorphKeyframeRefObject::opaque() const
 
 QString MorphKeyframeRefObject::name() const
 {
+    Q_ASSERT(m_keyframeRef);
     return Util::toQString(m_keyframeRef->name());
 }
 
 void MorphKeyframeRefObject::setName(const QString &value)
 {
+    Q_ASSERT(m_keyframeRef);
     if (!Util::equalsString(value, m_keyframeRef->name())) {
         qt::String s(value);
         m_keyframeRef->setName(&s);
@@ -100,11 +102,13 @@ void MorphKeyframeRefObject::setName(const QString &value)
 
 qreal MorphKeyframeRefObject::weight() const
 {
+    Q_ASSERT(m_keyframeRef);
     return static_cast<qreal>(m_keyframeRef->weight());
 }
 
 void MorphKeyframeRefObject::setWeight(const qreal &value)
 {
+    Q_ASSERT(m_keyframeRef);
     if (!qFuzzyCompare(value, weight())) {
         m_keyframeRef->setWeight(static_cast<IMorph::WeightPrecision>(value));
         emit weightChanged();

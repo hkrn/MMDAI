@@ -79,6 +79,7 @@ BaseKeyframeRefObject *CameraMotionTrack::copy(BaseKeyframeRefObject *value, con
 
 BaseKeyframeRefObject *CameraMotionTrack::convert(IKeyframe *value)
 {
+    Q_ASSERT(value);
     if (value->type() == IKeyframe::kCameraKeyframe) {
         ICameraKeyframe *keyframe = static_cast<ICameraKeyframe *>(value);
         return convertCameraKeyframe(keyframe);
@@ -124,6 +125,7 @@ void CameraMotionTrack::addKeyframe(QObject *value, bool doUpdate)
 
 void CameraMotionTrack::removeKeyframe(CameraKeyframeRefObject *keyframe, bool doUpdate)
 {
+    Q_ASSERT(m_parentMotionRef);
     Q_ASSERT(keyframe);
     IMotion *motionRef = m_parentMotionRef->data();
     motionRef->removeKeyframe(keyframe->data());

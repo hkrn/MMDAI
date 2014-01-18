@@ -58,6 +58,7 @@ MorphMotionTrack::~MorphMotionTrack()
 
 BaseKeyframeRefObject *MorphMotionTrack::convert(IKeyframe *value)
 {
+    Q_ASSERT(value);
     if (value->type() == IKeyframe::kMorphKeyframe) {
         IMorphKeyframe *keyframe = static_cast<IMorphKeyframe *>(value);
         return convertMorphKeyframe(keyframe);
@@ -83,6 +84,7 @@ MorphKeyframeRefObject *MorphMotionTrack::convertMorphKeyframe(IMorphKeyframe *k
 
 void MorphMotionTrack::addKeyframe(MorphKeyframeRefObject *keyframe, bool doUpdate)
 {
+    Q_ASSERT(m_parentMotionRef);
     Q_ASSERT(keyframe);
     IMotion *motionRef = m_parentMotionRef->data();
     motionRef->addKeyframe(keyframe->data());
@@ -103,6 +105,8 @@ void MorphMotionTrack::addKeyframe(QObject *value, bool doUpdate)
 
 void MorphMotionTrack::removeKeyframe(MorphKeyframeRefObject *keyframe, bool doUpdate)
 {
+    Q_ASSERT(m_parentMotionRef);
+    Q_ASSERT(keyframe);
     IMotion *motionRef = m_parentMotionRef->data();
     motionRef->removeKeyframe(keyframe->data());
     if (doUpdate) {

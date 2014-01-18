@@ -61,6 +61,7 @@ CameraKeyframeRefObject::~CameraKeyframeRefObject()
 
 QVector4D CameraKeyframeRefObject::interpolationParameter(int type) const
 {
+    Q_ASSERT(m_keyframeRef);
     QuadWord value;
     m_keyframeRef->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(type), value);
     return QVector4D(value.x(), value.y(), value.z(), value.w());
@@ -68,6 +69,7 @@ QVector4D CameraKeyframeRefObject::interpolationParameter(int type) const
 
 void CameraKeyframeRefObject::setInterpolationParameter(int type, const QVector4D &value)
 {
+    Q_ASSERT(m_keyframeRef);
     QuadWord v(value.x(), value.y(), value.z(), value.w());
     m_keyframeRef->setInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(type), v);
 }
@@ -79,6 +81,7 @@ BaseMotionTrack *CameraKeyframeRefObject::parentTrack() const
 
 CameraRefObject *CameraKeyframeRefObject::parentCamera() const
 {
+    Q_ASSERT(m_parentTrackRef);
     return m_parentTrackRef->parentCamera();
 }
 
@@ -99,11 +102,13 @@ void CameraKeyframeRefObject::setName(const QString &value)
 
 QVector3D CameraKeyframeRefObject::lookAt() const
 {
+    Q_ASSERT(m_keyframeRef);
     return Util::fromVector3(m_keyframeRef->lookAt());
 }
 
 void CameraKeyframeRefObject::setLookAt(const QVector3D &value)
 {
+    Q_ASSERT(m_keyframeRef);
     if (!qFuzzyCompare(value, lookAt())) {
         m_keyframeRef->setLookAt(Util::toVector3(value));
         emit lookAtChanged();
@@ -112,11 +117,13 @@ void CameraKeyframeRefObject::setLookAt(const QVector3D &value)
 
 QVector3D CameraKeyframeRefObject::angle() const
 {
+    Q_ASSERT(m_keyframeRef);
     return Util::fromVector3(m_keyframeRef->angle());
 }
 
 void CameraKeyframeRefObject::setAngle(const QVector3D &value)
 {
+    Q_ASSERT(m_keyframeRef);
     if (!qFuzzyCompare(value, angle())) {
         m_keyframeRef->setAngle(Util::toVector3(value));
         emit angleChanged();
@@ -125,11 +132,13 @@ void CameraKeyframeRefObject::setAngle(const QVector3D &value)
 
 qreal CameraKeyframeRefObject::distance() const
 {
+    Q_ASSERT(m_keyframeRef);
     return static_cast<qreal>(m_keyframeRef->distance());
 }
 
 void CameraKeyframeRefObject::setDistance(const qreal &value)
 {
+    Q_ASSERT(m_keyframeRef);
     if (!qFuzzyCompare(value, distance())) {
         m_keyframeRef->setDistance(static_cast<Scalar>(value));
         emit distanceChanged();
@@ -138,11 +147,13 @@ void CameraKeyframeRefObject::setDistance(const qreal &value)
 
 qreal CameraKeyframeRefObject::fov() const
 {
+    Q_ASSERT(m_keyframeRef);
     return static_cast<qreal>(m_keyframeRef->fov());
 }
 
 void CameraKeyframeRefObject::setFov(const qreal &value)
 {
+    Q_ASSERT(m_keyframeRef);
     if (!qFuzzyCompare(value, fov())) {
         m_keyframeRef->setFov(static_cast<Scalar>(value));
         emit fovChanged();

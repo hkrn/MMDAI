@@ -60,6 +60,7 @@ BoneMotionTrack::~BoneMotionTrack()
 
 BaseKeyframeRefObject *BoneMotionTrack::convert(IKeyframe *value)
 {
+    Q_ASSERT(value);
     if (value->type() == IKeyframe::kBoneKeyframe) {
         IBoneKeyframe *keyframe = static_cast<IBoneKeyframe *>(value);
         return convertBoneKeyframe(keyframe);
@@ -85,6 +86,7 @@ BoneKeyframeRefObject *BoneMotionTrack::convertBoneKeyframe(IBoneKeyframe *keyfr
 
 void BoneMotionTrack::addKeyframe(BoneKeyframeRefObject *keyframe, bool doUpdate)
 {
+    Q_ASSERT(m_parentMotionRef);
     Q_ASSERT(keyframe);
     IMotion *motionRef = m_parentMotionRef->data();
     motionRef->addKeyframe(keyframe->data());

@@ -66,6 +66,7 @@ BaseMotionTrack *LightKeyframeRefObject::parentTrack() const
 
 LightRefObject *LightKeyframeRefObject::parentLight() const
 {
+    Q_ASSERT(m_parentTrackRef);
     return m_parentTrackRef->parentLight();
 }
 
@@ -86,11 +87,13 @@ void LightKeyframeRefObject::setName(const QString &value)
 
 QVector3D LightKeyframeRefObject::color() const
 {
+    Q_ASSERT(m_keyframeRef);
     return Util::fromVector3(m_keyframeRef->color());
 }
 
 void LightKeyframeRefObject::setColor(const QVector3D &value)
 {
+    Q_ASSERT(m_keyframeRef);
     if (!qFuzzyCompare(value, color())) {
         m_keyframeRef->setColor(Util::toVector3(value));
         emit colorChanged();
@@ -99,11 +102,13 @@ void LightKeyframeRefObject::setColor(const QVector3D &value)
 
 QVector3D LightKeyframeRefObject::direction() const
 {
+    Q_ASSERT(m_keyframeRef);
     return Util::fromVector3(m_keyframeRef->direction());
 }
 
 void LightKeyframeRefObject::setDirection(const QVector3D &value)
 {
+    Q_ASSERT(m_keyframeRef);
     if (!qFuzzyCompare(value, direction())) {
         m_keyframeRef->setDirection(Util::toVector3(value));
         emit directionChanged();

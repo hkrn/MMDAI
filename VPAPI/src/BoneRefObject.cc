@@ -89,6 +89,7 @@ vpvl2::IBone *BoneRefObject::data() const
 
 BoneRefObject *BoneRefObject::parentBone() const
 {
+    Q_ASSERT(m_parentLabelRef);
     return m_parentLabelRef->parentModel()->resolveBoneRef(m_boneRef->parentBoneRef());
 }
 
@@ -99,11 +100,14 @@ LabelRefObject *BoneRefObject::parentLabel() const
 
 QUuid BoneRefObject::uuid() const
 {
+    Q_ASSERT(!m_uuid.isNull());
     return m_uuid;
 }
 
 QString BoneRefObject::name() const
 {
+    Q_ASSERT(m_parentLabelRef);
+    Q_ASSERT(m_boneRef);
     ModelProxy *parentModel = m_parentLabelRef->parentModel();
     IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
     return Util::toQString(m_boneRef->name(language));
@@ -158,16 +162,19 @@ QQuaternion BoneRefObject::originLocalOrientation() const
 
 int BoneRefObject::index() const
 {
+    Q_ASSERT(m_boneRef);
     return m_boneRef->index();
 }
 
 bool BoneRefObject::isInverseKinematicsKEnabled() const
 {
+    Q_ASSERT(m_boneRef);
     return m_boneRef->isInverseKinematicsEnabled();
 }
 
 void BoneRefObject::setInverseKinematicsEnabled(bool value)
 {
+    Q_ASSERT(m_boneRef);
     if (value != isInverseKinematicsKEnabled()) {
         m_boneRef->setInverseKinematicsEnable(value);
         emit enableInverseKinematicsChanged();
@@ -176,26 +183,31 @@ void BoneRefObject::setInverseKinematicsEnabled(bool value)
 
 bool BoneRefObject::isMovable() const
 {
+    Q_ASSERT(m_boneRef);
     return m_boneRef->isMovable();
 }
 
 bool BoneRefObject::isRotateable() const
 {
+    Q_ASSERT(m_boneRef);
     return m_boneRef->isRotateable();
 }
 
 bool BoneRefObject::hasInverseKinematics() const
 {
+    Q_ASSERT(m_boneRef);
     return m_boneRef->hasInverseKinematics();
 }
 
 bool BoneRefObject::hasFixedAxes() const
 {
+    Q_ASSERT(m_boneRef);
     return m_boneRef->hasFixedAxes();
 }
 
 bool BoneRefObject::hasLocalAxes() const
 {
+    Q_ASSERT(m_boneRef);
     return m_boneRef->hasLocalAxes();
 }
 
@@ -206,26 +218,31 @@ void BoneRefObject::sync()
 
 bool BoneRefObject::canHandle() const
 {
+    Q_ASSERT(m_boneRef);
     return m_boneRef->isVisible() && m_boneRef->isInteractive() && (m_boneRef->isRotateable() || m_boneRef->isMovable());
 }
 
 Vector3 BoneRefObject::fixedAxis() const
 {
+    Q_ASSERT(m_boneRef);
     return m_boneRef->fixedAxis();
 }
 
 void BoneRefObject::getLocalAxes(Matrix3x3 &value)
 {
+    Q_ASSERT(m_boneRef);
     m_boneRef->getLocalAxes(value);
 }
 
 Vector3 BoneRefObject::rawLocalTranslation() const
 {
+    Q_ASSERT(m_boneRef);
     return m_boneRef->localTranslation();
 }
 
 void BoneRefObject::setRawLocalTranslation(const Vector3 &value)
 {
+    Q_ASSERT(m_boneRef);
     if (!(value - m_boneRef->localTranslation()).fuzzyZero()) {
         m_boneRef->setLocalTranslation(value);
         emit localTranslationChanged();
@@ -234,11 +251,13 @@ void BoneRefObject::setRawLocalTranslation(const Vector3 &value)
 
 Quaternion BoneRefObject::rawLocalOrientation() const
 {
+    Q_ASSERT(m_boneRef);
     return m_boneRef->localOrientation();
 }
 
 void BoneRefObject::setRawLocalOrientation(const Quaternion &value)
 {
+    Q_ASSERT(m_boneRef);
     if (!btFuzzyZero((value - m_boneRef->localOrientation()).length2())) {
         m_boneRef->setLocalOrientation(value);
         emit localOrientationChanged();
@@ -247,6 +266,7 @@ void BoneRefObject::setRawLocalOrientation(const Quaternion &value)
 
 Transform BoneRefObject::rawWorldTransform() const
 {
+    Q_ASSERT(m_boneRef);
     return m_boneRef->worldTransform();
 }
 

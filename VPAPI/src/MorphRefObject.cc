@@ -87,11 +87,14 @@ LabelRefObject *MorphRefObject::parentLabel() const
 
 QUuid MorphRefObject::uuid() const
 {
+    Q_ASSERT(!m_uuid.isNull());
     return m_uuid;
 }
 
 QString MorphRefObject::name() const
 {
+    Q_ASSERT(m_parentLabelRef);
+    Q_ASSERT(m_morphRef);
     ModelProxy *parentModel = m_parentLabelRef->parentModel();
     IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
     return Util::toQString(m_morphRef->name(language));
@@ -99,6 +102,7 @@ QString MorphRefObject::name() const
 
 MorphRefObject::Category MorphRefObject::category() const
 {
+    Q_ASSERT(m_morphRef);
     switch (m_morphRef->category()) {
     case IMorph::kEye:
         return Eye;
@@ -115,16 +119,19 @@ MorphRefObject::Category MorphRefObject::category() const
 
 int MorphRefObject::index() const
 {
+    Q_ASSERT(m_morphRef);
     return m_morphRef->index();
 }
 
 qreal MorphRefObject::weight() const
 {
+    Q_ASSERT(m_morphRef);
     return m_morphRef->weight();
 }
 
 void MorphRefObject::setWeight(const qreal &value)
 {
+    Q_ASSERT(m_morphRef);
     if (!qFuzzyCompare(value, weight())) {
         m_morphRef->setWeight(static_cast<IMorph::WeightPrecision>(value));
         emit weightChanged();

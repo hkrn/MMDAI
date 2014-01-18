@@ -66,6 +66,7 @@ BoneKeyframeRefObject::~BoneKeyframeRefObject()
 
 QVector4D BoneKeyframeRefObject::interpolationParameter(int type) const
 {
+    Q_ASSERT(m_keyframeRef);
     QuadWord value;
     m_keyframeRef->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(type), value);
     return QVector4D(value.x(), value.y(), value.z(), value.w());
@@ -73,6 +74,7 @@ QVector4D BoneKeyframeRefObject::interpolationParameter(int type) const
 
 void BoneKeyframeRefObject::setInterpolationParameter(int type, const QVector4D &value)
 {
+    Q_ASSERT(m_keyframeRef);
     QuadWord v(value.x(), value.y(), value.z(), value.w());
     m_keyframeRef->setInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(type), v);
 }
@@ -102,11 +104,13 @@ QObject *BoneKeyframeRefObject::opaque() const
 
 QString BoneKeyframeRefObject::name() const
 {
+    Q_ASSERT(m_keyframeRef);
     return Util::toQString(m_keyframeRef->name());
 }
 
 void BoneKeyframeRefObject::setName(const QString &value)
 {
+    Q_ASSERT(m_keyframeRef);
     if (!Util::equalsString(value, m_keyframeRef->name())) {
         qt::String s(value);
         m_keyframeRef->setName(&s);
@@ -115,11 +119,13 @@ void BoneKeyframeRefObject::setName(const QString &value)
 
 QVector3D BoneKeyframeRefObject::localTranslation() const
 {
+    Q_ASSERT(m_keyframeRef);
     return Util::fromVector3(m_keyframeRef->localTranslation());
 }
 
 void BoneKeyframeRefObject::setLocalTranslation(const QVector3D &value)
 {
+    Q_ASSERT(m_keyframeRef);
     if (!qFuzzyCompare(value, localTranslation())) {
         m_keyframeRef->setLocalTranslation(Util::toVector3(value));
         emit localTranslationChanged();
@@ -128,11 +134,13 @@ void BoneKeyframeRefObject::setLocalTranslation(const QVector3D &value)
 
 QQuaternion BoneKeyframeRefObject::localOrientation() const
 {
+    Q_ASSERT(m_keyframeRef);
     return Util::fromQuaternion(m_keyframeRef->localOrientation());
 }
 
 void BoneKeyframeRefObject::setLocalOrientation(const QQuaternion &value)
 {
+    Q_ASSERT(m_keyframeRef);
     if (!qFuzzyCompare(value, localOrientation())) {
         m_keyframeRef->setLocalOrientation(Util::toQuaternion(value));
         emit localRotationChanged();
