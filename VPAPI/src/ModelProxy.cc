@@ -117,6 +117,9 @@ ModelProxy::~ModelProxy()
 
 void ModelProxy::initialize()
 {
+    Q_ASSERT(m_allLabels.isEmpty());
+    Q_ASSERT(m_allBones.isEmpty());
+    Q_ASSERT(m_allMorphs.isEmpty());
     Array<ILabel *> labelRefs;
     m_model->getLabelRefs(labelRefs);
     const int nlabels = labelRefs.count();
@@ -178,6 +181,7 @@ void ModelProxy::selectBone(BoneRefObject *value)
 
 void ModelProxy::beginTransform(qreal startY)
 {
+    Q_ASSERT(!m_moving);
     saveTransformState();
     m_baseY = startY;
     m_moving = true;
@@ -317,6 +321,7 @@ void ModelProxy::rotate(qreal angle)
 
 void ModelProxy::discardTransform()
 {
+    Q_ASSERT(m_moving);
     clearTransformState();
     m_baseY = 0;
     m_moving = false;
@@ -325,6 +330,7 @@ void ModelProxy::discardTransform()
 
 void ModelProxy::commitTransform()
 {
+    Q_ASSERT(m_moving);
     clearTransformState();
     m_baseY = 0;
     m_moving = false;
@@ -461,6 +467,7 @@ void ModelProxy::setParentBindingBone(BoneRefObject *value)
 
 QUuid ModelProxy::uuid() const
 {
+    Q_ASSERT(!m_uuid.isNull());
     return m_uuid;
 }
 
@@ -616,11 +623,13 @@ void ModelProxy::setEulerOrientation(const QVector3D &value)
 
 qreal ModelProxy::scaleFactor() const
 {
+    Q_ASSERT(m_model);
     return static_cast<qreal>(m_model->scaleFactor());
 }
 
 void ModelProxy::setScaleFactor(qreal value)
 {
+    Q_ASSERT(m_model);
     if (!qFuzzyCompare(value, scaleFactor())) {
         m_model->setScaleFactor(static_cast<Scalar>(value));
         emit scaleFactorChanged();
@@ -629,11 +638,13 @@ void ModelProxy::setScaleFactor(qreal value)
 
 qreal ModelProxy::opacity() const
 {
+    Q_ASSERT(m_model);
     return static_cast<qreal>(m_model->opacity());
 }
 
 void ModelProxy::setOpacity(qreal value)
 {
+    Q_ASSERT(m_model);
     if (!qFuzzyCompare(value, opacity())) {
         m_model->setOpacity(static_cast<Scalar>(value));
         emit opacityChanged();
@@ -642,11 +653,13 @@ void ModelProxy::setOpacity(qreal value)
 
 qreal ModelProxy::edgeWidth() const
 {
+    Q_ASSERT(m_model);
     return static_cast<qreal>(m_model->edgeWidth());
 }
 
 void ModelProxy::setEdgeWidth(qreal value)
 {
+    Q_ASSERT(m_model);
     if (!qFuzzyCompare(value, edgeWidth())) {
         m_model->setEdgeWidth(static_cast<IVertex::EdgeSizePrecision>(value));
         emit edgeWidthChanged();
@@ -655,12 +668,14 @@ void ModelProxy::setEdgeWidth(qreal value)
 
 int ModelProxy::orderIndex() const
 {
+    Q_ASSERT(m_parentProjectRef);
     static const QString kSettingOrderKey(QString::fromStdString(XMLProject::kSettingOrderKey));
     return m_parentProjectRef->modelSetting(this, kSettingOrderKey).toInt();
 }
 
 void ModelProxy::setOrderIndex(int value)
 {
+    Q_ASSERT(m_parentProjectRef);
     if (value != orderIndex()) {
         static const QString kSettingOrderKey(QString::fromStdString(XMLProject::kSettingOrderKey));
         m_parentProjectRef->setModelSetting(this, kSettingOrderKey, value);
@@ -670,11 +685,13 @@ void ModelProxy::setOrderIndex(int value)
 
 bool ModelProxy::isVisible() const
 {
+    Q_ASSERT(m_model);
     return m_model->isVisible();
 }
 
 void ModelProxy::setVisible(bool value)
 {
+    Q_ASSERT(m_model);
     if (value != isVisible()) {
         m_model->setVisible(value);
         emit visibleChanged();
