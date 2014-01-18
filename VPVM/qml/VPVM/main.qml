@@ -91,6 +91,7 @@ ApplicationWindow {
         }
     }
     Component.onCompleted: {
+        scene.project.initializeOnce()
         updateWindowRect()
         applicationPreference.windowRectChanged.connect(updateWindowRect)
         Qt.application.stateChanged.connect(__handleApplicationStateChange)

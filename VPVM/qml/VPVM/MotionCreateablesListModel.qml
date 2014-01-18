@@ -117,6 +117,5 @@ ListModel {
         __actions["\uf0eb"] = __handleLight
         __actions[FontAwesome.Icon.PlusSign] = __handlePlus
         updateModels()
-        scene.project.initializeOnce()
     }
 }
