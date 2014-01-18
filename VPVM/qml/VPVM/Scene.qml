@@ -351,11 +351,13 @@ Item {
                 projectDocument.addModel(model)
             }
         }
+        onModelDidFailLoading: notificationDidPost(qsTr("The model cannot be loaded: %1").arg(project.errorString))
         onMotionWillLoad: {
             motion.motionWillLoad.connect(__handleWillLoad)
             motion.motionBeLoading.connect(__handleBeLoading)
             motion.motionDidLoad.connect(__handleDidLoad)
         }
+        onMotionDidFailLoading: notificationDidPost(qsTr("The motion cannot be loaded: %1").arg(project.errorString))
         onMotionDidLoad: {
             currentMotion = motion;
             motion.motionWillLoad.disconnect(__handleWillLoad)

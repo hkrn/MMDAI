@@ -249,11 +249,13 @@ signals:
     void projectDidSave();
     void modelWillLoad(ModelProxy *model);
     void modelDidLoad(ModelProxy *model, bool skipConfirm);
+    void modelDidFailLoading();
     void modelDidAdd(ModelProxy *model, bool isProject);
     void modelWillRemove(ModelProxy *model);
     void modelDidRemove(ModelProxy *model);
     void motionWillLoad(MotionProxy *motion);
     void motionDidLoad(MotionProxy *motion);
+    void motionDidFailLoading();
     void motionWillDelete(MotionProxy *motion);
     void effectDidAdd(ModelProxy *model);
     void poseDidLoad(ModelProxy *model);

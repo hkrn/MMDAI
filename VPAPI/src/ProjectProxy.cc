@@ -136,12 +136,12 @@ private:
                 }
             }
             else {
-                m_errorString = QApplication::tr("Cannot load model %1: %2").arg(m_fileUrl.toDisplayString()).arg(m_model->error());
+                m_errorString = QStringLiteral("errno=%1").arg(m_model->error());
                 m_model.reset();
             }
         }
         else {
-            m_errorString = QApplication::tr("Cannot open model %1: %2").arg(m_fileUrl.toDisplayString()).arg(file.errorString());
+            m_errorString = file.errorString();
         }
         m_running = false;
     }
@@ -170,7 +170,7 @@ public:
     inline QString errorString() const { return m_errorString; }
     inline bool isRunning() const { return m_running; }
 
-    //private:
+private:
     void run() {
         QFile file(m_fileUrl.toLocalFile());
         if (file.open(QFile::ReadOnly)) {
@@ -179,12 +179,12 @@ public:
             IModel *modelRef = m_modelProxy ? m_modelProxy->data() : 0;
             m_motion.reset(m_factoryRef->createMotion(ptr, file.size(), modelRef, m_result));
             if (!m_result) {
-                m_errorString = QApplication::tr("Cannot load motion %1").arg(m_fileUrl.toDisplayString());
+                m_errorString = QStringLiteral("errno=%1").arg(m_motion->error());
                 m_motion.reset();
             }
         }
         else {
-            m_errorString = QApplication::tr("Cannot open motion %1: %2").arg(m_fileUrl.toDisplayString()).arg(file.errorString());
+            m_errorString = file.errorString();
         }
         m_running = false;
     }
@@ -411,6 +411,7 @@ bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, Motio
     }
     else {
         setErrorString(task->errorString());
+        emit motionDidFailLoading();
     }
     return modelProxy;
 }
@@ -435,11 +436,11 @@ bool ProjectProxy::loadPose(const QUrl &fileUrl, ModelProxy *modelProxy)
             }
         }
         else {
-            setErrorString(tr("Cannot open pose %1: %2").arg(fileUrl.toDisplayString()).arg(file.errorString()));
+            setErrorString(file.errorString());
         }
     }
     else {
-        setErrorString(tr("Current model is not set. You should select the model to load a pose."));
+        setErrorString(tr("Current model is not set."));
     }
     return result;
 }
@@ -929,6 +930,7 @@ ModelProxy *ProjectProxy::loadModel(const QUrl &fileUrl, const QUuid &uuid, bool
     }
     else {
         setErrorString(task->errorString());
+        emit modelDidFailLoading();
     }
     return modelProxy;
 }
