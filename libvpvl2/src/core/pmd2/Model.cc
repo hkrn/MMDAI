@@ -650,7 +650,7 @@ struct Model::PrivateContext {
     }
     void parseMorphs(const Model::DataInfo &info) {
         const int nmorphs = int(info.morphsCount);
-        const uint8 *englishPtr = info.englishFaceNamesPtr;
+        const uint8 *englishPtr = info.englishMorphNamesPtr;
         uint8 *ptr = info.morphsPtr;
         vsize size;
         for (int i = 0; i < nmorphs; i++) {
@@ -672,7 +672,7 @@ struct Model::PrivateContext {
         labels.append(new Label(selfRef, encodingRef, rootLabelName, Label::kSpecialBoneCategoryLabel));
         for (int i = 0; i < ncategories; i++) {
             Label *label = labels.append(new Label(selfRef, encodingRef, boneCategoryNamesPtr, Label::kBoneCategoryLabel));
-            label->readEnglishName(info.englishBoneFramesPtr, i);
+            label->readEnglishName(info.englishBoneCategoryNamesPtr, i);
             boneCategoryNamesPtr += Bone::kCategoryNameSize;
         }
         const int nbones = int(info.boneLabelsCount);
@@ -893,7 +893,7 @@ bool Model::preparse(const uint8 *data, vsize size, DataInfo &info)
     m_context->hasEnglish = hasEnglish != 0;
     if (m_context->hasEnglish) {
         const vsize boneNameSize = Bone::kNameSize * info.bonesCount;
-        const vsize morphNameSize =  Morph::kNameSize * info.morphLabelsCount;
+        const vsize morphNameSize = Morph::kNameSize * (btMax(info.morphsCount, vsize(1)) - 1); /* exclude invisible "base" morph */
         const vsize boneCategoryNameSize = Bone::kCategoryNameSize * info.boneCategoryNamesCount;
         const vsize required = kNameSize + kCommentSize + boneNameSize + morphNameSize + boneCategoryNameSize;
         if (required > rest) {
@@ -906,9 +906,9 @@ bool Model::preparse(const uint8 *data, vsize size, DataInfo &info)
         internal::drainBytes(kCommentSize, ptr, rest);
         info.englishBoneNamesPtr = ptr;
         internal::drainBytes(boneNameSize, ptr, rest);
-        info.englishFaceNamesPtr = ptr;
+        info.englishMorphNamesPtr = ptr;
         internal::drainBytes(morphNameSize, ptr, rest);
-        info.englishBoneFramesPtr = ptr;
+        info.englishBoneCategoryNamesPtr = ptr;
         internal::drainBytes(boneCategoryNameSize, ptr, rest);
     }
     // Custom toon textures

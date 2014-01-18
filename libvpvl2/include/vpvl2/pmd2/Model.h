@@ -96,8 +96,8 @@ public:
         uint8 *englishNamePtr;
         uint8 *englishCommentPtr;
         uint8 *englishBoneNamesPtr;
-        uint8 *englishFaceNamesPtr;
-        uint8 *englishBoneFramesPtr;
+        uint8 *englishMorphNamesPtr;
+        uint8 *englishBoneCategoryNamesPtr;
         uint8 *customToonTextureNamesPtr;
         uint8 *rigidBodiesPtr;
         vsize rigidBodiesCount;
