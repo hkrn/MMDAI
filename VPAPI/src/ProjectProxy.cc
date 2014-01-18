@@ -227,7 +227,7 @@ static void convertStringFromVariant(const QVariant &value, std::string &result)
 ProjectProxy::ProjectProxy(QObject *parent)
     : QObject(parent),
       m_encoding(new Encoding(&m_dictionary)),
-      m_factory(new Factory(m_encoding.data())),
+      m_factory(new Factory(m_encoding.data(), this)),
       m_delegate(new ProjectDelegate(this)),
       m_project(new XMLProject(m_delegate.data(), m_factory.data(), false)),
       m_cameraRefObject(new CameraRefObject(this)),
@@ -381,6 +381,7 @@ void ProjectProxy::deleteModel(ModelProxy *value)
 bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, MotionType type)
 {
     Q_ASSERT(fileUrl.isValid());
+    emit motionDidStartLoading();
     QScopedPointer<LoadingMotionTask> task(new LoadingMotionTask(modelProxy, m_factory.data(), fileUrl));
     QThreadPool::globalInstance()->start(task.data());
     while (task->isRunning()) {
@@ -918,6 +919,7 @@ ModelProxy *ProjectProxy::loadModel(const QUrl &fileUrl, const QUuid &uuid, bool
 {
     Q_ASSERT(fileUrl.isValid() && !uuid.isNull());
     ModelProxy *modelProxy = 0;
+    emit modelDidStartLoading();
     QScopedPointer<LoadingModelTask> task(new LoadingModelTask(m_factory.data(), fileUrl));
     QThreadPool::globalInstance()->start(task.data());
     while (task->isRunning()) {
@@ -1117,6 +1119,11 @@ Factory *ProjectProxy::factoryInstanceRef() const
 XMLProject *ProjectProxy::projectInstanceRef() const
 {
     return m_project.data();
+}
+
+void ProjectProxy::reportProgress(float value)
+{
+    emit progressDidUpdate(value);
 }
 
 void ProjectProxy::createProjectInstance()

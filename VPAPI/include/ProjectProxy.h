@@ -74,7 +74,7 @@ class WorldProxy;
 class QUndoGroup;
 class QUndoStack;
 
-class ProjectProxy : public QObject
+class ProjectProxy : public QObject, protected vpvl2::IProgressReporter
 {
     Q_OBJECT
 
@@ -247,12 +247,14 @@ signals:
     void projectDidLoad();
     void projectWillSave();
     void projectDidSave();
+    void modelDidStartLoading();
     void modelWillLoad(ModelProxy *model);
     void modelDidLoad(ModelProxy *model, bool skipConfirm);
     void modelDidFailLoading();
     void modelDidAdd(ModelProxy *model, bool isProject);
     void modelWillRemove(ModelProxy *model);
     void modelDidRemove(ModelProxy *model);
+    void motionDidStartLoading();
     void motionWillLoad(MotionProxy *motion);
     void motionDidLoad(MotionProxy *motion);
     void motionDidFailLoading();
@@ -292,9 +294,11 @@ signals:
     void redoDidPerform();
     void canUndoChanged();
     void canRedoChanged();
+    void progressDidUpdate(float value);
 
 private:
     static void resetIKEffectorBones(BoneRefObject *bone);
+    void reportProgress(float value);
     void createProjectInstance();
     void assignCamera();
     void assignLight();

@@ -37,6 +37,7 @@
 
 import QtQuick 2.2
 import QtQuick.Controls 1.1
+import QtQuick.Layouts 1.1
 import com.github.mmdai.VPVM 1.0 as VPVM
 import "FontAwesome.js" as FontAwesome
 
@@ -132,11 +133,10 @@ Item {
         // asynchronous: true
         visible: status === Loader.Ready
         function __handleAccept() {
-            buzyIndicator.running = true
             renderTarget.forceActiveFocus()
         }
         function __handleReject() {
-            buzyIndicator.running = false
+            busyIndicator.running = false
             renderTarget.forceActiveFocus()
         }
         onLoaded: {
@@ -303,12 +303,10 @@ Item {
             __constructing = false
         }
         function __handleWillLoad(numEstimated) {
-            buzyIndicator.running = true
         }
         function __handleBeLoading(numLoaded, numEstimated) {
         }
         function __handleDidLoad(numLoaded, numEstimated) {
-            buzyIndicator.running = false
         }
         camera.seekable: playing || currentMotion === camera.motion
         onProjectWillCreate: __stopProject()
@@ -327,6 +325,9 @@ Item {
             if (!__constructing) {
                 renderTarget.render()
             }
+        }
+        onModelDidStartLoading: {
+            busyIndicator.running = true
         }
         onModelWillLoad: {
             model.modelWillLoad.connect(__handleWillLoad)
@@ -351,13 +352,18 @@ Item {
                 projectDocument.addModel(model)
             }
         }
-        onModelDidFailLoading: notificationDidPost(qsTr("The model cannot be loaded: %1").arg(project.errorString))
+        onModelDidFailLoading: {
+            busyIndicator.running = false
+            notificationDidPost(qsTr("The model cannot be loaded: %1").arg(project.errorString))
+        }
         onMotionWillLoad: {
             motion.motionWillLoad.connect(__handleWillLoad)
             motion.motionBeLoading.connect(__handleBeLoading)
             motion.motionDidLoad.connect(__handleDidLoad)
         }
-        onMotionDidFailLoading: notificationDidPost(qsTr("The motion cannot be loaded: %1").arg(project.errorString))
+        onMotionDidFailLoading: {
+            notificationDidPost(qsTr("The motion cannot be loaded: %1").arg(project.errorString))
+        }
         onMotionDidLoad: {
             currentMotion = motion;
             motion.motionWillLoad.disconnect(__handleWillLoad)
@@ -442,14 +448,14 @@ Item {
             if (model.availableBones.length > 0) {
                 model.selectOpaqueObject(model.availableBones[0])
             }
-            buzyIndicator.running = false
+            busyIndicator.running = false
             scene.uploadingModelDidSucceed(model, isProject)
         }
         onUploadingModelDidFail: {
             if (model === currentModel) {
                 currentModel = null
             }
-            buzyIndicator.running = false
+            busyIndicator.running = false
             scene.uploadingModelDidFail(model, isProject)
         }
         onUploadingEffectDidSucceed: scene.uploadingEffectDidSucceed(model)
@@ -463,9 +469,10 @@ Item {
             scene.encodeDidFinish(isNormalExit)
         }
         BusyIndicator {
-            id: buzyIndicator
+            id: busyIndicator
             running: false
             anchors.centerIn: parent
+            scale: 2.0
         }
         Timer {
             id: standbyRenderTimer
