@@ -921,6 +921,12 @@ void RenderTarget::updateGizmo()
             const Vector3 &v = boneRef->origin();
             translationGizmoRef->SetOffset(v.x(), v.y(), v.z());
             orientationGizmoRef->SetOffset(v.x(), v.y(), v.z());
+            if (!boneRef->isMovable() && editMode() == MoveMode) {
+                setEditMode(RotateMode);
+            }
+            if (!boneRef->isRotateable() && editMode() == RotateMode) {
+                setEditMode(SelectMode);
+            }
         }
     }
     else {
@@ -1294,8 +1300,6 @@ void RenderTarget::performDeletingEnqueuedModels()
     const QList<ModelProxy *> &deletedModelProxies = m_applicationContext->deleteEnqueuedModelProxies(m_projectProxyRef);
     foreach (ModelProxy *modelProxy, deletedModelProxies) {
         VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is scheduled to be delete from RenderTarget and will be deleted");
-        disconnect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
-        disconnect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateGizmo);
         modelProxy->deleteLater();
     }
     emit enqueuedModelsDidDelete();

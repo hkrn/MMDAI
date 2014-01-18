@@ -644,7 +644,7 @@ ApplicationWindow {
             text: qsTr("Select")
             tooltip: qsTr("Toggle the current edit mode to the mode of selecting bones.")
             checkable: true
-            checked: true
+            checked: scene.editMode === VPVM.RenderTarget.SelectMode
             onTriggered: scene.editMode = VPVM.RenderTarget.SelectMode
         }
         Action {
@@ -653,6 +653,7 @@ ApplicationWindow {
             text: qsTr("Move")
             tooltip: qsTr("Toggle the current edit mode to the mode of moving a bone.")
             checkable: enabled
+            checked: scene.editMode === VPVM.RenderTarget.MoveMode
             onTriggered: scene.editMode = VPVM.RenderTarget.MoveMode
         }
         Action {
@@ -661,6 +662,7 @@ ApplicationWindow {
             text: qsTr("Rotate")
             tooltip: qsTr("Toggle the current edit mode to the mode of rotating a bone.")
             checkable: enabled
+            checked: scene.editMode === VPVM.RenderTarget.RotateMode
             onTriggered: scene.editMode = VPVM.RenderTarget.RotateMode
         }
     }
