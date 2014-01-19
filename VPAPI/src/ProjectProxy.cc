@@ -450,7 +450,7 @@ bool ProjectProxy::loadPose(const QUrl &fileUrl, ModelProxy *modelProxy)
 
 void ProjectProxy::seek(qreal timeIndex)
 {
-    internalSeek(timeIndex, false);
+    internalSeek(timeIndex, false, false);
 }
 
 void ProjectProxy::rewind()
@@ -462,7 +462,7 @@ void ProjectProxy::rewind()
             resetIKEffectorBones(bone);
         }
     }
-    internalSeek(0, true);
+    internalSeek(0, true, true);
     m_worldProxy->rewind();
     emit rewindDidPerform();
 }
@@ -500,7 +500,7 @@ void ProjectProxy::undo()
     if (m_undoGroup->canUndo()) {
         m_undoGroup->undo();
         /* force seeking to get latest motion value after undo and render it */
-        internalSeek(m_currentTimeIndex, true);
+        internalSeek(m_currentTimeIndex, true, false);
         emit undoDidPerform();
     }
 }
@@ -510,7 +510,7 @@ void ProjectProxy::redo()
     if (m_undoGroup->canRedo()) {
         m_undoGroup->redo();
         /* force seeking to get latest motion value after redo and render it */
-        internalSeek(m_currentTimeIndex, true);
+        internalSeek(m_currentTimeIndex, true, false);
         emit redoDidPerform();
     }
 }
@@ -1260,20 +1260,14 @@ void ProjectProxy::assignLight()
     track->addKeyframe(track->convertLightKeyframe(keyframe.take()), true);
 }
 
-void ProjectProxy::internalSeek(const qreal &timeIndex, bool forceUpdate)
+void ProjectProxy::internalSeek(const qreal &timeIndex, bool forceUpdate, bool forceUpdateCamera)
 {
     if (forceUpdate || !qFuzzyCompare(timeIndex, m_currentTimeIndex)) {
-        MotionProxy *cameraMotionProxy = 0;
-        if (!m_cameraRefObject->isSeekable()) {
-            /* save camera motion not to apply camera motion */
-            cameraMotionProxy = m_cameraRefObject->motion();
-            m_cameraRefObject->data()->setMotion(0);
+        int flags = Scene::kUpdateAll;
+        if (!forceUpdateCamera && !m_cameraRefObject->isSeekable()) {
+            flags &= ~Scene::kUpdateCamera;
         }
-        m_project->seek(timeIndex, Scene::kUpdateAll);
-        if (cameraMotionProxy) {
-            /* restore camera motion */
-            m_cameraRefObject->data()->setMotion(cameraMotionProxy->data());
-        }
+        m_project->seek(timeIndex, flags);
         m_worldProxy->stepSimulation(timeIndex);
         if (m_currentModelRef) {
             updateOriginValues();

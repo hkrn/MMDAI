@@ -302,7 +302,7 @@ private:
     void createProjectInstance();
     void assignCamera();
     void assignLight();
-    void internalSeek(const qreal &timeIndex, bool forceUpdate);
+    void internalSeek(const qreal &timeIndex, bool forceUpdate, bool forceUpdateCamera);
     void updateOriginValues();
     void setErrorString(const QString &value);
     void release(bool fromDestructor);

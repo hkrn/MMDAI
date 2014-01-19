@@ -58,6 +58,7 @@ StaticLibrary {
     Properties {
         condition: qbs.targetOS.contains("osx")
         cpp.minimumOsxVersion: "10.6"
+        excludeFiles: [ "src/Updater.cc" ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x) })
     }
     Properties {
         condition: qbs.toolchain.contains("msvc")
