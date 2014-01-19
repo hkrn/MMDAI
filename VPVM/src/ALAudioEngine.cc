@@ -56,8 +56,7 @@ using namespace vpvl2;
 ALAudioEngine::ALAudioEngine(QObject *parent)
     : QObject(parent),
       m_audioSource(0),
-      m_audioBuffer(0),
-      m_timerID(0)
+      m_audioBuffer(0)
 {
     connect(this, &ALAudioEngine::sourceChanged, this, &ALAudioEngine::seekableChanged);
     connect(this, &ALAudioEngine::audioSourceDidLoad, this, &ALAudioEngine::sourceChanged);
@@ -72,9 +71,9 @@ void ALAudioEngine::play()
 {
     if (!m_source.isEmpty()) {
         /* play if the timer is not started else do nothing */
-        if (!m_timerID) {
+        if (!m_timer.isActive()) {
             alurePlaySource(m_audioSource, &ALAudioEngine::stopCallback, this);
-            m_timerID = startTimer(0);
+            m_timer.start(0, Qt::PreciseTimer, this);
             emit playingDidPerform();
         }
     }
@@ -87,10 +86,9 @@ void ALAudioEngine::stop()
 {
     if (!m_source.isEmpty()) {
         /* stop if the timer is active else do nothing */
-        if (m_timerID) {
+        if (m_timer.isActive()) {
             alureStopSource(m_audioSource, AL_FALSE);
-            killTimer(m_timerID);
-            m_timerID = 0;
+            m_timer.stop();
             emit stoppingDidPerform();
         }
     }
@@ -101,8 +99,7 @@ void ALAudioEngine::stop()
 
 void ALAudioEngine::release()
 {
-    killTimer(m_timerID);
-    m_timerID = 0;
+    m_timer.stop();
     if (m_audioSource) {
         alDeleteSources(1, &m_audioSource);
         m_audioSource = 0;
@@ -158,11 +155,13 @@ bool ALAudioEngine::seekable() const
 
 void ALAudioEngine::timerEvent(QTimerEvent *event)
 {
-    if (event->timerId() == m_timerID) {
+    if (event->timerId() == m_timer.timerId()) {
         alureUpdate();
         emit timeIndexChanged();
     }
-    QObject::timerEvent(event);
+    else {
+        QObject::timerEvent(event);
+    }
 }
 
 void ALAudioEngine::stopCallback(void *userData, ALuint /* source */)

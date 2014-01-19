@@ -39,6 +39,7 @@
 #define ALAUDIOENGINE_H
 
 #include <QObject>
+#include <QBasicTimer>
 #include <QUrl>
 
 #include <AL/al.h>
@@ -80,10 +81,10 @@ signals:
 private:
     static void stopCallback(void *userData, ALuint source);
 
+    QBasicTimer m_timer;
     QUrl m_source;
     ALuint m_audioSource;
     ALuint m_audioBuffer;
-    int m_timerID;
 };
 
 #endif // ALAUDIOENGINE_H
