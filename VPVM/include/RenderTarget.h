@@ -174,8 +174,6 @@ public slots:
     Q_INVOKABLE void cancelExportingVideo();
     Q_INVOKABLE void loadJson(const QUrl &fileUrl);
     Q_INVOKABLE void share(const QString &serviceName);
-    void resetCurrentTimeIndex();
-    void resetLastTimeIndex();
 
 signals:
     void initializedChanged();
@@ -242,6 +240,7 @@ private slots:
     void performDeletingEnqueuedModels();
     void performUpdatingLight();
     void disconnectProjectSignals();
+    void rewind();
     void releaseVideoSurface();
     void resetMediaPlayer();
     void prepareUploadingModelsInProject();
@@ -272,6 +271,7 @@ private:
     void drawDebug();
     void drawModelBones();
     void drawCurrentGizmo();
+    void drawEffectParameterUIWidgets();
     void drawOffscreen(QOpenGLFramebufferObject *fbo);
     void updateViewport();
     void seekVideo(const qreal &value);

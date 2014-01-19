@@ -524,9 +524,7 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmoAndRender);
     connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmoAndRender);
     connect(value, &ProjectProxy::currentTimeIndexChanged, this, &RenderTarget::seekMediaFromProject);
-    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::resetCurrentTimeIndex);
-    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::resetLastTimeIndex);
-    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
+    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::rewind);
     connect(value->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
     CameraRefObject *camera = value->camera();
     connect(camera, &CameraRefObject::lookAtChanged, this, &RenderTarget::markDirty);
@@ -895,18 +893,6 @@ void RenderTarget::share(const QString &serviceName)
     m_sharingService->setServiceName(serviceName);
 }
 
-void RenderTarget::resetCurrentTimeIndex()
-{
-    m_currentTimeIndex = 0;
-    emit currentTimeIndexChanged();
-}
-
-void RenderTarget::resetLastTimeIndex()
-{
-    m_lastTimeIndex = 0;
-    emit lastTimeIndexChanged();
-}
-
 void RenderTarget::markDirty()
 {
     m_dirty = true;
@@ -1031,7 +1017,7 @@ void RenderTarget::draw()
         drawDebug();
         drawModelBones();
         drawCurrentGizmo();
-        m_applicationContext->renderEffectParameterUIWidgets();
+        drawEffectParameterUIWidgets();
         bool flushed = false;
         m_counter.update(m_renderTimer.elapsed(), flushed);
         if (flushed) {
@@ -1363,10 +1349,19 @@ void RenderTarget::disconnectProjectSignals()
     /* disable below signals behavior while loading project */
     disconnect(m_projectProxyRef, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
     disconnect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::prepareUpdatingLight);
-    disconnect(m_projectProxyRef, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
+    disconnect(m_projectProxyRef, &ProjectProxy::rewindDidPerform, this, &RenderTarget::rewind);
     disconnect(m_projectProxyRef->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
     disconnect(m_projectProxyRef->light(), &LightRefObject::directionChanged, this, &RenderTarget::prepareUpdatingLight);
     disconnect(m_projectProxyRef->light(), &LightRefObject::shadowTypeChanged, this, &RenderTarget::prepareUpdatingLight);
+}
+
+void RenderTarget::rewind()
+{
+    m_currentTimeIndex = 0;
+    emit currentTimeIndexChanged();
+    m_lastTimeIndex = 0;
+    emit lastTimeIndexChanged();
+    prepareSyncMotionState();
 }
 
 void RenderTarget::releaseVideoSurface()
@@ -1414,7 +1409,7 @@ void RenderTarget::activateProject()
     m_grid->setVisible(m_projectProxyRef->isGridVisible());
     connect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::prepareUpdatingLight);
     connect(m_projectProxyRef, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
-    connect(m_projectProxyRef, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
+    connect(m_projectProxyRef, &ProjectProxy::rewindDidPerform, this, &RenderTarget::rewind);
     connect(m_projectProxyRef->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
     connect(m_projectProxyRef->light(), &LightRefObject::directionChanged, this, &RenderTarget::prepareUpdatingLight);
     connect(m_projectProxyRef->light(), &LightRefObject::shadowTypeChanged, this, &RenderTarget::prepareUpdatingLight);
@@ -1587,6 +1582,13 @@ void RenderTarget::drawCurrentGizmo()
         gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
         m_currentGizmoRef->Draw();
         gl::popAnnotationGroup(m_applicationContext.data());
+    }
+}
+
+void RenderTarget::drawEffectParameterUIWidgets()
+{
+    if (!m_playing) {
+        m_applicationContext->renderEffectParameterUIWidgets();
     }
 }
 
