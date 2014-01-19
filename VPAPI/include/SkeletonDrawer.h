@@ -65,7 +65,7 @@ public:
     void setModelProxyRef(const ModelProxy *value);
     const ModelProxy *currentModelProxyRef() const;
     void setViewProjectionMatrix(const QMatrix4x4 &value);
-    void draw();
+    void draw(const QMatrix4x4 &worldMatrix);
     void update();
     void removeModelRef(const ModelProxy *modelProxyRef);
 

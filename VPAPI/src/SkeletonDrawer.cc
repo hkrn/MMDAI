@@ -154,17 +154,9 @@ void SkeletonDrawer::setViewProjectionMatrix(const QMatrix4x4 &value)
     m_viewProjectionMatrix = value;
 }
 
-void SkeletonDrawer::draw()
+void SkeletonDrawer::draw(const QMatrix4x4 &worldMatrix)
 {
     bindProgram();
-    QMatrix4x4 worldMatrix;
-    if (m_currentModelRef) {
-        const IModel *modelRef = m_currentModelRef->data();
-        const Vector3 &translation = modelRef->worldTranslation();
-        const Quaternion &orientation = modelRef->worldOrientation();
-        worldMatrix.translate(translation.x(), translation.y(), translation.z());
-        worldMatrix.rotate(QQuaternion(orientation.w(), orientation.x(), orientation.y(), orientation.z()));
-    }
     m_program->setUniformValue("modelViewProjectionMatrix", m_viewProjectionMatrix * worldMatrix);
     glDrawElements(GL_TRIANGLES, m_nindices, GL_UNSIGNED_INT, 0);
     releaseProgram();

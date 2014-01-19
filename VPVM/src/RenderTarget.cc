@@ -245,13 +245,13 @@ public:
         m_cbo->bind();
         m_cbo->write(0, m_colors, m_index * sizeof(m_colors[0]));
         bindProgram();
-        m_program->setUniformValue("modelViewProjectionMatrix", m_modelViewProjectionMatrix);
+        m_program->setUniformValue("modelViewProjectionMatrix", m_viewProjectionMatrix);
         glDrawArrays(GL_LINES, 0, m_index / 2);
         releaseProgram();
         m_index = 0;
     }
-    void setModelViewProjectionMatrix(const QMatrix4x4 &value) {
-        m_modelViewProjectionMatrix = value;
+    void setViewProjectionMatrix(const QMatrix4x4 &value) {
+        m_viewProjectionMatrix = value;
     }
 
 private:
@@ -304,7 +304,7 @@ private:
     QScopedPointer<QOpenGLVertexArrayObject> m_vao;
     QScopedPointer<QOpenGLBuffer> m_vbo;
     QScopedPointer<QOpenGLBuffer> m_cbo;
-    QMatrix4x4 m_modelViewProjectionMatrix;
+    QMatrix4x4 m_viewProjectionMatrix;
     Vector3 m_vertices[kPreAllocatedSize];
     Vector3 m_colors[kPreAllocatedSize];
     int m_flags;
@@ -934,15 +934,11 @@ void RenderTarget::updateGizmo()
         setSnapGizmoStepSize(m_snapStepSize);
         if (const BoneRefObject *boneProxy = modelProxy->firstTargetBone()) {
             const IBone *boneRef = boneProxy->data();
-            const IModel *modelRef = modelProxy->data();
-            Transform transform(boneRef->localOrientation() * modelRef->worldOrientation(),
-                                boneRef->localTranslation() + modelRef->worldTranslation());
-            Scalar rawMatrix[16];
-            transform.getOpenGLMatrix(rawMatrix);
-            for (int i = 0; i < 16; i++) {
-                m_editMatrix.data()[i] = static_cast<qreal>(rawMatrix[i]);
-            }
-            const Vector3 &v = boneRef->origin();
+            Transform transform;
+            float32 m[16];
+            m_applicationContext->getMatrix(m, modelProxy->data(), IApplicationContext::kCameraMatrix | IApplicationContext::kWorldMatrix);
+            transform.setFromOpenGLMatrix(m);
+            const Vector3 &v = transform.getOrigin();
             translationGizmoRef->SetOffset(v.x(), v.y(), v.z());
             orientationGizmoRef->SetOffset(v.x(), v.y(), v.z());
             if (!boneRef->isMovable() && editMode() == MoveMode) {
@@ -951,6 +947,11 @@ void RenderTarget::updateGizmo()
             if (!boneRef->isRotateable() && editMode() == RotateMode) {
                 setEditMode(SelectMode);
             }
+            transform.setIdentity();
+            transform.setOrigin(boneRef->localTranslation());
+            transform.setRotation(boneRef->localOrientation());
+            transform.getOpenGLMatrix(m);
+            m_editMatrix = Util::fromMatrix4(glm::make_mat4(m));
         }
     }
     else {
@@ -1546,7 +1547,7 @@ void RenderTarget::drawDebug()
         if (!m_debugDrawer) {
             m_debugDrawer.reset(new DebugDrawer());
             m_debugDrawer->initialize();
-            m_debugDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
+            m_debugDrawer->setViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
             m_debugDrawer->setDebugMode(btIDebugDraw::DBG_DrawAabb |
                                         // btIDebugDraw::DBG_DrawConstraintLimits |
                                         // btIDebugDraw::DBG_DrawConstraints |
@@ -1571,8 +1572,10 @@ void RenderTarget::drawModelBones()
     if (!m_playing && m_editMode == SelectMode && currentModelRef && currentModelRef->isVisible()) {
         gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
         if (m_modelDrawer) {
+            float32 m[16];
             m_modelDrawer->setModelProxyRef(currentModelRef);
-            m_modelDrawer->draw();
+            m_applicationContext->getMatrix(m, currentModelRef->data(), IApplicationContext::kCameraMatrix | IApplicationContext::kWorldMatrix);
+            m_modelDrawer->draw(Util::fromMatrix4(glm::make_mat4(m)));
         }
         gl::popAnnotationGroup(m_applicationContext.data());
     }
@@ -1618,7 +1621,7 @@ void RenderTarget::updateViewport()
         m_projectionMatrix = cameraProjection;
         m_viewProjectionMatrix = cameraProjection * cameraView;
         if (m_debugDrawer) {
-            m_debugDrawer->setModelViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
+            m_debugDrawer->setViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
         }
         if (m_modelDrawer) {
             m_modelDrawer->setViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));

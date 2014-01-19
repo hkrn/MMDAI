@@ -791,14 +791,11 @@ void BaseApplicationContext::getMatrix(float32 value[], const IModel *model, int
             m *= m_cameraViewMatrix;
         }
         if (model && internal::hasFlagBits(flags, IApplicationContext::kWorldMatrix)) {
-            const IBone *bone = model->parentBoneRef();
-            Transform transform;
-            transform.setOrigin(model->worldTranslation());
-            transform.setRotation(model->worldOrientation());
+            Transform transform(model->worldOrientation(), model->worldTranslation());
             Scalar matrix[16];
             transform.getOpenGLMatrix(matrix);
             m *= glm::make_mat4(matrix);
-            if (bone) {
+            if (const IBone *bone = model->parentBoneRef()) {
                 transform = bone->worldTransform();
                 transform.getOpenGLMatrix(matrix);
                 m *= glm::make_mat4(matrix);
