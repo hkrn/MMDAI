@@ -246,21 +246,21 @@ ApplicationWindow {
                     ListModel {
                         id: modelList
                         function __updateData() {
-                            clear()
                             var models = scene.project.availableModels, allModels = [], i
                             for (i in models) {
                                 allModels.push(models[i])
                             }
                             allModels.sort(function(a, b) { return a.orderIndex - b.orderIndex })
+                            clear()
                             for (i in allModels) {
                                 var model = allModels[i]
-                                append({ "model": model })
+                                append({ "name": model.name, "__ptr_model": model })
                             }
                         }
                         function updateOrderIndices() {
                             var models = scene.project.availableModels
                             for (var i = 0; i < count; i++) {
-                                var model = get(i).model
+                                var model = get(i).__ptr_model
                                 model.orderIndex = i + 1
                             }
                         }
