@@ -59,16 +59,16 @@ public:
     }
 
     void update(int64 elapsed, bool &flushed) {
-        if (abs(m_updated - elapsed) > 1000) {
+        if (std::abs(elapsed - m_updated) >= 1000) {
             m_value = m_accumulated;
             m_accumulated = 0;
             m_updated = elapsed;
             flushed = true;
         }
         else {
+            m_accumulated++;
             flushed = false;
         }
-        m_accumulated++;
     }
     void reset() {
         m_value = 0;
