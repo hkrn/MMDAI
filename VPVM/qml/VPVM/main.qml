@@ -334,7 +334,7 @@ ApplicationWindow {
         id: loadAudioDialog
         nameFilters: [ qsTr("AIFF/WAVE File (*.wav *.aif)") ]
         selectExisting: true
-        onAccepted: scene.loadAudio(fileUrl)
+        onAccepted: scene.project.audioSource = fileUrl
     }
     Action {
         id: loadAudioAction
@@ -345,7 +345,7 @@ ApplicationWindow {
     FileDialog {
         id: loadVideoDialog
         selectExisting: true
-        onAccepted: scene.loadVideo(fileUrl)
+        onAccepted: scene.project.videoSource = fileUrl
     }
     Action {
         id: loadVideoAction

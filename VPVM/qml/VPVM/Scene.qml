@@ -83,6 +83,11 @@ Item {
     signal boneDidSelect(var bone)
     signal morphDidSelect(var morph)
 
+    function __handleDeviceAvailableChanged() {
+        if (VPVM.ALAudioContext.deviceAvailable) {
+            audioEngine.source = projectDocument.audioSource
+        }
+    }
     Component.onCompleted: {
         __keycode2closures[Qt.Key_Plus] = function(event) { camera.zoom(-1) }
         __keycode2closures[Qt.Key_Minus] = function(event) { camera.zoom(1) }
@@ -126,6 +131,7 @@ Item {
             baseFontPointSize = 12
             baseIconPointSize = 36
         }
+        VPVM.ALAudioContext.deviceAvailableChanged.connect(__handleDeviceAvailableChanged)
     }
 
     Loader {
@@ -162,7 +168,6 @@ Item {
         onPlayingNotPerformed: renderTargetAnimation.start()
         onStoppingNotPerformed: tryStop()
         onAudioSourceDidLoad: notificationDidPost(qsTr("The audio file was loaded normally."))
-        onSourceChanged: project.audioSource = source
         onErrorDidHappen: notificationDidPost(qsTr("Could not load the audio file. For more verbose reason, see log."))
         onTimeIndexChanged: renderTarget.currentTimeIndex = timeIndex
     }
@@ -186,13 +191,6 @@ Item {
     function resetMorph(opaque) {
         projectDocument.resetMorph(opaque)
         renderTarget.render()
-    }
-    function loadAudio(fileUrl) {
-        VPVM.ALAudioContext.initialize()
-        audioEngine.source = fileUrl
-    }
-    function loadVideo(fileUrl) {
-        renderTarget.videoUrl = fileUrl
     }
     function exportImage(fileUrl, size) {
         if (fileUrl.toString() !== "") {
@@ -293,11 +291,6 @@ Item {
             renderTarget.currentTimeIndex = 0
             projectDocument.refresh()
             projectDocument.rewind()
-            var audioSource = projectDocument.audioSource
-            if (audioSource.toString() !== "") {
-                VPVM.ALAudioContext.initialize()
-                audioEngine.source = audioSource
-            }
             renderTarget.toggleRunning(true)
             standbyRenderTimer.start()
             __constructing = false
@@ -379,6 +372,16 @@ Item {
             seek(currentTimeIndex)
             renderTarget.render()
         }
+        onAudioSourceChanged: {
+            console.log(audioSource)
+            if (VPVM.ALAudioContext.deviceAvailable) {
+                audioEngine.source = audioSource
+            }
+            else {
+                VPVM.ALAudioContext.initialize()
+            }
+        }
+        onVideoSourceChanged: renderTarget.videoUrl = videoSource
     }
     VPVM.RenderTarget {
         id: renderTarget
