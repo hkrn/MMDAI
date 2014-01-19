@@ -449,8 +449,15 @@ Item {
             model.transformTypeChanged.connect(__handleTransformTypeChanged)
             model.boneDidSelect.connect(__handleBoneDidSelect)
             model.morphDidSelect.connect(__handleMorphDidSelect)
-            if (model.availableBones.length > 0) {
-                model.selectOpaqueObject(model.availableBones[0])
+            if (model.allBones.length > 0) {
+                var allBones = model.allBones
+                for (var i in allBones) {
+                    var bone = allBones[i]
+                    if (bone.interactive) {
+                        model.selectOpaqueObject(bone)
+                        break
+                    }
+                }
             }
             busyIndicator.running = false
             scene.uploadingModelDidSucceed(model, isProject)

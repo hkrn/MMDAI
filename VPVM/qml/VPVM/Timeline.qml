@@ -208,7 +208,7 @@ FocusScope {
     }
     function assignModel(model) {
         console.assert(model)
-        var motion = model.childMotion, labels = model.availableLabels, anims = []
+        var motion = model.childMotion, labels = model.allLabels, anims = []
         for (var i in labels) {
             var label = labels[i], bones = label.bones, morphs = label.morphs, opaqueObjects = null
             if (bones.length > 0) {

@@ -79,9 +79,9 @@ class ModelProxy : public QObject
     Q_PROPERTY(QUrl faviconUrl READ faviconUrl CONSTANT FINAL)
     Q_PROPERTY(QString name READ name NOTIFY nameChanged FINAL)
     Q_PROPERTY(QString comment READ comment NOTIFY commentChanged FINAL)
-    Q_PROPERTY(QQmlListProperty<LabelRefObject> availableLabels READ availableLabels CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<BoneRefObject> availableBones READ availableBones CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<MorphRefObject> availableMorphs READ availableMorphs CONSTANT FINAL)
+    Q_PROPERTY(QQmlListProperty<LabelRefObject> allLabels READ allLabels CONSTANT FINAL)
+    Q_PROPERTY(QQmlListProperty<BoneRefObject> allBones READ allBones CONSTANT FINAL)
+    Q_PROPERTY(QQmlListProperty<MorphRefObject> allMorphs READ allMorphs CONSTANT FINAL)
     Q_PROPERTY(QQmlListProperty<BoneRefObject> targetBones READ targetBones CONSTANT FINAL)
     Q_PROPERTY(BoneRefObject *firstTargetBone READ firstTargetBone NOTIFY firstTargetBoneChanged FINAL)
     Q_PROPERTY(MorphRefObject *firstTargetMorph READ firstTargetMorph WRITE setFirstTargetMorph NOTIFY firstTargetMorphChanged FINAL)
@@ -135,9 +135,9 @@ public:
     QUrl faviconUrl() const;
     QString name() const;
     QString comment() const;
-    QQmlListProperty<LabelRefObject> availableLabels();
-    QQmlListProperty<BoneRefObject> availableBones();
-    QQmlListProperty<MorphRefObject> availableMorphs();
+    QQmlListProperty<LabelRefObject> allLabels();
+    QQmlListProperty<BoneRefObject> allBones();
+    QQmlListProperty<MorphRefObject> allMorphs();
     QQmlListProperty<BoneRefObject> targetBones();
     QList<BoneRefObject *> allTargetBones() const;
     BoneRefObject *firstTargetBone() const;
@@ -248,7 +248,6 @@ private:
     QHash<QUuid, MorphRefObject *> m_uuid2morphRefs;
     QList<LabelRefObject *> m_allLabels;
     QList<BoneRefObject *> m_allBones;
-    QList<BoneRefObject *> m_availableBoneRefs;
     QList<BoneRefObject *> m_targetBoneRefs;
     QList<MorphRefObject *> m_allMorphs;
     QList<ModelProxy *> m_bindingModels;

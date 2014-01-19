@@ -491,14 +491,14 @@ QString ModelProxy::comment() const
     return m_model ? Util::toQString(m_model->comment(languageType())) : QString();
 }
 
-QQmlListProperty<LabelRefObject> ModelProxy::availableLabels()
+QQmlListProperty<LabelRefObject> ModelProxy::allLabels()
 {
     return QQmlListProperty<LabelRefObject>(this, m_allLabels);
 }
 
-QQmlListProperty<BoneRefObject> ModelProxy::availableBones()
+QQmlListProperty<BoneRefObject> ModelProxy::allBones()
 {
-    return QQmlListProperty<BoneRefObject>(this, m_availableBoneRefs);
+    return QQmlListProperty<BoneRefObject>(this, m_allBones);
 }
 
 QQmlListProperty<BoneRefObject> ModelProxy::targetBones()
@@ -506,7 +506,7 @@ QQmlListProperty<BoneRefObject> ModelProxy::targetBones()
     return QQmlListProperty<BoneRefObject>(this, m_targetBoneRefs);
 }
 
-QQmlListProperty<MorphRefObject> ModelProxy::availableMorphs()
+QQmlListProperty<MorphRefObject> ModelProxy::allMorphs()
 {
     return QQmlListProperty<MorphRefObject>(this, m_allMorphs);
 }
@@ -731,7 +731,6 @@ void ModelProxy::setAllBones(const Array<ILabel *> &labelRefs, int numEstimatedO
                 const QUuid uuid = QUuid::createUuid();
                 BoneRefObject *boneObject = new BoneRefObject(labelObject, boneRef, uuid);
                 if (boneRef->isInteractive()) {
-                    m_availableBoneRefs.append(boneObject);
                     labelObject->addBone(boneObject);
                 }
                 m_allBones.append(boneObject);

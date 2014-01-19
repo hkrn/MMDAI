@@ -193,6 +193,12 @@ bool BoneRefObject::isRotateable() const
     return m_boneRef->isRotateable();
 }
 
+bool BoneRefObject::isInteractive() const
+{
+    Q_ASSERT(m_boneRef);
+    return m_boneRef->isInteractive();
+}
+
 bool BoneRefObject::hasInverseKinematics() const
 {
     Q_ASSERT(m_boneRef);

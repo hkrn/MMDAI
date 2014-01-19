@@ -66,6 +66,7 @@ class BoneRefObject : public QObject
     Q_PROPERTY(bool enableInverseKinematics READ isInverseKinematicsKEnabled WRITE setInverseKinematicsEnabled NOTIFY enableInverseKinematicsChanged FINAL)
     Q_PROPERTY(bool movable READ isMovable CONSTANT FINAL)
     Q_PROPERTY(bool rotateable READ isRotateable CONSTANT FINAL)
+    Q_PROPERTY(bool interactive READ isInteractive CONSTANT FINAL)
     Q_PROPERTY(bool hasInverseKinematics READ hasInverseKinematics CONSTANT FINAL)
     Q_PROPERTY(bool hasFixedAxes READ hasFixedAxes CONSTANT FINAL)
     Q_PROPERTY(bool hasLocalAxes READ hasLocalAxes CONSTANT FINAL)
@@ -95,6 +96,7 @@ public:
     void setInverseKinematicsEnabled(bool value);
     bool isMovable() const;
     bool isRotateable() const;
+    bool isInteractive() const;
     bool hasInverseKinematics() const;
     bool hasFixedAxes() const;
     bool hasLocalAxes() const;
