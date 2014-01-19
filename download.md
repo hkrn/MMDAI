@@ -28,7 +28,7 @@ VPVM {{ site.data.VPVM.version }}
 
 ### [Windows 版をダウンロード]({{ site.data.VPVM.location }}/{{ site.data.VPVM.version }}/VPVM-win32-{{ site.data.VPVM.version }}.zip)
 
- - DirectX9 以上に対応するグラボが必要です。
+ - [Visual C++ 再配布可能ランタイムのインストール](http://www.microsoft.com/ja-jp/download/details.aspx?id=30679) とDirectX9 以上に対応するグラボが必要です。
  - Windows Vista 以上が必要です。Windows XP では動かないはず
  - 32bit 版のみ
  - 現時点での実装上の制約として動画出力が出来ません
