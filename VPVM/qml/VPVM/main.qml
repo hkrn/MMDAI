@@ -47,7 +47,6 @@ ApplicationWindow {
     id: applicationWindow
     readonly property bool isOSX: Qt.platform.os === "osx"
     readonly property int applicationLayoutAnchorMargin : 10
-    property bool isFullSceneMode: false
     minimumWidth: 960
     minimumHeight: 620
     title: "%1 - %2".arg(Qt.application.name).arg(scene.project.title)
@@ -766,9 +765,9 @@ ApplicationWindow {
         text: qsTr("Enable Full Scene Mode")
         tooltip: qsTr("Expands Scene and Hides Timeline and Tabs.")
         checkable: true
-        checked: isFullSceneMode
+        checked: scene.isFullView
         onToggled: {
-            isFullSceneMode = checked
+            scene.isFullView = checked
             propertyPanel.visible = !checked /* manually set visible of propertyPanel */
         }
     }
@@ -784,7 +783,7 @@ ApplicationWindow {
         id: toggleVisiblePropertyPanelAction
         text: qsTr("Toggle Visible of Property Panel")
         tooltip: qsTr("Toggle visible of bottom property panel.")
-        enabled: !isFullSceneMode
+        enabled: !scene.isFullView
         checkable: true
         checked: enabled && propertyPanel.visible
         onToggled: {
@@ -835,7 +834,7 @@ ApplicationWindow {
     SystemPalette { id: systemPalette }
     color: systemPalette.window
     statusBar: StatusBar {
-        visible: !isFullSceneMode
+        visible: !scene.isFullView
         Label {
             id: statusBarLabel
             Layout.fillWidth: true
@@ -1023,7 +1022,7 @@ ApplicationWindow {
                 id: timelineContainer
                 width: 400
                 Layout.minimumWidth: 300
-                visible: !isFullSceneMode
+                visible: !scene.isFullView
                 Rectangle {
                     id: timelineView
                     property bool initialized: false
@@ -1279,7 +1278,7 @@ ApplicationWindow {
                         name: "attachedTimeline"
                         StateChangeScript { script: timelineWindow.close() }
                         ParentChange { target: timelineView; parent: timelineContainer }
-                        PropertyChanges { target: timelineContainer; visible: !isFullSceneMode }
+                        PropertyChanges { target: timelineContainer; visible: !scene.isFullView }
                         StateChangeScript { script: timeline.refresh() }
                     },
                     State {
@@ -1318,7 +1317,7 @@ ApplicationWindow {
             height: 220
             color: systemPalette.window
             enabled: scene.isHUDAvailable
-            visible: !isFullSceneMode
+            visible: !scene.isFullView
             TabView {
                 id: sceneTabView
                 readonly property int modelTabIndex : 0
