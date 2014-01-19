@@ -270,10 +270,12 @@ ProjectProxy::ProjectProxy(QObject *parent)
     connect(this, &ProjectProxy::currentModelChanged, this, &ProjectProxy::updateParentBindingModel);
     connect(this, &ProjectProxy::parentBindingDidUpdate, this, &ProjectProxy::availableParentBindingBonesChanged);
     connect(this, &ProjectProxy::parentBindingDidUpdate, this, &ProjectProxy::availableParentBindingModelsChanged);
+    connect(this, &ProjectProxy::projectDidCreate, this, &ProjectProxy::durationTimeIndexChanged);
     connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::screenColorChanged);
     connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::languageChanged);
     connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::loopChanged);
-    connect(this, &ProjectProxy::projectDidCreate, this, &ProjectProxy::durationTimeIndexChanged);
+    connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::audioSourceChanged);
+    connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::videoSourceChanged);
     connect(this, &ProjectProxy::projectDidLoad, this, &ProjectProxy::durationTimeIndexChanged);
     connect(this, &ProjectProxy::undoDidPerform, this, &ProjectProxy::durationTimeIndexChanged);
     connect(this, &ProjectProxy::redoDidPerform, this, &ProjectProxy::durationTimeIndexChanged);

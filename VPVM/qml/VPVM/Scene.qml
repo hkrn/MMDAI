@@ -373,11 +373,10 @@ Item {
             renderTarget.render()
         }
         onAudioSourceChanged: {
-            console.log(audioSource)
             if (VPVM.ALAudioContext.deviceAvailable) {
                 audioEngine.source = audioSource
             }
-            else {
+            else if (audioSource.toString().length !== 0) {
                 VPVM.ALAudioContext.initialize()
             }
         }
