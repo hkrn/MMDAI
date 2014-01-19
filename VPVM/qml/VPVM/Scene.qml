@@ -237,6 +237,7 @@ Item {
                 script: {
                     audioEngine.stop()
                     renderTargetAnimation.stop()
+                    renderTarget.playing = false
                     renderTarget.lastTimeIndex = projectDocument.currentTimeIndex
                     standbyRenderTimer.start()
                 }
@@ -249,8 +250,8 @@ Item {
                 script: {
                     audioEngine.stop()
                     renderTargetAnimation.stop()
+                    renderTarget.playing = false
                     projectDocument.rewind()
-                    renderTarget.render()
                     standbyRenderTimer.start()
                 }
             }
@@ -489,7 +490,7 @@ Item {
             id: renderTargetAnimation
             from: 0
             running: false
-            onRunningChanged: renderTarget.playing = running
+            onRunningChanged:renderTarget.playing = running
             onStopped: audioEngine.tryStop()
             function setRange(from, to) {
                 if (to <= 0) {
