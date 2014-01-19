@@ -435,7 +435,7 @@ bool ProjectProxy::loadPose(const QUrl &fileUrl, ModelProxy *modelProxy)
                 result = true;
             }
             else {
-                setErrorString(tr("Cannot load pose %1").arg(fileUrl.toDisplayString()));
+                setErrorString(QStringLiteral("errno=%1").arg(pose.error()));
             }
         }
         else {

@@ -70,6 +70,12 @@ public:
         virtual const IString *name() const = 0;
         virtual IMorph::WeightPrecision weight() const = 0;
     };
+    enum ErrorType {
+        kNoError,
+        kInvalidSignatureError,
+        kEmptyBoneNameError,
+        kEmptyMorphNameError
+    };
 
     Pose(IEncoding *encoding)
         : m_encoding(encoding)
@@ -97,6 +103,7 @@ public:
     bool load(std::istringstream &stream) {
         getLine(stream, m_currentLine);
         if (m_currentLine != "Vocaloid Pose Data file") { // signature
+            m_error = kInvalidSignatureError;
             return false;
         }
         getLine(stream, m_currentLine); // model name
@@ -158,13 +165,18 @@ public:
             morphs.append(morph);
         }
     }
+    ErrorType error() const {
+        return m_error;
+    }
 
     static std::string trim(const std::string &value) {
         std::string::const_iterator stringFrom = value.begin(), stringTo = value.end() - 1;
-        while (isspace(*stringFrom) && (stringFrom != value.end()))
+        while (isspace(*stringFrom) && (stringFrom != value.end())) {
             ++stringFrom;
-        while (isspace(*stringTo) && (stringTo != value.begin()))
+        }
+        while (isspace(*stringTo) && (stringTo != value.begin())) {
             --stringTo;
+        }
         return (stringTo - stringFrom >= 0) ? std::string(stringFrom, ++stringTo) : std::string();
     }
     static void getLine(std::istringstream &stream, std::string &nextLine) {
@@ -252,6 +264,7 @@ private:
             }
             std::getline(s, name);
             if (name.empty()) {
+                m_error = kEmptyBoneNameError;
                 return false;
             }
             getLine(stream, pstr);
@@ -298,6 +311,7 @@ private:
             }
             std::getline(s, name);
             if (name.empty()) {
+                m_error = kEmptyMorphNameError;
                 return false;
             }
             getLine(stream, wstr);
@@ -373,6 +387,7 @@ private:
     PointerArray<BoneImpl> m_bones;
     PointerArray<MorphImpl> m_morphs;
     std::string m_currentLine;
+    ErrorType m_error;
 };
 
 } /* namespace extensions */
