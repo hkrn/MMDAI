@@ -115,6 +115,8 @@ public:
     void getLocalAxes(Matrix3x3 & /* value */) const {}
     void setInverseKinematicsEnable(bool /* value */) {}
     bool isInverseKinematicsEnabled() const { return false; }
+    bool isInherentTranslationEnabled() const { return false; }
+    bool isInherentOrientationEnabled() const { return false; }
     float32 coefficient() const { return 1.0f; }
 
     void setParentBoneRef(IBone * /* value */) {}
@@ -207,6 +209,8 @@ public:
     void getLocalAxes(Matrix3x3 & /* value */) const {}
     void setInverseKinematicsEnable(bool /* value */) {}
     bool isInverseKinematicsEnabled() const { return false; }
+    bool isInherentTranslationEnabled() const { return false; }
+    bool isInherentOrientationEnabled() const { return false; }
     float32 coefficient() const { return 1.0f; }
 
     void setParentBoneRef(IBone * /* value */) {}

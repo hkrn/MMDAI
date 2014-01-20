@@ -538,6 +538,16 @@ bool Bone::isInverseKinematicsEnabled() const
     return m_context->enableInverseKinematics;
 }
 
+bool Bone::isInherentTranslationEnabled() const
+{
+    return false;
+}
+
+bool Bone::isInherentOrientationEnabled() const
+{
+    return false;
+}
+
 float32 Bone::coefficient() const
 {
     return 1.0f;

@@ -122,6 +122,8 @@ public:
     void setSimulated(bool value);
     bool isAxisXAligned();
     bool isInverseKinematicsEnabled() const;
+    bool isInherentTranslationEnabled() const;
+    bool isInherentOrientationEnabled() const;
     float32 coefficient() const;
 
     void setParentBoneRef(IBone * /* value */) {}

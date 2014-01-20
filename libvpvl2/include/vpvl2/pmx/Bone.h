@@ -137,8 +137,8 @@ public:
     bool isVisible() const;
     bool isInteractive() const;
     bool hasInverseKinematics() const;
-    bool hasInherentRotation() const;
-    bool hasInherentTranslation() const;
+    bool isInherentOrientationEnabled() const;
+    bool isInherentTranslationEnabled() const;
     bool hasFixedAxes() const;
     bool hasLocalAxes() const;
     bool isTransformedAfterPhysicsSimulation() const;

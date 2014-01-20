@@ -613,7 +613,7 @@ void Bone::write(uint8 *&data, const Model::DataInfo &info) const
         internal::getPosition(m_context->destinationOrigin, &bu.vector3[0]);
         internal::writeBytes(&bu, sizeof(bu), data);
     }
-    if (hasInherentRotation() || hasInherentTranslation()) {
+    if (isInherentOrientationEnabled() || isInherentTranslationEnabled()) {
         internal::writeSignedIndex(m_context->parentInherentBoneIndex, boneIndexSize, data);
         internal::writeBytes(&m_context->coefficient, sizeof(m_context->coefficient), data);
     }
@@ -662,7 +662,7 @@ vsize Bone::estimateSize(const Model::DataInfo &info) const
     size += sizeof(m_context->layerIndex);
     size += sizeof(m_context->flags);
     size += (internal::hasFlagBits(m_context->flags, kHasDestinationOrigin)) ? boneIndexSize : sizeof(BoneUnit);
-    if (hasInherentRotation() || hasInherentTranslation()) {
+    if (isInherentOrientationEnabled() || isInherentTranslationEnabled()) {
         size += boneIndexSize;
         size += sizeof(m_context->coefficient);
     }
@@ -711,10 +711,10 @@ void Bone::getLocalTransform(const Transform &worldTransform, Transform &output)
 void Bone::performTransform()
 {
     Quaternion rotation(Quaternion::getIdentity());
-    if (hasInherentRotation()) {
+    if (isInherentOrientationEnabled()) {
         Bone *parentBoneRef = m_context->parentInherentBoneRef;
         if (parentBoneRef) {
-            if (parentBoneRef->hasInherentRotation()) {
+            if (parentBoneRef->isInherentOrientationEnabled()) {
                 rotation *= parentBoneRef->m_context->localInherentRotation;
             }
             else {
@@ -733,10 +733,10 @@ void Bone::performTransform()
     rotation *= m_context->localRotation * m_context->localMorphRotation * m_context->jointRotation;
     rotation.normalize();
     Vector3 position(kZeroV3);
-    if (hasInherentTranslation()) {
+    if (isInherentTranslationEnabled()) {
         Bone *parentBone = m_context->parentInherentBoneRef;
         if (parentBone) {
-            if (parentBone->hasInherentTranslation()) {
+            if (parentBone->isInherentTranslationEnabled()) {
                 position += parentBone->m_context->localInherentTranslation;
             }
             else {
@@ -1099,12 +1099,12 @@ bool Bone::hasInverseKinematics() const
     return internal::hasFlagBits(m_context->flags, kHasInverseKinematics);
 }
 
-bool Bone::hasInherentRotation() const
+bool Bone::isInherentOrientationEnabled() const
 {
     return internal::hasFlagBits(m_context->flags, kHasInherentRotation);
 }
 
-bool Bone::hasInherentTranslation() const
+bool Bone::isInherentTranslationEnabled() const
 {
     return internal::hasFlagBits(m_context->flags, kHasInherentTranslation);
 }

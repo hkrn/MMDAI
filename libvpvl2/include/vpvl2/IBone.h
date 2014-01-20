@@ -311,6 +311,8 @@ public:
      */
     virtual bool isInverseKinematicsEnabled() const = 0;
 
+    virtual bool isInherentTranslationEnabled() const = 0;
+    virtual bool isInherentOrientationEnabled() const = 0;
     virtual float32 coefficient() const = 0;
 
     virtual void setParentBoneRef(IBone *value) = 0;
