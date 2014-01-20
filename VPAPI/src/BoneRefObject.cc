@@ -45,6 +45,7 @@
 #include "Util.h"
 
 using namespace vpvl2;
+using namespace vpvl2::extensions::qt;
 
 BoneRefObject::BoneRefObject(LabelRefObject *labelRef, IBone *boneRef, const QUuid &uuid)
     : QObject(labelRef),
@@ -113,6 +114,47 @@ QString BoneRefObject::name() const
     return Util::toQString(m_boneRef->name(language));
 }
 
+void BoneRefObject::setName(const QString &value)
+{
+    Q_ASSERT(m_parentLabelRef);
+    Q_ASSERT(m_boneRef);
+    if (name() != value) {
+        ModelProxy *parentModel = m_parentLabelRef->parentModel();
+        IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
+        QScopedPointer<IString> s(String::create(value.toStdString()));
+        m_boneRef->setName(s.data(), language);
+        emit nameChanged();
+    }
+}
+
+QVector3D BoneRefObject::origin() const
+{
+    return Util::fromVector3(m_boneRef->origin());
+}
+
+void BoneRefObject::setOrigin(const QVector3D &value)
+{
+    Q_ASSERT(m_boneRef);
+    if (!qFuzzyCompare(origin(), value)) {
+        m_boneRef->setOrigin(Util::toVector3(value));
+        emit originChanged();
+    }
+}
+
+QVector3D BoneRefObject::destinationOrigin() const
+{
+    return Util::fromVector3(m_boneRef->destinationOrigin());
+}
+
+void BoneRefObject::setDestinationOrigin(const QVector3D &value)
+{
+    Q_ASSERT(m_boneRef);
+    if (!qFuzzyCompare(destinationOrigin(), value)) {
+        m_boneRef->setDestinationOrigin(Util::toVector3(value));
+        emit destinationOriginChanged();
+    }
+}
+
 QVector3D BoneRefObject::localTranslation() const
 {
     return Util::fromVector3(rawLocalTranslation());
@@ -160,6 +202,21 @@ QQuaternion BoneRefObject::originLocalOrientation() const
     return m_originOrientation;
 }
 
+qreal BoneRefObject::coefficient() const
+{
+    Q_ASSERT(m_boneRef);
+    return m_boneRef->coefficient();
+}
+
+void BoneRefObject::setCoefficient(qreal value)
+{
+    Q_ASSERT(m_boneRef);
+    if (!qFuzzyCompare(coefficient(), value)) {
+        m_boneRef->coefficient();
+        emit coefficientChanged();
+    }
+}
+
 int BoneRefObject::index() const
 {
     Q_ASSERT(m_boneRef);
@@ -187,10 +244,43 @@ bool BoneRefObject::isMovable() const
     return m_boneRef->isMovable();
 }
 
+void BoneRefObject::setMovable(bool value)
+{
+    Q_ASSERT(m_boneRef);
+    if (isMovable() != value) {
+        m_boneRef->setMovable(value);
+        emit movableChanged();
+    }
+}
+
 bool BoneRefObject::isRotateable() const
 {
     Q_ASSERT(m_boneRef);
     return m_boneRef->isRotateable();
+}
+
+void BoneRefObject::setRotateable(bool value)
+{
+    Q_ASSERT(m_boneRef);
+    if (isRotateable() != value) {
+        m_boneRef->setRotateable(value);
+        emit rotateableChanged();
+    }
+}
+
+bool BoneRefObject::isVisible() const
+{
+    Q_ASSERT(m_boneRef);
+    return m_boneRef->isVisible();
+}
+
+void BoneRefObject::setVisible(bool value)
+{
+    Q_ASSERT(m_boneRef);
+    if (isVisible() != value) {
+        m_boneRef->setVisible(value);
+        emit visibleChanged();
+    }
 }
 
 bool BoneRefObject::isInteractive() const
@@ -199,10 +289,49 @@ bool BoneRefObject::isInteractive() const
     return m_boneRef->isInteractive();
 }
 
+void BoneRefObject::setInteractive(bool value)
+{
+    Q_ASSERT(m_boneRef);
+    if (isInteractive() != value) {
+        m_boneRef->setInteractive(value);
+        emit interactiveChanged();
+    }
+}
+
 bool BoneRefObject::hasInverseKinematics() const
 {
     Q_ASSERT(m_boneRef);
     return m_boneRef->hasInverseKinematics();
+}
+
+bool BoneRefObject::isInherenceTranslationEnabled() const
+{
+    Q_ASSERT(m_boneRef);
+    return m_boneRef->isInherentTranslationEnabled();
+}
+
+void BoneRefObject::setInherenceTranslationEnabled(bool value)
+{
+    Q_ASSERT(m_boneRef);
+    if (isInherenceTranslationEnabled() != value) {
+        m_boneRef->setInherentTranslationEnable(value);
+        emit inherenceTranslationChanged();
+    }
+}
+
+bool BoneRefObject::isInherenceOrientationEnabled() const
+{
+    Q_ASSERT(m_boneRef);
+    return m_boneRef->isInherentOrientationEnabled();
+}
+
+void BoneRefObject::setInherenceOrientationEnabled(bool value)
+{
+    Q_ASSERT(m_boneRef);
+    if (isInherenceOrientationEnabled() != value) {
+        m_boneRef->setInherentOrientationEnable(value);
+        emit inherenceOrientationChanged();
+    }
 }
 
 bool BoneRefObject::hasFixedAxes() const
@@ -211,10 +340,27 @@ bool BoneRefObject::hasFixedAxes() const
     return m_boneRef->hasFixedAxes();
 }
 
+void BoneRefObject::setFixedAxes(bool value)
+{
+    Q_ASSERT(m_boneRef);
+    if (hasFixedAxes() != value) {
+        //m_boneRef->setFixedAxis(value);
+    }
+}
+
 bool BoneRefObject::hasLocalAxes() const
 {
     Q_ASSERT(m_boneRef);
     return m_boneRef->hasLocalAxes();
+}
+
+void BoneRefObject::setLocalAxes(bool value)
+{
+    Q_ASSERT(m_boneRef);
+    if (hasLocalAxes() != value) {
+        m_boneRef->setLocalAxesEnable(value);
+        emit localAxesChanged();
+    }
 }
 
 void BoneRefObject::sync()
