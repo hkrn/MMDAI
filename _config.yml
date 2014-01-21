@@ -16,7 +16,7 @@ production_url : http://hkrn.github.com/MMDAI
 JB :
   version : 0.2.13
   ASSET_PATH : false
-  BASE_PATH: MMDAI
+  BASE_PATH: /
   archive_path: /archive.html
   categories_path : /categories.html
   tags_path : /tags.html
