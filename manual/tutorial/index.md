@@ -2,11 +2,11 @@
 layout: page
 title: チュートリアル
 header: チュートリアル
-group: navigation
+# group: navigation
 ---
 {% include JB/setup %}
 
-VPVM a.k.a MMDAI2 のチュートリアル
+MMDAI2 0.30.0 のチュートリアル
 ----------------------------------
 
 <ul>

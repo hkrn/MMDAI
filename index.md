@@ -17,9 +17,13 @@ title: MMDAI Project Portal2
 
 MMDAI/VPVM (a.k.a MMDAI2) のダウンロードが可能です。
 
-### [マニュアル](manual/VPVM/)
+### マニュアル
 
-今のところ MMDAI2 0.30.0 のマニュアルが置かれています。[VPVM {{ site.data.VPVM.version }} は github 上にあります。]({{ site.data.VPVM.github }}/wiki/VPVM)もっとざっくりとした、しかしあまり期待のできない説明は「["MMDAI2 使い方"]({{ site.data.VPVM.blog }}/blomaga/ar37961)」を参照。
+ - [VPVM {{ site.data.VPVM.version }} は github 上にあります]({{ site.data.VPVM.github }}/wiki/VPVM)
+   - [タグの VPVM で VPVM {{ site.data.VPVM.version }} の使い方逆引きマニュアルを参照する事ができます](tags.html)
+ - [MMDAI2 0.30.0 のマニュアルはこちら](manual/VPVM/)
+   - [MMDAI2 0.30.0 のチュートリアルもあります](manual/tutorial/)
+ - もっとざっくりとした、しかしあまり期待のできない説明は「["MMDAI2 使い方"]({{ site.data.VPVM.blog }}/blomaga/ar37961)」を参照。
 
 ### [コミュニティ]({{ site.data.VPVM.community }})
 
