@@ -85,14 +85,24 @@ QVector3D Util::fromVector3(const Vector3 &value)
     return QVector3D(value.x(), value.y(), value.z());
 }
 
-Vector3 Util::toColor(const QColor &value)
+Vector3 Util::toColorRGB(const QColor &value)
 {
     return Vector3(value.redF(), value.greenF(), value.blueF());
 }
 
-QColor Util::fromColor(const Vector3 &value)
+QColor Util::fromColorRGB(const Vector3 &value)
 {
     return QColor::fromRgbF(value.x(), value.y(), value.z());
+}
+
+Color Util::toColorRGBA(const QColor &value)
+{
+    return Color(value.redF(), value.greenF(), value.blueF(), value.alphaF());
+}
+
+QColor Util::fromColorRGBA(const Color &value)
+{
+    return QColor::fromRgbF(value.x(), value.y(), value.z(), value.w());
 }
 
 Quaternion Util::toQuaternion(const QQuaternion &value)

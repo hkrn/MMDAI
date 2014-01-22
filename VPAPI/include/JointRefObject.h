@@ -35,46 +35,54 @@
 
 */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef JOINTREFOBJECT_H
+#define JOINTREFOBJECT_H
 
-#include <QColor>
-#include <QMatrix4x4>
-#include <QQuaternion>
-#include <QString>
-#include <QVector3D>
-
+#include <QObject>
+#include <QUuid>
 #include <vpvl2/Common.h>
-#include <glm/mat4x4.hpp>
+
+class ModelProxy;
+class RigidBodyRefObject;
 
 namespace vpvl2 {
-class IString;
+class IJoint;
 }
 
-class Util {
-public:
-    static const QColor kRed;
-    static const QColor kGreen;
-    static const QColor kBlue;
-    static const QColor kYellow;
-    static const QColor kGray;
+class JointRefObject : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
+    Q_PROPERTY(RigidBodyRefObject *bodyA READ bodyA CONSTANT FINAL)
+    Q_PROPERTY(RigidBodyRefObject *bodyB READ bodyB CONSTANT FINAL)
+    Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
+    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
 
-    static QString toQString(const vpvl2::IString *value);
-    static bool equalsString(const QString lhs, const vpvl2::IString *rhs);
-    static QMatrix4x4 fromMatrix4(const glm::mat4 &value);
-    static vpvl2::Vector3 toVector3(const QVector3D &value);
-    static QVector3D fromVector3(const vpvl2::Vector3 &value);
-    static vpvl2::Vector3 toColorRGB(const QColor &value);
-    static QColor fromColorRGB(const vpvl2::Vector3 &value);
-    static vpvl2::Color toColorRGBA(const QColor &value);
-    static QColor fromColorRGBA(const vpvl2::Color &value);
-    static vpvl2::Quaternion toQuaternion(const QQuaternion &value);
-    static QQuaternion fromQuaternion(const vpvl2::Quaternion &value);
-    static QString resourcePath(const QString &basePath);
+public:
+    JointRefObject(ModelProxy *parentModel,
+                   RigidBodyRefObject *bodyA,
+                   RigidBodyRefObject *bodyB,
+                   vpvl2::IJoint *jointRef,
+                   const QUuid &uuid);
+    ~JointRefObject();
+
+    vpvl2::IJoint *data() const;
+    ModelProxy *parentModel() const;
+    RigidBodyRefObject *bodyA() const;
+    RigidBodyRefObject *bodyB() const;
+    QUuid uuid() const;
+    QString name() const;
+    void setName(const QString &value);
+
+signals:
+    void nameChanged();
 
 private:
-    Util();
-    ~Util();
+    ModelProxy *m_parentModelRef;
+    RigidBodyRefObject *m_bodyARef;
+    RigidBodyRefObject *m_bodyBRef;
+    vpvl2::IJoint *m_jointRef;
+    const QUuid m_uuid;
 };
 
-#endif // UTIL_H
+#endif

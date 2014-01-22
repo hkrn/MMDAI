@@ -338,7 +338,7 @@ public:
         Q_ASSERT(m_keyframeRef);
         Q_ASSERT(m_lightRef);
         ILightKeyframe *newKeyframeRef = m_newKeyframe->data();
-        newKeyframeRef->setColor(Util::toColor(m_lightRef->color()));
+        newKeyframeRef->setColor(Util::toColorRGB(m_lightRef->color()));
         newKeyframeRef->setDirection(Util::toVector3(m_lightRef->direction()));
         setText(QApplication::tr("Update Light Keyframe"));
     }
@@ -367,7 +367,7 @@ private:
     void setLightParameters(const LightKeyframeRefObject *lightKeyframe) {
         if (m_lightRef) {
             ILightKeyframe *keyframeRef = lightKeyframe->data();
-            m_lightRef->setColor(Util::fromColor(keyframeRef->color()));
+            m_lightRef->setColor(Util::fromColorRGB(keyframeRef->color()));
             m_lightRef->setDirection(Util::fromVector3(keyframeRef->direction()));
         }
     }

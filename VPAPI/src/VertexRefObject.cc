@@ -35,46 +35,46 @@
 
 */
 
-#ifndef UTIL_H
-#define UTIL_H
+#include "VertexRefObject.h"
+#include "ModelProxy.h"
+#include "Util.h"
 
-#include <QColor>
-#include <QMatrix4x4>
-#include <QQuaternion>
-#include <QString>
-#include <QVector3D>
+#include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/qt/String.h>
 
-#include <vpvl2/Common.h>
-#include <glm/mat4x4.hpp>
+using namespace vpvl2;
 
-namespace vpvl2 {
-class IString;
+VertexRefObject::VertexRefObject(ModelProxy *parentModelRef,
+                                 vpvl2::IVertex *vertexRef,
+                                 const QUuid &uuid)
+    : m_parentModelRef(parentModelRef),
+      m_vertexRef(vertexRef),
+      m_uuid(uuid)
+{
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_vertexRef);
+    Q_ASSERT(!m_uuid.isNull());
 }
 
-class Util {
-public:
-    static const QColor kRed;
-    static const QColor kGreen;
-    static const QColor kBlue;
-    static const QColor kYellow;
-    static const QColor kGray;
+VertexRefObject::~VertexRefObject()
+{
+    m_parentModelRef = 0;
+    m_vertexRef = 0;
+}
 
-    static QString toQString(const vpvl2::IString *value);
-    static bool equalsString(const QString lhs, const vpvl2::IString *rhs);
-    static QMatrix4x4 fromMatrix4(const glm::mat4 &value);
-    static vpvl2::Vector3 toVector3(const QVector3D &value);
-    static QVector3D fromVector3(const vpvl2::Vector3 &value);
-    static vpvl2::Vector3 toColorRGB(const QColor &value);
-    static QColor fromColorRGB(const vpvl2::Vector3 &value);
-    static vpvl2::Color toColorRGBA(const QColor &value);
-    static QColor fromColorRGBA(const vpvl2::Color &value);
-    static vpvl2::Quaternion toQuaternion(const QQuaternion &value);
-    static QQuaternion fromQuaternion(const vpvl2::Quaternion &value);
-    static QString resourcePath(const QString &basePath);
+IVertex *VertexRefObject::data() const
+{
+    Q_ASSERT(m_vertexRef);
+    return m_vertexRef;
+}
 
-private:
-    Util();
-    ~Util();
-};
+ModelProxy *VertexRefObject::parentModel() const
+{
+    Q_ASSERT(m_parentModelRef);
+    return m_parentModelRef;
+}
 
-#endif // UTIL_H
+QUuid VertexRefObject::uuid() const
+{
+    return m_uuid;
+}

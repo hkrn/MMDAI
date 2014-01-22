@@ -55,8 +55,12 @@
 class QAbstractItemModel;
 class QStringListModel;
 class BoneRefObject;
+class JointRefObject;
 class LabelRefObject;
+class MaterialRefObject;
 class MorphRefObject;
+class RigidBodyRefObject;
+class VertexRefObject;
 
 namespace vpvl2 {
 class IBone;
@@ -82,6 +86,10 @@ class ModelProxy : public QObject
     Q_PROPERTY(QQmlListProperty<LabelRefObject> allLabels READ allLabels CONSTANT FINAL)
     Q_PROPERTY(QQmlListProperty<BoneRefObject> allBones READ allBones CONSTANT FINAL)
     Q_PROPERTY(QQmlListProperty<MorphRefObject> allMorphs READ allMorphs CONSTANT FINAL)
+    Q_PROPERTY(QQmlListProperty<MaterialRefObject> allMaterials READ allMaterials CONSTANT FINAL)
+    Q_PROPERTY(QQmlListProperty<VertexRefObject> allVertices READ allVertices CONSTANT FINAL)
+    Q_PROPERTY(QQmlListProperty<RigidBodyRefObject> allRigidBodies READ allRigidBodies CONSTANT FINAL)
+    Q_PROPERTY(QQmlListProperty<JointRefObject> allJoints READ allJoints CONSTANT FINAL)
     Q_PROPERTY(QQmlListProperty<BoneRefObject> targetBones READ targetBones CONSTANT FINAL)
     Q_PROPERTY(BoneRefObject *firstTargetBone READ firstTargetBone NOTIFY firstTargetBoneChanged FINAL)
     Q_PROPERTY(MorphRefObject *firstTargetMorph READ firstTargetMorph WRITE setFirstTargetMorph NOTIFY firstTargetMorphChanged FINAL)
@@ -138,6 +146,10 @@ public:
     QQmlListProperty<LabelRefObject> allLabels();
     QQmlListProperty<BoneRefObject> allBones();
     QQmlListProperty<MorphRefObject> allMorphs();
+    QQmlListProperty<MaterialRefObject> allMaterials();
+    QQmlListProperty<VertexRefObject> allVertices();
+    QQmlListProperty<RigidBodyRefObject> allRigidBodies();
+    QQmlListProperty<JointRefObject> allJoints();
     QQmlListProperty<BoneRefObject> targetBones();
     QList<BoneRefObject *> allTargetBones() const;
     BoneRefObject *firstTargetBone() const;
@@ -171,6 +183,10 @@ public:
     QList<LabelRefObject *> allLabelRefs() const;
     QList<BoneRefObject *> allBoneRefs() const;
     QList<MorphRefObject *> allMorphRefs() const;
+    QList<MaterialRefObject *> allMaterialRefs() const;
+    QList<VertexRefObject *> allVertexRefs() const;
+    QList<RigidBodyRefObject *> allRigidBodyRefs() const;
+    QList<JointRefObject *> allJointRefs() const;
 
 signals:
     void parentBindingModelChanged();
@@ -221,6 +237,17 @@ public slots:
     Q_INVOKABLE MorphRefObject *findMorphByName(const QString &name) const;
     Q_INVOKABLE MorphRefObject *findMorphByUuid(const QUuid &uuid) const;
     Q_INVOKABLE QList<QObject *> findMorphsByCategory(int type) const;
+    Q_INVOKABLE MaterialRefObject *resolveMaterialRef(const vpvl2::IMaterial *value) const;
+    Q_INVOKABLE MaterialRefObject *findMaterialByName(const QString &name) const;
+    Q_INVOKABLE MaterialRefObject *findMaterialByUuid(const QUuid &uuid) const;
+    Q_INVOKABLE VertexRefObject *resolveVertexRef(const vpvl2::IVertex *value) const;
+    Q_INVOKABLE VertexRefObject *findVertexByUuid(const QUuid &uuid) const;
+    Q_INVOKABLE RigidBodyRefObject *resolveRigidBodyRef(const vpvl2::IRigidBody *value) const;
+    Q_INVOKABLE RigidBodyRefObject *findRigidBodyByName(const QString &name) const;
+    Q_INVOKABLE RigidBodyRefObject *findRigidBodyByUuid(const QUuid &uuid) const;
+    Q_INVOKABLE JointRefObject *resolveJointRef(const vpvl2::IJoint *value) const;
+    Q_INVOKABLE JointRefObject *findJointByName(const QString &name) const;
+    Q_INVOKABLE JointRefObject *findJointByUuid(const QUuid &uuid) const;
 
 private:
     void buildLabelHash(const vpvl2::IModel *model,
@@ -242,14 +269,29 @@ private:
     const QUrl m_faviconUrl;
     QHash<const vpvl2::IBone *, BoneRefObject *> m_bone2Refs;
     QHash<const vpvl2::IMorph *, MorphRefObject *> m_morph2Refs;
-    QHash<QString, BoneRefObject *> m_name2boneRefs;
-    QHash<QUuid, BoneRefObject *> m_uuid2boneRefs;
-    QHash<QString, MorphRefObject *> m_name2morphRefs;
-    QHash<QUuid, MorphRefObject *> m_uuid2morphRefs;
+    QHash<const vpvl2::IMaterial *, MaterialRefObject *> m_material2Refs;
+    QHash<const vpvl2::IVertex *, VertexRefObject *> m_vertex2Refs;
+    QHash<const vpvl2::IRigidBody *, RigidBodyRefObject *> m_rigidBody2Refs;
+    QHash<const vpvl2::IJoint *, JointRefObject *> m_joint2Refs;
+    QHash<const QString, BoneRefObject *> m_name2BoneRefs;
+    QHash<const QUuid, BoneRefObject *> m_uuid2BoneRefs;
+    QHash<const QString, MorphRefObject *> m_name2MorphRefs;
+    QHash<const QUuid, MorphRefObject *> m_uuid2MorphRefs;
+    QHash<const QString, MaterialRefObject *> m_name2MaterialRefs;
+    QHash<const QUuid, MaterialRefObject *> m_uuid2MaterialRefs;
+    QHash<const QUuid, VertexRefObject *> m_uuid2VertexRefs;
+    QHash<const QString, RigidBodyRefObject *> m_name2RigidBodyRefs;
+    QHash<const QUuid, RigidBodyRefObject *> m_uuid2RigidBodyRefs;
+    QHash<const QString, JointRefObject *> m_name2JointRefs;
+    QHash<const QUuid, JointRefObject *> m_uuid2JointRefs;
     QList<LabelRefObject *> m_allLabels;
     QList<BoneRefObject *> m_allBones;
     QList<BoneRefObject *> m_targetBoneRefs;
     QList<MorphRefObject *> m_allMorphs;
+    QList<MaterialRefObject *> m_allMaterials;
+    QList<VertexRefObject *> m_allVertices;
+    QList<RigidBodyRefObject *> m_allRigidBodies;
+    QList<JointRefObject *> m_allJoints;
     QList<ModelProxy *> m_bindingModels;
     MorphRefObject * m_targetMorphRef;
     AxisType m_boneAxisType;

@@ -100,7 +100,7 @@ void LightRefObject::assignLightRef(ILight *lightRef, MotionProxy *motionProxyRe
 void LightRefObject::refresh()
 {
     Q_ASSERT(m_lightRef);
-    m_color = Util::fromColor(m_lightRef->color());
+    m_color = Util::fromColorRGB(m_lightRef->color());
     m_direction = Util::fromVector3(m_lightRef->direction());
     emit lightDidReset();
 }
@@ -134,7 +134,7 @@ void LightRefObject::setColor(const QColor &value)
 {
     Q_ASSERT(m_lightRef);
     if (value != color()) {
-        m_lightRef->setColor(Util::toColor(value));
+        m_lightRef->setColor(Util::toColorRGB(value));
         m_color = value;
         emit colorChanged();
     }

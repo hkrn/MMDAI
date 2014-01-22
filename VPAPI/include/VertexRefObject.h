@@ -35,46 +35,37 @@
 
 */
 
-#ifndef UTIL_H
-#define UTIL_H
+#ifndef VERTEXREFOBJECT_H
+#define VERTEXREFOBJECT_H
 
-#include <QColor>
-#include <QMatrix4x4>
-#include <QQuaternion>
-#include <QString>
-#include <QVector3D>
-
+#include <QObject>
+#include <QUuid>
 #include <vpvl2/Common.h>
-#include <glm/mat4x4.hpp>
+
+class ModelProxy;
 
 namespace vpvl2 {
-class IString;
+class IVertex;
 }
 
-class Util {
-public:
-    static const QColor kRed;
-    static const QColor kGreen;
-    static const QColor kBlue;
-    static const QColor kYellow;
-    static const QColor kGray;
+class VertexRefObject : public QObject
+{
+    Q_OBJECT
+    Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
+    Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
 
-    static QString toQString(const vpvl2::IString *value);
-    static bool equalsString(const QString lhs, const vpvl2::IString *rhs);
-    static QMatrix4x4 fromMatrix4(const glm::mat4 &value);
-    static vpvl2::Vector3 toVector3(const QVector3D &value);
-    static QVector3D fromVector3(const vpvl2::Vector3 &value);
-    static vpvl2::Vector3 toColorRGB(const QColor &value);
-    static QColor fromColorRGB(const vpvl2::Vector3 &value);
-    static vpvl2::Color toColorRGBA(const QColor &value);
-    static QColor fromColorRGBA(const vpvl2::Color &value);
-    static vpvl2::Quaternion toQuaternion(const QQuaternion &value);
-    static QQuaternion fromQuaternion(const vpvl2::Quaternion &value);
-    static QString resourcePath(const QString &basePath);
+public:
+    VertexRefObject(ModelProxy *parentModelRef, vpvl2::IVertex *vertexRef, const QUuid &uuid);
+    ~VertexRefObject();
+
+    vpvl2::IVertex *data() const;
+    ModelProxy *parentModel() const;
+    QUuid uuid() const;
 
 private:
-    Util();
-    ~Util();
+    ModelProxy *m_parentModelRef;
+    vpvl2::IVertex *m_vertexRef;
+    const QUuid m_uuid;
 };
 
-#endif // UTIL_H
+#endif
