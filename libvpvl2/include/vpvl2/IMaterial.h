@@ -58,14 +58,14 @@ public:
         kMaxSphereTextureRenderModeType
     };
     enum Flags {
-        kDisableCulling   = 0x1,
-        kHasShadow        = 0x2,
-        kHasShadowMap     = 0x4,
-        kEnableSelfShadow = 0x8,
-        kEnableEdge       = 0x10,
-        kHasVertexColor   = 0x20,
-        kEnablePointDraw  = 0x40,
-        kEnableLineDraw   = 0x80,
+        kDisableCulling    = 0x1,
+        kCastingShadow     = 0x2,
+        kCastingShadowMap  = 0x4,
+        kEnableShadowMap   = 0x8,
+        kEnableEdge        = 0x10,
+        kEnableVertexColor = 0x20,
+        kEnablePointDraw   = 0x40,
+        kEnableLineDraw    = 0x80,
         kMaxMaterialFlags = 0x100
     };
 
@@ -141,10 +141,11 @@ public:
     virtual int toonTextureIndex() const = 0;
     virtual bool isSharedToonTextureUsed() const = 0;
     virtual bool isCullingDisabled() const = 0;
-    virtual bool hasShadow() const = 0;
-    virtual bool hasShadowMap() const = 0;
-    virtual bool isSelfShadowEnabled() const = 0;
+    virtual bool isCastingShadowEnabled() const = 0;
+    virtual bool isCastingShadowMapEnabled() const = 0;
+    virtual bool isShadowMapEnabled() const = 0;
     virtual bool isEdgeEnabled() const = 0;
+    virtual bool isVertexColorEnabled() const = 0;
 
     virtual void setName(const IString *value, IEncoding::LanguageType type) = 0;
     virtual void setUserDataArea(const IString *value) = 0;
@@ -162,6 +163,13 @@ public:
     virtual void setMainTextureIndex(int value) = 0;
     virtual void setSphereTextureIndex(int value) = 0;
     virtual void setToonTextureIndex(int value) = 0;
+    virtual void setSharedToonTextureUsed(bool value) = 0;
+    virtual void setCullingDisabled(bool value) = 0;
+    virtual void setCastingShadowEnabled(bool value) = 0;
+    virtual void setCastingShadowMapEnabled(bool value) = 0;
+    virtual void setShadowMapEnabled(bool value) = 0;
+    virtual void setEdgeEnabled(bool value) = 0;
+    virtual void setVertexColorEnabled(bool value) = 0;
     virtual void setFlags(int value) = 0;
 };
 

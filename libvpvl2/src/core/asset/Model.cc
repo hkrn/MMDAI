@@ -352,10 +352,11 @@ public:
     int sizeofIndices() const { return m_nindices; }
     bool isSharedToonTextureUsed() const { return false; }
     bool isCullingDisabled() const { return !btFuzzyZero(m_diffuse.w() - 1); }
-    bool hasShadow() const { return false; }
-    bool hasShadowMap() const { return !btFuzzyZero(m_diffuse.x() - 0.98f); }
-    bool isSelfShadowEnabled() const { return hasShadowMap(); }
+    bool isCastingShadowEnabled() const { return false; }
+    bool isCastingShadowMapEnabled() const { return !btFuzzyZero(m_diffuse.x() - 0.98f); }
+    bool isShadowMapEnabled() const { return isCastingShadowMapEnabled(); }
     bool isEdgeEnabled() const { return false; }
+    bool isVertexColorEnabled() const { return false; }
 
     void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     void setUserDataArea(const IString * /* value */) {}
@@ -375,6 +376,13 @@ public:
     void setToonTextureIndex(int /* value */) {}
     void setIndices(int /* value */) {}
     void setFlags(int /* value */) {}
+    void setSharedToonTextureUsed(bool /* value */) {}
+    void setCullingDisabled(bool /* value */) {}
+    void setCastingShadowEnabled(bool /* value */) {}
+    void setCastingShadowMapEnabled(bool /* value */) {}
+    void setShadowMapEnabled(bool /* value */) {}
+    void setEdgeEnabled(bool /* value */) {}
+    void setVertexColorEnabled(bool /* value */) {}
 
 private:
     void setMaterialTextures() {

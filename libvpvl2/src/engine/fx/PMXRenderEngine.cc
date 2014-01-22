@@ -536,7 +536,7 @@ void PMXRenderEngine::renderModel()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const MaterialContext &materialContext = m_materialContexts[i];
-        const char *const target = hasShadowMap && material->isSelfShadowEnabled() ? "object_ss" : "object";
+        const char *const target = hasShadowMap && material->isShadowMapEnabled() ? "object_ss" : "object";
         const bool hasMainTexture = materialContext.mainTextureRef != 0, hasSphereMap = materialContext.sphereTextureRef != 0 && material->sphereTextureRenderMode() != IMaterial::kNone;
         if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true)) {
             if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
@@ -624,7 +624,7 @@ void PMXRenderEngine::renderShadow()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->hasShadow()) {
+        if (material->isCastingShadowEnabled()) {
             if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true)) {
                 technique->setOverridePass(m_overridePass);
                 updateDrawPrimitivesCommand(material, command);
@@ -661,7 +661,7 @@ void PMXRenderEngine::renderZPlot()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->hasShadowMap()) {
+        if (material->isCastingShadowMapEnabled()) {
             if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true)) {
                 technique->setOverridePass(m_overridePass);
                 updateDrawPrimitivesCommand(material, command);

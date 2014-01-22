@@ -174,6 +174,9 @@ struct Material::PrivateContext {
         flags = 0;
         useSharedToonTexture = false;
     }
+    int bitFlags(int value, bool enable) {
+        return enable ? (flags | value) : (flags & ~value);
+    }
 
     Model *modelRef;
     IString *name;
@@ -250,7 +253,7 @@ bool Material::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
         }
         /* check capacity */
         internal::getData(ptr, flags);
-        if ((internal::hasFlagBits(flags, kHasVertexColor) ||
+        if ((internal::hasFlagBits(flags, kEnableVertexColor) ||
              internal::hasFlagBits(flags, kEnablePointDraw) ||
              internal::hasFlagBits(flags, kEnableLineDraw)) && info.version < 2.1) {
             VPVL2_LOG(WARNING, "VertexColor/PointDraw/LineDraw is not supported: index=" << i << " ptr=" << static_cast<const void *>(ptr) << " rest=" << rest);
@@ -655,19 +658,19 @@ bool Material::isCullingDisabled() const
     return internal::hasFlagBits(m_context->flags, kDisableCulling);
 }
 
-bool Material::hasShadow() const
+bool Material::isCastingShadowEnabled() const
 {
-    return internal::hasFlagBits(m_context->flags, kHasShadow) && !isPointDrawEnabled();
+    return internal::hasFlagBits(m_context->flags, kCastingShadow) && !isPointDrawEnabled();
 }
 
-bool Material::hasShadowMap() const
+bool Material::isCastingShadowMapEnabled() const
 {
-    return internal::hasFlagBits(m_context->flags, kHasShadowMap) && !isPointDrawEnabled();
+    return internal::hasFlagBits(m_context->flags, kCastingShadowMap) && !isPointDrawEnabled();
 }
 
-bool Material::isSelfShadowEnabled() const
+bool Material::isShadowMapEnabled() const
 {
-    return internal::hasFlagBits(m_context->flags, kEnableSelfShadow) && !isPointDrawEnabled();
+    return internal::hasFlagBits(m_context->flags, kEnableShadowMap) && !isPointDrawEnabled();
 }
 
 bool Material::isEdgeEnabled() const
@@ -675,9 +678,9 @@ bool Material::isEdgeEnabled() const
     return internal::hasFlagBits(m_context->flags, kEnableEdge) && !isPointDrawEnabled() && !isLineDrawEnabled();
 }
 
-bool Material::hasVertexColor() const
+bool Material::isVertexColorEnabled() const
 {
-    return internal::hasFlagBits(m_context->flags, kHasVertexColor);
+    return internal::hasFlagBits(m_context->flags, kEnableVertexColor);
 }
 
 bool Material::isPointDrawEnabled() const
@@ -842,6 +845,41 @@ void Material::setFlags(int value)
 void Material::setIndex(int value)
 {
     m_context->index = value;
+}
+
+void Material::setSharedToonTextureUsed(bool value)
+{
+    m_context->useSharedToonTexture = value;
+}
+
+void Material::setCullingDisabled(bool value)
+{
+    setFlags(m_context->bitFlags(kDisableCulling, value));
+}
+
+void Material::setCastingShadowEnabled(bool value)
+{
+    setFlags(m_context->bitFlags(kCastingShadow, value));
+}
+
+void Material::setCastingShadowMapEnabled(bool value)
+{
+    setFlags(m_context->bitFlags(kCastingShadowMap, value));
+}
+
+void Material::setShadowMapEnabled(bool value)
+{
+    setFlags(m_context->bitFlags(kEnableShadowMap, value));
+}
+
+void Material::setEdgeEnabled(bool value)
+{
+    setFlags(m_context->bitFlags(kEnableEdge, value));
+}
+
+void Material::setVertexColorEnabled(bool value)
+{
+    setFlags(m_context->bitFlags(kEnableVertexColor, value));
 }
 
 } /* namespace pmx */

@@ -740,7 +740,7 @@ void PMXRenderEngine::renderModel()
         modelProgram->setMainTexture(materialPrivate.mainTextureRef);
         modelProgram->setSphereTexture(materialPrivate.sphereTextureRef, material->sphereTextureRenderMode());
         modelProgram->setToonTexture(materialPrivate.toonTextureRef);
-        if (textureID && material->isSelfShadowEnabled())
+        if (textureID && material->isShadowMapEnabled())
             modelProgram->setDepthTexture(textureID);
         else
             modelProgram->setDepthTexture(0);
@@ -794,7 +794,7 @@ void PMXRenderEngine::renderShadow()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->hasShadow()) {
+        if (material->isCastingShadowEnabled()) {
             if (isVertexShaderSkinning) {
                 const IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 shadowProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));
@@ -884,7 +884,7 @@ void PMXRenderEngine::renderZPlot()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->hasShadowMap()) {
+        if (material->isCastingShadowMapEnabled()) {
             if (isVertexShaderSkinning) {
                 const IModel::MatrixBuffer *matrixBuffer = m_context->matrixBuffer;
                 zplotProgram->setBoneMatrices(matrixBuffer->bytes(i), matrixBuffer->size(i));

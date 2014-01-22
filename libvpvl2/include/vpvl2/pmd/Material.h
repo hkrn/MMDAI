@@ -92,9 +92,9 @@ public:
     int sizeofIndices() const;
     bool isSharedToonTextureUsed() const;
     bool isCullingDisabled() const;
-    bool hasShadow() const;
-    bool hasShadowMap() const;
-    bool isSelfShadowEnabled() const;
+    bool isCastingShadowEnabled() const;
+    bool isCastingShadowMapEnabled() const;
+    bool isShadowMapEnabled() const;
     bool isEdgeEnabled() const;
 
     void setName(const IString * /* value */) {}

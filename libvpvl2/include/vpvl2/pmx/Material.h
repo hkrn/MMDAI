@@ -113,11 +113,11 @@ public:
     int toonTextureIndex() const;
     bool isSharedToonTextureUsed() const;
     bool isCullingDisabled() const;
-    bool hasShadow() const;
-    bool hasShadowMap() const;
-    bool isSelfShadowEnabled() const;
+    bool isCastingShadowEnabled() const;
+    bool isCastingShadowMapEnabled() const;
+    bool isShadowMapEnabled() const;
     bool isEdgeEnabled() const;
-    bool hasVertexColor() const;
+    bool isVertexColorEnabled() const;
     bool isPointDrawEnabled() const;
     bool isLineDrawEnabled() const;
 
@@ -139,6 +139,13 @@ public:
     void setToonTextureIndex(int value);
     void setFlags(int value);
     void setIndex(int value);
+    void setSharedToonTextureUsed(bool value);
+    void setCullingDisabled(bool value);
+    void setCastingShadowEnabled(bool value);
+    void setCastingShadowMapEnabled(bool value);
+    void setShadowMapEnabled(bool value);
+    void setEdgeEnabled(bool value);
+    void setVertexColorEnabled(bool value);
 
 private:
     struct PrivateContext;

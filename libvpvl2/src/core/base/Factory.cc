@@ -173,10 +173,11 @@ public:
     int sizeofIndices() const { return 0; }
     bool isSharedToonTextureUsed() const { return false; }
     bool isCullingDisabled() const { return true; }
-    bool hasShadow() const { return false; }
-    bool hasShadowMap() const { return false; }
-    bool isSelfShadowEnabled() const { return hasShadowMap(); }
+    bool isCastingShadowEnabled() const { return false; }
+    bool isCastingShadowMapEnabled() const { return false; }
+    bool isShadowMapEnabled() const { return false; }
     bool isEdgeEnabled() const { return false; }
+    bool isVertexColorEnabled() const { return false; }
 
     void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     void setUserDataArea(const IString * /* value */) {}
@@ -195,6 +196,13 @@ public:
     void setSphereTextureIndex(int /* value */) {}
     void setToonTextureIndex(int /* value */) {}
     void setIndices(int /* value */) {}
+    void setSharedToonTextureUsed(bool /* value */) {}
+    void setCullingDisabled(bool /* value */) {}
+    void setCastingShadowEnabled(bool /* value */) {}
+    void setCastingShadowMapEnabled(bool /* value */) {}
+    void setShadowMapEnabled(bool /* value */) {}
+    void setEdgeEnabled(bool /* value */) {}
+    void setVertexColorEnabled(bool /* value */) {}
     void setFlags(int /* value */) {}
 
 private:

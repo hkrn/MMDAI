@@ -412,24 +412,29 @@ bool Material::isCullingDisabled() const
     return !btFuzzyZero(m_context->diffuse.w() - 1);
 }
 
-bool Material::hasShadow() const
+bool Material::isCastingShadowEnabled() const
 {
     return true;
 }
 
-bool Material::hasShadowMap() const
+bool Material::isCastingShadowMapEnabled() const
 {
     return !btFuzzyZero(m_context->diffuse.x() - 0.98f);
 }
 
-bool Material::isSelfShadowEnabled() const
+bool Material::isShadowMapEnabled() const
 {
-    return hasShadowMap();
+    return isCastingShadowMapEnabled();
 }
 
 bool Material::isEdgeEnabled() const
 {
     return m_context->enableEdge;
+}
+
+bool Material::isVertexColorEnabled() const
+{
+    return false;
 }
 
 void Material::setMainTexture(const IString *value)
