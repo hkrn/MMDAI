@@ -180,6 +180,10 @@ class MockIModel : public IModel {
       void(IRigidBody *value));
   MOCK_METHOD1(removeVertex,
       void(IVertex *value));
+  MOCK_CONST_METHOD0(progressReporterRef,
+      IProgressReporter*());
+  MOCK_METHOD1(setProgressReporterRef,
+      void(IProgressReporter *value));
 };
 
 }  // namespace vpvl2

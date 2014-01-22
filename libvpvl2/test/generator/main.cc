@@ -104,11 +104,11 @@ void CreateModel(IModel *model, const char *filename)
     {
         IMaterial *material = model->createMaterial();
         AssignMaterial(material, IMaterial::kDisableCulling |
-                       IMaterial::kHasShadow |
-                       IMaterial::kHasShadowMap |
-                       IMaterial::kEnableSelfShadow |
+                       IMaterial::kCastingShadow |
+                       IMaterial::kCastingShadowMap |
+                       IMaterial::kEnableShadowMap |
                        IMaterial::kEnableEdge |
-                       IMaterial::kHasVertexColor |
+                       IMaterial::kEnableVertexColor |
                        IMaterial::kEnableLineDraw |
                        0);
         model->addMaterial(material);
@@ -117,11 +117,11 @@ void CreateModel(IModel *model, const char *filename)
     {
         material = model->createMaterial();
         AssignMaterial(material, IMaterial::kDisableCulling |
-                       IMaterial::kHasShadow |
-                       IMaterial::kHasShadowMap |
-                       IMaterial::kEnableSelfShadow |
+                       IMaterial::kCastingShadow |
+                       IMaterial::kCastingShadowMap |
+                       IMaterial::kEnableShadowMap |
                        IMaterial::kEnableEdge |
-                       IMaterial::kHasVertexColor |
+                       IMaterial::kEnableVertexColor |
                        IMaterial::kEnablePointDraw |
                        0);
         model->addMaterial(material);

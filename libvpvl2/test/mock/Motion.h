@@ -8,6 +8,8 @@ class MockIMotion : public IMotion {
       void(uint8 *data));
   MOCK_CONST_METHOD0(estimateSize,
       vsize());
+  MOCK_CONST_METHOD0(error,
+      Error());
   MOCK_CONST_METHOD0(parentModelRef,
       IModel*());
   MOCK_METHOD1(setParentModelRef,

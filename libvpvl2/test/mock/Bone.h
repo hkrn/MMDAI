@@ -64,6 +64,10 @@ class MockIBone : public IBone {
       void(bool value));
   MOCK_CONST_METHOD0(isInverseKinematicsEnabled,
       bool());
+  MOCK_CONST_METHOD0(isInherentTranslationEnabled,
+      bool());
+  MOCK_CONST_METHOD0(isInherentOrientationEnabled,
+      bool());
   MOCK_CONST_METHOD0(coefficient,
       float32());
   MOCK_METHOD1(setParentBoneRef,

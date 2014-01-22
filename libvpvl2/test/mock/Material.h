@@ -54,13 +54,15 @@ class MockIMaterial : public IMaterial {
       bool());
   MOCK_CONST_METHOD0(isCullingDisabled,
       bool());
-  MOCK_CONST_METHOD0(hasShadow,
+  MOCK_CONST_METHOD0(isCastingShadowEnabled,
       bool());
-  MOCK_CONST_METHOD0(hasShadowMap,
+  MOCK_CONST_METHOD0(isCastingShadowMapEnabled,
       bool());
-  MOCK_CONST_METHOD0(isSelfShadowEnabled,
+  MOCK_CONST_METHOD0(isShadowMapEnabled,
       bool());
   MOCK_CONST_METHOD0(isEdgeEnabled,
+      bool());
+  MOCK_CONST_METHOD0(isVertexColorEnabled,
       bool());
   MOCK_METHOD2(setName,
       void(const IString *value, IEncoding::LanguageType type));
@@ -94,6 +96,20 @@ class MockIMaterial : public IMaterial {
       void(int value));
   MOCK_METHOD1(setToonTextureIndex,
       void(int value));
+  MOCK_METHOD1(setSharedToonTextureUsed,
+      void(bool value));
+  MOCK_METHOD1(setCullingDisabled,
+      void(bool value));
+  MOCK_METHOD1(setCastingShadowEnabled,
+      void(bool value));
+  MOCK_METHOD1(setCastingShadowMapEnabled,
+      void(bool value));
+  MOCK_METHOD1(setShadowMapEnabled,
+      void(bool value));
+  MOCK_METHOD1(setEdgeEnabled,
+      void(bool value));
+  MOCK_METHOD1(setVertexColorEnabled,
+      void(bool value));
   MOCK_METHOD1(setFlags,
       void(int value));
 };
