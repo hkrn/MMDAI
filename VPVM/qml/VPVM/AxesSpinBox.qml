@@ -38,6 +38,7 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.1
 import QtQuick.Layouts 1.1
+import com.github.mmdai.VPVM 1.0 as VPVM
 
 GroupBox {
     id: axesSpinBox
@@ -51,19 +52,25 @@ GroupBox {
     property bool activeFocusOnSpinBox: false
     property bool hovered: false
     property bool resettable: false
-    property var value
+    property vector3d value
     signal resetDidTrigger()
     signal editingFinished()
-    Component.onCompleted: {
-        spinboxX.editingFinished.connect(editingFinished)
-        spinboxY.editingFinished.connect(editingFinished)
-        spinboxZ.editingFinished.connect(editingFinished)
-    }
-    onResetDidTrigger: value.x = value.y = value.z = spinboxX.value = spinboxY.value = spinboxZ.value = 0
     onValueChanged: {
         spinboxX.value = value.x
         spinboxY.value = value.y
         spinboxZ.value = value.z
+    }
+    VPVM.Vector3 { id: vector3 }
+    Binding {
+        target: axesSpinBox
+        property: "value"
+        value: vector3.value
+        when: spinboxX.hovered || spinboxY.hovered || spinboxZ.hovered
+    }
+    Component.onCompleted: {
+        spinboxX.editingFinished.connect(editingFinished)
+        spinboxY.editingFinished.connect(editingFinished)
+        spinboxZ.editingFinished.connect(editingFinished)
     }
     GridLayout {
         columns: 2
@@ -74,16 +81,9 @@ GroupBox {
             minimumValue: axesSpinBox.minimumValue
             decimals: axesSpinBox.decimals
             stepSize: axesSpinBox.stepSize
-            value: axesSpinBox.value ? axesSpinBox.value.x : 0
             onHoveredChanged: axesSpinBox.hovered = hovered
-            onValueChanged: if (hovered) axesSpinBox.value.x = value
-            onActiveFocusChanged: {
-                axesSpinBox.activeFocusOnSpinBox = activeFocus
-                if (!activeFocus) {
-                    axesSpinBox.value.x = value
-                }
-            }
         }
+        Binding { target: vector3; property: "x"; value: spinboxX.value }
         Label { text: axesSpinBox.labelY }
         SpinBox {
             id: spinboxY
@@ -91,16 +91,9 @@ GroupBox {
             minimumValue: axesSpinBox.minimumValue
             decimals: axesSpinBox.decimals
             stepSize: axesSpinBox.stepSize
-            value: axesSpinBox.value ? axesSpinBox.value.y : 0
             onHoveredChanged: axesSpinBox.hovered = hovered
-            onValueChanged: if (hovered) axesSpinBox.value.y = value
-            onActiveFocusChanged: {
-                axesSpinBox.activeFocusOnSpinBox = activeFocus
-                if (!activeFocus) {
-                    axesSpinBox.value.y = value
-                }
-            }
         }
+        Binding { target: vector3; property: "y"; value: spinboxY.value }
         Label { text: axesSpinBox.labelZ }
         SpinBox {
             id: spinboxZ
@@ -108,16 +101,9 @@ GroupBox {
             minimumValue: axesSpinBox.minimumValue
             decimals: axesSpinBox.decimals
             stepSize: axesSpinBox.stepSize
-            value: axesSpinBox.value ? axesSpinBox.value.z : 0
             onHoveredChanged: axesSpinBox.hovered = hovered
-            onValueChanged: if (hovered) axesSpinBox.value.z = value
-            onActiveFocusChanged: {
-                axesSpinBox.activeFocusOnSpinBox = activeFocus
-                if (!activeFocus) {
-                    axesSpinBox.value.z = value
-                }
-            }
         }
+        Binding { target: vector3; property: "z"; value: spinboxZ.value }
         Button {
             visible: axesSpinBox.resettable
             Layout.columnSpan: 2

@@ -87,37 +87,60 @@ Tab {
                     columns: 2
                     Label { text: qsTr("Scale") }
                     SpinBox {
+                        id: modelScaleFactorSpinBox
                         minimumValue: 0.0
                         maximumValue: 1000.0
                         stepSize: 0.01
                         decimals: 2
-                        value: scene.currentModel ? scene.currentModel.scaleFactor : 1
-                        onValueChanged: if (scene.currentModel) scene.currentModel.scaleFactor = value
+                        value: scene.currentModel ? scene.currentModel.scaleFactor : 0
+                    }
+                    Binding {
+                        target: scene.currentModel
+                        property: "scaleFactor"
+                        value: modelScaleFactorSpinBox.value
+                        when: modelScaleFactorSpinBox.hovered
                     }
                     Label { text: qsTr("Opacity") }
                     SpinBox {
+                        id: modelOpacitySpinBox
                         minimumValue: 0.0
                         maximumValue: 1.0
                         stepSize: 0.01
                         decimals: 2
-                        value: scene.currentModel ? scene.currentModel.opacity : 1
-                        onValueChanged: if (scene.currentModel) scene.currentModel.opacity = value
+                        value: scene.currentModel ? scene.currentModel.opacity : 0
+                    }
+                    Binding {
+                        target: scene.currentModel
+                        property: "opacity"
+                        value: modelOpacitySpinBox.value
+                        when: modelOpacitySpinBox.hovered
                     }
                     Label { text: qsTr("Edge") }
                     SpinBox {
+                        id: modelEdgeWidthSpinBox
                         minimumValue: 0.0
                         maximumValue: 2.0
                         stepSize: 0.01
                         decimals: 2
-                        value: scene.currentModel ? scene.currentModel.edgeWidth : 1
-                        onValueChanged: if (scene.currentModel) scene.currentModel.edgeWidth = value
+                        value: 1.0
+                    }
+                    Binding {
+                        target: scene.currentModel
+                        property: "edgeWidth"
+                        value: modelEdgeWidthSpinBox.value
+                        when: modelEdgeWidthSpinBox.hovered
                     }
                     CheckBox {
+                        id: modelVisibleCheckbox
                         Layout.columnSpan: 2
                         Layout.alignment: Qt.AlignCenter
                         text: qsTr("Visible")
-                        checked: scene.currentModel ? scene.currentModel.visible : true
-                        onCheckedChanged: if (scene.currentModel) scene.currentModel.visible = checked
+                        checked: scene.currentModel ? scene.currentModel.visible : false
+                    }
+                    Binding {
+                        target: scene.currentModel
+                        property: "visible"
+                        value: modelVisibleCheckbox.checked
                     }
                 }
             }
@@ -246,6 +269,12 @@ Tab {
                 value: scene.currentModel ? scene.currentModel.translation : Qt.vector3d(0, 0, 0)
                 resettable: true
             }
+            Binding {
+                target: scene.currentModel
+                property: "translation"
+                value: modelTranslationAxesSpinBox.value
+                when: modelTranslationAxesSpinBox.hovered
+            }
             AxesSpinBox {
                 id: modelOrientationAxesSpinBox
                 Layout.fillHeight: true
@@ -255,8 +284,14 @@ Tab {
                 maximumValue: propertyPanel.maximumRotaitonValue
                 stepSize: propertyPanel.rotationStepSize
                 decimals: propertyPanel.rotationDecimalPrecision
-                value: scene.currentModel ? scene.currentModel.eulerOrientation : Qt.vector3d(0, 0, 0)
+                value: scene.currentModel ? scene.currentModel.orientation : Qt.vector3d(0, 0, 0)
                 resettable: true
+            }
+            Binding {
+                target: scene.currentModel
+                property: "eulerOrientation"
+                value: modelOrientationAxesSpinBox.value
+                when: modelOrientationAxesSpinBox.hovered
             }
         }
         RowLayout {
@@ -311,22 +346,32 @@ Tab {
                                 id: globalTransformMode
                                 exclusiveGroup: tranformGroup
                                 text: setTransformModeGlobalAction.text
-                                checked: setTransformModeGlobalAction.checked
-                                onCheckedChanged: if (checked) setTransformModeGlobalAction.trigger()
+                            }
+                            Binding {
+                                target: setTransformModeGlobalAction
+                                property: "checked"
+                                value: globalTransformMode.checked
                             }
                             RadioButton {
                                 id: localTransformMode
                                 exclusiveGroup: tranformGroup
                                 text: setTransformModeLocalAction.text
-                                checked: setTransformModeLocalAction.checked
-                                onCheckedChanged: if (checked) setTransformModeLocalAction.trigger()
+                                checked: true
+                            }
+                            Binding {
+                                target: setTransformModeLocalAction
+                                property: "checked"
+                                value: localTransformMode.checked
                             }
                             RadioButton {
                                 id: viewTransformMode
                                 exclusiveGroup: tranformGroup
                                 text: setTransformModeViewAction.text
-                                checked: setTransformModeViewAction.checked
-                                onCheckedChanged: if (checked) setTransformModeViewAction.trigger()
+                            }
+                            Binding {
+                                target: setTransformModeViewAction
+                                property: "checked"
+                                value: viewTransformMode.checked
                             }
                         }
                     }
@@ -369,11 +414,17 @@ Tab {
                 maximumValue: propertyPanel.maximumPositionValue
                 stepSize: propertyPanel.positionStepSize
                 decimals: propertyPanel.positionDecimalPrecision
-                value: enabled ? scene.currentModel.firstTargetBone.localTranslation : Qt.vector3d(0, 0, 0)
                 resettable: true
-                onActiveFocusOnSpinBoxChanged: activeFocusOnSpinBox ? scene.currentModel.beginTransform(0) : scene.currentModel.discardTransform()
+                value: scene.hasBoneSelected ? scene.currentModel.firstTargetBone.localTranslation : Qt.vector3d(0, 0, 0)
+                onActiveFocusChanged: activeFocus ? scene.currentModel.beginTransform(0) : scene.currentModel.discardTransform()
                 onEditingFinished: scene.currentModel.commitTransform()
                 onResetDidTrigger: resetBoneXYZAxesTranslationAction.trigger()
+            }
+            Binding {
+                target: scene.hasBoneSelected ? scene.currentModel.firstTargetBone : null
+                property: "localTranslation"
+                value: boneTranslationAxesSpinBox.value
+                when: boneTranslationAxesSpinBox.hovered
             }
             AxesSpinBox {
                 id: boneOrientationAxesSpinBox
@@ -385,11 +436,17 @@ Tab {
                 maximumValue: propertyPanel.maximumRotaitonValue
                 stepSize: propertyPanel.rotationStepSize
                 decimals: propertyPanel.rotationDecimalPrecision
-                value: enabled ? scene.currentModel.firstTargetBone.localEulerOrientation : Qt.vector3d(0, 0, 0)
                 resettable: true
-                onActiveFocusOnSpinBoxChanged: activeFocusOnSpinBox ? scene.currentModel.beginTransform(0) : scene.currentModel.discardTransform()
+                value: scene.hasBoneSelected ? scene.currentModel.firstTargetBone.localOrientation : Qt.vector3d(0, 0, 0)
+                onActiveFocusChanged: activeFocus ? scene.currentModel.beginTransform(0) : scene.currentModel.discardTransform()
                 onEditingFinished: scene.currentModel.commitTransform()
                 onResetDidTrigger: resetBoneOrientationAction.trigger()
+            }
+            Binding {
+                target: scene.hasBoneSelected ? scene.currentModel.firstTargetBone : null
+                property: "localEulerOrientation"
+                value: boneOrientationAxesSpinBox.value
+                when: boneOrientationAxesSpinBox.hovered
             }
             RowLayout {
                 id: modelMorphGroup
@@ -418,6 +475,7 @@ Tab {
                                         }
                                         else if (morphList.model.length > 0) {
                                             var morph = morphList.model[0]
+                                            morphList.currentIndex = 0
                                             currentModel.firstTargetMorph = morph
                                         }
                                     }
@@ -431,6 +489,7 @@ Tab {
                                     var currentModel = scene.currentModel
                                     if (currentModel) {
                                         var morph = model[currentIndex]
+                                        console.log([ currentIndex, morph ])
                                         if (morph) {
                                             currentModel.firstTargetMorph = morph
                                             morphSlider.value = morph.weight
@@ -454,11 +513,17 @@ Tab {
                                         motion.updateKeyframe(morph, timeIndex)
                                     }
                                 }
-                                onValueChanged: {
-                                    morphSpinBox.value = value
-                                    scene.currentModel.firstTargetMorph.weight = value
-                                }
                                 onPressedChanged: if (!pressed) updateKeyframe()
+                                Binding on value {
+                                    value: morphSpinBox.value
+                                    when: morphSpinBox.hovered
+                                }
+                            }
+                            Binding {
+                                target: scene.hasMorphSelected ? scene.currentModel.firstTargetMorph : null
+                                property: "weight"
+                                value: morphSlider.value
+                                when: morphSlider.pressed
                             }
                             SpinBox {
                                 id: morphSpinBox
@@ -467,10 +532,17 @@ Tab {
                                 maximumValue: morphSlider.maximumValue
                                 decimals: 3
                                 stepSize: 0.01
-                                onValueChanged: {
-                                    morphSlider.value = value
-                                    scene.currentModel.firstTargetMorph.weight = value
+                                onEditingFinished: morphSlider.updateKeyframe()
+                                Binding on value {
+                                    value: morphSlider.value
+                                    when: morphSlider.pressed
                                 }
+                            }
+                            Binding {
+                                target: scene.hasMorphSelected ? scene.currentModel.firstTargetMorph : null
+                                property: "weight"
+                                value: morphSpinBox.value
+                                when: morphSpinBox.hovered
                             }
                             function __handleUndoDidPerform() {
                                 if (scene.hasMorphSelected) {

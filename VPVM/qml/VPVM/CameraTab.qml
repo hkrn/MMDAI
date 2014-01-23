@@ -49,6 +49,7 @@ Tab {
             Layout.fillHeight: true
             RowLayout {
                 AxesSpinBox {
+                    id: cameraLookAtAxexSpinBox
                     title: qsTr("LookAt")
                     Layout.fillHeight: true
                     Layout.columnSpan: 2
@@ -58,7 +59,14 @@ Tab {
                     stepSize: propertyPanel.positionStepSize
                     value: scene.camera.lookAt
                 }
+                Binding {
+                    target: scene.camera
+                    property: "lookAt"
+                    value: cameraLookAtAxexSpinBox.value
+                    when: cameraLookAtAxexSpinBox.hovered
+                }
                 AxesSpinBox {
+                    id: cameraAngleAxesSpinBox
                     title: qsTr("Angle")
                     Layout.fillHeight: true
                     Layout.columnSpan: 2
@@ -68,6 +76,12 @@ Tab {
                     stepSize: propertyPanel.rotationStepSize
                     value: scene.camera.angle
                 }
+                Binding {
+                    target: scene.camera
+                    property: "angle"
+                    value: cameraAngleAxesSpinBox.value
+                    when: cameraAngleAxesSpinBox.hovered
+                }
                 ColumnLayout {
                     GroupBox {
                         title: qsTr("Look")
@@ -75,19 +89,31 @@ Tab {
                             columns: 2
                             Label { text: qsTr("Fov") }
                             SpinBox {
+                                id: cameraFovSpinBox
                                 maximumValue: 135
                                 minimumValue: -135
                                 value: scene.camera.fov
-                                onValueChanged: scene.camera.fov = value
+                            }
+                            Binding {
+                                target: scene.camera
+                                property: "fov"
+                                value: cameraFovSpinBox.value
+                                when: cameraFovSpinBox.hovered
                             }
                             Label { text: qsTr("Distance") }
                             SpinBox {
+                                id: cameraDistanceSpinBox
                                 maximumValue: propertyPanel.maximumPositionValue
                                 minimumValue: propertyPanel.minimumPositionValue
                                 decimals: propertyPanel.positionDecimalPrecision
                                 stepSize: propertyPanel.positionStepSize
                                 value: scene.camera.distance
-                                onValueChanged: if (hovered) scene.camera.distance = value
+                            }
+                            Binding {
+                                target: scene.camera
+                                property: "distance"
+                                value: cameraDistanceSpinBox.value
+                                when: cameraDistanceSpinBox.hovered
                             }
                         }
                     }

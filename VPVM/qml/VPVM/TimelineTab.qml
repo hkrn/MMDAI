@@ -56,7 +56,12 @@ Tab {
                     minimumValue: 900
                     maximumValue: Math.pow(2, 31)
                     value: timeline.durationTimeIndex
-                    onValueChanged: timeline.durationTimeIndex = value
+                }
+                Binding {
+                    target: timeline
+                    property: "durationTimeIndex"
+                    value: estimatedDurationInIndex.value
+                    when: estimatedDurationInIndex.hovered
                 }
                 TextField {
                     id: estimatedDurationInSeconds
@@ -88,7 +93,12 @@ Tab {
                     minimumValue: 0
                     maximumValue: timeline.durationTimeIndex
                     value: timeline.timeIndex
-                    onValueChanged: timeline.timeIndex = value
+                }
+                Binding {
+                    target: timeline
+                    property: "timeIndex"
+                    value: currentPositionInIndex.value
+                    when: currentPositionInIndex.hovered
                 }
                 TextField {
                     id: currentPositionInSeconds
@@ -99,17 +109,19 @@ Tab {
                 }
                 Label { text: qsTr("Scale Factor") }
                 SpinBox {
+                    id: timelineScaleFactorSpinBox
                     minimumValue: timeline.minimumTimeScaleFactor
                     maximumValue: timeline.maximumTimeScaleFactor
                     decimals: 3
                     stepSize: 0.005
                     value: timeline.timeScaleFactor
-                    onValueChanged: {
-                        if (hovered) {
-                            timeline.timeScaleFactor = value
-                            timeline.refresh()
-                        }
-                    }
+                    onValueChanged: timeline.refresh()
+                }
+                Binding {
+                    target: timeline
+                    property: "timeScaleFactor"
+                    value: timelineScaleFactorSpinBox.value
+                    when: timelineScaleFactorSpinBox.hovered
                 }
                 CheckBox {
                     Layout.columnSpan: 2
@@ -212,7 +224,6 @@ Tab {
                     id: playRangeTo
                     minimumValue: playRangeFrom.value
                     maximumValue: estimatedDurationInIndex.maximumValue
-                    value: scene.project.durationTimeIndex
                     onValueChanged: rangedPlaying.updateRange()
                     function __handleDurationTimeIndexChanged() {
                         var durationTimeIndex = scene.project.durationTimeIndex
@@ -224,6 +235,11 @@ Tab {
                     Component.onCompleted: {
                         scene.project.durationTimeIndexChanged.connect(__handleDurationTimeIndexChanged)
                     }
+                }
+                Binding {
+                    target: scene.project
+                    property: "durationTimeIndex"
+                    value: playRangeTo.value
                 }
                 CheckBox {
                     Layout.alignment: Qt.AlignCenter

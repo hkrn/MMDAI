@@ -66,7 +66,6 @@ Tab {
                             Layout.alignment: Qt.AlignCenter
                             width: 50
                             height: 50
-                            color: scene.light.color
                             MouseArea {
                                 anchors.fill: parent
                                 onClicked: {
@@ -75,6 +74,11 @@ Tab {
                                     lightColorDialog.open()
                                 }
                             }
+                        }
+                        Binding {
+                            target: scene.light
+                            property: "color"
+                            value: lightColorPreview.color
                         }
                         Button {
                             id: openDialogButton
@@ -88,6 +92,7 @@ Tab {
                     }
                 }
                 AxesSpinBox {
+                    id: lightDirectionAxesSpinBox
                     title: qsTr("Direction")
                     Layout.fillHeight: true
                     maximumValue: 1.0
@@ -95,6 +100,12 @@ Tab {
                     decimals: 3
                     stepSize: 0.01
                     value: scene.light.direction
+                }
+                Binding {
+                    target: scene.light
+                    property: "direction"
+                    value: lightDirectionAxesSpinBox.value
+                    when: lightDirectionAxesSpinBox.hovered
                 }
                 Button {
                     Layout.alignment: Qt.AlignCenter
@@ -158,11 +169,16 @@ Tab {
                     Layout.alignment: Qt.AlignCenter
                     Label { text: qsTr("Distance") }
                     SpinBox {
-                        id: shadowDistance
+                        id: shadowDistanceSpinBox
                         value: scene.light.shadowDistance
                         maximumValue: propertyPanel.maximumPositionValue
                         minimumValue: propertyPanel.minimumPositionValue
-                        onValueChanged: scene.light.shadowDistance = value
+                    }
+                    Binding {
+                        target: scene.light
+                        property: "distance"
+                        value: shadowDistanceSpinBox.value
+                        when: shadowDistanceSpinBox.hovered
                     }
                 }
             }

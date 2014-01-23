@@ -70,6 +70,7 @@
 #include "UIAuxHelper.h"
 #include "Updater.h"
 #include "Util.h"
+#include "Vector3RefObject.h"
 #include "WorldProxy.h"
 
 using namespace vpvl2::extensions;
@@ -121,11 +122,12 @@ void registerQmlTypes()
     qmlRegisterUncreatableType<MorphRefObject>("com.github.mmdai.VPVM", 1, 0, "Morph", "");
     qmlRegisterUncreatableType<MotionProxy>("com.github.mmdai.VPVM", 1, 0, "Motion", "");
     qmlRegisterUncreatableType<Preference>("com.github.mmdai.VPVM", 1, 0, "Preference", "");
+    qmlRegisterType<ProjectProxy>("com.github.mmdai.VPVM", 1, 0, "Project");
+    qmlRegisterType<RenderTarget>("com.github.mmdai.VPVM", 1, 0, "RenderTarget");
+    qmlRegisterType<Vector3RefObject>("com.github.mmdai.VPVM", 1, 0, "Vector3");
     qmlRegisterUncreatableType<WorldProxy>("com.github.mmdai.VPVM", 1, 0, "World", "");
     qmlRegisterSingletonType<UIAuxHelper>("com.github.mmdai.VPVM", 1, 0, "UIAuxHelper", createUIAuxHelper);
     qmlRegisterSingletonType<Updater>("com.github.mmdai.VPVM", 1, 0, "Updater", createUpdater);
-    qmlRegisterType<ProjectProxy>("com.github.mmdai.VPVM", 1, 0, "Project");
-    qmlRegisterType<RenderTarget>("com.github.mmdai.VPVM", 1, 0, "RenderTarget");
 }
 
 }
