@@ -79,6 +79,27 @@ Product {
         "BulletCollision",
         "LinearMath"
     ]
+    readonly property var commonIncludePaths: [
+        "include",
+        "vendor/cl-1.2",
+        "vendor/nvFX",
+        "vendor/SOIL",
+        "vendor/minizip-1.1",
+        "vendor/tinyxml2-1.0.11",
+        "../glm-src",
+        "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
+        "../assimp-src/" + libraryInstallDirectory + "/include",
+        "../nvFX-src/" + libraryInstallDirectory + "/include",
+        "../zlib-src/" + libraryInstallDirectory + "/include",
+        "../AntTweakBar-src/include",
+        "../tbb-src/include"
+    ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x) }).concat(buildDirectory)
+    readonly property var commonLibraryPaths: [
+        "../bullet-src",
+        "../assimp-src",
+        "../nvFX-src",
+        "../zlib-src",
+    ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x, libraryInstallDirectory, "lib") }).concat([ "../tbb-src/lib" ])
     readonly property var commonConfigDefinitions: [
         "VPVL2_ENABLE_OPENGL",
         "VPVL2_COORDINATE_OPENGL",
@@ -110,27 +131,8 @@ Product {
         }
         return defines
     }
-    cpp.includePaths: [ buildDirectory ].concat([
-        "include",
-        "vendor/cl-1.2",
-        "vendor/nvFX",
-        "vendor/SOIL",
-        "vendor/minizip-1.1",
-        "vendor/tinyxml2-1.0.11",
-        "../glm-src",
-        "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
-        "../assimp-src/" + libraryInstallDirectory + "/include",
-        "../nvFX-src/" + libraryInstallDirectory + "/include",
-        "../zlib-src/" + libraryInstallDirectory + "/include",
-        "../AntTweakBar-src/include",
-        "../tbb-src/include"
-    ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x) }))
-    cpp.libraryPaths: [ "../tbb-src/lib" ].concat([
-        "../bullet-src",
-        "../assimp-src",
-        "../nvFX-src",
-        "../zlib-src",
-    ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x, libraryInstallDirectory, "lib") }))
+    cpp.includePaths: commonIncludePaths
+    cpp.libraryPaths: commonLibraryPaths
     Transformer {
         inputs: sourceDirectory + "/include/vpvl2/config.h.in"
         Artifact {
