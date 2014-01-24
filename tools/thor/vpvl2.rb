@@ -21,6 +21,7 @@ protected
     build_suite = (not need_opengl_es?)
     is_debug = (build_type === :debug)
     config = {
+      :cmake_osx_deployment_target => "10.8",
       :vpvl2_build_qt_renderer => is_debug,
       :vpvl2_enable_custom_release_clang => (build_suite and not is_debug),
       :vpvl2_enable_cxx11 => false,

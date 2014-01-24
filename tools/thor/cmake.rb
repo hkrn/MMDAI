@@ -62,7 +62,8 @@ module Mmdai
           build_options[:library_output_path] = "#{build_path}/lib"
         end
         if is_darwin? then
-          add_cc_flags " -F/Library/Frameworks -mmacosx-version-min=10.6", build_options
+          add_cc_flags "-mmacosx-version-min=" + (build_options[:cmake_osx_deployment_target] || 10.6), build_options
+          build_options.delete :cmake_osx_deployment_target
         end
         envvars = [
           "ANDROID_NATIVE_API_LEVEL",
@@ -113,14 +114,14 @@ module Mmdai
       end
 
       def add_cc_flags(cflags, build_options)
-        build_options[:cmake_c_flags] ||= cflags
-        build_options[:cmake_c_flags] += cflags
+        build_options[:cmake_c_flags] ||= ""
+        build_options[:cmake_c_flags] += cflags + " "
         add_cxx_flags(cflags, build_options)
       end
 
       def add_cxx_flags(cflags, build_options)
         build_options[:cmake_cxx_flags] ||= ""
-        build_options[:cmake_cxx_flags] += cflags
+        build_options[:cmake_cxx_flags] += cflags + " "
       end
 
       def is_debug_build?(extra_options = {})
