@@ -36,6 +36,7 @@
 */
 
 #include "VertexRefObject.h"
+#include "BoneRefObject.h"
 #include "ModelProxy.h"
 #include "Util.h"
 
@@ -62,6 +63,67 @@ VertexRefObject::~VertexRefObject()
     m_vertexRef = 0;
 }
 
+QVector4D VertexRefObject::originUV(int index)
+{
+    return Util::fromVector4(m_vertexRef->originUV(index));
+}
+
+void VertexRefObject::setOriginUV(int index, const QVector4D &value)
+{
+    const QVector4D &oldValue = originUV(index);
+    if (!qFuzzyCompare(oldValue, value)) {
+        m_vertexRef->setOriginUV(index, Util::toVector4(value));
+        m_parentModelRef->setDirty(true);
+        emit originUVDidChange(index, value, oldValue);
+    }
+}
+
+QVector4D VertexRefObject::morphUV(int index)
+{
+    return Util::fromVector4(m_vertexRef->morphUV(index));
+}
+
+void VertexRefObject::setMorphUV(int index, const QVector4D &value)
+{
+    const QVector4D &oldValue = morphUV(index);
+    if (!qFuzzyCompare(oldValue, value)) {
+        m_vertexRef->setMorphUV(index, Util::toVector4(value));
+        m_parentModelRef->setDirty(true);
+        emit morphUVDidChange(index, value, oldValue);
+    }
+}
+
+BoneRefObject *VertexRefObject::bone(int index)
+{
+    return m_parentModelRef->resolveBoneRef(m_vertexRef->boneRef(index));
+}
+
+void VertexRefObject::setBone(int index, BoneRefObject *value)
+{
+    BoneRefObject *oldValue = bone(index);
+    if (value && oldValue != value) {
+        m_vertexRef->setBoneRef(index, value->data());
+        m_parentModelRef->setDirty(true);
+        emit boneDidChange(index, value, oldValue);
+    }
+}
+
+qreal VertexRefObject::weight(int index)
+{
+    return m_vertexRef->weight(index);
+}
+
+void VertexRefObject::setWeight(int index, const qreal &value)
+{
+    qreal oldValue = weight(index);
+    if (value && !qFuzzyCompare(oldValue, value)) {
+        m_vertexRef->setWeight(index, value);
+        m_parentModelRef->setDirty(true);
+        emit weightDidChange(index, value, oldValue);
+    }
+}
+
+
 IVertex *VertexRefObject::data() const
 {
     Q_ASSERT(m_vertexRef);
@@ -77,4 +139,74 @@ ModelProxy *VertexRefObject::parentModel() const
 QUuid VertexRefObject::uuid() const
 {
     return m_uuid;
+}
+
+QVector3D VertexRefObject::origin() const
+{
+    return Util::fromVector3(m_vertexRef->origin());
+}
+
+void VertexRefObject::setOrigin(const QVector3D &value)
+{
+    if (!qFuzzyCompare(origin(), value)) {
+        m_vertexRef->setOrigin(Util::toVector3(value));
+        m_parentModelRef->setDirty(true);
+        emit originChanged();
+    }
+}
+
+QVector3D VertexRefObject::normal() const
+{
+    return Util::fromVector3(m_vertexRef->normal());
+}
+
+void VertexRefObject::setNormal(const QVector3D &value)
+{
+    if (!qFuzzyCompare(normal(), value)) {
+        m_vertexRef->setNormal(Util::toVector3(value));
+        m_parentModelRef->setDirty(true);
+        emit normalChanged();
+    }
+}
+
+QVector3D VertexRefObject::textureCoord() const
+{
+    return Util::fromVector3(m_vertexRef->textureCoord());
+}
+
+void VertexRefObject::setTextureCoord(const QVector3D &value)
+{
+    if (!qFuzzyCompare(textureCoord(), value)) {
+        m_vertexRef->setTextureCoord(Util::toVector3(value));
+        m_parentModelRef->setDirty(true);
+        emit textureCoordChanged();
+    }
+}
+
+qreal VertexRefObject::edgeSize() const
+{
+    return m_vertexRef->edgeSize();
+}
+
+void VertexRefObject::setEdgeSize(const qreal &value)
+{
+    if (!qFuzzyCompare(edgeSize(), value)) {
+        m_vertexRef->setEdgeSize(value);
+        m_parentModelRef->setDirty(true);
+        emit edgeSizeChanged();
+    }
+}
+
+VertexRefObject::Type VertexRefObject::type() const
+{
+    return static_cast<VertexRefObject::Type>(m_vertexRef->type());
+}
+
+void VertexRefObject::setType(const Type &value)
+{
+    if (type() != value) {
+        m_vertexRef->setType(static_cast<IVertex::Type>(value));
+        m_parentModelRef->setDirty(true);
+        emit typeChanged();
+    }
 }

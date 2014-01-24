@@ -39,12 +39,14 @@
 #include "MorphRefObject.h"
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/qt/String.h>
 #include <QtCore>
 
 #include "LabelRefObject.h"
 #include "Util.h"
 
 using namespace vpvl2;
+using namespace vpvl2::extensions::qt;
 
 MorphRefObject::MorphRefObject(LabelRefObject *labelRef, IMorph *morphRef, const QUuid &uuid)
     : QObject(labelRef),
@@ -100,6 +102,20 @@ QString MorphRefObject::name() const
     return Util::toQString(m_morphRef->name(language));
 }
 
+void MorphRefObject::setName(const QString &value)
+{
+    Q_ASSERT(m_parentLabelRef);
+    Q_ASSERT(m_morphRef);
+    if (name() != value) {
+        ModelProxy *parentModel = m_parentLabelRef->parentModel();
+        IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
+        QScopedPointer<IString> s(String::create(value.toStdString()));
+        m_morphRef->setName(s.data(), language);
+        parentModel->markDirty();
+        emit nameChanged();
+    }
+}
+
 MorphRefObject::Category MorphRefObject::category() const
 {
     Q_ASSERT(m_morphRef);
@@ -114,6 +130,35 @@ MorphRefObject::Category MorphRefObject::category() const
         return Other;
     default:
         return Unknown;
+    }
+}
+
+void MorphRefObject::setCategory(const Category &value)
+{
+    Q_ASSERT(m_parentLabelRef);
+    Q_ASSERT(m_morphRef);
+    switch (value) {
+    /*
+    case Eye:
+        m_morphRef->setCategory(IMorph::kEye);
+        m_parentLabelRef->parentModel()->markDirty();
+        break;
+    case Lip:
+        m_morphRef->setCategory(IMorph::kLip);
+        m_parentLabelRef->parentModel()->markDirty();
+        break;
+    case Eyeblow:
+        m_morphRef->setCategory(IMorph::kEyeblow);
+        m_parentLabelRef->parentModel()->markDirty();
+        break;
+    case Other:
+        m_morphRef->setCategory(IMorph::kOther);
+        m_parentLabelRef->parentModel()->markDirty();
+        break;
+        */
+    default:
+        Q_ASSERT(0);
+        break;
     }
 }
 

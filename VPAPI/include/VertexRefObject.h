@@ -40,27 +40,70 @@
 
 #include <QObject>
 #include <QUuid>
-#include <vpvl2/Common.h>
+#include <QVector3D>
+#include <QVector4D>
+#include <vpvl2/IVertex.h>
 
+class BoneRefObject;
 class ModelProxy;
-
-namespace vpvl2 {
-class IVertex;
-}
 
 class VertexRefObject : public QObject
 {
     Q_OBJECT
+    Q_ENUMS(Type)
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
+    Q_PROPERTY(QVector3D origin READ origin WRITE setOrigin NOTIFY originChanged FINAL)
+    Q_PROPERTY(QVector3D normal READ normal WRITE setNormal NOTIFY normalChanged FINAL)
+    Q_PROPERTY(QVector3D textureCoord READ textureCoord WRITE setTextureCoord NOTIFY textureCoordChanged FINAL)
+    Q_PROPERTY(qreal edgeSize READ edgeSize WRITE setEdgeSize NOTIFY edgeSizeChanged FINAL)
+    Q_PROPERTY(Type type READ type WRITE setType NOTIFY typeChanged FINAL)
 
 public:
+    enum Type {
+        Bdef1 = vpvl2::IVertex::kBdef1,
+        Bdef2 = vpvl2::IVertex::kBdef2,
+        Bdef4 = vpvl2::IVertex::kBdef4,
+        Sdef  = vpvl2::IVertex::kSdef,
+        Qdef  = vpvl2::IVertex::kQdef
+    };
+
     VertexRefObject(ModelProxy *parentModelRef, vpvl2::IVertex *vertexRef, const QUuid &uuid);
     ~VertexRefObject();
+
+    Q_INVOKABLE QVector4D originUV(int index);
+    Q_INVOKABLE void setOriginUV(int index, const QVector4D &value);
+    Q_INVOKABLE QVector4D morphUV(int index);
+    Q_INVOKABLE void setMorphUV(int index, const QVector4D &value);
+    Q_INVOKABLE BoneRefObject *bone(int index);
+    Q_INVOKABLE void setBone(int index, BoneRefObject *value);
+    Q_INVOKABLE qreal weight(int index);
+    Q_INVOKABLE void setWeight(int index, const qreal &value);
 
     vpvl2::IVertex *data() const;
     ModelProxy *parentModel() const;
     QUuid uuid() const;
+    QVector3D origin() const;
+    void setOrigin(const QVector3D &value);
+    QVector3D normal() const;
+    void setNormal(const QVector3D &value);
+    QVector3D textureCoord() const;
+    void setTextureCoord(const QVector3D &value);
+    qreal edgeSize() const;
+    void setEdgeSize(const qreal &value);
+    Type type() const;
+    void setType(const Type &value);
+
+signals:
+    void originChanged();
+    void normalChanged();
+    void textureCoordChanged();
+    void edgeSizeChanged();
+    void typeChanged();
+    void originUVDidChange(int index, const QVector4D &newValue, const QVector4D &oldValue);
+    void morphUVDidChange(int index, const QVector4D &newValue, const QVector4D &oldValue);
+    void boneDidChange(int index, BoneRefObject *newValue, BoneRefObject *oldValue);
+    void weightDidChange(int index, const qreal &newValue, const qreal &oldValue);
 
 private:
     ModelProxy *m_parentModelRef;

@@ -112,6 +112,7 @@ void JointRefObject::setName(const QString &value)
         IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(m_parentModelRef->language());
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_jointRef->setName(s.data(), language);
+        m_parentModelRef->markDirty();
         emit nameChanged();
     }
 }

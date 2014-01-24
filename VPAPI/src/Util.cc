@@ -85,6 +85,16 @@ QVector3D Util::fromVector3(const Vector3 &value)
     return QVector3D(value.x(), value.y(), value.z());
 }
 
+vpvl2::Vector4 Util::toVector4(const QVector4D &value)
+{
+    return Vector4(value.x(), value.y(), value.z(), value.w());
+}
+
+QVector4D Util::fromVector4(const vpvl2::Vector4 &value)
+{
+    return QVector4D(value.x(), value.y(), value.z(), value.w());
+}
+
 Vector3 Util::toColorRGB(const QColor &value)
 {
     return Vector3(value.redF(), value.greenF(), value.blueF());

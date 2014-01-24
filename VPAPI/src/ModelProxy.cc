@@ -86,7 +86,8 @@ ModelProxy::ModelProxy(ProjectProxy *project,
       m_boneTransformType(LocalTransform),
       m_language(project->language()),
       m_baseY(0),
-      m_moving(false)
+      m_moving(false),
+      m_dirty(false)
 {
     Q_ASSERT(m_parentProjectRef);
     Q_ASSERT(!m_model.isNull());
@@ -839,6 +840,24 @@ void ModelProxy::setVisible(bool value)
 bool ModelProxy::isMoving() const
 {
     return m_moving;
+}
+
+bool ModelProxy::isDirty() const
+{
+    return m_dirty;
+}
+
+void ModelProxy::setDirty(bool value)
+{
+    if (isDirty() != value) {
+        m_dirty = value;
+        emit dirtyChanged();
+    }
+}
+
+void ModelProxy::markDirty()
+{
+    setDirty(true);
 }
 
 QList<LabelRefObject *> ModelProxy::allLabelRefs() const

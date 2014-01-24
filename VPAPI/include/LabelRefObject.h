@@ -53,7 +53,7 @@ class LabelRefObject : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
-    Q_PROPERTY(QString name READ name CONSTANT FINAL)
+    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
     Q_PROPERTY(int index READ index CONSTANT FINAL)
     Q_PROPERTY(QQmlListProperty<BoneRefObject> bones READ bones CONSTANT FINAL)
     Q_PROPERTY(QQmlListProperty<MorphRefObject> morphs READ morphs CONSTANT FINAL)
@@ -67,9 +67,13 @@ public:
 
     ModelProxy *parentModel() const;
     QString name() const;
+    void setName(const QString &value);
     int index() const;
     QQmlListProperty<BoneRefObject> bones();
     QQmlListProperty<MorphRefObject> morphs();
+
+signals:
+    void nameChanged();
 
 private:
     ModelProxy *m_parentModelRef;

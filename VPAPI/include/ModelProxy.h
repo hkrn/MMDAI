@@ -105,6 +105,7 @@ class ModelProxy : public QObject
     Q_PROPERTY(int orderIndex READ orderIndex WRITE setOrderIndex NOTIFY orderIndexChanged FINAL)
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged FINAL)
     Q_PROPERTY(bool moving READ isMoving NOTIFY movingChanged FINAL)
+    Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
     enum AxisType {
@@ -179,6 +180,9 @@ public:
     bool isVisible() const;
     void setVisible(bool value);
     bool isMoving() const;
+    bool isDirty() const;
+    void setDirty(bool value);
+    void markDirty();
 
     QList<LabelRefObject *> allLabelRefs() const;
     QList<BoneRefObject *> allBoneRefs() const;
@@ -207,6 +211,7 @@ signals:
     void orderIndexChanged();
     void visibleChanged();
     void movingChanged();
+    void dirtyChanged();
     void targetBonesDidBeginTransform();
     void targetBonesDidTranslate();
     void targetBonesDidRotate();
@@ -299,6 +304,7 @@ private:
     ProjectProxy::LanguageType m_language;
     qreal m_baseY;
     bool m_moving;
+    bool m_dirty;
 };
 
 #endif // MODELPROXY_H

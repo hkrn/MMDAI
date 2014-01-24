@@ -102,6 +102,133 @@ void RigidBodyRefObject::setName(const QString &value)
         IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(m_parentModelRef->language());
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_rigidBodyRef->setName(s.data(), language);
+        m_parentModelRef->markDirty();
         emit nameChanged();
+    }
+}
+
+QVector3D RigidBodyRefObject::position() const
+{
+    return Util::fromVector3(m_rigidBodyRef->position());
+}
+
+void RigidBodyRefObject::setPosition(const QVector3D &value)
+{
+    if (!qFuzzyCompare(position(), value)) {
+        m_rigidBodyRef->setPosition(Util::toVector3(value));
+        m_parentModelRef->markDirty();
+        emit positionChanged();
+    }
+}
+
+QVector3D RigidBodyRefObject::rotation() const
+{
+    return Util::fromVector3(m_rigidBodyRef->rotation());
+}
+
+void RigidBodyRefObject::setRotation(const QVector3D &value)
+{
+    if (!qFuzzyCompare(rotation(), value)) {
+        m_rigidBodyRef->setRotation(Util::toVector3(value));
+        m_parentModelRef->markDirty();
+        emit rotationChanged();
+    }
+}
+
+qreal RigidBodyRefObject::mass() const
+{
+    return m_rigidBodyRef->mass();
+}
+
+void RigidBodyRefObject::setMass(const qreal &value)
+{
+    if (qFuzzyCompare(mass(), value)) {
+        m_rigidBodyRef->setMass(value);
+        m_parentModelRef->markDirty();
+        emit massChanged();
+    }
+}
+
+qreal RigidBodyRefObject::linearDamping() const
+{
+    return m_rigidBodyRef->linearDamping();
+}
+
+void RigidBodyRefObject::setLinearDamping(const qreal &value)
+{
+    if (qFuzzyCompare(linearDamping(), value)) {
+        m_rigidBodyRef->setLinearDamping(value);
+        m_parentModelRef->markDirty();
+        emit linearDampingChanged();
+    }
+}
+
+qreal RigidBodyRefObject::angularDamping() const
+{
+    return m_rigidBodyRef->angularDamping();
+}
+
+void RigidBodyRefObject::setAngularDamping(const qreal &value)
+{
+    if (qFuzzyCompare(angularDamping(), value)) {
+        m_rigidBodyRef->setAngularDamping(value);
+        m_parentModelRef->markDirty();
+        emit angularDampingChanged();
+    }
+}
+
+qreal RigidBodyRefObject::friction() const
+{
+    return m_rigidBodyRef->friction();
+}
+
+void RigidBodyRefObject::setFriction(const qreal &value)
+{
+    if (qFuzzyCompare(friction(), value)) {
+        m_rigidBodyRef->setFriction(value);
+        m_parentModelRef->markDirty();
+        emit frictionChanged();
+    }
+}
+
+qreal RigidBodyRefObject::restitution() const
+{
+    return m_rigidBodyRef->restitution();
+}
+
+void RigidBodyRefObject::setRestitution(const qreal &value)
+{
+    if (qFuzzyCompare(restitution(), value)) {
+        m_rigidBodyRef->setRestitution(value);
+        m_parentModelRef->markDirty();
+        emit restitutionChanged();
+    }
+}
+
+quint16 RigidBodyRefObject::collisionGroupMask() const
+{
+    return m_rigidBodyRef->collisionGroupMask();
+}
+
+void RigidBodyRefObject::setCollisionGroupMask(const quint16 &value)
+{
+    if (collisionGroupMask() != value) {
+        m_rigidBodyRef->setCollisionMask(value);
+        m_parentModelRef->markDirty();
+        emit collisionGroupMaskChanged();
+    }
+}
+
+quint8 RigidBodyRefObject::collisionGroupID() const
+{
+    return m_rigidBodyRef->collisionGroupID();
+}
+
+void RigidBodyRefObject::setCollisionGroupID(const quint8 &value)
+{
+    if (collisionGroupID() != value) {
+        m_rigidBodyRef->setCollisionGroupID(value);
+        m_parentModelRef->markDirty();
+        emit collisionGroupMaskChanged();
     }
 }

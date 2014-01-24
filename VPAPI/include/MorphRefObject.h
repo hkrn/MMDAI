@@ -53,8 +53,8 @@ class MorphRefObject : public QObject
     Q_ENUMS(Category)
     Q_PROPERTY(LabelRefObject *parentLabel READ parentLabel CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
-    Q_PROPERTY(QString name READ name NOTIFY nameChanged FINAL)
-    Q_PROPERTY(Category category READ category CONSTANT FINAL)
+    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
+    Q_PROPERTY(Category category READ category WRITE setCategory NOTIFY categoryChanged FINAL)
     Q_PROPERTY(int index READ index CONSTANT FINAL)
     Q_PROPERTY(qreal weight READ weight WRITE setWeight NOTIFY weightChanged FINAL)
     Q_PROPERTY(qreal originWeight READ originWeight NOTIFY originWeightChanged FINAL)
@@ -77,7 +77,9 @@ public:
     LabelRefObject *parentLabel() const;
     QUuid uuid() const;
     QString name() const;
+    void setName(const QString &value);
     Category category() const;
+    void setCategory(const Category &value);
     int index() const;
     qreal weight() const;
     void setWeight(const qreal &value);
@@ -88,6 +90,7 @@ public slots:
 
 signals:
     void nameChanged();
+    void categoryChanged();
     void weightChanged();
     void originWeightChanged();
     void morphDidSync();

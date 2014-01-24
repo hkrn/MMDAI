@@ -40,6 +40,7 @@
 
 #include <QObject>
 #include <QUuid>
+#include <QVector3D>
 #include <vpvl2/Common.h>
 
 class BoneRefObject;
@@ -56,6 +57,15 @@ class RigidBodyRefObject : public QObject
     Q_PROPERTY(BoneRefObject *parentBone READ parentBone CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
+    Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged FINAL)
+    Q_PROPERTY(QVector3D rotation READ rotation WRITE setRotation NOTIFY rotationChanged FINAL)
+    Q_PROPERTY(qreal mass READ mass WRITE setMass NOTIFY massChanged FINAL)
+    Q_PROPERTY(qreal linearDamping READ linearDamping WRITE setLinearDamping NOTIFY linearDampingChanged FINAL)
+    Q_PROPERTY(qreal angularDamping READ angularDamping WRITE setAngularDamping NOTIFY angularDampingChanged FINAL)
+    Q_PROPERTY(qreal friction READ friction WRITE setFriction NOTIFY frictionChanged FINAL)
+    Q_PROPERTY(qreal restitution READ restitution WRITE setRestitution NOTIFY restitutionChanged FINAL)
+    Q_PROPERTY(quint16 collisionGroupMask READ collisionGroupMask WRITE setCollisionGroupMask NOTIFY collisionGroupMaskChanged FINAL)
+    Q_PROPERTY(quint8 collisionGroupID READ collisionGroupID WRITE setCollisionGroupID NOTIFY collisionGroupIDChanged FINAL)
 
 public:
     RigidBodyRefObject(ModelProxy *parentModelRef,
@@ -70,9 +80,36 @@ public:
     QUuid uuid() const;
     QString name() const;
     void setName(const QString &value);
+    QVector3D position() const;
+    void setPosition(const QVector3D &value);
+    QVector3D rotation() const;
+    void setRotation(const QVector3D &value);
+    qreal mass() const;
+    void setMass(const qreal &value);
+    qreal linearDamping() const;
+    void setLinearDamping(const qreal &value);
+    qreal angularDamping() const;
+    void setAngularDamping(const qreal &value);
+    qreal friction() const;
+    void setFriction(const qreal &value);
+    qreal restitution() const;
+    void setRestitution(const qreal &value);
+    quint16 collisionGroupMask() const;
+    void setCollisionGroupMask(const quint16 &value);
+    quint8 collisionGroupID() const;
+    void setCollisionGroupID(const quint8 &value);
 
 signals:
     void nameChanged();
+    void positionChanged();
+    void rotationChanged();
+    void massChanged();
+    void linearDampingChanged();
+    void angularDampingChanged();
+    void frictionChanged();
+    void restitutionChanged();
+    void collisionGroupMaskChanged();
+    void collisionGroupIDChanged();
 
 private:
     ModelProxy *m_parentModelRef;

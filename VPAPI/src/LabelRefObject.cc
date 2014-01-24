@@ -38,12 +38,14 @@
 #include "LabelRefObject.h"
 
 #include <vpvl2/vpvl2.h>
+#include <vpvl2/extensions/qt/String.h>
 #include <QtCore>
 
 #include "ModelProxy.h"
 #include "Util.h"
 
 using namespace vpvl2;
+using namespace vpvl2::extensions::qt;
 
 LabelRefObject::LabelRefObject(ModelProxy *modelRef, ILabel *labelRef)
     : QObject(modelRef),
@@ -78,16 +80,33 @@ ModelProxy *LabelRefObject::parentModel() const
 
 QString LabelRefObject::name() const
 {
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_labelRef);
     if (m_labelRef->isSpecial()) {
         if (IBone *bone = m_labelRef->boneRef(0)) {
-            return Util::toQString(bone->name(IEncoding::kJapanese));
+            IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(m_parentModelRef->language());
+            return Util::toQString(bone->name(language));
         }
     }
     return Util::toQString(m_labelRef->name(IEncoding::kJapanese));
 }
 
+void LabelRefObject::setName(const QString &value)
+{
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_labelRef);
+    if (!m_labelRef->isSpecial() && name() != value) {
+        IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(m_parentModelRef->language());
+        QScopedPointer<IString> s(String::create(value.toStdString()));
+        m_labelRef->setName(s.data(), language);
+        m_parentModelRef->markDirty();
+        emit nameChanged();
+    }
+}
+
 int LabelRefObject::index() const
 {
+    Q_ASSERT(m_labelRef);
     return m_labelRef->index();
 }
 
