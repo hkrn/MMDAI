@@ -72,6 +72,9 @@ public:
         virtual void originWillChange(const Vector3 &value, IVertex *vertex) = 0;
         virtual void normalWillChange(const Vector3 &value, IVertex *vertex) = 0;
         virtual void textureCoordWillChange(const Vector3 &value, IVertex *vertex) = 0;
+        virtual void sdefCWillChange(const Vector3 &value, IVertex *vertex) = 0;
+        virtual void sdefR0WillChange(const Vector3 &value, IVertex *vertex) = 0;
+        virtual void sdefR1WillChange(const Vector3 &value, IVertex *vertex) = 0;
         virtual void originUVWillChange(int index, const Vector4 &value, IVertex *vertex) = 0;
         virtual void morphUVWillChange(int index, const Vector4 &value, IVertex *vertex) = 0;
         virtual void typeWillChange(Type value, IVertex *vertex) = 0;

@@ -769,17 +769,26 @@ void Vertex::setMaterialRef(IMaterial *value)
 
 void Vertex::setSdefC(const Vector3 &value)
 {
-    m_context->c = value;
+    if (m_context->c != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sdefCWillChange(value, this));
+        m_context->c = value;
+    }
 }
 
 void Vertex::setSdefR0(const Vector3 &value)
 {
-    m_context->r0 = value;
+    if (m_context->r0 != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sdefR0WillChange(value, this));
+        m_context->r0 = value;
+    }
 }
 
 void Vertex::setSdefR1(const Vector3 &value)
 {
-    m_context->r1 = value;
+    if (m_context->r1 != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sdefR1WillChange(value, this));
+        m_context->r1 = value;
+    }
 }
 
 void Vertex::setIndex(int value)
