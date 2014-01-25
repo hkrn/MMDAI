@@ -86,6 +86,12 @@ QUuid RigidBodyRefObject::uuid() const
     return m_uuid;
 }
 
+int RigidBodyRefObject::index() const
+{
+    Q_ASSERT(m_rigidBodyRef);
+    return m_rigidBodyRef->index();
+}
+
 QString RigidBodyRefObject::name() const
 {
     Q_ASSERT(m_parentModelRef);
@@ -109,11 +115,13 @@ void RigidBodyRefObject::setName(const QString &value)
 
 QVector3D RigidBodyRefObject::position() const
 {
+    Q_ASSERT(m_rigidBodyRef);
     return Util::fromVector3(m_rigidBodyRef->position());
 }
 
 void RigidBodyRefObject::setPosition(const QVector3D &value)
 {
+    Q_ASSERT(m_rigidBodyRef);
     if (!qFuzzyCompare(position(), value)) {
         m_rigidBodyRef->setPosition(Util::toVector3(value));
         m_parentModelRef->markDirty();
@@ -123,11 +131,43 @@ void RigidBodyRefObject::setPosition(const QVector3D &value)
 
 QVector3D RigidBodyRefObject::rotation() const
 {
+    Q_ASSERT(m_rigidBodyRef);
     return Util::fromVector3(m_rigidBodyRef->rotation());
+}
+
+RigidBodyRefObject::ObjectType RigidBodyRefObject::objectType() const
+{
+    Q_ASSERT(m_rigidBodyRef);
+    return static_cast<ObjectType>(m_rigidBodyRef->objectType());
+}
+
+void RigidBodyRefObject::setObjectType(const ObjectType &value)
+{
+    Q_ASSERT(m_rigidBodyRef);
+    if (objectType() != value) {
+        m_rigidBodyRef->setObjectType(static_cast<IRigidBody::ObjectType>(value));
+        emit objectTypeChanged();
+    }
+}
+
+RigidBodyRefObject::ShapeType RigidBodyRefObject::shapeType() const
+{
+    Q_ASSERT(m_rigidBodyRef);
+    return static_cast<ShapeType>(m_rigidBodyRef->shapeType());
+}
+
+void RigidBodyRefObject::setShapeType(const ShapeType &value)
+{
+    Q_ASSERT(m_rigidBodyRef);
+    if (shapeType() != value) {
+        m_rigidBodyRef->setShapeType(static_cast<IRigidBody::ShapeType>(value));
+        emit shapeTypeChanged();
+    }
 }
 
 void RigidBodyRefObject::setRotation(const QVector3D &value)
 {
+    Q_ASSERT(m_rigidBodyRef);
     if (!qFuzzyCompare(rotation(), value)) {
         m_rigidBodyRef->setRotation(Util::toVector3(value));
         m_parentModelRef->markDirty();
@@ -137,11 +177,13 @@ void RigidBodyRefObject::setRotation(const QVector3D &value)
 
 qreal RigidBodyRefObject::mass() const
 {
+    Q_ASSERT(m_rigidBodyRef);
     return m_rigidBodyRef->mass();
 }
 
 void RigidBodyRefObject::setMass(const qreal &value)
 {
+    Q_ASSERT(m_rigidBodyRef);
     if (qFuzzyCompare(mass(), value)) {
         m_rigidBodyRef->setMass(value);
         m_parentModelRef->markDirty();
@@ -151,11 +193,13 @@ void RigidBodyRefObject::setMass(const qreal &value)
 
 qreal RigidBodyRefObject::linearDamping() const
 {
+    Q_ASSERT(m_rigidBodyRef);
     return m_rigidBodyRef->linearDamping();
 }
 
 void RigidBodyRefObject::setLinearDamping(const qreal &value)
 {
+    Q_ASSERT(m_rigidBodyRef);
     if (qFuzzyCompare(linearDamping(), value)) {
         m_rigidBodyRef->setLinearDamping(value);
         m_parentModelRef->markDirty();
@@ -165,11 +209,13 @@ void RigidBodyRefObject::setLinearDamping(const qreal &value)
 
 qreal RigidBodyRefObject::angularDamping() const
 {
+    Q_ASSERT(m_rigidBodyRef);
     return m_rigidBodyRef->angularDamping();
 }
 
 void RigidBodyRefObject::setAngularDamping(const qreal &value)
 {
+    Q_ASSERT(m_rigidBodyRef);
     if (qFuzzyCompare(angularDamping(), value)) {
         m_rigidBodyRef->setAngularDamping(value);
         m_parentModelRef->markDirty();
@@ -179,11 +225,13 @@ void RigidBodyRefObject::setAngularDamping(const qreal &value)
 
 qreal RigidBodyRefObject::friction() const
 {
+    Q_ASSERT(m_rigidBodyRef);
     return m_rigidBodyRef->friction();
 }
 
 void RigidBodyRefObject::setFriction(const qreal &value)
 {
+    Q_ASSERT(m_rigidBodyRef);
     if (qFuzzyCompare(friction(), value)) {
         m_rigidBodyRef->setFriction(value);
         m_parentModelRef->markDirty();
@@ -193,11 +241,13 @@ void RigidBodyRefObject::setFriction(const qreal &value)
 
 qreal RigidBodyRefObject::restitution() const
 {
+    Q_ASSERT(m_rigidBodyRef);
     return m_rigidBodyRef->restitution();
 }
 
 void RigidBodyRefObject::setRestitution(const qreal &value)
 {
+    Q_ASSERT(m_rigidBodyRef);
     if (qFuzzyCompare(restitution(), value)) {
         m_rigidBodyRef->setRestitution(value);
         m_parentModelRef->markDirty();
@@ -207,11 +257,13 @@ void RigidBodyRefObject::setRestitution(const qreal &value)
 
 quint16 RigidBodyRefObject::collisionGroupMask() const
 {
+    Q_ASSERT(m_rigidBodyRef);
     return m_rigidBodyRef->collisionGroupMask();
 }
 
 void RigidBodyRefObject::setCollisionGroupMask(const quint16 &value)
 {
+    Q_ASSERT(m_rigidBodyRef);
     if (collisionGroupMask() != value) {
         m_rigidBodyRef->setCollisionMask(value);
         m_parentModelRef->markDirty();
@@ -221,11 +273,13 @@ void RigidBodyRefObject::setCollisionGroupMask(const quint16 &value)
 
 quint8 RigidBodyRefObject::collisionGroupID() const
 {
+    Q_ASSERT(m_rigidBodyRef);
     return m_rigidBodyRef->collisionGroupID();
 }
 
 void RigidBodyRefObject::setCollisionGroupID(const quint8 &value)
 {
+    Q_ASSERT(m_rigidBodyRef);
     if (collisionGroupID() != value) {
         m_rigidBodyRef->setCollisionGroupID(value);
         m_parentModelRef->markDirty();
