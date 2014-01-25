@@ -153,7 +153,7 @@ TEST(PMDPropertyEventListener, HandleBonePropertyEvents)
     TestHandleEvents<IBone::PropertyEventListener>(listener, bone);
     Vector3 v(1, 2, 3);
     Quaternion q(0.1, 0.2, 0.3);
-    bool enableIK = !bone.isInverseKinematicsEnabled();
+    bool enableIK = false;
     EXPECT_CALL(listener, nameWillChange(_, IEncoding::kJapanese, &bone)).WillOnce(Return());
     EXPECT_CALL(listener, nameWillChange(_, IEncoding::kEnglish, &bone)).WillOnce(Return());
     EXPECT_CALL(listener, inverseKinematicsEnableWillChange(enableIK, &bone)).WillOnce(Return());

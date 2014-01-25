@@ -106,7 +106,7 @@ class MockIBone : public IBone {
       void(bool value));
   MOCK_METHOD1(setInherentTranslationEnable,
       void(bool value));
-  MOCK_METHOD1(setAxisFixedEnable,
+  MOCK_METHOD1(setFixedAxisEnable,
       void(bool value));
   MOCK_METHOD1(setLocalAxesEnable,
       void(bool value));

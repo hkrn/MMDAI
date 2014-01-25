@@ -28,6 +28,12 @@ class MockIVertex : public IVertex {
       Vector4(int index));
   MOCK_CONST_METHOD0(delta,
       Vector3());
+  MOCK_CONST_METHOD0(sdefC,
+      Vector3());
+  MOCK_CONST_METHOD0(sdefR0,
+      Vector3());
+  MOCK_CONST_METHOD0(sdefR1,
+      Vector3());
   MOCK_CONST_METHOD0(type,
       Type());
   MOCK_CONST_METHOD0(edgeSize,
@@ -45,6 +51,12 @@ class MockIVertex : public IVertex {
   MOCK_METHOD1(setNormal,
       void(const Vector3 &value));
   MOCK_METHOD1(setTextureCoord,
+      void(const Vector3 &value));
+  MOCK_METHOD1(setSdefC,
+      void(const Vector3 &value));
+  MOCK_METHOD1(setSdefR0,
+      void(const Vector3 &value));
+  MOCK_METHOD1(setSdefR1,
       void(const Vector3 &value));
   MOCK_METHOD2(setOriginUV,
       void(int index, const Vector4 &value));
