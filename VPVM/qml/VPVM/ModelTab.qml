@@ -437,7 +437,7 @@ Tab {
                 stepSize: propertyPanel.rotationStepSize
                 decimals: propertyPanel.rotationDecimalPrecision
                 resettable: true
-                value: scene.hasBoneSelected ? scene.currentModel.firstTargetBone.localOrientation : Qt.vector3d(0, 0, 0)
+                value: scene.hasBoneSelected ? scene.currentModel.firstTargetBone.localEulerOrientation : Qt.vector3d(0, 0, 0)
                 onActiveFocusChanged: activeFocus ? scene.currentModel.beginTransform(0) : scene.currentModel.discardTransform()
                 onEditingFinished: scene.currentModel.commitTransform()
                 onResetDidTrigger: resetBoneOrientationAction.trigger()
