@@ -333,7 +333,7 @@ public:
     virtual void setHasInverseKinematics(bool value) = 0;
     virtual void setInherentOrientationEnable(bool value) = 0;
     virtual void setInherentTranslationEnable(bool value) = 0;
-    virtual void setAxisFixedEnable(bool value) = 0;
+    virtual void setFixedAxisEnable(bool value) = 0;
     virtual void setLocalAxesEnable(bool value) = 0;
     virtual void setTransformAfterPhysicsEnable(bool value) = 0;
     virtual void setTransformedByExternalParentEnable(bool value) = 0;

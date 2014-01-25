@@ -136,7 +136,7 @@ void CreateModel(IModel *model, const char *filename)
         bone->setOrigin(Vector3(1, 2, 3));
         bone->setDestinationOrigin(Vector3(4, 5, 6));
         bone->setFixedAxis(Vector3(0.1, 0.2, 0.3));
-        bone->setAxisFixedEnable(true);
+        bone->setFixedAxisEnable(true);
         bone->setAxisX(Vector3(0.3, 0.2, 0.1));
         bone->setAxisZ(Vector3(0.6, 0.5, 0.4));
         bone->setLocalAxesEnable(true);

@@ -1131,7 +1131,7 @@ bool Bone::isTransformedByExternalParent() const
 
 bool Bone::isInverseKinematicsEnabled() const
 {
-    return m_context->enableInverseKinematics;
+    return hasInverseKinematics() && m_context->enableInverseKinematics;
 }
 
 void Bone::setLocalTransform(const Transform &value)
@@ -1272,7 +1272,7 @@ void Bone::setInherentTranslationEnable(bool value)
     internal::toggleFlag(kHasInherentRotation, value, m_context->flags);
 }
 
-void Bone::setAxisFixedEnable(bool value)
+void Bone::setFixedAxisEnable(bool value)
 {
     internal::toggleFlag(kHasFixedAxis, value, m_context->flags);
 }

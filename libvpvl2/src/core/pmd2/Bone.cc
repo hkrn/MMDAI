@@ -535,7 +535,7 @@ bool Bone::isAxisXAligned()
 
 bool Bone::isInverseKinematicsEnabled() const
 {
-    return m_context->enableInverseKinematics;
+    return hasInverseKinematics() && m_context->enableInverseKinematics;
 }
 
 bool Bone::isInherentTranslationEnabled() const

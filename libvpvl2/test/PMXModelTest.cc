@@ -449,7 +449,7 @@ TEST_P(PMXFragmentTest, ReadWriteBone)
     bone.setHasInverseKinematics(true);
     bone.setInherentOrientationEnable(true);
     bone.setInherentTranslationEnable(true);
-    bone.setAxisFixedEnable(true);
+    bone.setFixedAxisEnable(true);
     bone.setLocalAxesEnable(true);
     bone.setTransformAfterPhysicsEnable(true);
     bone.setTransformedByExternalParentEnable(true);

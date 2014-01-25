@@ -138,7 +138,7 @@ public:
     void setHasInverseKinematics(bool /* value */) {}
     void setInherentOrientationEnable(bool /* value */) {}
     void setInherentTranslationEnable(bool /* value */) {}
-    void setAxisFixedEnable(bool /* value */) {}
+    void setFixedAxisEnable(bool /* value */) {}
     void setLocalAxesEnable(bool /* value */) {}
     void setTransformAfterPhysicsEnable(bool /* value */) {}
     void setTransformedByExternalParentEnable(bool /* value */) {}
@@ -232,7 +232,7 @@ public:
     void setHasInverseKinematics(bool /* value */) {}
     void setInherentOrientationEnable(bool /* value */) {}
     void setInherentTranslationEnable(bool /* value */) {}
-    void setAxisFixedEnable(bool /* value */) {}
+    void setFixedAxisEnable(bool /* value */) {}
     void setLocalAxesEnable(bool /* value */) {}
     void setTransformAfterPhysicsEnable(bool /* value */) {}
     void setTransformedByExternalParentEnable(bool /* value */) {}
