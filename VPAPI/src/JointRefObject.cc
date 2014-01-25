@@ -122,3 +122,129 @@ void JointRefObject::setName(const QString &value)
         emit nameChanged();
     }
 }
+
+JointRefObject::Type JointRefObject::type() const
+{
+    Q_ASSERT(m_jointRef);
+    return static_cast<Type>(m_jointRef->type());
+}
+
+void JointRefObject::setType(const Type &value)
+{
+    if (type() != value) {
+        m_jointRef->setType(static_cast<IJoint::Type>(value));
+        emit typeChanged();
+    }
+}
+
+QVector3D JointRefObject::position() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3(m_jointRef->position());
+}
+
+void JointRefObject::setPosition(const QVector3D &value)
+{
+    if (!qFuzzyCompare(position(), value)) {
+        m_jointRef->setPosition(Util::toVector3(value));
+        emit positionChanged();
+    }
+}
+
+QVector3D JointRefObject::rotation() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3(m_jointRef->rotation());
+}
+
+void JointRefObject::setRotation(const QVector3D &value)
+{
+    if (!qFuzzyCompare(position(), value)) {
+        m_jointRef->setRotation(Util::toVector3(value));
+        emit rotationChanged();
+    }
+}
+
+QVector3D JointRefObject::positionUpperLimit() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3(m_jointRef->positionUpperLimit());
+}
+
+void JointRefObject::setPositionUpperLimit(const QVector3D &value)
+{
+    if (!qFuzzyCompare(positionUpperLimit(), value)) {
+        m_jointRef->setPositionUpperLimit(Util::toVector3(value));
+        emit positionUpperLimitChanged();
+    }
+}
+
+QVector3D JointRefObject::rotationUpperLimit() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3(m_jointRef->rotationUpperLimit());
+}
+
+void JointRefObject::setRotationUpperLimit(const QVector3D &value)
+{
+    if (!qFuzzyCompare(rotationUpperLimit(), value)) {
+        m_jointRef->setRotationUpperLimit(Util::toVector3(value));
+        emit rotationUpperLimitChanged();
+    }
+}
+
+QVector3D JointRefObject::positionLowerLimit() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3(m_jointRef->positionLowerLimit());
+}
+
+void JointRefObject::setPositionLowerLimit(const QVector3D &value)
+{
+    if (!qFuzzyCompare(positionLowerLimit(), value)) {
+        m_jointRef->setPositionLowerLimit(Util::toVector3(value));
+        emit positionLowerLimitChanged();
+    }
+}
+
+QVector3D JointRefObject::rotationLowerLimit() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3(m_jointRef->rotationLowerLimit());
+}
+
+void JointRefObject::setRotationLowerLimit(const QVector3D &value)
+{
+    if (!qFuzzyCompare(rotationLowerLimit(), value)) {
+        m_jointRef->setRotationLowerLimit(Util::toVector3(value));
+        emit rotationLowerLimitChanged();
+    }
+}
+
+QVector3D JointRefObject::positionStiffness() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3(m_jointRef->positionStiffness());
+}
+
+void JointRefObject::setPositionStiffness(const QVector3D &value)
+{
+    if (!qFuzzyCompare(positionStiffness(), value)) {
+        m_jointRef->setPositionStiffness(Util::toVector3(value));
+        emit positionStiffnessChanged();
+    }
+}
+
+QVector3D JointRefObject::rotationStiffness() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3(m_jointRef->rotationStiffness());
+}
+
+void JointRefObject::setRotationStiffness(const QVector3D &value)
+{
+    if (!qFuzzyCompare(rotationStiffness(), value)) {
+        m_jointRef->setRotationStiffness(Util::toVector3(value));
+        emit rotationStiffnessChanged();
+    }
+}
