@@ -53,6 +53,7 @@ class VertexRefObject : public QObject
     Q_ENUMS(Type)
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
+    Q_PROPERTY(int index READ index CONSTANT FINAL)
     Q_PROPERTY(QVector3D origin READ origin WRITE setOrigin NOTIFY originChanged FINAL)
     Q_PROPERTY(QVector3D normal READ normal WRITE setNormal NOTIFY normalChanged FINAL)
     Q_PROPERTY(QVector3D textureCoord READ textureCoord WRITE setTextureCoord NOTIFY textureCoordChanged FINAL)
@@ -83,6 +84,7 @@ public:
     vpvl2::IVertex *data() const;
     ModelProxy *parentModel() const;
     QUuid uuid() const;
+    int index() const;
     QVector3D origin() const;
     void setOrigin(const QVector3D &value);
     QVector3D normal() const;

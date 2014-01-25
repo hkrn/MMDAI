@@ -96,6 +96,12 @@ QUuid JointRefObject::uuid() const
     return m_uuid;
 }
 
+int JointRefObject::index() const
+{
+    Q_ASSERT(m_jointRef);
+    return m_jointRef->index();
+}
+
 QString JointRefObject::name() const
 {
     Q_ASSERT(m_parentModelRef);

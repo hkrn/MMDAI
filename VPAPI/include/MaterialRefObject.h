@@ -54,6 +54,7 @@ class MaterialRefObject : public QObject
     Q_OBJECT
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
+    Q_PROPERTY(int index READ index CONSTANT FINAL)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
     Q_PROPERTY(QString mainTexturePath READ mainTexturePath WRITE setMainTexturePath NOTIFY mainTexturePathChanged FINAL)
     Q_PROPERTY(QString sphereTexturePath READ sphereTexturePath WRITE setSphereTexturePath NOTIFY sphereTexturePathChanged FINAL)
@@ -79,6 +80,7 @@ public:
     vpvl2::IMaterial *data() const;
     ModelProxy *parentModel() const;
     QUuid uuid() const;
+    int index() const;
     QString name() const;
     void setName(const QString &value);
     QString mainTexturePath() const;

@@ -56,6 +56,7 @@ class JointRefObject : public QObject
     Q_PROPERTY(RigidBodyRefObject *bodyA READ bodyA CONSTANT FINAL)
     Q_PROPERTY(RigidBodyRefObject *bodyB READ bodyB CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
+    Q_PROPERTY(int index READ index CONSTANT FINAL)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
 
 public:
@@ -71,6 +72,7 @@ public:
     RigidBodyRefObject *bodyA() const;
     RigidBodyRefObject *bodyB() const;
     QUuid uuid() const;
+    int index() const;
     QString name() const;
     void setName(const QString &value);
 

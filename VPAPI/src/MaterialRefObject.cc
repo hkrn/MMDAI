@@ -80,6 +80,12 @@ QUuid MaterialRefObject::uuid() const
     return m_uuid;
 }
 
+int MaterialRefObject::index() const
+{
+    Q_ASSERT(m_materialRef);
+    return m_materialRef->index();
+}
+
 QString MaterialRefObject::name() const
 {
     Q_ASSERT(m_parentModelRef);
@@ -267,11 +273,13 @@ void MaterialRefObject::setEdgeSize(const qreal &value)
 
 bool MaterialRefObject::isCullingDisabled() const
 {
+    Q_ASSERT(m_materialRef);
     return m_materialRef->isCullingDisabled();
 }
 
 void MaterialRefObject::setCullingDisabled(bool value)
 {
+    Q_ASSERT(m_materialRef);
     if (isCullingDisabled() != value) {
         m_materialRef->setCullingDisabled(value);
         m_parentModelRef->markDirty();
@@ -281,11 +289,13 @@ void MaterialRefObject::setCullingDisabled(bool value)
 
 bool MaterialRefObject::isCastingShadowEnabled() const
 {
+    Q_ASSERT(m_materialRef);
     return m_materialRef->isCastingShadowEnabled();
 }
 
 void MaterialRefObject::setCastingShadowEnabled(bool value)
 {
+    Q_ASSERT(m_materialRef);
     if (isCastingShadowEnabled() != value) {
         m_materialRef->setCastingShadowEnabled(value);
         m_parentModelRef->markDirty();
@@ -295,11 +305,13 @@ void MaterialRefObject::setCastingShadowEnabled(bool value)
 
 bool MaterialRefObject::isCastingShadowMapEnabled() const
 {
+    Q_ASSERT(m_materialRef);
     return m_materialRef->isCastingShadowMapEnabled();
 }
 
 void MaterialRefObject::setCastingShadowMapEnabled(bool value)
 {
+    Q_ASSERT(m_materialRef);
     if (isCastingShadowMapEnabled() != value) {
         m_materialRef->setCastingShadowMapEnabled(value);
         m_parentModelRef->markDirty();
@@ -309,11 +321,13 @@ void MaterialRefObject::setCastingShadowMapEnabled(bool value)
 
 bool MaterialRefObject::isShadowMapEnabled() const
 {
+    Q_ASSERT(m_materialRef);
     return m_materialRef->isShadowMapEnabled();
 }
 
 void MaterialRefObject::setShadowMapEnabled(bool value)
 {
+    Q_ASSERT(m_materialRef);
     if (isShadowMapEnabled() != value) {
         m_materialRef->setShadowMapEnabled(value);
         m_parentModelRef->markDirty();
@@ -323,11 +337,13 @@ void MaterialRefObject::setShadowMapEnabled(bool value)
 
 bool MaterialRefObject::isEdgeEnabled() const
 {
+    Q_ASSERT(m_materialRef);
     return m_materialRef->isEdgeEnabled();
 }
 
 void MaterialRefObject::setEdgeEnabled(bool value)
 {
+    Q_ASSERT(m_materialRef);
     if (isEdgeEnabled() != value) {
         m_materialRef->setEdgeEnabled(value);
         m_parentModelRef->markDirty();
@@ -337,11 +353,13 @@ void MaterialRefObject::setEdgeEnabled(bool value)
 
 bool MaterialRefObject::isVertexColorEnabled() const
 {
+    Q_ASSERT(m_materialRef);
     return m_materialRef->isVertexColorEnabled();
 }
 
 void MaterialRefObject::setVertexColorEnabled(bool value)
 {
+    Q_ASSERT(m_materialRef);
     if (isVertexColorEnabled() != value) {
         m_materialRef->setVertexColorEnabled(value);
         m_parentModelRef->markDirty();
