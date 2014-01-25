@@ -279,15 +279,15 @@ void ModelProxy::rotate(qreal angle)
                     const InternalTransform &t = m_transformState.value(boneRef);
                     delta = t.second;
                 }
-                if (boneRef->hasFixedAxes()) {
-                    delta.setRotation(boneRef->fixedAxis(), btRadians(angle - m_baseY));
+                if (boneRef->isFixedAxisEnabled()) {
+                    delta.setRotation(boneRef->rawFixedAxis(), btRadians(angle - m_baseY));
                 }
                 else {
                     Vector3 axisX(1, 0, 0), axisY(0, 1, 0), axisZ(0, 0, 1);
                     switch (m_boneTransformType) {
                     case LocalTransform: {
                         Matrix3x3 axes;
-                        if (boneRef->hasLocalAxes()) {
+                        if (boneRef->isLocalAxesEnabled()) {
                             boneRef->getLocalAxes(axes);
                             axisX = axes[0];
                             axisY = axes[1];

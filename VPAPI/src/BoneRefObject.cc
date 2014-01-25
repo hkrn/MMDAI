@@ -158,6 +158,21 @@ void BoneRefObject::setDestinationOrigin(const QVector3D &value)
     }
 }
 
+QVector3D BoneRefObject::fixedAxis() const
+{
+    return Util::fromVector3(m_boneRef->fixedAxis());
+}
+
+void BoneRefObject::setFixedAxis(const QVector3D &value)
+{
+    Q_ASSERT(m_boneRef);
+    if (!qFuzzyCompare(fixedAxis(), value)) {
+        m_boneRef->setFixedAxis(Util::toVector3(value));
+        m_parentLabelRef->parentModel()->markDirty();
+        emit fixedAxisChanged();
+    }
+}
+
 QVector3D BoneRefObject::localTranslation() const
 {
     return Util::fromVector3(rawLocalTranslation());
@@ -239,7 +254,7 @@ void BoneRefObject::setInverseKinematicsEnabled(bool value)
     if (value != isInverseKinematicsKEnabled()) {
         m_boneRef->setInverseKinematicsEnable(value);
         m_parentLabelRef->parentModel()->markDirty();
-        emit enableInverseKinematicsChanged();
+        emit inverseKinematicsEnabledChanged();
     }
 }
 
@@ -307,12 +322,6 @@ void BoneRefObject::setInteractive(bool value)
     }
 }
 
-bool BoneRefObject::hasInverseKinematics() const
-{
-    Q_ASSERT(m_boneRef);
-    return m_boneRef->hasInverseKinematics();
-}
-
 bool BoneRefObject::isInherenceTranslationEnabled() const
 {
     Q_ASSERT(m_boneRef);
@@ -325,7 +334,7 @@ void BoneRefObject::setInherenceTranslationEnabled(bool value)
     if (isInherenceTranslationEnabled() != value) {
         m_boneRef->setInherentTranslationEnable(value);
         m_parentLabelRef->parentModel()->markDirty();
-        emit inherenceTranslationChanged();
+        emit inherenceTranslationEnabledChanged();
     }
 }
 
@@ -341,39 +350,39 @@ void BoneRefObject::setInherenceOrientationEnabled(bool value)
     if (isInherenceOrientationEnabled() != value) {
         m_boneRef->setInherentOrientationEnable(value);
         m_parentLabelRef->parentModel()->markDirty();
-        emit inherenceOrientationChanged();
+        emit inherenceOrientationEnabledChanged();
     }
 }
 
-bool BoneRefObject::hasFixedAxes() const
+bool BoneRefObject::isFixedAxisEnabled() const
 {
     Q_ASSERT(m_boneRef);
     return m_boneRef->hasFixedAxes();
 }
 
-void BoneRefObject::setFixedAxes(bool value)
+void BoneRefObject::setFixedAxisEnabled(bool value)
 {
     Q_ASSERT(m_boneRef);
-    if (hasFixedAxes() != value) {
-        //m_boneRef->setFixedAxis(value);
+    if (isFixedAxisEnabled() != value) {
+        m_boneRef->setFixedAxisEnable(value);
         m_parentLabelRef->parentModel()->markDirty();
-        emit fixedAxesChanged();
+        emit fixedAxisEnabledChanged();
     }
 }
 
-bool BoneRefObject::hasLocalAxes() const
+bool BoneRefObject::isLocalAxesEnabled() const
 {
     Q_ASSERT(m_boneRef);
     return m_boneRef->hasLocalAxes();
 }
 
-void BoneRefObject::setLocalAxes(bool value)
+void BoneRefObject::setLocalAxesEnabled(bool value)
 {
     Q_ASSERT(m_boneRef);
-    if (hasLocalAxes() != value) {
+    if (isLocalAxesEnabled() != value) {
         m_boneRef->setLocalAxesEnable(value);
         m_parentLabelRef->parentModel()->markDirty();
-        emit localAxesChanged();
+        emit localAxesEnabledChanged();
     }
 }
 
@@ -388,7 +397,7 @@ bool BoneRefObject::canHandle() const
     return m_boneRef->isVisible() && m_boneRef->isInteractive() && (m_boneRef->isRotateable() || m_boneRef->isMovable());
 }
 
-Vector3 BoneRefObject::fixedAxis() const
+Vector3 BoneRefObject::rawFixedAxis() const
 {
     Q_ASSERT(m_boneRef);
     return m_boneRef->fixedAxis();

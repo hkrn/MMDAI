@@ -59,6 +59,7 @@ class BoneRefObject : public QObject
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
     Q_PROPERTY(QVector3D origin READ origin WRITE setOrigin NOTIFY originChanged FINAL)
     Q_PROPERTY(QVector3D destinationOrigin READ destinationOrigin WRITE setDestinationOrigin NOTIFY destinationOriginChanged FINAL)
+    Q_PROPERTY(QVector3D fixedAxis READ fixedAxis WRITE setFixedAxis NOTIFY fixedAxisChanged FINAL)
     Q_PROPERTY(QVector3D localTranslation READ localTranslation WRITE setLocalTranslation NOTIFY localTranslationChanged FINAL)
     Q_PROPERTY(QQuaternion localOrientation READ localOrientation WRITE setLocalOrientation NOTIFY localOrientationChanged FINAL)
     Q_PROPERTY(QVector3D localEulerOrientation READ localEulerOrientation WRITE setLocalEulerOrientation NOTIFY localOrientationChanged FINAL)
@@ -66,16 +67,15 @@ class BoneRefObject : public QObject
     Q_PROPERTY(QQuaternion originLocalOrientation READ originLocalOrientation NOTIFY originLocalOrientationChanged FINAL)
     Q_PROPERTY(qreal coefficient READ coefficient WRITE setCoefficient NOTIFY coefficientChanged)
     Q_PROPERTY(int index READ index CONSTANT FINAL)
-    Q_PROPERTY(bool enableInverseKinematics READ isInverseKinematicsKEnabled WRITE setInverseKinematicsEnabled NOTIFY enableInverseKinematicsChanged FINAL)
+    Q_PROPERTY(bool inverseKinematicsEnabled READ isInverseKinematicsKEnabled WRITE setInverseKinematicsEnabled NOTIFY inverseKinematicsEnabledChanged FINAL)
     Q_PROPERTY(bool movable READ isMovable WRITE setMovable NOTIFY movableChanged FINAL)
     Q_PROPERTY(bool rotateable READ isRotateable WRITE setRotateable NOTIFY rotateableChanged FINAL)
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged FINAL)
     Q_PROPERTY(bool interactive READ isInteractive WRITE setInteractive NOTIFY interactiveChanged FINAL)
-    Q_PROPERTY(bool inherenceTranslation READ isInherenceTranslationEnabled WRITE setInherenceTranslationEnabled NOTIFY inherenceTranslationChanged FINAL)
-    Q_PROPERTY(bool inherenceOrientation READ isInherenceOrientationEnabled WRITE setInherenceOrientationEnabled NOTIFY inherenceTranslationChanged FINAL)
-    Q_PROPERTY(bool hasInverseKinematics READ hasInverseKinematics CONSTANT FINAL)
-    Q_PROPERTY(bool hasFixedAxes READ hasFixedAxes WRITE setFixedAxes NOTIFY fixedAxesChanged FINAL)
-    Q_PROPERTY(bool hasLocalAxes READ hasLocalAxes WRITE setLocalAxes NOTIFY localAxesChanged FINAL)
+    Q_PROPERTY(bool inherenceTranslationEnabled READ isInherenceTranslationEnabled WRITE setInherenceTranslationEnabled NOTIFY inherenceTranslationEnabledChanged FINAL)
+    Q_PROPERTY(bool inherenceOrientationEnabled READ isInherenceOrientationEnabled WRITE setInherenceOrientationEnabled NOTIFY inherenceOrientationEnabledChanged FINAL)
+    Q_PROPERTY(bool fixedAxisEnabled READ isFixedAxisEnabled WRITE setFixedAxisEnabled NOTIFY fixedAxisEnabledChanged FINAL)
+    Q_PROPERTY(bool localAxesEnabled READ isLocalAxesEnabled WRITE setLocalAxesEnabled NOTIFY localAxesEnabledChanged FINAL)
 
 public:
     BoneRefObject(LabelRefObject *labelRef, vpvl2::IBone *boneRef, const QUuid &uuid);
@@ -94,6 +94,8 @@ public:
     void setOrigin(const QVector3D &value);
     QVector3D destinationOrigin() const;
     void setDestinationOrigin(const QVector3D &value);
+    QVector3D fixedAxis() const;
+    void setFixedAxis(const QVector3D &value);
     QVector3D localTranslation() const;
     void setLocalTranslation(const QVector3D &value);
     QQuaternion localOrientation() const;
@@ -120,13 +122,13 @@ public:
     void setInherenceTranslationEnabled(bool value);
     bool isInherenceOrientationEnabled() const;
     void setInherenceOrientationEnabled(bool value);
-    bool hasFixedAxes() const;
-    void setFixedAxes(bool value);
-    bool hasLocalAxes() const;
-    void setLocalAxes(bool value);
+    bool isFixedAxisEnabled() const;
+    void setFixedAxisEnabled(bool value);
+    bool isLocalAxesEnabled() const;
+    void setLocalAxesEnabled(bool value);
 
     bool canHandle() const;
-    vpvl2::Vector3 fixedAxis() const;
+    vpvl2::Vector3 rawFixedAxis() const;
     void getLocalAxes(vpvl2::Matrix3x3 &value);
     vpvl2::Vector3 rawLocalTranslation() const;
     void setRawLocalTranslation(const vpvl2::Vector3 &value);
@@ -141,21 +143,22 @@ signals:
     void nameChanged();
     void originChanged();
     void destinationOriginChanged();
+    void fixedAxisChanged();
     void localTranslationChanged();
     void localOrientationChanged();
     void localEulerorientationChanged();
     void originLocalTranslationChanged();
     void originLocalOrientationChanged();
-    void enableInverseKinematicsChanged();
+    void inverseKinematicsEnabledChanged();
     void coefficientChanged();
     void movableChanged();
     void rotateableChanged();
     void visibleChanged();
     void interactiveChanged();
-    void inherenceTranslationChanged();
-    void inherenceOrientationChanged();
-    void fixedAxesChanged();
-    void localAxesChanged();
+    void inherenceTranslationEnabledChanged();
+    void inherenceOrientationEnabledChanged();
+    void fixedAxisEnabledChanged();
+    void localAxesEnabledChanged();
     void boneDidSync();
 
 private:
