@@ -55,6 +55,7 @@ tinyxml2-*
 tufao-*
 UpgradeLog*.XML
 _UpgradeReport_Files
+VPMM*.json
 VPVM*.png
 VPVM.desktop
 VPVM*.json

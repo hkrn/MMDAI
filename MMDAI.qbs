@@ -44,6 +44,7 @@ Project {
         "libgizmo-src/libgizmo.qbs",
         "libvpvl2/libvpvl2.qbs",
         "VPAPI/VPAPI.qbs",
-        "VPVM/VPVM.qbs"
+        "VPVM/VPVM.qbs",
+        "VPMM/VPMM.qbs"
     ]
 }
