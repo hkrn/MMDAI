@@ -64,7 +64,7 @@ TEST(PMXPropertyEventListener, HandleBonePropertyEvents)
     TestHandleEvents<IBone::PropertyEventListener>(listener, bone);
     Vector3 v(1, 2, 3);
     Quaternion q(0.1, 0.2, 0.3);
-    bool enableIK = !bone.isInverseKinematicsEnabled();
+    bool enableIK = false;
     EXPECT_CALL(listener, nameWillChange(_, IEncoding::kJapanese, &bone)).WillOnce(Return());
     EXPECT_CALL(listener, nameWillChange(_, IEncoding::kEnglish, &bone)).WillOnce(Return());
     EXPECT_CALL(listener, inverseKinematicsEnableWillChange(enableIK, &bone)).WillOnce(Return());
@@ -381,7 +381,8 @@ TEST(PMXPropertyEventListener, HandleVertexPropertyEvents)
     IVertex::EdgeSizePrecision edgeSize(0.42);
     IVertex::WeightPrecision weightSize(0.84);
     IVertex::Type type(IVertex::kBdef4);
-    Vector3 origin(1, 2, 3), normal(origin.normalized()), texcoord(0.4, 0.5, 0.6);
+    Vector3 origin(1, 2, 3), normal(origin.normalized()), texcoord(0.4, 0.5, 0.6),
+            c(0.01, 0.02, 0.03), r0(0.04, 0.05, 0.06), r1(0.07, 0.08, 0.09);
     Vector4 uv(0.6, 0.7, 0.8, 0.9);
     EXPECT_CALL(listener, boneRefWillChange(0, &bone, &vertex)).WillOnce(Return());
     EXPECT_CALL(listener, edgeSizeWillChange(edgeSize, &vertex)).WillOnce(Return());
@@ -389,6 +390,9 @@ TEST(PMXPropertyEventListener, HandleVertexPropertyEvents)
     EXPECT_CALL(listener, normalWillChange(normal, &vertex)).WillOnce(Return());
     EXPECT_CALL(listener, originWillChange(origin, &vertex)).WillOnce(Return());
     EXPECT_CALL(listener, textureCoordWillChange(texcoord, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, sdefCWillChange(c, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, sdefR0WillChange(r0, &vertex)).WillOnce(Return());
+    EXPECT_CALL(listener, sdefR1WillChange(r1, &vertex)).WillOnce(Return());
     EXPECT_CALL(listener, typeWillChange(type, &vertex)).WillOnce(Return());
     EXPECT_CALL(listener, originUVWillChange(0, uv, &vertex)).WillOnce(Return());
     EXPECT_CALL(listener, morphUVWillChange(0, uv, &vertex)).WillOnce(Return());
@@ -406,6 +410,12 @@ TEST(PMXPropertyEventListener, HandleVertexPropertyEvents)
     vertex.setOrigin(origin);
     vertex.setTextureCoord(texcoord);
     vertex.setTextureCoord(texcoord);
+    vertex.setSdefC(c);
+    vertex.setSdefC(c);
+    vertex.setSdefR0(r0);
+    vertex.setSdefR0(r0);
+    vertex.setSdefR1(r1);
+    vertex.setSdefR1(r1);
     vertex.setType(type);
     vertex.setType(type);
     vertex.setOriginUV(0, uv);

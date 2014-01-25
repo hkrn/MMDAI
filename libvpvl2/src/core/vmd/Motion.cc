@@ -263,7 +263,7 @@ bool Motion::preparse(const uint8 *data, vsize size, DataInfo &info)
     info.selfShadowKeyframePtr = ptr;
     VPVL2_VLOG(1, "VMDSelfShadowKeyframes: ptr=" << static_cast<const void *>(info.selfShadowKeyframePtr) << " size=" << nSelfShadowKeyframes << " rest=" << rest);
 
-    int32 nModelKeyframes;
+    int32 nModelKeyframes = 0;
     if (!internal::getTyped<int32>(ptr, rest, nModelKeyframes)) {
         VPVL2_LOG(WARNING, "Invalid VMD model keyframe size detected: " << static_cast<const void*>(ptr) << " size=" << nModelKeyframes << " rest=" << rest);
         m_context->error = kVMDInvalidModelKeyframesSizeError;
