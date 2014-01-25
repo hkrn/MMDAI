@@ -105,6 +105,9 @@ public:
     virtual Vector4 originUV(int index) const = 0;
     virtual Vector4 morphUV(int index) const = 0;
     virtual Vector3 delta() const = 0;
+    virtual Vector3 sdefC() const = 0;
+    virtual Vector3 sdefR0() const = 0;
+    virtual Vector3 sdefR1() const = 0;
     virtual Type type() const = 0;
     virtual EdgeSizePrecision edgeSize() const = 0;
     virtual WeightPrecision weight(int index) const = 0;
@@ -114,6 +117,9 @@ public:
     virtual void setOrigin(const Vector3 &value) = 0;
     virtual void setNormal(const Vector3 &value) = 0;
     virtual void setTextureCoord(const Vector3 &value) = 0;
+    virtual void setSdefC(const Vector3 &value) = 0;
+    virtual void setSdefR0(const Vector3 &value) = 0;
+    virtual void setSdefR1(const Vector3 &value) = 0;
     virtual void setOriginUV(int index, const Vector4 &value) = 0;
     virtual void setMorphUV(int index, const Vector4 &value) = 0;
     virtual void setType(Type value) = 0;

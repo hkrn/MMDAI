@@ -529,6 +529,9 @@ public:
     Vector3 origin() const { return m_origin; }
     Vector3 normal() const { return m_normal; }
     Vector3 textureCoord() const { return m_texcoord; }
+    Vector3 sdefC() const { return kZeroV3; }
+    Vector3 sdefR0() const { return kZeroV3; }
+    Vector3 sdefR1() const { return kZeroV3; }
     Vector4 uv(int /* index */) const { return kZeroV4; }
     Vector4 originUV(int /* index */) const { return kZeroV4; }
     Vector4 morphUV(int /* index */) const { return kZeroV4; }
@@ -542,6 +545,9 @@ public:
     void setOrigin(const Vector3 & /* value */) {}
     void setNormal(const Vector3 & /* value */) {}
     void setTextureCoord(const Vector3 & /* value */) {}
+    void setSdefC(const Vector3 & /* value */) {}
+    void setSdefR0(const Vector3 & /* value */) {}
+    void setSdefR1(const Vector3 & /* value */) {}
     void setOriginUV(int /* index */, const Vector4 & /* value */) {}
     void setMorphUV(int /* index */, const Vector4 & /* value */) {}
     void setType(Type /* value */) {}

@@ -302,6 +302,21 @@ Vector3 Vertex::delta() const
     return m_context->morphDelta;
 }
 
+Vector3 Vertex::sdefC() const
+{
+    return kZeroV3;
+}
+
+Vector3 Vertex::sdefR0() const
+{
+    return kZeroV3;
+}
+
+Vector3 Vertex::sdefR1() const
+{
+    return kZeroV3;
+}
+
 IVertex::Type Vertex::type() const
 {
     return kBdef2;
@@ -354,6 +369,18 @@ void Vertex::setTextureCoord(const Vector3 &value)
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, textureCoordWillChange(value, this));
         m_context->texcoord = value;
     }
+}
+
+void Vertex::setSdefC(const Vector3 & /* value */)
+{
+}
+
+void Vertex::setSdefR0(const Vector3 & /* value */)
+{
+}
+
+void Vertex::setSdefR1(const Vector3 & /* value */)
+{
 }
 
 void Vertex::setOriginUV(int /* index */, const Vector4 & /* value */)

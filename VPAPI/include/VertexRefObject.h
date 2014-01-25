@@ -57,6 +57,9 @@ class VertexRefObject : public QObject
     Q_PROPERTY(QVector3D origin READ origin WRITE setOrigin NOTIFY originChanged FINAL)
     Q_PROPERTY(QVector3D normal READ normal WRITE setNormal NOTIFY normalChanged FINAL)
     Q_PROPERTY(QVector3D textureCoord READ textureCoord WRITE setTextureCoord NOTIFY textureCoordChanged FINAL)
+    Q_PROPERTY(QVector3D sdefC READ sdefC WRITE setSdefC NOTIFY sdefCChanged FINAL)
+    Q_PROPERTY(QVector3D sdefR0 READ sdefR0 WRITE setSdefR0 NOTIFY sdefR0Changed FINAL)
+    Q_PROPERTY(QVector3D sdefR1 READ sdefR1 WRITE setSdefR1 NOTIFY sdefR1Changed FINAL)
     Q_PROPERTY(qreal edgeSize READ edgeSize WRITE setEdgeSize NOTIFY edgeSizeChanged FINAL)
     Q_PROPERTY(Type type READ type WRITE setType NOTIFY typeChanged FINAL)
 
@@ -91,6 +94,12 @@ public:
     void setNormal(const QVector3D &value);
     QVector3D textureCoord() const;
     void setTextureCoord(const QVector3D &value);
+    QVector3D sdefC() const;
+    void setSdefC(const QVector3D &value);
+    QVector3D sdefR0() const;
+    void setSdefR0(const QVector3D &value);
+    QVector3D sdefR1() const;
+    void setSdefR1(const QVector3D &value);
     qreal edgeSize() const;
     void setEdgeSize(const qreal &value);
     Type type() const;
@@ -100,6 +109,9 @@ signals:
     void originChanged();
     void normalChanged();
     void textureCoordChanged();
+    void sdefCChanged();
+    void sdefR0Changed();
+    void sdefR1Changed();
     void edgeSizeChanged();
     void typeChanged();
     void originUVDidChange(int index, const QVector4D &newValue, const QVector4D &oldValue);

@@ -73,6 +73,9 @@ public:
     Vector4 originUV(int index) const;
     Vector4 morphUV(int index) const;
     Vector3 delta() const;
+    Vector3 sdefC() const;
+    Vector3 sdefR0() const;
+    Vector3 sdefR1() const;
     Type type() const;
     EdgeSizePrecision edgeSize() const;
     WeightPrecision weight(int index) const;
@@ -82,6 +85,9 @@ public:
     void setOrigin(const Vector3 &value);
     void setNormal(const Vector3 &value);
     void setTextureCoord(const Vector3 &value);
+    void setSdefC(const Vector3 &value);
+    void setSdefR0(const Vector3 &value);
+    void setSdefR1(const Vector3 &value);
     void setOriginUV(int index, const Vector4 &value);
     void setMorphUV(int index, const Vector4 &value);
     void setType(Type value);

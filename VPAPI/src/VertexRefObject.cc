@@ -65,60 +65,71 @@ VertexRefObject::~VertexRefObject()
 
 QVector4D VertexRefObject::originUV(int index)
 {
+    Q_ASSERT(m_vertexRef);
     return Util::fromVector4(m_vertexRef->originUV(index));
 }
 
 void VertexRefObject::setOriginUV(int index, const QVector4D &value)
 {
+    Q_ASSERT(m_vertexRef);
     const QVector4D &oldValue = originUV(index);
     if (!qFuzzyCompare(oldValue, value)) {
         m_vertexRef->setOriginUV(index, Util::toVector4(value));
-        m_parentModelRef->setDirty(true);
+        m_parentModelRef->markDirty();
         emit originUVDidChange(index, value, oldValue);
     }
 }
 
 QVector4D VertexRefObject::morphUV(int index)
 {
+    Q_ASSERT(m_vertexRef);
     return Util::fromVector4(m_vertexRef->morphUV(index));
 }
 
 void VertexRefObject::setMorphUV(int index, const QVector4D &value)
 {
+    Q_ASSERT(m_vertexRef);
     const QVector4D &oldValue = morphUV(index);
     if (!qFuzzyCompare(oldValue, value)) {
         m_vertexRef->setMorphUV(index, Util::toVector4(value));
-        m_parentModelRef->setDirty(true);
+        m_parentModelRef->markDirty();
         emit morphUVDidChange(index, value, oldValue);
     }
 }
 
 BoneRefObject *VertexRefObject::bone(int index)
 {
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_vertexRef);
     return m_parentModelRef->resolveBoneRef(m_vertexRef->boneRef(index));
 }
 
 void VertexRefObject::setBone(int index, BoneRefObject *value)
 {
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_vertexRef);
     BoneRefObject *oldValue = bone(index);
     if (value && oldValue != value) {
         m_vertexRef->setBoneRef(index, value->data());
-        m_parentModelRef->setDirty(true);
+        m_parentModelRef->markDirty();
         emit boneDidChange(index, value, oldValue);
     }
 }
 
 qreal VertexRefObject::weight(int index)
 {
+    Q_ASSERT(m_vertexRef);
     return m_vertexRef->weight(index);
 }
 
 void VertexRefObject::setWeight(int index, const qreal &value)
 {
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_vertexRef);
     qreal oldValue = weight(index);
-    if (value && !qFuzzyCompare(oldValue, value)) {
+    if (!qFuzzyCompare(oldValue, value)) {
         m_vertexRef->setWeight(index, value);
-        m_parentModelRef->setDirty(true);
+        m_parentModelRef->markDirty();
         emit weightDidChange(index, value, oldValue);
     }
 }
@@ -155,10 +166,11 @@ QVector3D VertexRefObject::origin() const
 
 void VertexRefObject::setOrigin(const QVector3D &value)
 {
+    Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_vertexRef);
     if (!qFuzzyCompare(origin(), value)) {
         m_vertexRef->setOrigin(Util::toVector3(value));
-        m_parentModelRef->setDirty(true);
+        m_parentModelRef->markDirty();
         emit originChanged();
     }
 }
@@ -171,10 +183,11 @@ QVector3D VertexRefObject::normal() const
 
 void VertexRefObject::setNormal(const QVector3D &value)
 {
+    Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_vertexRef);
     if (!qFuzzyCompare(normal(), value)) {
         m_vertexRef->setNormal(Util::toVector3(value));
-        m_parentModelRef->setDirty(true);
+        m_parentModelRef->markDirty();
         emit normalChanged();
     }
 }
@@ -187,11 +200,63 @@ QVector3D VertexRefObject::textureCoord() const
 
 void VertexRefObject::setTextureCoord(const QVector3D &value)
 {
+    Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_vertexRef);
     if (!qFuzzyCompare(textureCoord(), value)) {
         m_vertexRef->setTextureCoord(Util::toVector3(value));
-        m_parentModelRef->setDirty(true);
+        m_parentModelRef->markDirty();
         emit textureCoordChanged();
+    }
+}
+
+QVector3D VertexRefObject::sdefC() const
+{
+    Q_ASSERT(m_vertexRef);
+    return Util::fromVector3(m_vertexRef->sdefC());
+}
+
+void VertexRefObject::setSdefC(const QVector3D &value)
+{
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_vertexRef);
+    if (!qFuzzyCompare(sdefC(), value)) {
+        m_vertexRef->setSdefC(Util::toVector3(value));
+        m_parentModelRef->markDirty();
+        emit sdefCChanged();
+    }
+}
+
+QVector3D VertexRefObject::sdefR0() const
+{
+    Q_ASSERT(m_vertexRef);
+    return Util::fromVector3(m_vertexRef->sdefR0());
+}
+
+void VertexRefObject::setSdefR0(const QVector3D &value)
+{
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_vertexRef);
+    if (!qFuzzyCompare(sdefR0(), value)) {
+        m_vertexRef->setSdefR0(Util::toVector3(value));
+        m_parentModelRef->markDirty();
+        emit sdefR0Changed();
+    }
+}
+
+QVector3D VertexRefObject::sdefR1() const
+{
+    Q_ASSERT(m_vertexRef);
+    return Util::fromVector3(m_vertexRef->sdefR1());
+}
+
+void VertexRefObject::setSdefR1(const QVector3D &value)
+{
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_vertexRef);
+    if (!qFuzzyCompare(sdefR1(), value)) {
+        m_vertexRef->setSdefR1(Util::toVector3(value));
+        m_parentModelRef->markDirty();
+        emit sdefR1Changed();
     }
 }
 
@@ -203,10 +268,11 @@ qreal VertexRefObject::edgeSize() const
 
 void VertexRefObject::setEdgeSize(const qreal &value)
 {
+    Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_vertexRef);
     if (!qFuzzyCompare(edgeSize(), value)) {
         m_vertexRef->setEdgeSize(value);
-        m_parentModelRef->setDirty(true);
+        m_parentModelRef->markDirty();
         emit edgeSizeChanged();
     }
 }
@@ -219,10 +285,11 @@ VertexRefObject::Type VertexRefObject::type() const
 
 void VertexRefObject::setType(const Type &value)
 {
+    Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_vertexRef);
     if (type() != value) {
         m_vertexRef->setType(static_cast<IVertex::Type>(value));
-        m_parentModelRef->setDirty(true);
+        m_parentModelRef->markDirty();
         emit typeChanged();
     }
 }
