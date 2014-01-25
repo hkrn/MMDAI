@@ -386,9 +386,9 @@ Tab {
                 CheckBox {
                     id: enableInverseKinematics
                     enabled: scene.hasBoneSelected && scene.currentModel.firstTargetBone.hasInverseKinematics
-                    checked: visible && scene.currentModel.firstTargetBone.enableInverseKinematics
+                    checked: visible && scene.currentModel.firstTargetBone.inverseKinematicsEnabled
                     text: qsTr("Enable IK (a.k.a Inverse Kinematics)")
-                    onCheckedChanged: scene.currentModel.firstTargetBone.enableInverseKinematics = checked
+                    onCheckedChanged: scene.currentModel.firstTargetBone.inverseKinematicsEnabled = checked
                 }
                 Item { Layout.fillHeight: true }
             }
