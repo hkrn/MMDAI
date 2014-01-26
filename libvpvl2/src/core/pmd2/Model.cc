@@ -656,7 +656,7 @@ struct Model::PrivateContext {
             Morph *morph = morphs.append(new Morph(selfRef, encodingRef));
             morph->read(ptr, size);
             name2morphRefs.insert(morph->name(IEncoding::kJapanese)->toHashString(), morph);
-            if (hasEnglish) {
+            if (hasEnglish && morph->category() != IMorph::kBase) {
                 morph->readEnglishName(englishPtr, i);
                 name2morphRefs.insert(morph->name(IEncoding::kEnglish)->toHashString(), morph);
             }
