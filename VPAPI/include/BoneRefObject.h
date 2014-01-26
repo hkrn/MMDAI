@@ -45,6 +45,7 @@
 #include <vpvl2/Common.h>
 
 class LabelRefObject;
+class ModelProxy;
 
 namespace vpvl2 {
 class IBone;
@@ -53,6 +54,7 @@ class IBone;
 class BoneRefObject : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(BoneRefObject *parentBone READ parentBone CONSTANT FINAL)
     Q_PROPERTY(LabelRefObject *parentLabel READ parentLabel CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
@@ -78,13 +80,14 @@ class BoneRefObject : public QObject
     Q_PROPERTY(bool localAxesEnabled READ isLocalAxesEnabled WRITE setLocalAxesEnabled NOTIFY localAxesEnabledChanged FINAL)
 
 public:
-    BoneRefObject(LabelRefObject *labelRef, vpvl2::IBone *boneRef, const QUuid &uuid);
+    BoneRefObject(ModelProxy *modelRef, LabelRefObject *labelRef, vpvl2::IBone *boneRef, const QUuid &uuid);
     ~BoneRefObject();
 
     void setOriginLocalTranslation(const QVector3D &value);
     void setOriginLocalOrientation(const QQuaternion &value);
 
     vpvl2::IBone *data() const;
+    ModelProxy *parentModel() const;
     BoneRefObject *parentBone() const;
     LabelRefObject *parentLabel() const;
     QUuid uuid() const;
@@ -162,6 +165,7 @@ signals:
     void boneDidSync();
 
 private:
+    ModelProxy *m_parentModelRef;
     LabelRefObject *m_parentLabelRef;
     vpvl2::IBone *m_boneRef;
     const QUuid m_uuid;

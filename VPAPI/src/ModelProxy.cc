@@ -497,7 +497,7 @@ MaterialRefObject *ModelProxy::createMaterial()
 BoneRefObject *ModelProxy::createBone()
 {
     QScopedPointer<IBone> bone(m_model->createBone());
-    QScopedPointer<BoneRefObject> boneRef(new BoneRefObject(0, bone.data(), QUuid::createUuid()));
+    QScopedPointer<BoneRefObject> boneRef(new BoneRefObject(this, 0, bone.data(), QUuid::createUuid()));
     m_allBones.append(boneRef.data());
     m_uuid2BoneRefs.insert(boneRef->uuid(), boneRef.data());
     m_bone2Refs.insert(bone.data(), boneRef.data());
@@ -509,7 +509,7 @@ BoneRefObject *ModelProxy::createBone()
 MorphRefObject *ModelProxy::createMorph()
 {
     QScopedPointer<IMorph> morph(m_model->createMorph());
-    QScopedPointer<MorphRefObject> morphRef(new MorphRefObject(0, morph.data(), QUuid::createUuid()));
+    QScopedPointer<MorphRefObject> morphRef(new MorphRefObject(this, 0, morph.data(), QUuid::createUuid()));
     m_allMorphs.append(morphRef.data());
     m_uuid2MorphRefs.insert(morphRef->uuid(), morphRef.data());
     m_morph2Refs.insert(morph.data(), morphRef.data());
@@ -1171,7 +1171,7 @@ void ModelProxy::setAllBones(const Array<ILabel *> &labelRefs)
             for (int j = 0; j < nobjects; j++) {
                 IBone *boneRef = labelRef->boneRef(j);
                 const QUuid uuid = QUuid::createUuid();
-                BoneRefObject *boneObject = new BoneRefObject(labelObject, boneRef, uuid);
+                BoneRefObject *boneObject = new BoneRefObject(this, labelObject, boneRef, uuid);
                 if (boneRef->isInteractive()) {
                     labelObject->addBone(boneObject);
                 }
@@ -1198,7 +1198,7 @@ void ModelProxy::setAllMorphs(const Array<ILabel *> &labelRefs, const IModel *mo
             for (int j = 0; j < nobjects; j++) {
                 IMorph *morphRef = labelRef->morphRef(j);
                 const QUuid uuid = QUuid::createUuid();
-                MorphRefObject *morphObject = new MorphRefObject(labelObject, morphRef, uuid);
+                MorphRefObject *morphObject = new MorphRefObject(this, labelObject, morphRef, uuid);
                 labelObject->addMorph(morphObject);
                 m_allMorphs.append(morphObject);
                 m_morph2Refs.insert(morphRef, morphObject);

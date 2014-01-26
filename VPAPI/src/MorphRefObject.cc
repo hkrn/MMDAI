@@ -48,17 +48,18 @@
 using namespace vpvl2;
 using namespace vpvl2::extensions::qt;
 
-MorphRefObject::MorphRefObject(LabelRefObject *labelRef, IMorph *morphRef, const QUuid &uuid)
+MorphRefObject::MorphRefObject(ModelProxy *modelRef, LabelRefObject *labelRef, IMorph *morphRef, const QUuid &uuid)
     : QObject(labelRef),
+      m_parentModelRef(modelRef),
       m_parentLabelRef(labelRef),
       m_morphRef(morphRef),
       m_uuid(uuid),
       m_originWeight(0)
 {
-    Q_ASSERT(m_parentLabelRef);
+    Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_morphRef);
     Q_ASSERT(!m_uuid.isNull());
-    connect(m_parentLabelRef->parentModel(), &ModelProxy::languageChanged, this, &MorphRefObject::nameChanged);
+    connect(m_parentModelRef, &ModelProxy::languageChanged, this, &MorphRefObject::nameChanged);
     connect(this, &MorphRefObject::morphDidSync, this, &MorphRefObject::weightChanged);
 }
 
@@ -82,6 +83,11 @@ vpvl2::IMorph *MorphRefObject::data() const
     return m_morphRef;
 }
 
+ModelProxy *MorphRefObject::parentModel() const
+{
+    return m_parentModelRef;
+}
+
 LabelRefObject *MorphRefObject::parentLabel() const
 {
     return m_parentLabelRef;
@@ -97,7 +103,7 @@ QString MorphRefObject::name() const
 {
     Q_ASSERT(m_parentLabelRef);
     Q_ASSERT(m_morphRef);
-    ModelProxy *parentModel = m_parentLabelRef->parentModel();
+    ModelProxy *parentModel = m_parentModelRef;
     IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
     const IString *name = m_morphRef->name(language);
     return Util::toQString((name && name->size() > 0) ? name : m_morphRef->name(IEncoding::kDefaultLanguage));
@@ -108,7 +114,7 @@ void MorphRefObject::setName(const QString &value)
     Q_ASSERT(m_parentLabelRef);
     Q_ASSERT(m_morphRef);
     if (name() != value) {
-        ModelProxy *parentModel = m_parentLabelRef->parentModel();
+        ModelProxy *parentModel = m_parentModelRef;
         IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_morphRef->setName(s.data(), language);
@@ -142,19 +148,19 @@ void MorphRefObject::setCategory(const Category &value)
     /*
     case Eye:
         m_morphRef->setCategory(IMorph::kEye);
-        m_parentLabelRef->parentModel()->markDirty();
+        m_parentModelRef->markDirty();
         break;
     case Lip:
         m_morphRef->setCategory(IMorph::kLip);
-        m_parentLabelRef->parentModel()->markDirty();
+        m_parentModelRef->markDirty();
         break;
     case Eyeblow:
         m_morphRef->setCategory(IMorph::kEyeblow);
-        m_parentLabelRef->parentModel()->markDirty();
+        m_parentModelRef->markDirty();
         break;
     case Other:
         m_morphRef->setCategory(IMorph::kOther);
-        m_parentLabelRef->parentModel()->markDirty();
+        m_parentModelRef->markDirty();
         break;
         */
     default:

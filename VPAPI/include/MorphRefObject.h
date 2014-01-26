@@ -42,6 +42,7 @@
 #include <QUuid>
 
 class LabelRefObject;
+class ModelProxy;
 
 namespace vpvl2 {
 class IMorph;
@@ -51,6 +52,7 @@ class MorphRefObject : public QObject
 {
     Q_OBJECT
     Q_ENUMS(Category)
+    Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(LabelRefObject *parentLabel READ parentLabel CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
@@ -68,12 +70,13 @@ public:
         Other
     };
 
-    MorphRefObject(LabelRefObject *labelRef, vpvl2::IMorph *morphRef, const QUuid &uuid);
+    MorphRefObject(ModelProxy *modelRef, LabelRefObject *labelRef, vpvl2::IMorph *morphRef, const QUuid &uuid);
     ~MorphRefObject();
 
     void setOriginWeight(const qreal &value);
 
     vpvl2::IMorph *data() const;
+    ModelProxy *parentModel() const;
     LabelRefObject *parentLabel() const;
     QUuid uuid() const;
     QString name() const;
@@ -96,6 +99,7 @@ signals:
     void morphDidSync();
 
 private:
+    ModelProxy *m_parentModelRef;
     LabelRefObject *m_parentLabelRef;
     vpvl2::IMorph *m_morphRef;
     const QUuid m_uuid;
