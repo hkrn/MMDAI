@@ -63,31 +63,12 @@ Item {
 
     VPMM.Project {
         id: projectDocument
-        function __handleWillLoad(numEstimated) {
-        }
-        function __handleBeLoading(numLoaded, numEstimated) {
-        }
-        function __handleDidLoad(numLoaded, numEstimated) {
-        }
-        onModelWillLoad: {
-            model.modelWillLoad.connect(__handleWillLoad)
-            model.modelBeLoading.connect(__handleBeLoading)
-            model.modelDidLoad.connect(__handleDidLoad)
-        }
         onModelDidLoad: {
-            model.modelWillLoad.disconnect(__handleWillLoad)
-            model.modelBeLoading.disconnect(__handleBeLoading)
-            model.modelDidLoad.disconnect(__handleDidLoad)
             projectDocument.addModel(model)
         }
         onModelDidFailLoading: {
             busyIndicator.running = false
             notificationDidPost(qsTr("The model cannot be loaded: %1").arg(project.errorString))
-        }
-        onMotionWillLoad: {
-            motion.motionWillLoad.connect(__handleWillLoad)
-            motion.motionBeLoading.connect(__handleBeLoading)
-            motion.motionDidLoad.connect(__handleDidLoad)
         }
         onMotionDidFailLoading: {
             notificationDidPost(qsTr("The motion cannot be loaded: %1").arg(project.errorString))
