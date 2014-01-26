@@ -393,7 +393,6 @@ Item {
         }
         function __handleBoneDidSelect(bone) {
             transformHandleSet.toggle(bone)
-            infoPanel.currentBoneName = bone ? bone.name : infoPanel.defaultNullBoneName
             boneDidSelect(bone)
         }
         function __handleMorphWeightChanged() {
@@ -403,10 +402,6 @@ Item {
             if (morph) {
                 morph.weightChanged.connect(__handleMorphWeightChanged)
                 morph.sync()
-                infoPanel.currentMorphName = morph.name
-            }
-            else {
-                infoPanel.currentMorphName = infoPanel.defaultNullMorphlName
             }
             morphDidSelect(morph)
         }

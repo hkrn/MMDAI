@@ -58,7 +58,9 @@ Column {
             id: modelNameLabel
             font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
             color: infoPanel.textColor
-            text: defaultNullModelName
+            Binding on text {
+                value: scene.currentModel ? scene.currentModel.name : defaultNullModelName
+            }
         }
     }
     Row {
@@ -71,7 +73,9 @@ Column {
             id: boneNameLabel
             font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
             color: infoPanel.textColor
-            text: defaultNullBoneName
+            Binding on text {
+                value: scene.hasBoneSelected ? scene.currentModel.firstTargetBone.name : defaultNullBoneName
+            }
         }
     }
     Row {
@@ -84,7 +88,9 @@ Column {
             id: morphNameLabel
             font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }
             color: infoPanel.textColor
-            text: defaultNullMorphlName
+            Binding on text {
+                value: scene.hasMorphSelected ? scene.currentModel.firstTargetMorph.name : defaultNullMorphlName
+            }
         }
     }
 }
