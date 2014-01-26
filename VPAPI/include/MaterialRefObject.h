@@ -41,17 +41,14 @@
 #include <QColor>
 #include <QObject>
 #include <QUuid>
-#include <vpvl2/Common.h>
+#include <vpvl2/IMaterial.h>
 
 class ModelProxy;
-
-namespace vpvl2 {
-class IMaterial;
-}
 
 class MaterialRefObject : public QObject
 {
     Q_OBJECT
+    Q_ENUMS(SphereTextureType)
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
     Q_PROPERTY(int index READ index CONSTANT FINAL)
@@ -64,16 +61,26 @@ class MaterialRefObject : public QObject
     Q_PROPERTY(QColor diffuse READ diffuse WRITE setDiffuse NOTIFY diffuseChanged FINAL)
     Q_PROPERTY(QColor specular READ specular WRITE setSpecular NOTIFY specularChanged FINAL)
     Q_PROPERTY(QColor edgeColor READ edgeColor WRITE setEdgeColor NOTIFY edgeColorChanged FINAL)
+    Q_PROPERTY(SphereTextureType sphereTextureType READ sphereTextureType WRITE setSphereTextureType NOTIFY sphereTextureTypeChanged FINAL)
     Q_PROPERTY(qreal shininess READ shininess WRITE setShininess NOTIFY shininessChanged FINAL)
     Q_PROPERTY(qreal edgeSize READ edgeSize WRITE setEdgeSize NOTIFY edgeSizeChanged FINAL)
+    Q_PROPERTY(int toonTextureIndex READ toonTextureIndex WRITE setToonTextureIndex NOTIFY toonTextureIndexChanged FINAL)
+    Q_PROPERTY(bool sharedToonTextureEnabled READ isSharedToonTextureEnabled WRITE setSharedToonTextureEnabled NOTIFY sharedToonTextureEnabledChanged FINAL)
     Q_PROPERTY(bool cullingDisabled READ isCullingDisabled WRITE setCullingDisabled NOTIFY cullingDisabledChanged FINAL)
     Q_PROPERTY(bool castingShadowEnabled READ isCastingShadowEnabled WRITE setCastingShadowEnabled NOTIFY castingShadowEnabledChanged FINAL)
     Q_PROPERTY(bool castingShadowMapEnabled READ isCastingShadowMapEnabled WRITE setCastingShadowMapEnabled NOTIFY castingShadowMapEnabledChanged FINAL)
     Q_PROPERTY(bool shadowMapEnabled READ isShadowMapEnabled WRITE setShadowMapEnabled NOTIFY shadowMapEnabledChanged FINAL)
     Q_PROPERTY(bool edgeEnabled READ isEdgeEnabled WRITE setEdgeEnabled NOTIFY edgeEnabledChanged FINAL)
-    Q_PROPERTY(bool vertexColorEnabled READ isVertexColorEnabled WRITE setVertexColorEnabled NOTIFY vertexColorEnabledChanged)
+    Q_PROPERTY(bool vertexColorEnabled READ isVertexColorEnabled WRITE setVertexColorEnabled NOTIFY vertexColorEnabledChanged FINAL)
 
 public:
+    enum SphereTextureType {
+        None = vpvl2::IMaterial::kNone,
+        Multiply = vpvl2::IMaterial::kMultTexture,
+        Additive = vpvl2::IMaterial::kAddTexture,
+        SubTexture = vpvl2::IMaterial::kSubTexture
+    };
+
     MaterialRefObject(ModelProxy *parentModelRef, vpvl2::IMaterial *materialRef, const QUuid &uuid);
     ~MaterialRefObject();
 
@@ -99,10 +106,16 @@ public:
     void setSpecular(const QColor &value);
     QColor edgeColor() const;
     void setEdgeColor(const QColor &value);
+    SphereTextureType sphereTextureType() const;
+    void setSphereTextureType(const SphereTextureType &value);
     qreal shininess() const;
     void setShininess(const qreal &value);
     qreal edgeSize() const;
     void setEdgeSize(const qreal &value);
+    int toonTextureIndex() const;
+    void setToonTextureIndex(int value);
+    bool isSharedToonTextureEnabled() const;
+    void setSharedToonTextureEnabled(bool value);
     bool isCullingDisabled() const;
     void setCullingDisabled(bool value);
     bool isCastingShadowEnabled() const;
@@ -126,8 +139,11 @@ signals:
     void diffuseChanged();
     void specularChanged();
     void edgeColorChanged();
+    void sphereTextureTypeChanged();
     void shininessChanged();
     void edgeSizeChanged();
+    void toonTextureIndexChanged();
+    void sharedToonTextureEnabledChanged();
     void cullingDisabledChanged();
     void castingShadowEnabledChanged();
     void castingShadowMapEnabledChanged();

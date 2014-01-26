@@ -33,7 +33,7 @@ ScrollView {
                     id: rigidBodyNameTextField
                     Layout.fillWidth: true
                     placeholderText: qsTr("Input Rigid Body Name Here")
-                    text: rigidBodyView.targetObject.name
+                    text: targetObject.name
                 }
                 Binding {
                     target: targetObject
@@ -74,7 +74,7 @@ ScrollView {
                         { "text": qsTr("Static"),  "value": VPMM.RigidBody.StaticObject },
                         { "text": qsTr("Aligned"), "value": VPMM.RigidBody.AlignedObject }
                     ]
-                    currentIndex: indexOf(rigidBodyView.targetObject.objectType)
+                    currentIndex: indexOf(targetObject.objectType)
                 }
                 Binding {
                     target: targetObject
@@ -108,7 +108,7 @@ ScrollView {
                             { "text": qsTr("Box"),     "value": VPMM.RigidBody.BoxShape },
                             { "text": qsTr("Capsule"), "value": VPMM.RigidBody.CapsureShape }
                         ]
-                        currentIndex: indexOf(rigidBodyView.targetObject.shapeType)
+                        currentIndex: indexOf(targetObject.shapeType)
                     }
                     Binding {
                         target: targetObject

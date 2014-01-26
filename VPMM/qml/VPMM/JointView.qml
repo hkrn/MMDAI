@@ -75,7 +75,7 @@ ScrollView {
                     id: jointNameTextField
                     Layout.fillWidth: true
                     placeholderText: qsTr("Input Rigid Body Name Here")
-                    text: jointView.targetObject.name
+                    text: targetObject.name
                 }
                 Binding {
                     target: targetObject
@@ -126,10 +126,10 @@ ScrollView {
                         { "text": qsTr("Slider"), "value": VPMM.Joint.SliderConstraint },
                         { "text": qsTr("Hinge"), "value": VPMM.Joint.HingeConstraint }
                     ]
-                    currentIndex: indexOf(jointView.targetObject.type)
+                    currentIndex: indexOf(targetObject.type)
                 }
                 Binding {
-                    target: jointView.targetObject
+                    target: targetObject
                     property: "type"
                     value: jointTypeComboBox.model[jointTypeComboBox.currentIndex].value
                     when: jointTypeComboBox.hovered

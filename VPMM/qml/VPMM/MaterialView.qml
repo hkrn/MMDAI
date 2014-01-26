@@ -1,9 +1,13 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.1
+import QtQuick.Dialogs 1.1
 import QtQuick.Layouts 1.1
+import com.github.mmdai.VPMM 1.0 as VPMM
 
 ScrollView {
     id: materialView
+    readonly property int colorPreviewWidth: 75
+    readonly property int colorPreviewHeight: 25
     property var targetObject
     Item {
         id: materialContentView
@@ -16,7 +20,7 @@ ScrollView {
                 TextField {
                     Layout.fillWidth: true
                     placeholderText: qsTr("Input Material Name Here")
-                    text: materialView.targetObject.name
+                    text: targetObject.name
                 }
             }
             RowLayout {
@@ -27,53 +31,287 @@ ScrollView {
                 title: qsTr("Color")
                 Layout.fillWidth: true
                 GridLayout {
-                    columns: 6
-                    Label { Layout.columnSpan: 2; Layout.alignment: Qt.AlignCenter; text: qsTr("Preview") }
-                    Label { text: qsTr("Red") }
-                    Label { text: qsTr("Green") }
-                    Label { text: qsTr("Blue") }
-                    Label { text: qsTr("Alpha") }
-                    Rectangle { id: ambientColor; width: 25; height: 25; color: materialView.targetObject.ambient }
-                    Label { text: qsTr("Ambient") }
-                    SpinBox { minimumValue: 0; maximumValue: 255; value: ambientColor.color.r }
-                    SpinBox { minimumValue: 0; maximumValue: 255; value: ambientColor.color.g }
-                    SpinBox { minimumValue: 0; maximumValue: 255; value: ambientColor.color.b }
-                    Item { Layout.fillWidth: true }
-                    Rectangle { id: diffuseColor; width: 25; height: 25; color: materialView.targetObject.diffuse }
-                    Label { text: qsTr("Diffuse") }
-                    SpinBox { minimumValue: 0; maximumValue: 255; value: diffuseColor.color.r }
-                    SpinBox { minimumValue: 0; maximumValue: 255; value: diffuseColor.color.g }
-                    SpinBox { minimumValue: 0; maximumValue: 255; value: diffuseColor.color.b }
-                    SpinBox { minimumValue: 0; maximumValue: 255; value: diffuseColor.color.a }
-                    Rectangle { id: specularColor; width: 25; height: 25; color: materialView.targetObject.specular }
-                    Label { text: qsTr("Specular") }
-                    SpinBox { minimumValue: 0; maximumValue: 255; value: specularColor.color.r }
-                    SpinBox { minimumValue: 0; maximumValue: 255; value: specularColor.color.r }
-                    SpinBox { minimumValue: 0; maximumValue: 255; value: specularColor.color.r }
-                    Item { Layout.fillWidth: true }
-                    Rectangle { width: 25; height: 25; color: systemPalette.window }
-                    Label { text: qsTr("Shininess") }
-                    SpinBox { minimumValue: 0; maximumValue: 255; value: materialView.targetObject.shininess }
-                    Item { Layout.columnSpan: 3; Layout.fillWidth: true }
+                    id: materialColorLayout
+                    columns: 8
+                    RowLayout {
+                        Layout.columnSpan: materialColorLayout.columns
+                        Rectangle {
+                            id: ambientColor
+                            width: colorPreviewWidth
+                            height: colorPreviewHeight
+                            color: targetObject.ambient
+                            ColorDialog {
+                                id: ambientColorDialog
+                                property color previousColor
+                                title: qsTr("Ambient Color")
+                                onCurrentColorChanged: targetObject.ambient = currentColor
+                                onAccepted: {
+                                    targetObject.ambient = color
+                                    close()
+                                }
+                                onRejected: {
+                                    targetObject.ambient = previousColor
+                                    close()
+                                }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    ambientColorDialog.color = ambientColorDialog.previousColor = targetObject.ambient
+                                    ambientColorDialog.open()
+                                }
+                            }
+                        }
+                        Label { text: qsTr("Ambient") }
+                    }
+                    Label { text: "R" }
+                    SpinBox {
+                        minimumValue: 0
+                        maximumValue: 1
+                        decimals: 3
+                        stepSize: 0.01
+                        value: ambientColor.color.r
+                    }
+                    Label { text: "G" }
+                    SpinBox {
+                        minimumValue: 0
+                        maximumValue: 1
+                        decimals: 3
+                        stepSize: 0.01
+                        value: ambientColor.color.g
+                    }
+                    Label { text: "B" }
+                    SpinBox {
+                        minimumValue: 0
+                        maximumValue: 1
+                        decimals: 3
+                        stepSize: 0.01
+                        value: ambientColor.color.b
+                    }
+                    Item {
+                        Layout.columnSpan: 2
+                        Layout.fillWidth: true
+                    }
+                    RowLayout {
+                        Layout.columnSpan: materialColorLayout.columns
+                        Rectangle {
+                            id: diffuseColor
+                            width: colorPreviewWidth
+                            height: colorPreviewHeight
+                            color: targetObject.diffuse
+                            ColorDialog {
+                                id: diffuseColorDialog
+                                property color previousColor
+                                title: qsTr("Diffuse Color")
+                                showAlphaChannel: true
+                                onCurrentColorChanged: targetObject.diffuse = currentColor
+                                onAccepted: {
+                                    targetObject.diffuse = color
+                                    close()
+                                }
+                                onRejected: {
+                                    targetObject.diffuse = previousColor
+                                    close()
+                                }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    diffuseColorDialog.color = diffuseColorDialog.previousColor = targetObject.diffuse
+                                    diffuseColorDialog.open()
+                                }
+                            }
+                        }
+                        Label { text: qsTr("Diffuse") }
+                    }
+                    Label { text: "R" }
+                    SpinBox {
+                        minimumValue: 0
+                        maximumValue: 1
+                        decimals: 3
+                        stepSize: 0.01
+                        value: diffuseColor.color.r
+                    }
+                    Label { text: "G" }
+                    SpinBox {
+                        minimumValue: 0
+                        maximumValue: 1
+                        decimals: 3
+                        stepSize: 0.01
+                        value: diffuseColor.color.g
+                    }
+                    Label { text: "B" }
+                    SpinBox {
+                        minimumValue: 0
+                        maximumValue: 1
+                        decimals: 3
+                        stepSize: 0.01
+                        value: diffuseColor.color.b
+                    }
+                    Label { text: "A" }
+                    SpinBox {
+                        minimumValue: 0
+                        maximumValue: 1
+                        decimals: 3
+                        stepSize: 0.01
+                        value: diffuseColor.color.a
+                    }
+                    RowLayout {
+                        Layout.columnSpan: materialColorLayout.columns
+                        Rectangle {
+                            id: specularColor
+                            width: colorPreviewWidth
+                            height: colorPreviewHeight
+                            color: targetObject.specular
+                            ColorDialog {
+                                id: specularColorDialog
+                                property color previousColor
+                                title: qsTr("Specular Color")
+                                onCurrentColorChanged: targetObject.specular = currentColor
+                                onAccepted: {
+                                    targetObject.specular = color
+                                    close()
+                                }
+                                onRejected: {
+                                    targetObject.specular = previousColor
+                                    close()
+                                }
+                            }
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: {
+                                    specularColorDialog.color = specularColorDialog.previousColor = targetObject.specular
+                                    specularColorDialog.open()
+                                }
+                            }
+                        }
+                        Label { text: qsTr("Specular") }
+                    }
+                    Label { text: "R" }
+                    SpinBox {
+                        minimumValue: 0
+                        maximumValue: 1
+                        decimals: 3
+                        stepSize: 0.01
+                        value: specularColor.color.r
+                    }
+                    Label { text: "G" }
+                    SpinBox {
+                        minimumValue: 0
+                        maximumValue: 1
+                        decimals: 3
+                        stepSize: 0.01
+                        value: specularColor.color.g
+                    }
+                    Label { text: "B" }
+                    SpinBox {
+                        minimumValue: 0
+                        maximumValue: 1
+                        decimals: 3
+                        stepSize: 0.01
+                        value: specularColor.color.b
+                    }
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.columnSpan: 2
+                    }
+                    RowLayout {
+                        Layout.columnSpan: materialColorLayout.columns
+                        Label {
+                            text: qsTr("Shininess")
+                        }
+                        SpinBox {
+                            minimumValue: 0
+                            maximumValue: 10000
+                            decimals: 3
+                            stepSize: 0.01
+                            value: targetObject.shininess
+                        }
+                    }
                 }
             }
             GroupBox {
                 title: qsTr("Edge")
                 checkable: true
-                checked: materialView.targetObject.edgeEnabled
+                checked: targetObject.edgeEnabled
                 Layout.fillWidth: true
                 ColumnLayout {
-                    RowLayout {
-                        Rectangle { id: edgeColor; width: 25; height: 25; color: materialView.targetObject.edgeColor }
-                        Label { text: qsTr("Edge") }
-                        SpinBox { minimumValue: 0; maximumValue: 255; value: edgeColor.color.r }
-                        SpinBox { minimumValue: 0; maximumValue: 255; value: edgeColor.color.g }
-                        SpinBox { minimumValue: 0; maximumValue: 255; value: edgeColor.color.b }
-                        SpinBox { minimumValue: 0; maximumValue: 255; value: edgeColor.color.a }
+                    GridLayout {
+                        id: materialEdgeLayout
+                        columns: 8
+                        RowLayout {
+                            Layout.columnSpan: materialEdgeLayout.columns
+                            Rectangle {
+                                id: edgeColor
+                                width: colorPreviewWidth
+                                height: colorPreviewHeight
+                                color: targetObject.edgeColor
+                                ColorDialog {
+                                    id: edgeColorDialog
+                                    property color previousColor
+                                    title: qsTr("Edge Color")
+                                    showAlphaChannel: true
+                                    onCurrentColorChanged: targetObject.edgeColor = currentColor
+                                    onAccepted: {
+                                        targetObject.edgeColor = color
+                                        close()
+                                    }
+                                    onRejected: {
+                                        targetObject.edgeColor = previousColor
+                                        close()
+                                    }
+                                }
+                                MouseArea {
+                                    anchors.fill: parent
+                                    onClicked: {
+                                        edgeColorDialog.color = edgeColorDialog.previousColor = targetObject.edgeColor
+                                        edgeColorDialog.open()
+                                    }
+                                }
+                            }
+                            Label { text: qsTr("Edge") }
+                        }
+                        Label { text: "R" }
+                        SpinBox {
+                            minimumValue: 0
+                            maximumValue: 1
+                            decimals: 3
+                            stepSize: 0.01
+                            value: edgeColor.color.r
+                        }
+                        Label { text: "G" }
+                        SpinBox {
+                            minimumValue: 0
+                            maximumValue: 1
+                            decimals: 3
+                            stepSize: 0.01
+                            value: edgeColor.color.g
+                        }
+                        Label { text: "B" }
+                        SpinBox {
+                            minimumValue: 0
+                            maximumValue: 1
+                            decimals: 3
+                            stepSize: 0.01
+                            value: edgeColor.color.b
+                        }
+                        Label { text: "A" }
+                        SpinBox {
+                            minimumValue: 0
+                            maximumValue: 1
+                            decimals: 3
+                            stepSize: 0.01
+                            value: edgeColor.color.a
+                        }
                     }
                     RowLayout {
                         Label { text: qsTr("Size") }
-                        SpinBox { height: 2; decimals: 3; stepSize: 0.01; value: materialView.targetObject.edgeSize }
+                        SpinBox {
+                            height: 2
+                            decimals: 3
+                            stepSize: 0.01
+                            value: targetObject.edgeSize
+                        }
                     }
                 }
             }
@@ -81,11 +319,26 @@ ScrollView {
                 title: qsTr("Capabilities")
                 Layout.fillWidth: true
                 ColumnLayout {
-                    CheckBox { text: qsTr("TwoSide Drawing"); checked: materialView.targetObject.cullingDisabled }
-                    CheckBox { text: qsTr("Casting Projective Shadow"); checked: materialView.targetObject.castingShadowEnabled }
-                    CheckBox { text: qsTr("Casting Shadow Map"); checked: materialView.targetObject.castingShadowMapEnabled }
-                    CheckBox { text: qsTr("Enable Shadow Map"); checked: materialView.targetObject.shadowMapEnabled }
-                    CheckBox { text: qsTr("Vertex Color"); checked: materialView.targetObject.vertexColorEnabled }
+                    CheckBox {
+                        text: qsTr("TwoSide Drawing")
+                        checked: targetObject.cullingDisabled
+                    }
+                    CheckBox {
+                        text: qsTr("Casting Projective Shadow")
+                        checked: targetObject.castingShadowEnabled
+                    }
+                    CheckBox {
+                        text: qsTr("Casting Shadow Map")
+                        checked: targetObject.castingShadowMapEnabled
+                    }
+                    CheckBox {
+                        text: qsTr("Enable Shadow Map")
+                        checked: targetObject.shadowMapEnabled
+                    }
+                    CheckBox {
+                        text: qsTr("Vertex Color")
+                        checked: targetObject.vertexColorEnabled
+                    }
                 }
             }
             GroupBox {
@@ -95,13 +348,23 @@ ScrollView {
                     GridLayout {
                         columns: 3
                         Label { text: qsTr("Main") }
-                        TextField { Layout.fillWidth: true; text: materialView.targetObject.mainTexturePath }
+                        TextField {
+                            Layout.fillWidth: true
+                            text: targetObject.mainTexturePath
+                        }
                         Button { text: qsTr("Change")  }
                         Label { text: qsTr("Toon") }
-                        TextField { Layout.fillWidth: true; text: materialView.targetObject.sphereTexturePath }
+                        TextField {
+                            Layout.fillWidth: true
+                            enabled: !enableSharedToonCheckbox.checked
+                            text: targetObject.sphereTexturePath
+                        }
                         Button { text: qsTr("Change") }
                         Label { text: qsTr("Sphere") }
-                        TextField { Layout.fillWidth: true; text: materialView.targetObject.toonTexturePath }
+                        TextField {
+                            Layout.fillWidth: true
+                            text: targetObject.toonTexturePath
+                        }
                         Button { text: qsTr("Change") }
                     }
                     GridLayout {
@@ -109,22 +372,59 @@ ScrollView {
                         CheckBox {
                             id: enableSharedToonCheckbox
                             text: qsTr("Enable Shared Toon")
-                            checked: false
+                            checked: targetObject.sharedToonTextureEnabled
                         }
                         ComboBox {
+                            id: toonTextureIndexComboBox
                             enabled: enableSharedToonCheckbox.checked
                             model: [
-                                0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+                                "toon0.bmp",
+                                "toon1.bmp",
+                                "toon2.bmp",
+                                "toon3.bmp",
+                                "toon4.bmp",
+                                "toon5.bmp",
+                                "toon6.bmp",
+                                "toon7.bmp",
+                                "toon8.bmp",
+                                "toon9.bmp"
                             ]
+                            currentIndex: enabled ? targetObject.toonTextureIndex : 0
+                        }
+                        Binding {
+                            target: targetObject
+                            property: "toonTextureIndex"
+                            value: toonTextureIndexComboBox.enabled ? toonTextureIndexComboBox.currentIndex : 0
                         }
                         Label { text: qsTr("Sphere Texture Type") }
                         ComboBox {
-                            model: ListModel {
-                                ListElement { text: "None" }
-                                ListElement { text: "Multiply" }
-                                ListElement { text: "Add" }
-                                ListElement { text: "SubTexture" }
+                            id: sphereTextureTypeComboBox
+                            function indexOf(type) {
+                                switch (type) {
+                                case VPMM.Material.None:
+                                    return 0
+                                case VPMM.Material.Multiply:
+                                    return 1
+                                case VPMM.Material.Additive:
+                                    return 2
+                                case VPMM.Material.SubTexture:
+                                    return 3
+                                default:
+                                    return -1
+                                }
                             }
+                            model: [
+                                { "text": qsTr("None"), "value": VPMM.Material.None },
+                                { "text": qsTr("Multiply"), "value": VPMM.Material.Multiply },
+                                { "text": qsTr("Additive"), "value": VPMM.Material.Additive },
+                                { "text": qsTr("SubTexture"), "value": VPMM.Material.SubTexture }
+                            ]
+                            currentIndex: indexOf(targetObject.sphereTextureType)
+                        }
+                        Binding {
+                            target: targetObject
+                            property: "sphereTextureType"
+                            value: sphereTextureTypeComboBox.model[sphereTextureTypeComboBox.currentIndex].value
                         }
                     }
                 }
@@ -134,7 +434,7 @@ ScrollView {
                 Layout.fillWidth: true
                 TextArea {
                     anchors.fill: parent
-                    text: materialView.targetObject.userAreaData
+                    text: targetObject.userAreaData
                 }
             }
             Item { height: 20 }

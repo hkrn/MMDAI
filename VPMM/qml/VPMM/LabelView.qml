@@ -13,9 +13,38 @@ Item {
             TextField {
                 Layout.fillWidth: true
                 placeholderText: qsTr("Input Label Name Here")
-                text: labelView.targetObject.name
+                text: targetObject.name
             }
         }
-        Item { Layout.fillHeight: true }
+        RowLayout {
+            Label { text: qsTr("Type") }
+            ComboBox {
+                id: labelTypeComboBox
+                model: [
+                    qsTr("Bones"),
+                    qsTr("Morphs")
+                ]
+            }
+            CheckBox { text: qsTr("Special") }
+        }
+        TableView {
+            model: labelTypeComboBox.currentIndex === 0 ? targetObject.bones : targetObject.morphs
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            TableViewColumn { title: qsTr("Name"); role: "name" }
+        }
+        RowLayout {
+            ComboBox {
+                Layout.fillWidth: true
+                model: labelTypeComboBox.currentIndex === 0 ? bonesModel : morphsModel
+                editable: true
+            }
+            Button {
+                text: qsTr("Add")
+            }
+            Button {
+                text: qsTr("Remove")
+            }
+        }
     }
 }

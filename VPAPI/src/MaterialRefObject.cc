@@ -239,6 +239,20 @@ void MaterialRefObject::setEdgeColor(const QColor &value)
     }
 }
 
+MaterialRefObject::SphereTextureType MaterialRefObject::sphereTextureType() const
+{
+    Q_ASSERT(m_materialRef);
+    return static_cast<SphereTextureType>(m_materialRef->sphereTextureRenderMode());
+}
+
+void MaterialRefObject::setSphereTextureType(const SphereTextureType &value)
+{
+    if (sphereTextureType() != value) {
+        m_materialRef->setSphereTextureRenderMode(static_cast<IMaterial::SphereTextureRenderMode>(value));
+        emit sphereTextureTypeChanged();
+    }
+}
+
 qreal MaterialRefObject::shininess() const
 {
     Q_ASSERT(m_materialRef);
@@ -268,6 +282,34 @@ void MaterialRefObject::setEdgeSize(const qreal &value)
         m_materialRef->setEdgeSize(value);
         m_parentModelRef->markDirty();
         emit edgeSizeChanged();
+    }
+}
+
+int MaterialRefObject::toonTextureIndex() const
+{
+    Q_ASSERT(m_materialRef);
+    return m_materialRef->toonTextureIndex();
+}
+
+void MaterialRefObject::setToonTextureIndex(int value)
+{
+    if (toonTextureIndex() != value) {
+        m_materialRef->setToonTextureIndex(value);
+        emit toonTextureIndexChanged();
+    }
+}
+
+bool MaterialRefObject::isSharedToonTextureEnabled() const
+{
+    Q_ASSERT(m_materialRef);
+    return m_materialRef->isSharedToonTextureUsed();
+}
+
+void MaterialRefObject::setSharedToonTextureEnabled(bool value)
+{
+    if (isSharedToonTextureEnabled() != value) {
+        m_materialRef->setSharedToonTextureUsed(value);
+        emit sharedToonTextureEnabledChanged();
     }
 }
 

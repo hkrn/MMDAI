@@ -15,12 +15,17 @@ Item {
             TextField {
                 Layout.fillWidth: true
                 placeholderText: qsTr("Input Morph Name Here")
-                text: morphView.targetObject.name
+                text: targetObject.name
             }
             Label { text: qsTr("Category") }
             ComboBox {
                 Layout.fillWidth: true
-                model: [ qsTr("Lip"), qsTr("Eye"), qsTr("Eyeblow"), qsTr("Others") ]
+                model: [
+                    qsTr("Lip"),
+                    qsTr("Eye"),
+                    qsTr("Eyeblow"),
+                    qsTr("Others")
+                ]
             }
             Label { text: qsTr("Type") }
             Label { text: qsTr("Type Name") }

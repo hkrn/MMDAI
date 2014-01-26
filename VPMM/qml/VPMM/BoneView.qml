@@ -40,7 +40,7 @@ ScrollView {
                     id: boneNameTextField
                     Layout.fillWidth: true
                     placeholderText: qsTr("Input Bone Name Here")
-                    text: boneView.targetObject.name
+                    text: targetObject.name
                 }
                 Binding {
                     target: targetObject
@@ -152,7 +152,7 @@ ScrollView {
                     CheckBox {
                         id: boneRotateableCheckbox
                         text: qsTr("Rotateable")
-                        checked: boneView.targetObject.rotateable
+                        checked: targetObject.rotateable
                     }
                     Binding {
                         target: targetObject
@@ -162,7 +162,7 @@ ScrollView {
                     CheckBox {
                         id: boneMovableCheckbox
                         text: qsTr("Movable")
-                        checked: boneView.targetObject.movable
+                        checked: targetObject.movable
                     }
                     Binding {
                         target: targetObject
@@ -172,7 +172,7 @@ ScrollView {
                     CheckBox {
                         id: boneVisibleCheckbox
                         text: qsTr("Visible")
-                        checked: boneView.targetObject.visible
+                        checked: targetObject.visible
                     }
                     Binding {
                         target: targetObject
@@ -182,7 +182,7 @@ ScrollView {
                     CheckBox {
                         id: boneInteractiveCheckbox
                         text: qsTr("Interactive")
-                        checked: boneView.targetObject.interactive
+                        checked: targetObject.interactive
                     }
                     Binding {
                         target: targetObject
@@ -192,7 +192,7 @@ ScrollView {
                     CheckBox {
                         id: boneInherenceOrientationCheckbox
                         text: qsTr("Inherence Orientation")
-                        checked: boneView.targetObject.inherenceOrientationEnabled
+                        checked: targetObject.inherenceOrientationEnabled
                     }
                     Binding {
                         target: targetObject
@@ -202,7 +202,7 @@ ScrollView {
                     CheckBox {
                         id: boneInherenceTranslationCheckbox
                         text: qsTr("Inherence Translation")
-                        checked: boneView.targetObject.inherenceTranslationEnabled
+                        checked: targetObject.inherenceTranslationEnabled
                     }
                     Binding {
                         target: targetObject
@@ -230,7 +230,7 @@ ScrollView {
                         minimumValue: -maximumValue
                         decimals: 5
                         stepSize: 0.01
-                        value: boneView.targetObject.coefficient
+                        value: targetObject.coefficient
                     }
                     Binding {
                         target: targetObject
@@ -245,7 +245,7 @@ ScrollView {
                 title: qsTr("Local Axes")
                 enabled: checked
                 checkable: true
-                checked: boneView.targetObject.localAxesEnabled
+                checked: targetObject.localAxesEnabled
                 Layout.fillWidth: true
                 GridLayout {
                     columns: 2
@@ -282,7 +282,7 @@ ScrollView {
                 title: qsTr("Fixed Axes")
                 enabled: checked
                 checkable: true
-                checked: boneView.targetObject.fixedAxisEnabled
+                checked: targetObject.fixedAxisEnabled
                 Layout.fillWidth: true
                 RowLayout {
                     GroupBox {
@@ -357,7 +357,7 @@ ScrollView {
                 title: qsTr("IK (Inverse Kinematics)")
                 enabled: checked
                 checkable: true
-                checked: boneView.targetObject.inverseKinematicsEnabled
+                checked: targetObject.inverseKinematicsEnabled
                 Layout.fillWidth: true
                 GridLayout {
                     columns: 2
