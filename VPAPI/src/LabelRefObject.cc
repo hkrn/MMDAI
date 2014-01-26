@@ -41,6 +41,7 @@
 #include <vpvl2/extensions/qt/String.h>
 #include <QtCore>
 
+#include "BoneRefObject.h"
 #include "ModelProxy.h"
 #include "Util.h"
 
@@ -83,12 +84,13 @@ QString LabelRefObject::name() const
     Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_labelRef);
     if (m_labelRef->isSpecial()) {
-        if (IBone *bone = m_labelRef->boneRef(0)) {
-            IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(m_parentModelRef->language());
-            return Util::toQString(bone->name(language));
+        if (BoneRefObject *bone = m_parentModelRef->resolveBoneRef(m_labelRef->boneRef(0))) {
+            return bone->name();
         }
     }
-    return Util::toQString(m_labelRef->name(IEncoding::kJapanese));
+    IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(m_parentModelRef->language());
+    const IString *name = m_labelRef->name(language);
+    return Util::toQString((name && name->size() > 0) ? name : m_labelRef->name(IEncoding::kDefaultLanguage));
 }
 
 void LabelRefObject::setName(const QString &value)
