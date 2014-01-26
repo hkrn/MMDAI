@@ -310,10 +310,6 @@ Item {
         onProjectDidLoad: __startProject()
         onProjectWillSave: __stopProject()
         onProjectDidSave: __startProject()
-        onCurrentModelChanged: {
-            var currentModel = projectDocument.currentModel
-            infoPanel.currentModelName = currentModel ? currentModel.name : infoPanel.defaultNullModelName
-        }
         onCurrentMotionChanged: {
             renderTargetAnimation.setRange(0, projectDocument.durationTimeIndex)
             seek(currentTimeIndex)

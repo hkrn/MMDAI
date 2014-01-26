@@ -251,15 +251,14 @@ public slots:
     Q_INVOKABLE JointRefObject *findJointByName(const QString &name) const;
     Q_INVOKABLE JointRefObject *findJointByUuid(const QUuid &uuid) const;
 
+private slots:
+    void resetLanguage();
+
 private:
-    void buildLabelHash(const vpvl2::IModel *model,
-                        QHash<vpvl2::IBone *, vpvl2::ILabel *> &bone2label,
-                        QHash<vpvl2::IMorph *, vpvl2::ILabel *> &morph2label);
     void setAllBones(const vpvl2::Array<vpvl2::ILabel *> &labelRefs);
     void setAllMorphs(const vpvl2::Array<vpvl2::ILabel *> &labelRefs, const vpvl2::IModel *model);
     void saveTransformState();
     void clearTransformState();
-    vpvl2::IEncoding::LanguageType languageType() const;
 
     ProjectProxy *m_parentProjectRef;
     MotionProxy *m_childMotionRef;

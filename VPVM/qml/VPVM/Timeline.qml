@@ -224,7 +224,6 @@ FocusScope {
                     var animation = {
                         "target": label,
                         "label": label,
-                        "propertyName": opaqueObject.name,
                         "opaqueObject": opaqueObject
                     }
                     anims.push(animation)
@@ -241,7 +240,6 @@ FocusScope {
         var animation = {
             "target": label,
             "label": label,
-            "propertyName": camera.name,
             "opaqueObject": camera
         }
         anims.push(animation)
@@ -258,7 +256,6 @@ FocusScope {
         var animation = {
             "target": label,
             "label": label,
-            "propertyName": light.name,
             "opaqueObject": light
         }
         anims.push(animation)
@@ -415,10 +412,10 @@ FocusScope {
             for (j = 0; j < numTracks; j++) {
                 track = tracks[j];
                 if (track.type === "object" && track.target === animation.target) {
-                    objectTrack = track;
+                    objectTrack = track
                 }
-                if (track.type === "property" && track.target === animation.target && track.propertyName === animation.propertyName) {
-                    propertyTrack = track;
+                if (track.type === "property" && track.target === animation.target && track.opaqueObject === animation.opaqueObject) {
+                    propertyTrack = track
                 }
             }
             if (!objectTrack) {
@@ -426,7 +423,6 @@ FocusScope {
                 objectTrack = {
                     "type": "object",
                     "id": "t%1".arg(label.index),
-                    "name": label.name,
                     "target": label,
                     "collapsed": i > 0,
                     "selected": false,
@@ -441,8 +437,6 @@ FocusScope {
                 propertyTrack = {
                     "type": "property",
                     "id": "%1_o%2".arg(objectTrack.id).arg(opaqueObject.index),
-                    "name": opaqueObject.name,
-                    "propertyName": opaqueObject.name,
                     "opaqueObject": opaqueObject,
                     "selected": false,
                     "target": label,
@@ -848,10 +842,10 @@ FocusScope {
             }
             ctx.font = defaultFont
 
-            //bottom track line
+            // bottom track line
             drawLine(ctx, 0, y, canvasWidth, y, bottomTrackLineStrokeColor);
-            //draw track label
-            ctx.fillText(track.name, xshift, y - trackLabelHeight / 4);
+            // draw track label
+            ctx.fillText((track.opaqueObject || track.target).name, xshift, y - trackLabelHeight / 4);
 
             // if it's property track then draw animations
             if (trackType === "property") {

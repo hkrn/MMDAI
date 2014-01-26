@@ -45,9 +45,6 @@ Column {
     readonly property color labelColor: "#0074d9"
     readonly property color textColor: "#ff4136"
     property int fontPointSize : 16
-    property alias currentModelName: modelNameLabel.text
-    property alias currentBoneName: boneNameLabel.text
-    property alias currentMorphName: morphNameLabel.text
     Row {
         Text {
             font { family: applicationPreference.fontFamily; pointSize: infoPanel.fontPointSize }

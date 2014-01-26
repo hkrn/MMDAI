@@ -92,6 +92,7 @@ ModelProxy::ModelProxy(ProjectProxy *project,
     Q_ASSERT(m_parentProjectRef);
     Q_ASSERT(!m_model.isNull());
     Q_ASSERT(!m_uuid.isNull());
+    connect(m_parentProjectRef, &ProjectProxy::languageChanged, this, &ModelProxy::resetLanguage);
     connect(this, &ModelProxy::boneDidSelect, this, &ModelProxy::firstTargetBoneChanged);
     connect(this, &ModelProxy::morphDidSelect, this, &ModelProxy::firstTargetMorphChanged);
     connect(this, &ModelProxy::modelDidRefresh, this, &ModelProxy::translationChanged);
@@ -549,14 +550,14 @@ QUrl ModelProxy::faviconUrl() const
 QString ModelProxy::name() const
 {
     Q_ASSERT(m_model);
-    const IString *name = m_model->name(languageType());
+    const IString *name = m_model->name(static_cast<IEncoding::LanguageType>(language()));
     return Util::toQString((name && name->size() > 0) ? name : m_model->name(IEncoding::kDefaultLanguage));
 }
 
 QString ModelProxy::comment() const
 {
     Q_ASSERT(m_model);
-    const IString *comment = m_model->comment(languageType());
+    const IString *comment = m_model->comment(static_cast<IEncoding::LanguageType>(language()));
     return Util::toQString((comment && comment->size() > 0) ? comment : m_model->comment(IEncoding::kDefaultLanguage));
 }
 
@@ -903,6 +904,13 @@ QList<JointRefObject *> ModelProxy::allJointRefs() const
     return m_allJoints;
 }
 
+void ModelProxy::resetLanguage()
+{
+    /* force updating language property */
+    m_language = ProjectProxy::DefaultLauguage;
+    emit languageChanged();
+}
+
 void ModelProxy::setAllBones(const Array<ILabel *> &labelRefs)
 {
     const int nlabels = labelRefs.count();
@@ -974,9 +982,4 @@ void ModelProxy::saveTransformState()
 void ModelProxy::clearTransformState()
 {
     m_transformState.clear();
-}
-
-IEncoding::LanguageType ModelProxy::languageType() const
-{
-    return static_cast<IEncoding::LanguageType>(m_language);
 }

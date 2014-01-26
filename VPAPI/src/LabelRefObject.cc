@@ -55,6 +55,7 @@ LabelRefObject::LabelRefObject(ModelProxy *modelRef, ILabel *labelRef)
 {
     Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_labelRef);
+    connect(m_parentModelRef, &ModelProxy::languageChanged, this, &LabelRefObject::nameChanged);
 }
 
 LabelRefObject::~LabelRefObject()

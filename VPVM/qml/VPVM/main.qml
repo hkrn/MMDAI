@@ -544,6 +544,13 @@ ApplicationWindow {
         onTriggered: scene.seekPreviousTimeIndex(1)
     }
     Action {
+        id: showLabelsInEnglishAction
+        text: qsTr("Show Labels in English")
+        checkable: true
+        checked: false
+        onCheckedChanged: scene.project.language = checked ? VPVM.Project.English : VPVM.Project.Japanese
+    }
+    Action {
         id: playSceneAction
         enabled: scene.project.durationTimeIndex > 0
         text: qsTr("Play")
@@ -952,6 +959,8 @@ ApplicationWindow {
             MenuItem { action: nextTimeIndexAction }
             MenuItem { action: previousTimeIndexAtion }
             MenuSeparator {}
+            MenuItem { action: showLabelsInEnglishAction }
+            MenuSeparator {}
             MenuItem { action: openProjectPreferenceWindow }
         }
         Menu {
@@ -1210,6 +1219,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 offsetX: 0
                 offsetY: statusBar.height * statusBar.visible + propertyPanel.height * propertyPanel.visible
+                project.onLanguageChanged: timeline.refresh()
                 project.onProjectDidCreate: motionCreateablesListModel.updateModels()
                 project.onProjectDidLoad: {
                     var model = scene.currentModel
