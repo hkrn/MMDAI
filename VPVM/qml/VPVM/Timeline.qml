@@ -73,6 +73,7 @@ FocusScope {
     property real minimumTimeScaleFactor: 0.01
     property real __tracksScrollY: 0
     property bool __draggingTime: false
+    property bool __draggingTimeline: false
     property bool __draggingTracksScrollThumb: false
     property bool __draggingTimeScrollThumb: false
     property bool __draggingKeyframes: false
@@ -521,6 +522,8 @@ FocusScope {
         anchors.fill: parent
         antialiasing: true
         property rect selectRegion : Qt.rect(0, 0, 0, 0)
+        property int previousX: 0
+        property int previousY: 0
         function scrollTracks(y) {
             __tracksScrollThumbPos = Math.max(0, y - __headerHeight - __tracksScrollThumbDragOffset);
             updateScrollTracks()
@@ -590,6 +593,13 @@ FocusScope {
                         canvas.requestPaint()
                     }
                 }
+                if (__draggingTimeline) {
+                    canvas.scrollTimeSecondsOffsetDelta((x - canvas.previousX) * framesPerSecond * -10)
+                    canvas.scrollTracksOffsetDelta((y - canvas.previousY) * -1)
+                    canvas.requestPaint()
+                    canvas.previousX = x
+                    canvas.previousY = y
+                }
                 if (__draggingKeyframes) {
                     var selectedKeyframes = __selectedKeyframes,
                             numSelectedKeyframes = selectedKeyframes.length,
@@ -602,7 +612,6 @@ FocusScope {
                     }
                     __cancelKeyClick = true;
                     __timeScrollThumbPos = __timeScrollX * (__timeScrollBarWidth - __timeScrollThumbWidth);
-                    canvas.requestPaint()
                 }
                 if (__draggingTimeScale) {
                     var timelineTrackLabelWidth = __trackLabelWidth;
@@ -679,6 +688,17 @@ FocusScope {
                     }
                 }
             }
+            onPressAndHold: {
+                // keyframes
+                var isCtrl = (mouse.modifiers & Qt.ControlModifier) === Qt.ControlModifier;
+                timeline.selectKeyframesAt(x, y, isCtrl);
+                if (__selectedKeyframes.length > 0) {
+                    __draggingKeyframes = true;
+                    var timeIndex = xToTimeSeconds(x) * framesPerSecond
+                    draggingKeyframesDidBegin(timeIndex)
+                }
+                __draggingKeyframes = true
+            }
             onPressed: {
                 var x = mouse.x, y = mouse.y,
                         timelineTrackLabelWidth = __trackLabelWidth,
@@ -698,15 +718,11 @@ FocusScope {
                         handleMouseMove(x, y);
                     }
                     else if (y > __headerHeight && y < canvas.height - timeScrollHeight) {
-                        // keyframes
-                        var isCtrl = (mouse.modifiers & Qt.ControlModifier) === Qt.ControlModifier;
-                        timeline.selectKeyframesAt(x, y, isCtrl);
-                        if (__selectedKeyframes.length > 0) {
-                            __draggingKeyframes = true;
-                            var timeIndex = xToTimeSeconds(x) * framesPerSecond
-                            draggingKeyframesDidBegin(timeIndex)
-                        }
-                        __cancelKeyClick = false;
+                        // timeline
+                        canvas.previousX = x
+                        canvas.previousY = y
+                        __draggingTimeline = true
+                        __cancelKeyClick = false
                     }
                     else {
                         // begin dragging region
@@ -728,8 +744,9 @@ FocusScope {
                     var timeIndex = Math.max(xToTimeSeconds(mouse.x) * framesPerSecond, 0)
                     draggingKeyframesDidCommit(__selectedKeyframes, timeIndex)
                 }
-                __draggingTime = false;
                 __draggingTracksScrollThumb = false;
+                __draggingTime = false;
+                __draggingTimeline = false
                 __draggingTimeScale = false;
                 __draggingTimeScrollThumb = false;
                 canvas.selectRegion = Qt.rect(0, 0, 0, 0)
