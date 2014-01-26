@@ -558,7 +558,6 @@ struct Model::PrivateContext {
         aabbMax.setZero();
         aabbMin.setZero();
         edgeWidth = 0;
-        hasEnglish = false;
         visible = false;
         physicsEnabled = false;
     }
