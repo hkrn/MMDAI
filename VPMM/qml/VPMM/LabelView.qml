@@ -25,25 +25,47 @@ Item {
                     qsTr("Morphs")
                 ]
             }
-            CheckBox { text: qsTr("Special") }
+            CheckBox {
+                id: labelSpecialCheckBox
+                text: qsTr("Special")
+                checked: targetObject.special
+            }
+            Binding {
+                target: targetObject
+                property: "special"
+                value: labelSpecialCheckBox.checked
+            }
         }
         TableView {
-            model: labelTypeComboBox.currentIndex === 0 ? targetObject.bones : targetObject.morphs
+            id: objectsInLabelTableView
             Layout.fillWidth: true
             Layout.fillHeight: true
+            model: labelTypeComboBox.currentIndex === 0 ? targetObject.bones : targetObject.morphs
+            selectionMode: SelectionMode.ExtendedSelection
             TableViewColumn { title: qsTr("Name"); role: "name" }
         }
         RowLayout {
             ComboBox {
+                id: objectToAddComboBox
                 Layout.fillWidth: true
                 model: labelTypeComboBox.currentIndex === 0 ? bonesModel : morphsModel
                 editable: true
             }
             Button {
                 text: qsTr("Add")
+                onClicked: targetObject.addObject(objectToAddComboBox.model.get(objectToAddComboBox.currentIndex).item)
             }
             Button {
                 text: qsTr("Remove")
+                enabled: objectsInLabelTableView.selection.count > 0
+                onClicked: {
+                    var removeItems = []
+                    objectsInLabelTableView.selection.forEach(function(rowIndex) {
+                        removeItems.push(objectsInLabelTableView.model[rowIndex])
+                    })
+                    removeItems.reverse()
+                    removeItems.forEach(function(item){ targetObject.removeObject(item) })
+                }
             }
         }
     }

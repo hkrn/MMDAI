@@ -40,14 +40,11 @@
 
 #include <QObject>
 #include <QQmlListProperty>
+#include <vpvl2/ILabel.h>
 
 class BoneRefObject;
 class ModelProxy;
 class MorphRefObject;
-
-namespace vpvl2 {
-class ILabel;
-}
 
 class LabelRefObject : public QObject
 {
@@ -55,8 +52,9 @@ class LabelRefObject : public QObject
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
     Q_PROPERTY(int index READ index CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<BoneRefObject> bones READ bones CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<MorphRefObject> morphs READ morphs CONSTANT FINAL)
+    Q_PROPERTY(QQmlListProperty<BoneRefObject> bones READ bones NOTIFY bonesChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<MorphRefObject> morphs READ morphs NOTIFY morphsChanged FINAL)
+    Q_PROPERTY(bool special READ isSpecial WRITE setSpecial NOTIFY specialChanged FINAL)
 
 public:
     LabelRefObject(ModelProxy *modelRef, vpvl2::ILabel *labelRef);
@@ -65,15 +63,23 @@ public:
     void addBone(BoneRefObject *object);
     void addMorph(MorphRefObject *object);
 
+    Q_INVOKABLE void addObject(QObject *value);
+    Q_INVOKABLE void removeObject(QObject *value);
+
     ModelProxy *parentModel() const;
     QString name() const;
     void setName(const QString &value);
     int index() const;
     QQmlListProperty<BoneRefObject> bones();
     QQmlListProperty<MorphRefObject> morphs();
+    bool isSpecial() const;
+    void setSpecial(bool value);
 
 signals:
     void nameChanged();
+    void specialChanged();
+    void bonesChanged();
+    void morphsChanged();
 
 private:
     ModelProxy *m_parentModelRef;

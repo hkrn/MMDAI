@@ -43,6 +43,7 @@
 
 #include "BoneRefObject.h"
 #include "ModelProxy.h"
+#include "MorphRefObject.h"
 #include "Util.h"
 
 using namespace vpvl2;
@@ -73,6 +74,44 @@ void LabelRefObject::addMorph(MorphRefObject *object)
 {
     Q_ASSERT(object);
     m_morphs.append(object);
+}
+
+void LabelRefObject::addObject(QObject *value)
+{
+    if (BoneRefObject *bone = qobject_cast<BoneRefObject *>(value)) {
+        if (!m_bones.contains(bone)) {
+            m_bones.append(bone);
+            m_labelRef->addBoneRef(bone->data());
+            m_parentModelRef->markDirty();
+            emit bonesChanged();
+        }
+    }
+    else if (MorphRefObject *morph = qobject_cast<MorphRefObject *>(value)) {
+        if (!m_morphs.contains(morph)) {
+            m_morphs.append(morph);
+            m_labelRef->addMorphRef(morph->data());
+            m_parentModelRef->markDirty();
+            emit morphsChanged();
+        }
+    }
+}
+
+void LabelRefObject::removeObject(QObject *value)
+{
+    if (BoneRefObject *bone = qobject_cast<BoneRefObject *>(value)) {
+        if (m_bones.removeOne(bone)) {
+            m_labelRef->removeBoneRef(bone->data());
+            m_parentModelRef->markDirty();
+            emit bonesChanged();
+        }
+    }
+    else if (MorphRefObject *morph = qobject_cast<MorphRefObject *>(value)) {
+        if (m_morphs.removeOne(morph)) {
+            m_labelRef->removeMorphRef(morph->data());
+            m_parentModelRef->markDirty();
+            emit morphsChanged();
+        }
+    }
 }
 
 ModelProxy *LabelRefObject::parentModel() const
@@ -121,4 +160,20 @@ QQmlListProperty<BoneRefObject> LabelRefObject::bones()
 QQmlListProperty<MorphRefObject> LabelRefObject::morphs()
 {
     return QQmlListProperty<MorphRefObject>(this, m_morphs);
+}
+
+bool LabelRefObject::isSpecial() const
+{
+    Q_ASSERT(m_labelRef);
+    return m_labelRef->isSpecial();
+}
+
+void LabelRefObject::setSpecial(bool value)
+{
+    Q_ASSERT(m_labelRef);
+    if (isSpecial() != value) {
+        m_labelRef->setSpecial(value);
+        m_parentModelRef->markDirty();
+        emit specialChanged();
+    }
 }
