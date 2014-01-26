@@ -101,7 +101,7 @@ QUuid MorphRefObject::uuid() const
 
 QString MorphRefObject::name() const
 {
-    Q_ASSERT(m_parentLabelRef);
+    Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_morphRef);
     ModelProxy *parentModel = m_parentModelRef;
     IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
@@ -111,7 +111,7 @@ QString MorphRefObject::name() const
 
 void MorphRefObject::setName(const QString &value)
 {
-    Q_ASSERT(m_parentLabelRef);
+    Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_morphRef);
     if (name() != value) {
         ModelProxy *parentModel = m_parentModelRef;
@@ -126,46 +126,32 @@ void MorphRefObject::setName(const QString &value)
 MorphRefObject::Category MorphRefObject::category() const
 {
     Q_ASSERT(m_morphRef);
-    switch (m_morphRef->category()) {
-    case IMorph::kEye:
-        return Eye;
-    case IMorph::kLip:
-        return Lip;
-    case IMorph::kEyeblow:
-        return Eyeblow;
-    case IMorph::kOther:
-        return Other;
-    default:
-        return Unknown;
-    }
+    return static_cast<Category>(m_morphRef->category());
 }
 
 void MorphRefObject::setCategory(const Category &value)
 {
-    Q_ASSERT(m_parentLabelRef);
+    Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_morphRef);
     if (category() != value) {
-        switch (value) {
-        case Eye:
-            m_morphRef->setCategory(IMorph::kEye);
-            m_parentModelRef->markDirty();
-            break;
-        case Lip:
-            m_morphRef->setCategory(IMorph::kLip);
-            m_parentModelRef->markDirty();
-            break;
-        case Eyeblow:
-            m_morphRef->setCategory(IMorph::kEyeblow);
-            m_parentModelRef->markDirty();
-            break;
-        case Other:
-            m_morphRef->setCategory(IMorph::kOther);
-            m_parentModelRef->markDirty();
-            break;
-        default:
-            Q_ASSERT(0);
-            break;
-        }
+        m_morphRef->setCategory(static_cast<IMorph::Category>(value));
+        m_parentModelRef->markDirty();
+    }
+}
+
+MorphRefObject::Type MorphRefObject::type() const
+{
+    Q_ASSERT(m_morphRef);
+    return static_cast<Type>(m_morphRef->type());
+}
+
+void MorphRefObject::setType(const Type &value)
+{
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_morphRef);
+    if (type() != value) {
+        m_morphRef->setType(static_cast<IMorph::Type>(value));
+        m_parentModelRef->markDirty();
     }
 }
 

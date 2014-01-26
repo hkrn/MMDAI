@@ -40,34 +40,46 @@
 
 #include <QObject>
 #include <QUuid>
+#include <vpvl2/IMorph.h>
 
 class LabelRefObject;
 class ModelProxy;
-
-namespace vpvl2 {
-class IMorph;
-}
 
 class MorphRefObject : public QObject
 {
     Q_OBJECT
     Q_ENUMS(Category)
+    Q_ENUMS(Type)
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(LabelRefObject *parentLabel READ parentLabel CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
     Q_PROPERTY(Category category READ category WRITE setCategory NOTIFY categoryChanged FINAL)
+    Q_PROPERTY(Type type READ type WRITE setType NOTIFY typeChanged FINAL)
     Q_PROPERTY(int index READ index CONSTANT FINAL)
     Q_PROPERTY(qreal weight READ weight WRITE setWeight NOTIFY weightChanged FINAL)
     Q_PROPERTY(qreal originWeight READ originWeight NOTIFY originWeightChanged FINAL)
 
 public:
     enum Category {
-        Unknown,
-        Eye,
-        Lip,
-        Eyeblow,
-        Other
+        Unknown = vpvl2::IMorph::kBase,
+        Eye     = vpvl2::IMorph::kEye,
+        Lip     = vpvl2::IMorph::kLip,
+        Eyeblow = vpvl2::IMorph::kEyeblow,
+        Other   = vpvl2::IMorph::kOther
+    };
+    enum Type {
+        Group    = vpvl2::IMorph::kGroupMorph,
+        Vertex   = vpvl2::IMorph::kVertexMorph,
+        Bone     = vpvl2::IMorph::kBoneMorph,
+        Texcoord = vpvl2::IMorph::kTexCoordMorph,
+        UVA1     = vpvl2::IMorph::kUVA1Morph,
+        UVA2     = vpvl2::IMorph::kUVA2Morph,
+        UVA3     = vpvl2::IMorph::kUVA3Morph,
+        UVA4     = vpvl2::IMorph::kUVA4Morph,
+        Material = vpvl2::IMorph::kMaterialMorph,
+        Flip     = vpvl2::IMorph::kFlipMorph,
+        Impulse  = vpvl2::IMorph::kImpulseMorph
     };
 
     MorphRefObject(ModelProxy *modelRef, LabelRefObject *labelRef, vpvl2::IMorph *morphRef, const QUuid &uuid);
@@ -83,6 +95,8 @@ public:
     void setName(const QString &value);
     Category category() const;
     void setCategory(const Category &value);
+    Type type() const;
+    void setType(const Type &value);
     int index() const;
     qreal weight() const;
     void setWeight(const qreal &value);
@@ -94,6 +108,7 @@ public slots:
 signals:
     void nameChanged();
     void categoryChanged();
+    void typeChanged();
     void weightChanged();
     void originWeightChanged();
     void morphDidSync();

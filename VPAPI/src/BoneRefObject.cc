@@ -96,7 +96,7 @@ ModelProxy *BoneRefObject::parentModel() const
 
 BoneRefObject *BoneRefObject::parentBone() const
 {
-    Q_ASSERT(m_parentLabelRef);
+    Q_ASSERT(m_parentModelRef);
     return m_parentModelRef->resolveBoneRef(m_boneRef->parentBoneRef());
 }
 
@@ -113,7 +113,7 @@ QUuid BoneRefObject::uuid() const
 
 QString BoneRefObject::name() const
 {
-    Q_ASSERT(m_parentLabelRef);
+    Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_boneRef);
     ModelProxy *parentModel = m_parentModelRef;
     IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
@@ -123,7 +123,7 @@ QString BoneRefObject::name() const
 
 void BoneRefObject::setName(const QString &value)
 {
-    Q_ASSERT(m_parentLabelRef);
+    Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_boneRef);
     if (name() != value) {
         ModelProxy *parentModel = m_parentModelRef;
