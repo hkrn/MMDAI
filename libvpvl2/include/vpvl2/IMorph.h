@@ -40,6 +40,7 @@
 #define VPVL2_IMORPH_H_
 
 #include "vpvl2/IEncoding.h"
+#include "vpvl2/IVertex.h"
 
 namespace vpvl2
 {
@@ -49,7 +50,6 @@ class IMaterial;
 class IModel;
 class IRigidBody;
 class IString;
-class IVertex;
 
 /**
  * モデルのモーフをあらわすインターフェースです。
