@@ -37,7 +37,7 @@ protected
       :vpvl2_enable_extensions_string => build_suite,
       :vpvl2_enable_extensions_world => true,
       :vpvl2_enable_lazy_link => false,
-      :vpvl2_enable_test => (build_suite and is_debug and not is_msvc?),
+      :vpvl2_enable_test => (build_suite and is_debug and not is_msvc? and not is_darwin?),
       :vpvl2_link_assimp3 => build_suite,
       :vpvl2_link_atb => false,
       :vpvl2_link_egl => is_msvc?,

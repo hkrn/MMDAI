@@ -552,6 +552,9 @@ void ProjectProxy::internalDeleteModel(ModelProxy *value, bool emitSignal)
         deleteMotion(value->childMotion(), !emitSignal);
         m_worldProxy->leaveWorld(value);
         setDirty(true);
+        QUndoStack *undoStack = value->undoStack();
+        m_undoGroup->removeStack(undoStack);
+        undoStack->clear();
         m_modelProxies.removeOne(value);
         m_instance2ModelProxyRefs.remove(value->data());
         m_uuid2ModelProxyRefs.remove(value->uuid());
@@ -632,8 +635,7 @@ MotionProxy *ProjectProxy::currentMotion() const
 void ProjectProxy::setCurrentMotion(MotionProxy *value)
 {
     if (value != m_currentMotionRef) {
-        QUndoStack *stack = m_motion2UndoStacks.value(value);
-        m_undoGroup->setActiveStack(stack);
+        m_undoGroup->setActiveStack(value->undoStack());
         m_currentMotionRef = value;
         emit currentMotionChanged();
     }
@@ -942,7 +944,9 @@ ModelProxy *ProjectProxy::loadModel(const QUrl &fileUrl, const QUuid &uuid, bool
 
 bool ProjectProxy::loadEffect(const QUrl &fileUrl)
 {
-    ModelProxy *modelProxy = new ModelProxy(this, m_factory->newModel(IModel::kPMXModel), QUuid::createUuid(), fileUrl, QUrl());
+    QUndoStack *stack = new QUndoStack(m_undoGroup.data());
+    ModelProxy *modelProxy = new ModelProxy(this, m_factory->newModel(IModel::kPMXModel), QUuid::createUuid(), fileUrl, QUrl(), stack);
+    m_undoGroup->addStack(stack);
     m_modelProxies.append(modelProxy);
     m_instance2ModelProxyRefs.insert(modelProxy->data(), modelProxy);
     m_uuid2ModelProxyRefs.insert(modelProxy->uuid(), modelProxy);
@@ -961,7 +965,9 @@ ModelProxy *ProjectProxy::createModelProxy(IModel *model, const QUuid &uuid, con
         faviconUrl = QUrl::fromLocalFile(finfo.absoluteDir().filePath(faviconLocations.first()));
     }
     model->setPhysicsEnable(m_worldProxy->simulationType() != WorldProxy::DisableSimulation);
-    ModelProxy *modelProxy = new ModelProxy(this, model, uuid, fileUrl, faviconUrl);
+    QUndoStack *stack = new QUndoStack(m_undoGroup.data());
+    ModelProxy *modelProxy = new ModelProxy(this, model, uuid, fileUrl, faviconUrl, stack);
+    m_undoGroup->addStack(stack);
     emit modelDidLoad(modelProxy, skipConfirm);
     return modelProxy;
 }
@@ -974,7 +980,6 @@ MotionProxy *ProjectProxy::createMotionProxy(IMotion *motion, const QUuid &uuid,
         motionProxy = new MotionProxy(this, motion, uuid, fileUrl, undoStack);
         m_undoGroup->addStack(undoStack);
         m_motionProxies.append(motionProxy);
-        m_motion2UndoStacks.insert(motionProxy, undoStack);
         m_instance2MotionProxyRefs.insert(motion, motionProxy);
         m_uuid2MotionProxyRefs.insert(uuid, motionProxy);
         m_project->addMotion(motion, uuid.toString().toStdString());
@@ -1017,10 +1022,9 @@ void ProjectProxy::deleteMotion(MotionProxy *value, bool fromDestructor)
             modelProxy->setChildMotion(0, !fromDestructor);
             value->data()->setParentModelRef(0);
         }
-        QUndoStack *stack = m_motion2UndoStacks.value(value);
-        m_undoGroup->removeStack(stack);
-        m_motion2UndoStacks.remove(value);
-        stack->clear();
+        QUndoStack *undoStack = value->undoStack();
+        m_undoGroup->removeStack(undoStack);
+        undoStack->clear();
         m_motionProxies.removeOne(value);
         m_instance2MotionProxyRefs.remove(value->data());
         m_uuid2MotionProxyRefs.remove(value->uuid());

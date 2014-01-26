@@ -657,6 +657,7 @@ MotionProxy::~MotionProxy()
     m_morphMotionTrackBundle.clear();
     m_cameraMotionTrackRef = 0;
     m_lightMotionTrackRef = 0;
+    m_undoStackRef = 0;
     m_projectRef = 0;
 }
 
@@ -1019,6 +1020,11 @@ ProjectProxy *MotionProxy::parentProject() const
 ModelProxy *MotionProxy::parentModel() const
 {
     return m_projectRef->resolveModelProxy(m_motion->parentModelRef());
+}
+
+QUndoStack *MotionProxy::undoStack() const
+{
+    return m_undoStackRef;
 }
 
 QUuid MotionProxy::uuid() const

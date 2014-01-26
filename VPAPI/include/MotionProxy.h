@@ -112,6 +112,7 @@ public:
     vpvl2::IMotion *data() const;
     ProjectProxy *parentProject() const;
     ModelProxy *parentModel() const;
+    QUndoStack *undoStack() const;
     QUuid uuid() const;
     QUrl fileUrl() const;
     qreal durationTimeIndex() const;

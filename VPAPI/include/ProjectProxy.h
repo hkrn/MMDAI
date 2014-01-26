@@ -318,7 +318,6 @@ private:
     QHash<const vpvl2::IMotion *, MotionProxy *> m_instance2MotionProxyRefs;
     QHash<QUuid, ModelProxy *> m_uuid2ModelProxyRefs;
     QHash<QUuid, MotionProxy *> m_uuid2MotionProxyRefs;
-    QHash<MotionProxy *, QUndoStack *> m_motion2UndoStacks;
     QList<ModelProxy *> m_modelProxies;
     QList<MotionProxy *> m_motionProxies;
     QList<QObject *> m_parentModelProxyRefs;

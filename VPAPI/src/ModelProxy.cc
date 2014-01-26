@@ -73,7 +73,8 @@ ModelProxy::ModelProxy(ProjectProxy *project,
                        IModel *model,
                        const QUuid &uuid,
                        const QUrl &fileUrl,
-                       const QUrl &faviconUrl)
+                       const QUrl &faviconUrl,
+                       QUndoStack *undoStackRef)
     : QObject(project),
       m_parentProjectRef(project),
       m_childMotionRef(0),
@@ -81,6 +82,7 @@ ModelProxy::ModelProxy(ProjectProxy *project,
       m_uuid(uuid),
       m_fileUrl(fileUrl),
       m_faviconUrl(faviconUrl),
+      m_undoStackRef(undoStackRef),
       m_targetMorphRef(0),
       m_boneAxisType(AxisX),
       m_boneTransformType(LocalTransform),
@@ -90,6 +92,7 @@ ModelProxy::ModelProxy(ProjectProxy *project,
       m_dirty(false)
 {
     Q_ASSERT(m_parentProjectRef);
+    Q_ASSERT(m_undoStackRef);
     Q_ASSERT(!m_model.isNull());
     Q_ASSERT(!m_uuid.isNull());
     connect(m_parentProjectRef, &ProjectProxy::languageChanged, this, &ModelProxy::resetLanguage);
@@ -124,6 +127,7 @@ ModelProxy::~ModelProxy()
     qDeleteAll(m_allJoints);
     m_allJoints.clear();
     m_parentProjectRef = 0;
+    m_undoStackRef = 0;
     m_childMotionRef = 0;
     m_targetMorphRef = 0;
     m_baseY = -1;
@@ -714,6 +718,11 @@ IModel *ModelProxy::data() const
 ProjectProxy *ModelProxy::parentProject() const
 {
     return m_parentProjectRef;
+}
+
+QUndoStack *ModelProxy::undoStack() const
+{
+    return m_undoStackRef;
 }
 
 ModelProxy *ModelProxy::parentBindingModel() const

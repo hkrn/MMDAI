@@ -134,7 +134,8 @@ public:
                vpvl2::IModel *model,
                const QUuid &uuid,
                const QUrl &fileUrl,
-               const QUrl &faviconUrl);
+               const QUrl &faviconUrl,
+               QUndoStack *undoStackRef);
     ~ModelProxy();
 
     void initialize();
@@ -144,6 +145,7 @@ public:
 
     vpvl2::IModel *data() const;
     ProjectProxy *parentProject() const;
+    QUndoStack *undoStack() const;
     ModelProxy *parentBindingModel() const;
     void setParentBindingModel(ModelProxy *value);
     BoneRefObject *parentBindingBone() const;
@@ -332,6 +334,7 @@ private:
     QList<RigidBodyRefObject *> m_allRigidBodies;
     QList<JointRefObject *> m_allJoints;
     QList<ModelProxy *> m_bindingModels;
+    QUndoStack *m_undoStackRef;
     MorphRefObject * m_targetMorphRef;
     AxisType m_boneAxisType;
     TransformType m_boneTransformType;
