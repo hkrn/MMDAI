@@ -99,14 +99,40 @@ ScrollView {
                 }
                 Label { text: qsTr("Type") }
                 ComboBox {
+                    id: jointTypeComboBox
+                    function indexOf(type) {
+                        switch (type) {
+                        case VPMM.Joint.Generic6DofSpringConstraint:
+                            return 0
+                        case VPMM.Joint.Generic6DofConstraint:
+                            return 1
+                        case VPMM.Joint.Point2PointConstraint:
+                            return 2
+                        case VPMM.Joint.ConeTwistConstraint:
+                            return 3
+                        case VPMM.Joint.SliderConstraint:
+                            return 4
+                        case VPMM.Joint.HingeConstraint:
+                            return 5
+                        default:
+                            return -1
+                        }
+                    }
                     model: [
-                        qsTr("Spring 6-DOF"),
-                        qsTr("Generic 6-DOF"),
-                        qsTr("Point to Point"),
-                        qsTr("Cone Twist"),
-                        qsTr("Slider"),
-                        qsTr("Hinge")
+                        { "text": qsTr("Spring 6-DOF"), "value": VPMM.Joint.Generic6DofSpringConstraint },
+                        { "text": qsTr("Generic 6-DOF"), "value": VPMM.Joint.Generic6DofConstraint },
+                        { "text": qsTr("Point to Point"), "value": VPMM.Joint.Point2PointConstraint },
+                        { "text": qsTr("Cone Twist"), "value": VPMM.Joint.ConeTwistConstraint },
+                        { "text": qsTr("Slider"), "value": VPMM.Joint.SliderConstraint },
+                        { "text": qsTr("Hinge"), "value": VPMM.Joint.HingeConstraint }
                     ]
+                    currentIndex: indexOf(jointView.targetObject.type)
+                }
+                Binding {
+                    target: jointView.targetObject
+                    property: "type"
+                    value: jointTypeComboBox.model[jointTypeComboBox.currentIndex].value
+                    when: jointTypeComboBox.hovered
                 }
             }
             RowLayout {

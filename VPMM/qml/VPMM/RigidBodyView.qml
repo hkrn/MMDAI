@@ -6,47 +6,10 @@ import com.github.mmdai.VPMM 1.0 as VPMM
 ScrollView {
     id: rigidBodyView
     property var targetObject
-    /*
-    onTargetObjectChanged: {
-        var i = 0, l = 0
-        objectTypeComboBox.currentIndex = -1
-        console.log([ i, objectTypeModel, objectTypeModel.count ])
-        for (i = 0, l = objectTypeModel.count; i < l; i++) {
-            console.log([ i, objectTypeModel.model[i].value ])
-            if (objectTypeModel.get(i).value === targetObject.objectType) {
-                objectTypeComboBox.currentIndex = i
-                break
-            }
-        }
-        shapeTypeComboBox.currentIndex = -1
-        for (i = 0, l = shapeTypeModel.count; i < l; i++) {
-            if (shapeTypeModel.get(i).value === targetObject.shapeType) {
-                shapeTypeComboBox.currentIndex = i
-                break
-            }
-        }
-    }
-    */
     Item {
         id: rigidBodyContentView
         VPMM.Vector3 { id: rigidBodyPosition; value: targetObject.position }
         VPMM.Vector3 { id: rigidBodyRotation; value: targetObject.rotation }
-        ListModel {
-            id: objectTypeModel
-            Component.onCompleted: {
-                append({ "text": qsTr("Dynamic"), "value": VPMM.RigidBody.DynamicObject })
-                append({ "text": qsTr("Static"),  "value": VPMM.RigidBody.StaticObject })
-                append({ "text": qsTr("Aligned"), "value": VPMM.RigidBody.AlignedObject })
-            }
-        }
-        ListModel {
-            id: shapeTypeModel
-            Component.onCompleted: {
-                append({ "text": qsTr("Sphere"),  "value": VPMM.RigidBody.SphereShape })
-                append({ "text": qsTr("Box"),     "value": VPMM.RigidBody.BoxShape })
-                append({ "text": qsTr("Capsule"), "value": VPMM.RigidBody.CapsureShape })
-            }
-        }
         Binding {
             target: targetObject
             property: "posiiton"
@@ -94,13 +57,29 @@ ScrollView {
                 Label { text: qsTr("Type") }
                 ComboBox {
                     id: objectTypeComboBox
-                    model: objectTypeModel
-                    onCurrentIndexChanged: targetObject.objectType = objectTypeModel.get(currentIndex).value
+                    function indexOf(type) {
+                        switch (type) {
+                        case VPMM.RigidBody.DynamicObject:
+                            return 0
+                        case VPMM.RigidBody.StaticObject:
+                            return 1
+                        case VPMM.RigidBody.AlignedObject:
+                            return 2
+                        default:
+                            return -1
+                        }
+                    }
+                    model: [
+                        { "text": qsTr("Dynamic"), "value": VPMM.RigidBody.DynamicObject },
+                        { "text": qsTr("Static"),  "value": VPMM.RigidBody.StaticObject },
+                        { "text": qsTr("Aligned"), "value": VPMM.RigidBody.AlignedObject }
+                    ]
+                    currentIndex: indexOf(rigidBodyView.targetObject.objectType)
                 }
                 Binding {
                     target: targetObject
                     property: "objectType"
-                    value: objectTypeModel.get(objectTypeComboBox.currentIndex).value
+                    value: objectTypeComboBox.model[objectTypeComboBox.currentIndex].value
                     when: objectTypeComboBox.hovered
                 }
             }
@@ -112,13 +91,29 @@ ScrollView {
                     Label { text: qsTr("Type") }
                     ComboBox {
                         id: shapeTypeComboBox
-                        model: shapeTypeModel
-                        onCurrentIndexChanged: targetObject.shapeType = shapeTypeModel.get(currentIndex).value
+                        function indexOf(type) {
+                            switch (type) {
+                            case VPMM.RigidBody.SphereShape:
+                                return 0
+                            case VPMM.RigidBody.BoxShape:
+                                return 1
+                            case VPMM.RigidBody.CapsureShape:
+                                return 2
+                            default:
+                                return -1
+                            }
+                        }
+                        model: [
+                            { "text": qsTr("Sphere"),  "value": VPMM.RigidBody.SphereShape },
+                            { "text": qsTr("Box"),     "value": VPMM.RigidBody.BoxShape },
+                            { "text": qsTr("Capsule"), "value": VPMM.RigidBody.CapsureShape }
+                        ]
+                        currentIndex: indexOf(rigidBodyView.targetObject.shapeType)
                     }
                     Binding {
                         target: targetObject
                         property: "shapeType"
-                        value: shapeTypeModel.get(shapeTypeComboBox.currentIndex).value
+                        value: shapeTypeComboBox.model[shapeTypeComboBox.currentIndex].value
                         when: shapeTypeComboBox.hovered
                     }
                     Label { text: qsTr("Width") }
