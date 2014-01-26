@@ -684,7 +684,7 @@ struct Model::PrivateContext {
         }
         const int nmorphs = int(info.morphLabelsCount);
         uint8 *morphLabelsPtr = info.morphLabelsPtr;
-        Label *morphCategory = labels.append(new Label(selfRef, encodingRef, 0, Label::kMorphCategoryLabel));
+        Label *morphCategory = labels.append(new Label(selfRef, encodingRef, reinterpret_cast<const uint8_t *>("Expressions"), Label::kMorphCategoryLabel));
         for (int i = 0; i < nmorphs; i++) {
             morphCategory->read(morphLabelsPtr, info, size);
             morphLabelsPtr += size;
