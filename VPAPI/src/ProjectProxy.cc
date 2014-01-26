@@ -635,7 +635,7 @@ MotionProxy *ProjectProxy::currentMotion() const
 void ProjectProxy::setCurrentMotion(MotionProxy *value)
 {
     if (value != m_currentMotionRef) {
-        m_undoGroup->setActiveStack(value->undoStack());
+        m_undoGroup->setActiveStack(value ? value->undoStack() : 0);
         m_currentMotionRef = value;
         emit currentMotionChanged();
     }
