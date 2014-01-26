@@ -1212,12 +1212,18 @@ void Morph::removeImpulseMorph(Impulse *value)
 
 void Morph::setCategory(Category value)
 {
-    m_context->category = value;
+    if (m_context->category != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, categoryWillChange(value, this));
+        m_context->category = value;
+    }
 }
 
 void Morph::setType(Type value)
 {
-    m_context->type = value;
+    if (m_context->type != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, typeWillChange(value, this));
+        m_context->type = value;
+    }
 }
 
 void Morph::setIndex(int value)

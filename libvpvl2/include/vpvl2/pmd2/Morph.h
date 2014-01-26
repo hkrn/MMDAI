@@ -105,6 +105,7 @@ public:
     void addImpulseMorph(Impulse *value);
     void removeImpulseMorph(Impulse *value);
     void setType(Type value);
+    void setCategory(Category value);
 
     void getBoneMorphs(Array<Bone *> &morphs) const;
     void getGroupMorphs(Array<Group *> &morphs) const;

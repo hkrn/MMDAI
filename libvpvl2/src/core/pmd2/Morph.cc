@@ -457,6 +457,14 @@ void Morph::setType(Type /* value */)
 {
 }
 
+void Morph::setCategory(Category value)
+{
+    if (m_context->category != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, categoryWillChange(value, this));
+        m_context->category = value;
+    }
+}
+
 void Morph::getBoneMorphs(Array<Bone *> &morphs) const
 {
     morphs.clear();

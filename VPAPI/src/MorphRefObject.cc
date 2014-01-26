@@ -144,28 +144,28 @@ void MorphRefObject::setCategory(const Category &value)
 {
     Q_ASSERT(m_parentLabelRef);
     Q_ASSERT(m_morphRef);
-    switch (value) {
-    /*
-    case Eye:
-        m_morphRef->setCategory(IMorph::kEye);
-        m_parentModelRef->markDirty();
-        break;
-    case Lip:
-        m_morphRef->setCategory(IMorph::kLip);
-        m_parentModelRef->markDirty();
-        break;
-    case Eyeblow:
-        m_morphRef->setCategory(IMorph::kEyeblow);
-        m_parentModelRef->markDirty();
-        break;
-    case Other:
-        m_morphRef->setCategory(IMorph::kOther);
-        m_parentModelRef->markDirty();
-        break;
-        */
-    default:
-        Q_ASSERT(0);
-        break;
+    if (category() != value) {
+        switch (value) {
+        case Eye:
+            m_morphRef->setCategory(IMorph::kEye);
+            m_parentModelRef->markDirty();
+            break;
+        case Lip:
+            m_morphRef->setCategory(IMorph::kLip);
+            m_parentModelRef->markDirty();
+            break;
+        case Eyeblow:
+            m_morphRef->setCategory(IMorph::kEyeblow);
+            m_parentModelRef->markDirty();
+            break;
+        case Other:
+            m_morphRef->setCategory(IMorph::kOther);
+            m_parentModelRef->markDirty();
+            break;
+        default:
+            Q_ASSERT(0);
+            break;
+        }
     }
 }
 

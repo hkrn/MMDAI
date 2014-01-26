@@ -92,6 +92,8 @@ public:
         virtual ~PropertyEventListener() {}
         virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IMorph *morph) = 0;
         virtual void weightWillChange(const WeightPrecision &value, IMorph *morph) = 0;
+        virtual void typeWillChange(Type value, IMorph *morph) = 0;
+        virtual void categoryWillChange(Category value, IMorph *morph) = 0;
     };
     struct Bone {
         Bone()
@@ -396,6 +398,8 @@ public:
      * @param value
      */
     virtual void setType(Type value) = 0;
+
+    virtual void setCategory(Category value) = 0;
 
     virtual void getBoneMorphs(Array<Bone *> &morphs) const = 0;
     virtual void getGroupMorphs(Array<Group *> &morphs) const = 0;
