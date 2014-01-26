@@ -293,7 +293,7 @@ void Label::read(const uint8 *data, const Model::DataInfo & /* info */, vsize &s
 void Label::readEnglishName(const uint8 *data, int index)
 {
     if (data && index >= 0) {
-        internal::setStringDirect(m_context->encodingRef->toString(data + kBoneCategoryLabel * index, IString::kShiftJIS, kBoneCategoryLabel), m_context->englishNamePtr);
+        internal::setStringDirect(m_context->encodingRef->toString(data + Bone::kCategoryNameSize * index, IString::kShiftJIS, Bone::kCategoryNameSize), m_context->englishNamePtr);
     }
 }
 
