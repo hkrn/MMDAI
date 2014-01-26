@@ -57,17 +57,9 @@ ScrollView {
                 Label { text: qsTr("Type") }
                 ComboBox {
                     id: objectTypeComboBox
-                    function indexOf(type) {
-                        switch (type) {
-                        case VPMM.RigidBody.DynamicObject:
-                            return 0
-                        case VPMM.RigidBody.StaticObject:
-                            return 1
-                        case VPMM.RigidBody.AlignedObject:
-                            return 2
-                        default:
-                            return -1
-                        }
+                    function indexOf(value) {
+                        var result = model.filter(function(element){ return element.value === value })
+                        return result.length > 0 ? result[0].value : -1
                     }
                     model: [
                         { "text": qsTr("Dynamic"), "value": VPMM.RigidBody.DynamicObject },
@@ -91,17 +83,9 @@ ScrollView {
                     Label { text: qsTr("Type") }
                     ComboBox {
                         id: shapeTypeComboBox
-                        function indexOf(type) {
-                            switch (type) {
-                            case VPMM.RigidBody.SphereShape:
-                                return 0
-                            case VPMM.RigidBody.BoxShape:
-                                return 1
-                            case VPMM.RigidBody.CapsureShape:
-                                return 2
-                            default:
-                                return -1
-                            }
+                        function indexOf(value) {
+                            var result = model.filter(function(element){ return element.value === value })
+                            return result.length > 0 ? result[0].value : -1
                         }
                         model: [
                             { "text": qsTr("Sphere"),  "value": VPMM.RigidBody.SphereShape },

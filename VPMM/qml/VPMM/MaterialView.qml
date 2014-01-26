@@ -357,13 +357,13 @@ ScrollView {
                         TextField {
                             Layout.fillWidth: true
                             enabled: !enableSharedToonCheckbox.checked
-                            text: targetObject.sphereTexturePath
+                            text: targetObject.toonTexturePath
                         }
                         Button { text: qsTr("Change") }
                         Label { text: qsTr("Sphere") }
                         TextField {
                             Layout.fillWidth: true
-                            text: targetObject.toonTexturePath
+                            text: targetObject.sphereTexturePath
                         }
                         Button { text: qsTr("Change") }
                     }
@@ -399,19 +399,9 @@ ScrollView {
                         Label { text: qsTr("Sphere Texture Type") }
                         ComboBox {
                             id: sphereTextureTypeComboBox
-                            function indexOf(type) {
-                                switch (type) {
-                                case VPMM.Material.None:
-                                    return 0
-                                case VPMM.Material.Multiply:
-                                    return 1
-                                case VPMM.Material.Additive:
-                                    return 2
-                                case VPMM.Material.SubTexture:
-                                    return 3
-                                default:
-                                    return -1
-                                }
+                            function indexOf(value) {
+                                var result = model.filter(function(element){ return element.value === value })
+                                return result.length > 0 ? result[0].value : -1
                             }
                             model: [
                                 { "text": qsTr("None"), "value": VPMM.Material.None },

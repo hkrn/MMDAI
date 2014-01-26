@@ -100,23 +100,9 @@ ScrollView {
                 Label { text: qsTr("Type") }
                 ComboBox {
                     id: jointTypeComboBox
-                    function indexOf(type) {
-                        switch (type) {
-                        case VPMM.Joint.Generic6DofSpringConstraint:
-                            return 0
-                        case VPMM.Joint.Generic6DofConstraint:
-                            return 1
-                        case VPMM.Joint.Point2PointConstraint:
-                            return 2
-                        case VPMM.Joint.ConeTwistConstraint:
-                            return 3
-                        case VPMM.Joint.SliderConstraint:
-                            return 4
-                        case VPMM.Joint.HingeConstraint:
-                            return 5
-                        default:
-                            return -1
-                        }
+                    function indexOf(value) {
+                        var result = model.filter(function(element){ return element.value === value })
+                        return result.length > 0 ? result[0].value : -1
                     }
                     model: [
                         { "text": qsTr("Spring 6-DOF"), "value": VPMM.Joint.Generic6DofSpringConstraint },

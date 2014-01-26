@@ -1,6 +1,7 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.1
 import QtQuick.Layouts 1.1
+import com.github.mmdai.VPMM 1.0 as VPMM
 
 Item {
     id: morphView
@@ -19,16 +20,53 @@ Item {
             }
             Label { text: qsTr("Category") }
             ComboBox {
+                id: morphCategoryComboBox
+                function indexOf(value) {
+                    var result = model.filter(function(element){ return element.value === value })
+                    return result.length > 0 ? (result[0].value - 1) : -1
+                }
                 Layout.fillWidth: true
                 model: [
-                    qsTr("Lip"),
-                    qsTr("Eye"),
-                    qsTr("Eyeblow"),
-                    qsTr("Others")
+                    { "text": qsTr("Lip"), "value": VPMM.Morph.Lip },
+                    { "text": qsTr("Eye"), "value": VPMM.Morph.Eye },
+                    { "text": qsTr("Eyeblow"), "value": VPMM.Morph.Eyeblow },
+                    { "text": qsTr("Other"), "value": VPMM.Morph.Other }
                 ]
+                currentIndex: indexOf(targetObject.category)
+            }
+            Binding {
+                target: targetObject
+                property: "category"
+                value: morphCategoryComboBox.model[morphCategoryComboBox.currentIndex].value
             }
             Label { text: qsTr("Type") }
-            Label { text: qsTr("Type Name") }
+            ComboBox {
+                id: morphTypeComboBox
+                function indexOf(value) {
+                    var result = model.filter(function(element){ return element.value === value })
+                    return result.length > 0 ? result[0].value : -1
+                }
+                Layout.fillWidth: true
+                model: [
+                    { "text": qsTr("Group"), "value": VPMM.Morph.Group },
+                    { "text": qsTr("Vertex"), "value": VPMM.Morph.Vertex },
+                    { "text": qsTr("Bone"), "value": VPMM.Morph.Bone },
+                    { "text": qsTr("TexCoord"), "value": VPMM.Morph.TexCoord },
+                    { "text": qsTr("UVA1"), "value": VPMM.Morph.UVA1 },
+                    { "text": qsTr("UVA2"), "value": VPMM.Morph.UVA2 },
+                    { "text": qsTr("UVA3"), "value": VPMM.Morph.UVA3 },
+                    { "text": qsTr("UVA4"), "value": VPMM.Morph.UVA4 },
+                    { "text": qsTr("Material"), "value": VPMM.Morph.Material },
+                    { "text": qsTr("Flip"), "value": VPMM.Morph.Flip },
+                    { "text": qsTr("Impulse"), "value": VPMM.Morph.Impulse }
+                ]
+                currentIndex: indexOf(targetObject.type)
+            }
+            Binding {
+                target: targetObject
+                property: "type"
+                value: morphTypeComboBox.model[morphTypeComboBox.currentIndex].value
+            }
         }
         Item { Layout.fillHeight: true }
     }
