@@ -249,6 +249,7 @@ void MaterialRefObject::setSphereTextureType(const SphereTextureType &value)
 {
     if (sphereTextureType() != value) {
         m_materialRef->setSphereTextureRenderMode(static_cast<IMaterial::SphereTextureRenderMode>(value));
+        m_parentModelRef->markDirty();
         emit sphereTextureTypeChanged();
     }
 }
@@ -295,6 +296,7 @@ void MaterialRefObject::setToonTextureIndex(int value)
 {
     if (toonTextureIndex() != value) {
         m_materialRef->setToonTextureIndex(value);
+        m_parentModelRef->markDirty();
         emit toonTextureIndexChanged();
     }
 }
@@ -309,6 +311,7 @@ void MaterialRefObject::setSharedToonTextureEnabled(bool value)
 {
     if (isSharedToonTextureEnabled() != value) {
         m_materialRef->setSharedToonTextureUsed(value);
+        m_parentModelRef->markDirty();
         emit sharedToonTextureEnabledChanged();
     }
 }
