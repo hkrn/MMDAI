@@ -130,21 +130,14 @@ ModelProxy::~ModelProxy()
 
 void ModelProxy::initialize()
 {
+    Q_ASSERT(m_model);
     Q_ASSERT(m_allLabels.isEmpty());
     Q_ASSERT(m_allBones.isEmpty());
     Q_ASSERT(m_allMorphs.isEmpty());
     Array<ILabel *> labelRefs;
     m_model->getLabelRefs(labelRefs);
-    const int nlabels = labelRefs.count();
-    int numEstimatedObjects = 0, numLoadedObjects = 0;
-    for (int i = 0; i < nlabels; i++) {
-        const ILabel *label = labelRefs[i];
-        numEstimatedObjects += label->count();
-    }
-    emit modelWillLoad(numEstimatedObjects);
-    setAllBones(labelRefs, numEstimatedObjects, numLoadedObjects);
-    setAllMorphs(labelRefs, m_model.data(), numEstimatedObjects, numLoadedObjects);
-    emit modelDidLoad(numLoadedObjects, numEstimatedObjects);
+    setAllBones(labelRefs);
+    setAllMorphs(labelRefs, m_model.data());
     qSort(m_allLabels.begin(), m_allLabels.end(), LessThan());
 }
 
@@ -203,6 +196,7 @@ void ModelProxy::beginTransform(qreal startY)
 
 void ModelProxy::translate(qreal value)
 {
+    Q_ASSERT(m_parentProjectRef);
     if (isMoving()) {
         const XMLProject *project = m_parentProjectRef->projectInstanceRef();
         const ICamera *camera = project->cameraRef();
@@ -259,6 +253,7 @@ void ModelProxy::translate(qreal value)
 
 void ModelProxy::rotate(qreal angle)
 {
+    Q_ASSERT(m_parentProjectRef);
     if (isMoving()) {
         const XMLProject *project = m_parentProjectRef->projectInstanceRef();
         const ICamera *camera = project->cameraRef();
@@ -360,6 +355,7 @@ void ModelProxy::resetTargets()
 
 void ModelProxy::release()
 {
+    Q_ASSERT(m_parentProjectRef);
     if (!m_parentProjectRef->resolveModelProxy(data())) {
         VPVL2_VLOG(1, uuid().toString().toStdString() << " a.k.a " << name().toStdString() << " is scheduled to be delete from ModelProxy and will be deleted");
         m_parentProjectRef->world()->leaveWorld(this);
@@ -481,6 +477,7 @@ ProjectProxy *ModelProxy::parentProject() const
 
 ModelProxy *ModelProxy::parentBindingModel() const
 {
+    Q_ASSERT(m_parentProjectRef);
     return m_parentProjectRef->resolveModelProxy(data()->parentModelRef());
 }
 
@@ -551,12 +548,16 @@ QUrl ModelProxy::faviconUrl() const
 
 QString ModelProxy::name() const
 {
-    return m_model ? Util::toQString(m_model->name(languageType())) : QString();
+    Q_ASSERT(m_model);
+    const IString *name = m_model->name(languageType());
+    return Util::toQString((name && name->size() > 0) ? name : m_model->name(IEncoding::kDefaultLanguage));
 }
 
 QString ModelProxy::comment() const
 {
-    return m_model ? Util::toQString(m_model->comment(languageType())) : QString();
+    Q_ASSERT(m_model);
+    const IString *comment = m_model->comment(languageType());
+    return Util::toQString((comment && comment->size() > 0) ? comment : m_model->comment(IEncoding::kDefaultLanguage));
 }
 
 QQmlListProperty<LabelRefObject> ModelProxy::allLabels()
@@ -705,24 +706,27 @@ void ModelProxy::setTransformType(TransformType value)
 
 ProjectProxy::LanguageType ModelProxy::language() const
 {
+    Q_ASSERT(m_parentProjectRef);
     return m_language != ProjectProxy::DefaultLauguage ? m_language : m_parentProjectRef->language();
 }
 
 void ModelProxy::setLanguage(ProjectProxy::LanguageType value)
 {
     if (value != m_language) {
-        value = m_language;
+        m_language = value;
         emit languageChanged();
     }
 }
 
 QVector3D ModelProxy::translation() const
 {
+    Q_ASSERT(m_model);
     return Util::fromVector3(m_model->worldTranslation());
 }
 
 void ModelProxy::setTranslation(const QVector3D &value)
 {
+    Q_ASSERT(m_model);
     if (!qFuzzyCompare(value, translation())) {
         m_model->setWorldTranslation(Util::toVector3(value));
         emit translationChanged();
@@ -731,11 +735,13 @@ void ModelProxy::setTranslation(const QVector3D &value)
 
 QQuaternion ModelProxy::orientation() const
 {
+    Q_ASSERT(m_model);
     return Util::fromQuaternion(m_model->worldOrientation());
 }
 
 void ModelProxy::setOrientation(const QQuaternion &value)
 {
+    Q_ASSERT(m_model);
     if (!qFuzzyCompare(value, orientation())) {
         m_model->setWorldOrientation(Util::toQuaternion(value));
         emit orientationChanged();
@@ -744,6 +750,7 @@ void ModelProxy::setOrientation(const QQuaternion &value)
 
 QVector3D ModelProxy::eulerOrientation() const
 {
+    Q_ASSERT(m_model);
     Scalar yaw, pitch, roll;
     Matrix3x3 matrix(m_model->worldOrientation());
     matrix.getEulerZYX(yaw, pitch, roll);
@@ -752,6 +759,7 @@ QVector3D ModelProxy::eulerOrientation() const
 
 void ModelProxy::setEulerOrientation(const QVector3D &value)
 {
+    Q_ASSERT(m_model);
     if (!qFuzzyCompare(eulerOrientation(), value)) {
         Quaternion rotation(Quaternion::getIdentity());
         rotation.setEulerZYX(qDegreesToRadians(value.z()), qDegreesToRadians(value.y()), qDegreesToRadians(value.x()));
@@ -895,7 +903,7 @@ QList<JointRefObject *> ModelProxy::allJointRefs() const
     return m_allJoints;
 }
 
-void ModelProxy::setAllBones(const Array<ILabel *> &labelRefs, int numEstimatedObjects, int &numLoadedObjects)
+void ModelProxy::setAllBones(const Array<ILabel *> &labelRefs)
 {
     const int nlabels = labelRefs.count();
     for (int i = 0; i < nlabels; i++) {
@@ -914,14 +922,13 @@ void ModelProxy::setAllBones(const Array<ILabel *> &labelRefs, int numEstimatedO
                 m_bone2Refs.insert(boneRef, boneObject);
                 m_name2BoneRefs.insert(boneObject->name(), boneObject);
                 m_uuid2BoneRefs.insert(uuid, boneObject);
-                emit modelBeLoading(numLoadedObjects++, numEstimatedObjects);
             }
             m_allLabels.append(labelObject);
         }
     }
 }
 
-void ModelProxy::setAllMorphs(const Array<ILabel *> &labelRefs, const IModel *model, int numEstimatedObjects, int &numLoadedObjects)
+void ModelProxy::setAllMorphs(const Array<ILabel *> &labelRefs, const IModel *model)
 {
     const IEncoding *encodingRef = m_parentProjectRef->encodingInstanceRef();
     const IString *opacityMorphName = encodingRef->stringConstant(IEncoding::kOpacityMorphAsset);
@@ -940,7 +947,6 @@ void ModelProxy::setAllMorphs(const Array<ILabel *> &labelRefs, const IModel *mo
                 m_morph2Refs.insert(morphRef, morphObject);
                 m_name2MorphRefs.insert(morphObject->name(), morphObject);
                 m_uuid2MorphRefs.insert(uuid, morphObject);
-                emit modelBeLoading(numLoadedObjects++, numEstimatedObjects);
             }
             m_allLabels.append(labelObject);
         }

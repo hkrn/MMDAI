@@ -324,15 +324,7 @@ Item {
         onModelDidStartLoading: {
             busyIndicator.running = true
         }
-        onModelWillLoad: {
-            model.modelWillLoad.connect(__handleWillLoad)
-            model.modelBeLoading.connect(__handleBeLoading)
-            model.modelDidLoad.connect(__handleDidLoad)
-        }
         onModelDidLoad: {
-            model.modelWillLoad.disconnect(__handleWillLoad)
-            model.modelBeLoading.disconnect(__handleBeLoading)
-            model.modelDidLoad.disconnect(__handleDidLoad)
             if (!skipConfirm) {
                 if (confirmWindowLoader.status === Loader.Ready) {
                     var item = confirmWindowLoader.item
@@ -351,19 +343,11 @@ Item {
             busyIndicator.running = false
             notificationDidPost(qsTr("The model cannot be loaded: %1").arg(project.errorString))
         }
-        onMotionWillLoad: {
-            motion.motionWillLoad.connect(__handleWillLoad)
-            motion.motionBeLoading.connect(__handleBeLoading)
-            motion.motionDidLoad.connect(__handleDidLoad)
-        }
         onMotionDidFailLoading: {
             notificationDidPost(qsTr("The motion cannot be loaded: %1").arg(project.errorString))
         }
         onMotionDidLoad: {
             currentMotion = motion;
-            motion.motionWillLoad.disconnect(__handleWillLoad)
-            motion.motionBeLoading.disconnect(__handleBeLoading)
-            motion.motionDidLoad.disconnect(__handleDidLoad)
             if (!__constructing) {
                 renderTarget.currentTimeIndex = 0
                 rewind()

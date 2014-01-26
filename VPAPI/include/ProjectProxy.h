@@ -162,7 +162,7 @@ public:
 
     ModelProxy *loadModel(const QUrl &fileUrl, const QUuid &uuid, bool skipConfirm);
     ModelProxy *createModelProxy(vpvl2::IModel *model, const QUuid &uuid, const QUrl &fileUrl, bool skipConfirm);
-    MotionProxy *createMotionProxy(vpvl2::IMotion *motion, const QUuid &uuid, const QUrl &fileUrl, bool emitSignal);
+    MotionProxy *createMotionProxy(vpvl2::IMotion *motion, const QUuid &uuid, const QUrl &fileUrl);
     ModelProxy *resolveModelProxy(const vpvl2::IModel *value) const;
     MotionProxy *resolveMotionProxy(const vpvl2::IMotion *value) const;
     void internalDeleteAllMotions(bool fromDestructor);
@@ -248,14 +248,12 @@ signals:
     void projectWillSave();
     void projectDidSave();
     void modelDidStartLoading();
-    void modelWillLoad(ModelProxy *model);
     void modelDidLoad(ModelProxy *model, bool skipConfirm);
     void modelDidFailLoading();
     void modelDidAdd(ModelProxy *model, bool isProject);
     void modelWillRemove(ModelProxy *model);
     void modelDidRemove(ModelProxy *model);
     void motionDidStartLoading();
-    void motionWillLoad(MotionProxy *motion);
     void motionDidLoad(MotionProxy *motion);
     void motionDidFailLoading();
     void motionWillDelete(MotionProxy *motion);

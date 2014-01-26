@@ -111,7 +111,8 @@ QString BoneRefObject::name() const
     Q_ASSERT(m_boneRef);
     ModelProxy *parentModel = m_parentLabelRef->parentModel();
     IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
-    return Util::toQString(m_boneRef->name(language));
+    const IString *name = m_boneRef->name(language);
+    return Util::toQString((name && name->size() > 0) ? name : m_boneRef->name(IEncoding::kDefaultLanguage));
 }
 
 void BoneRefObject::setName(const QString &value)

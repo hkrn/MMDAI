@@ -220,9 +220,6 @@ signals:
     void boneDidSelect(BoneRefObject *bone);
     void morphDidSelect(MorphRefObject *morph);
     void modelDidRefresh();
-    void modelWillLoad(int numEstimatedObjects);
-    void modelBeLoading(int numLoadedObjects, int numEstimatedObjects);
-    void modelDidLoad(int numLoadedObjects, int numEstimatedObjects);
 
 public slots:
     Q_INVOKABLE void selectOpaqueObject(QObject *value);
@@ -258,8 +255,8 @@ private:
     void buildLabelHash(const vpvl2::IModel *model,
                         QHash<vpvl2::IBone *, vpvl2::ILabel *> &bone2label,
                         QHash<vpvl2::IMorph *, vpvl2::ILabel *> &morph2label);
-    void setAllBones(const vpvl2::Array<vpvl2::ILabel *> &labelRefs, int numEstimatedObjects, int &numLoadedObjects);
-    void setAllMorphs(const vpvl2::Array<vpvl2::ILabel *> &labelRefs, const vpvl2::IModel *model, int numEstimatedObjects, int &numLoadedObjects);
+    void setAllBones(const vpvl2::Array<vpvl2::ILabel *> &labelRefs);
+    void setAllMorphs(const vpvl2::Array<vpvl2::ILabel *> &labelRefs, const vpvl2::IModel *model);
     void saveTransformState();
     void clearTransformState();
     vpvl2::IEncoding::LanguageType languageType() const;

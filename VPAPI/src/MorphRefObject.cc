@@ -99,7 +99,8 @@ QString MorphRefObject::name() const
     Q_ASSERT(m_morphRef);
     ModelProxy *parentModel = m_parentLabelRef->parentModel();
     IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
-    return Util::toQString(m_morphRef->name(language));
+    const IString *name = m_morphRef->name(language);
+    return Util::toQString((name && name->size() > 0) ? name : m_morphRef->name(IEncoding::kDefaultLanguage));
 }
 
 void MorphRefObject::setName(const QString &value)

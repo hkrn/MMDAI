@@ -49,6 +49,7 @@ class RigidBodyRefObject;
 class JointRefObject : public QObject
 {
     Q_OBJECT
+    Q_ENUMS(Type)
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(RigidBodyRefObject *bodyA READ bodyA CONSTANT FINAL)
     Q_PROPERTY(RigidBodyRefObject *bodyB READ bodyB CONSTANT FINAL)

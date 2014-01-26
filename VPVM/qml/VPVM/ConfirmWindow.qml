@@ -43,6 +43,7 @@ import com.github.mmdai.VPVM 1.0 as VPVM
 ApplicationWindow {
     id: confirmWindow
     property var modelSource: null
+    property var language
     signal accept()
     signal reject()
     title: qsTr("Confirm of loading ") + (modelSource ? modelSource.name : "")
@@ -77,6 +78,7 @@ ApplicationWindow {
                 { "text": qsTr("Japanese"), "value": VPVM.Project.Japanese },
                 { "text": qsTr("English"), "value": VPVM.Project.English }
             ]
+            currentIndex: language === VPVM.Project.English ? 1 : 0
             onCurrentIndexChanged: {
                 var item = model[currentIndex]
                 modelSource.language = item.value

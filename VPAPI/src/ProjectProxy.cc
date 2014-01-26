@@ -392,7 +392,7 @@ bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, Motio
     m_errorString.clear();
     if (IMotion *motion = task->takeMotion()) {
         const QUuid &uuid = QUuid::createUuid();
-        MotionProxy *motionProxy = createMotionProxy(motion, uuid, fileUrl, true);
+        MotionProxy *motionProxy = createMotionProxy(motion, uuid, fileUrl);
         if (modelProxy && type == ModelMotion) {
             VPVL2_VLOG(1, "The mode motion of " << modelProxy->name().toStdString() << " from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
             deleteMotion(modelProxy->childMotion(), false);
@@ -518,6 +518,7 @@ void ProjectProxy::redo()
 void ProjectProxy::internalAddModel(ModelProxy *value, bool selected, bool isProject)
 {
     Q_ASSERT(value);
+    value->initialize();
     m_modelProxies.append(value);
     m_instance2ModelProxyRefs.insert(value->data(), value);
     m_uuid2ModelProxyRefs.insert(value->uuid(), value);
@@ -529,7 +530,7 @@ void ProjectProxy::internalAddModel(ModelProxy *value, bool selected, bool isPro
     emit modelDidAdd(value, isProject);
     const QUuid &uuid = QUuid::createUuid();
     VPVL2_VLOG(1, "The initial motion of the model " << value->name().toStdString() << " will be allocated as " << uuid.toString().toStdString());
-    if (MotionProxy *motionProxy = createMotionProxy(m_factory->newMotion(IMotion::kVMDMotion, value->data()), uuid, QUrl(), false)) {
+    if (MotionProxy *motionProxy = createMotionProxy(m_factory->newMotion(IMotion::kVMDMotion, value->data()), uuid, QUrl())) {
         motionProxy->setModelProxy(value, m_factory.data());
         value->setChildMotion(motionProxy, true);
         emit motionDidLoad(motionProxy);
@@ -961,21 +962,16 @@ ModelProxy *ProjectProxy::createModelProxy(IModel *model, const QUuid &uuid, con
     }
     model->setPhysicsEnable(m_worldProxy->simulationType() != WorldProxy::DisableSimulation);
     ModelProxy *modelProxy = new ModelProxy(this, model, uuid, fileUrl, faviconUrl);
-    emit modelWillLoad(modelProxy);
-    modelProxy->initialize();
     emit modelDidLoad(modelProxy, skipConfirm);
     return modelProxy;
 }
 
-MotionProxy *ProjectProxy::createMotionProxy(IMotion *motion, const QUuid &uuid, const QUrl &fileUrl, bool emitSignal)
+MotionProxy *ProjectProxy::createMotionProxy(IMotion *motion, const QUuid &uuid, const QUrl &fileUrl)
 {
     MotionProxy *motionProxy = 0;
     if (motion && !resolveMotionProxy(motion)) {
         QUndoStack *undoStack = new QUndoStack(m_undoGroup.data());
         motionProxy = new MotionProxy(this, motion, uuid, fileUrl, undoStack);
-        if (emitSignal) {
-            emit motionWillLoad(motionProxy);
-        }
         m_undoGroup->addStack(undoStack);
         m_motionProxies.append(motionProxy);
         m_motion2UndoStacks.insert(motionProxy, undoStack);
@@ -1176,7 +1172,7 @@ void ProjectProxy::internalLoadAsync()
             deleteMotion(motionProxy, false);
         }
         else {
-            motionProxy = createMotionProxy(motionRef, QUuid(QString::fromStdString(uuid)), QUrl(), false);
+            motionProxy = createMotionProxy(motionRef, QUuid(QString::fromStdString(uuid)), QUrl());
             if (ModelProxy *modelProxy = resolveModelProxy(motionRef->parentModelRef())) {
                 /* this is a model motion */
                 motionProxy->setModelProxy(modelProxy, m_factory.data());
@@ -1231,7 +1227,7 @@ void ProjectProxy::assignCamera()
     QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, 0));
     VPVL2_VLOG(1, "The camera motion will be allocated as " << uuid.toString().toStdString());
     deleteMotion(m_cameraRefObject->releaseMotion(), false);
-    MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl(), false);
+    MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl());
     ICamera *cameraRef = m_project->cameraRef();
     m_cameraRefObject->assignCameraRef(cameraRef, motionProxy);
     QScopedPointer<ICameraKeyframe> keyframe(m_factory->createCameraKeyframe(motion.take()));
@@ -1250,7 +1246,7 @@ void ProjectProxy::assignLight()
     QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, 0));
     VPVL2_VLOG(1, "The light motion will be allocated as " << uuid.toString().toStdString());
     deleteMotion(m_lightRefObject->releaseMotion(), false);
-    MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl(), false);
+    MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl());
     ILight *lightRef = m_project->lightRef();
     m_lightRefObject->assignLightRef(lightRef, motionProxy);
     QScopedPointer<ILightKeyframe> keyframe(m_factory->createLightKeyframe(motion.take()));
