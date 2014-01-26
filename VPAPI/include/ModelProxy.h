@@ -73,6 +73,7 @@ class ModelProxy : public QObject
 {
     Q_OBJECT
     Q_ENUMS(AxisType)
+    Q_ENUMS(ObjectType)
     Q_ENUMS(TransformType)
     Q_PROPERTY(ProjectProxy *parentProject READ parentProject CONSTANT FINAL)
     Q_PROPERTY(ModelProxy *parentBindingModel READ parentBindingModel WRITE setParentBindingModel NOTIFY parentBindingModelChanged)
@@ -83,14 +84,14 @@ class ModelProxy : public QObject
     Q_PROPERTY(QUrl faviconUrl READ faviconUrl CONSTANT FINAL)
     Q_PROPERTY(QString name READ name NOTIFY nameChanged FINAL)
     Q_PROPERTY(QString comment READ comment NOTIFY commentChanged FINAL)
-    Q_PROPERTY(QQmlListProperty<LabelRefObject> allLabels READ allLabels CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<BoneRefObject> allBones READ allBones CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<MorphRefObject> allMorphs READ allMorphs CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<MaterialRefObject> allMaterials READ allMaterials CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<VertexRefObject> allVertices READ allVertices CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<RigidBodyRefObject> allRigidBodies READ allRigidBodies CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<JointRefObject> allJoints READ allJoints CONSTANT FINAL)
-    Q_PROPERTY(QQmlListProperty<BoneRefObject> targetBones READ targetBones CONSTANT FINAL)
+    Q_PROPERTY(QQmlListProperty<LabelRefObject> allLabels READ allLabels NOTIFY allLabelsChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<BoneRefObject> allBones READ allBones NOTIFY allBonesChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<MorphRefObject> allMorphs READ allMorphs NOTIFY allMorphsChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<MaterialRefObject> allMaterials READ allMaterials NOTIFY allMaterialsChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<VertexRefObject> allVertices READ allVertices NOTIFY allVerticesChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<RigidBodyRefObject> allRigidBodies READ allRigidBodies NOTIFY allRigidBodiesChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<JointRefObject> allJoints READ allJoints NOTIFY allJointsChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<BoneRefObject> targetBones READ targetBones NOTIFY targetBonesChanged FINAL)
     Q_PROPERTY(BoneRefObject *firstTargetBone READ firstTargetBone NOTIFY firstTargetBoneChanged FINAL)
     Q_PROPERTY(MorphRefObject *firstTargetMorph READ firstTargetMorph WRITE setFirstTargetMorph NOTIFY firstTargetMorphChanged FINAL)
     Q_PROPERTY(AxisType axisType READ axisType WRITE setAxisType NOTIFY axisTypeChanged FINAL)
@@ -112,6 +113,16 @@ public:
         AxisX,
         AxisY,
         AxisZ
+    };
+    enum ObjectType {
+        Vertex,
+        Material,
+        Bone,
+        Morph,
+        Label,
+        RigidBody,
+        Joint,
+        SoftBody
     };
     enum TransformType {
         LocalTransform,
@@ -198,6 +209,14 @@ signals:
     void childMotionChanged();
     void nameChanged();
     void commentChanged();
+    void allLabelsChanged();
+    void allBonesChanged();
+    void allMorphsChanged();
+    void allMaterialsChanged();
+    void allVerticesChanged();
+    void allRigidBodiesChanged();
+    void allJointsChanged();
+    void targetBonesChanged();
     void firstTargetBoneChanged();
     void firstTargetMorphChanged();
     void axisTypeChanged();
@@ -232,6 +251,7 @@ public slots:
     Q_INVOKABLE void resetTargets();
     Q_INVOKABLE void release();
     Q_INVOKABLE void refresh();
+
     Q_INVOKABLE BoneRefObject *resolveBoneRef(const vpvl2::IBone *value) const;
     Q_INVOKABLE BoneRefObject *findBoneByName(const QString &name) const;
     Q_INVOKABLE BoneRefObject *findBoneByUuid(const QUuid &uuid) const;
@@ -250,6 +270,24 @@ public slots:
     Q_INVOKABLE JointRefObject *resolveJointRef(const vpvl2::IJoint *value) const;
     Q_INVOKABLE JointRefObject *findJointByName(const QString &name) const;
     Q_INVOKABLE JointRefObject *findJointByUuid(const QUuid &uuid) const;
+
+    Q_INVOKABLE VertexRefObject *createVertex();
+    Q_INVOKABLE MaterialRefObject *createMaterial();
+    Q_INVOKABLE BoneRefObject *createBone();
+    Q_INVOKABLE MorphRefObject *createMorph();
+    Q_INVOKABLE LabelRefObject *createLabel();
+    Q_INVOKABLE RigidBodyRefObject *createRigidBody();
+    Q_INVOKABLE JointRefObject *createJoint();
+    Q_INVOKABLE QObject *createObject(ObjectType type);
+    Q_INVOKABLE bool removeVertex(VertexRefObject *value);
+    Q_INVOKABLE bool removeMaterial(MaterialRefObject *value);
+    Q_INVOKABLE bool removeBone(BoneRefObject *value);
+    Q_INVOKABLE bool removeMorph(MorphRefObject *value);
+    Q_INVOKABLE bool removeLabel(LabelRefObject *value);
+    Q_INVOKABLE bool removeRigidBody(RigidBodyRefObject *value);
+    Q_INVOKABLE bool removeJoint(JointRefObject *value);
+    Q_INVOKABLE bool removeObject(QObject *value);
+    Q_INVOKABLE bool deleteObject(QObject *value);
 
 private slots:
     void resetLanguage();

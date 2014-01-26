@@ -466,6 +466,246 @@ JointRefObject *ModelProxy::findJointByUuid(const QUuid &uuid) const
     return m_uuid2JointRefs.value(uuid);
 }
 
+VertexRefObject *ModelProxy::createVertex()
+{
+    QScopedPointer<IVertex> vertex(m_model->createVertex());
+    QScopedPointer<VertexRefObject> vertexRef(new VertexRefObject(this, vertex.data(), QUuid::createUuid()));
+    m_allVertices.append(vertexRef.data());
+    m_uuid2VertexRefs.insert(vertexRef->uuid(), vertexRef.data());
+    m_vertex2Refs.insert(vertex.data(), vertexRef.data());
+    m_model->addVertex(vertex.take());
+    emit allVerticesChanged();
+    return vertexRef.take();
+}
+
+MaterialRefObject *ModelProxy::createMaterial()
+{
+    QScopedPointer<IMaterial> material(m_model->createMaterial());
+    QScopedPointer<MaterialRefObject> materialRef(new MaterialRefObject(this, material.data(), QUuid::createUuid()));
+    m_allMaterials.append(materialRef.data());
+    m_uuid2MaterialRefs.insert(materialRef->uuid(), materialRef.data());
+    m_material2Refs.insert(material.data(), materialRef.data());
+    m_model->addMaterial(material.take());
+    emit allMaterialsChanged();
+    return materialRef.take();
+}
+
+BoneRefObject *ModelProxy::createBone()
+{
+    QScopedPointer<IBone> bone(m_model->createBone());
+    QScopedPointer<BoneRefObject> boneRef(new BoneRefObject(0, bone.data(), QUuid::createUuid()));
+    m_allBones.append(boneRef.data());
+    m_uuid2BoneRefs.insert(boneRef->uuid(), boneRef.data());
+    m_bone2Refs.insert(bone.data(), boneRef.data());
+    m_model->addBone(bone.take());
+    emit allBonesChanged();
+    return boneRef.take();
+}
+
+MorphRefObject *ModelProxy::createMorph()
+{
+    QScopedPointer<IMorph> morph(m_model->createMorph());
+    QScopedPointer<MorphRefObject> morphRef(new MorphRefObject(0, morph.data(), QUuid::createUuid()));
+    m_allMorphs.append(morphRef.data());
+    m_uuid2MorphRefs.insert(morphRef->uuid(), morphRef.data());
+    m_morph2Refs.insert(morph.data(), morphRef.data());
+    m_model->addMorph(morph.take());
+    emit allMorphsChanged();
+    return morphRef.take();
+}
+
+LabelRefObject *ModelProxy::createLabel()
+{
+    QScopedPointer<ILabel> label(m_model->createLabel());
+    QScopedPointer<LabelRefObject> labelRef(new LabelRefObject(this, label.data()));
+    m_allLabels.append(labelRef.data());
+    m_model->addLabel(label.data());
+    emit allLabelsChanged();
+    return labelRef.take();
+}
+
+RigidBodyRefObject *ModelProxy::createRigidBody()
+{
+    QScopedPointer<IRigidBody> body(m_model->createRigidBody());
+    QScopedPointer<RigidBodyRefObject> bodyRef(new RigidBodyRefObject(this, 0, body.data(), QUuid::createUuid()));
+    m_allRigidBodies.append(bodyRef.data());
+    m_uuid2RigidBodyRefs.insert(bodyRef->uuid(), bodyRef.data());
+    m_rigidBody2Refs.insert(body.data(), bodyRef.data());
+    m_model->addRigidBody(body.take());
+    emit allRigidBodiesChanged();
+    return bodyRef.take();
+}
+
+JointRefObject *ModelProxy::createJoint()
+{
+    QScopedPointer<IJoint> joint(m_model->createJoint());
+    QScopedPointer<JointRefObject> jointRef(new JointRefObject(this, 0, 0, joint.data(), QUuid::createUuid()));
+    m_allJoints.append(jointRef.data());
+    m_uuid2JointRefs.insert(jointRef->uuid(), jointRef.data());
+    m_joint2Refs.insert(joint.data(), jointRef.data());
+    m_model->addJoint(joint.take());
+    emit allJointsChanged();
+    return jointRef.take();
+}
+
+QObject *ModelProxy::createObject(ObjectType type)
+{
+    QObject *object = 0;
+    switch (type) {
+    case Vertex: {
+        object = createVertex();
+        break;
+    }
+    case Material: {
+        object = createMaterial();
+        break;
+    }
+    case Bone: {
+        object = createBone();
+        break;
+    }
+    case Morph: {
+        object = createMorph();
+        break;
+    }
+    case Label: {
+        object = createLabel();
+        break;
+    }
+    case RigidBody: {
+        object = createRigidBody();
+        break;
+    }
+    case Joint: {
+        object = createJoint();
+        break;
+    }
+    case SoftBody: {
+        break;
+    }
+    default:
+        break;
+    }
+    return object;
+}
+
+bool ModelProxy::removeVertex(VertexRefObject *value)
+{
+    m_model->removeVertex(value->data());
+    m_vertex2Refs.remove(value->data());
+    m_uuid2VertexRefs.remove(value->uuid());
+    if (m_allVertices.removeOne(value)) {
+        emit allVerticesChanged();
+        return true;
+    }
+    return false;
+}
+
+bool ModelProxy::removeMaterial(MaterialRefObject *value)
+{
+    m_model->removeMaterial(value->data());
+    m_material2Refs.remove(value->data());
+    m_uuid2MaterialRefs.remove(value->uuid());
+    if (m_allMaterials.removeOne(value)) {
+        emit allMaterialsChanged();
+        return true;
+    }
+    return false;
+}
+
+bool ModelProxy::removeBone(BoneRefObject *value)
+{
+    m_model->removeBone(value->data());
+    m_bone2Refs.remove(value->data());
+    m_uuid2BoneRefs.remove(value->uuid());
+    if (m_allBones.removeOne(value)) {
+        emit allBonesChanged();
+        return true;
+    }
+    return false;
+}
+
+bool ModelProxy::removeMorph(MorphRefObject *value)
+{
+    m_model->removeMorph(value->data());
+    m_morph2Refs.remove(value->data());
+    m_uuid2MorphRefs.remove(value->uuid());
+    if (m_allMorphs.removeOne(value)) {
+        emit allMorphsChanged();
+        return true;
+    }
+    return false;
+}
+
+bool ModelProxy::removeLabel(LabelRefObject *value)
+{
+    // m_model->removeLabel(label->data());
+    if (m_allLabels.removeOne(value)) {
+        emit allLabelsChanged();
+        return true;
+    }
+    return false;
+}
+
+bool ModelProxy::removeRigidBody(RigidBodyRefObject *value)
+{
+    m_model->removeRigidBody(value->data());
+    m_rigidBody2Refs.remove(value->data());
+    m_uuid2RigidBodyRefs.remove(value->uuid());
+    if (m_allRigidBodies.removeOne(value)) {
+        emit allRigidBodiesChanged();
+        return true;
+    }
+    return false;
+}
+
+bool ModelProxy::removeJoint(JointRefObject *value)
+{
+    m_model->removeJoint(value->data());
+    m_joint2Refs.remove(value->data());
+    m_uuid2JointRefs.remove(value->uuid());
+    if (m_allJoints.removeOne(value)) {
+        emit allJointsChanged();
+        return true;
+    }
+    return false;
+}
+
+bool ModelProxy::removeObject(QObject *value)
+{
+    if (VertexRefObject *vertex = qobject_cast<VertexRefObject *>(value)) {
+        return removeVertex(vertex);
+    }
+    else if (MaterialRefObject *material = qobject_cast<MaterialRefObject *>(value)) {
+        return removeMaterial(material);
+    }
+    else if (BoneRefObject *bone = qobject_cast<BoneRefObject *>(value)) {
+        return removeBone(bone);
+    }
+    else if (MorphRefObject *morph = qobject_cast<MorphRefObject *>(value)) {
+        return removeMorph(morph);
+    }
+    else if (LabelRefObject *label = qobject_cast<LabelRefObject *>(value)) {
+        return removeLabel(label);
+    }
+    else if (RigidBodyRefObject *body = qobject_cast<RigidBodyRefObject *>(value)) {
+        return removeRigidBody(body);
+    }
+    else if (JointRefObject *joint = qobject_cast<JointRefObject *>(value)) {
+        return removeJoint(joint);
+    }
+    return false;
+}
+
+bool ModelProxy::deleteObject(QObject *value)
+{
+    if (removeObject(value)) {
+        value->deleteLater();
+        return true;
+    }
+    return false;
+}
+
 IModel *ModelProxy::data() const
 {
     return m_model.data();
