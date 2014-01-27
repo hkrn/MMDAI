@@ -48,6 +48,7 @@ class Application : public QApplication
 
 public:
     Q_PROPERTY(QString commitRevision READ commitRevision CONSTANT FINAL)
+    Q_PROPERTY(QUrl requestedFileUrl READ requestedFileUrl NOTIFY requestedFileUrlChanged FINAL)
     Q_PROPERTY(QUrl json READ json CONSTANT FINAL)
     Q_PROPERTY(bool hasJson READ hasJson CONSTANT FINAL)
 
@@ -55,12 +56,20 @@ public:
     ~Application();
 
     QString commitRevision() const;
+    QUrl requestedFileUrl() const;
     QUrl json() const;
     bool hasJson() const;
+
+signals:
+    void requestedFileUrlChanged();
+
+protected:
+    bool event(QEvent *event);
 
 private:
     const QCommandLineParser *m_parser;
     QCommandLineOption m_json;
+    QUrl m_requestedFileUrl;
 };
 
 #endif

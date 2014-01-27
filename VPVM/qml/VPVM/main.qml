@@ -55,6 +55,18 @@ ApplicationWindow {
         var state = Qt.application.state
         scene.state = Qt.ApplicationActive ? scene.lastStateAtSuspend : "suspend"
     }
+    function __handleRequestedFileUrlChange() {
+        var fileUrl = applicationBootstrapOption.requestedFileUrl, fileUrlString = fileUrl.toString()
+        if (/\.(?:pm[xd]|x)$/i.test(fileUrlString)) {
+            scene.project.loadModel(fileUrl)
+        }
+        else if (/\.(?:vmd|mvd)$/.test(fileUrlString)) {
+            scene.project.loadMotion(fileUrl, scene.currentModel, VPVM.Project.ModelMotion)
+        }
+        else if (/\.vpd$/.test(fileUrlString)) {
+            scene.project.loadPose(fileUrl, scene.currentModel)
+        }
+    }
     function updateWindowRect() {
         x = applicationPreference.windowRect.x
         y = applicationPreference.windowRect.y
@@ -93,6 +105,7 @@ ApplicationWindow {
         scene.project.initializeOnce()
         updateWindowRect()
         applicationPreference.windowRectChanged.connect(updateWindowRect)
+        applicationBootstrapOption.requestedFileUrlChanged.connect(__handleRequestedFileUrlChange)
         Qt.application.stateChanged.connect(__handleApplicationStateChange)
     }
 

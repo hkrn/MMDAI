@@ -38,6 +38,7 @@
 #include "Application.h"
 
 #include <QtCore>
+#include <QFileOpenEvent>
 #include <vpvl2/vpvl2.h>
 
 Application::Application(QCommandLineParser *parser, int argc, char **argv)
@@ -60,6 +61,11 @@ QString Application::commitRevision() const
     return vpvl2::libraryCommitRevisionString();
 }
 
+QUrl Application::requestedFileUrl() const
+{
+    return m_requestedFileUrl;
+}
+
 QUrl Application::json() const
 {
     return QUrl::fromLocalFile(m_parser->value(m_json));
@@ -68,4 +74,14 @@ QUrl Application::json() const
 bool Application::hasJson() const
 {
     return m_parser->isSet(m_json);
+}
+
+bool Application::event(QEvent *event)
+{
+    if (event->type() == QEvent::FileOpen) {
+        QFileOpenEvent *fileOpenEvent = static_cast<QFileOpenEvent *>(event);
+        m_requestedFileUrl = QUrl::fromLocalFile(fileOpenEvent->file());
+        emit requestedFileUrlChanged();
+    }
+    return QApplication::event(event);
 }
