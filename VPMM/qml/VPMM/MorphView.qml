@@ -68,7 +68,36 @@ Item {
                 value: morphTypeComboBox.model[morphTypeComboBox.currentIndex].value
             }
         }
-        Item { Layout.fillHeight: true }
+        TableView {
+            id: objectsInLabelTableView
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            model: {
+                switch (targetObject.type) {
+                case VPMM.Morph.Group:
+                    return targetObject.groups
+                case VPMM.Morph.Vertex:
+                    return targetObject.vertices
+                case VPMM.Morph.Bone:
+                    return targetObject.bones
+                case VPMM.Morph.TexCord:
+                case VPMM.Morph.UVA1:
+                case VPMM.Morph.UVA2:
+                case VPMM.Morph.UVA3:
+                case VPMM.Morph.UVA4:
+                    return targetObject.uvs
+                case VPMM.Morph.Material:
+                    return targetObject.materials
+                case VPMM.Morph.Flip:
+                    return targetObject.flips
+                case VPMM.Morph.Impulse:
+                    return targetObject.impulses
+                }
+            }
+            selectionMode: SelectionMode.ExtendedSelection
+            TableViewColumn { title: qsTr("Index"); role: "index" }
+            TableViewColumn { title: qsTr("Name"); role: "name" }
+        }
     }
 }
 

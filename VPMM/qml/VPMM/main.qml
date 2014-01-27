@@ -58,7 +58,7 @@ ApplicationWindow {
                 clear()
                 for (var i in vertices) {
                     var vertex = vertices[i]
-                    append({ "item": vertex })
+                    append({ "item": vertex, "text": vertex.name })
                 }
             }
         }
@@ -266,10 +266,12 @@ ApplicationWindow {
                             TableViewColumn {
                                 role: "index"
                                 title: "Index"
+                                resizable: true
                             }
                             TableViewColumn {
                                 role: "text"
                                 title: "Name"
+                                resizable: true
                             }
                             onDoubleClicked: {
                                 var item = model.get(row).item,

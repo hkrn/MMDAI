@@ -85,6 +85,13 @@ static void registerQmlTypes()
     qmlRegisterUncreatableType<CameraKeyframeRefObject>("com.github.mmdai.VPMM", 1, 0, "CameraKeyframe", "");
     qmlRegisterUncreatableType<CameraMotionTrack>("com.github.mmdai.VPMM", 1, 0, "CameraMotionTrack", "");
     qmlRegisterUncreatableType<CameraRefObject>("com.github.mmdai.VPMM", 1, 0, "Camera", "");
+    qmlRegisterUncreatableType<ChildBoneMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildBoneMorph", "");
+    qmlRegisterUncreatableType<ChildFlipMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildFlipMorph", "");
+    qmlRegisterUncreatableType<ChildGroupMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildGroupMorph", "");
+    qmlRegisterUncreatableType<ChildImpulseMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildImpulseMorph", "");
+    qmlRegisterUncreatableType<ChildMaterialMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildMaterialMorph", "");
+    qmlRegisterUncreatableType<ChildUVMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildUVMorph", "");
+    qmlRegisterUncreatableType<ChildVertexMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildVertexMorph", "");
     qmlRegisterUncreatableType<GraphicsDevice>("com.github.mmdai.VPMM", 1, 0, "GraphicsDevice", "");
     qmlRegisterUncreatableType<Grid>("com.github.mmdai.VPMM", 1, 0, "Grid", "");
     qmlRegisterUncreatableType<JointRefObject>("com.github.mmdai.VPMM", 1, 0, "Joint", "");
