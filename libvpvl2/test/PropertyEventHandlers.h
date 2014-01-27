@@ -74,6 +74,8 @@ class MockMorphPropertyEventListener : public IMorph::PropertyEventListener {
 public:
     MOCK_METHOD3(nameWillChange, void(const IString *value, IEncoding::LanguageType type, IMorph *morph));
     MOCK_METHOD2(weightWillChange, void(const IMorph::WeightPrecision &value, IMorph *morph));
+    MOCK_METHOD2(categoryWillChange, void(IMorph::Category value, IMorph *morph));
+    MOCK_METHOD2(typeWillChange, void(IMorph::Type value, IMorph *morph));
 };
 
 class MockRigidBodyPropertyEventListener : public IRigidBody::PropertyEventListener {

@@ -58,6 +58,8 @@ class MockIMorph : public IMorph {
       void(Impulse *value));
   MOCK_METHOD1(setType,
       void(Type value));
+  MOCK_METHOD1(setCategory,
+      void(Category value));
   MOCK_CONST_METHOD1(getBoneMorphs,
       void(Array<Bone *> &morphs));
   MOCK_CONST_METHOD1(getGroupMorphs,
