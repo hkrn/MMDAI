@@ -798,14 +798,14 @@ FocusScope {
                     trackKeyframes = track.keyframes,
                     trackLabelHeight = __trackLabelHeight,
                     halfTrackLabelHeight = trackLabelHeight * 0.5,
-                    fontAwesomeFont = [ iconPointSize, fontAwesome.name ].join(" "),
-                    defaultFont = [ fontPointSizeText, fontFamily ].join(" "),
+                    fontAwesomeFont = iconPointSizeText + " " + fontAwesome.name,
+                    defaultFont = fontPointSizeText + " " + fontFamily,
                     parentMotionTrack = track.parentMotionTrack,
                     trackType = track.type,
                     iconText, measuredWidth;
 
             // draw rectangle of label and track region
-            ctx.font = fontAwesomeFont;
+            ctx.font = fontAwesomeFont
             if (trackType === "property" && track.selected) {
                 ctx.fillStyle = selectedLabelFillColor
                 propertyLabelFillTextColor = selectedLabelStrokeColor
