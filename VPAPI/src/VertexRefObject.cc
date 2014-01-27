@@ -152,6 +152,15 @@ QUuid VertexRefObject::uuid() const
     return m_uuid;
 }
 
+QString VertexRefObject::name() const
+{
+    const QVector3D &o = origin();
+    return QString("(%1, %2, %3)")
+            .arg(o.x(), 0, 'g', 3)
+            .arg(o.y(), 0, 'g', 3)
+            .arg(o.z(), 0, 'g', 3);
+}
+
 int VertexRefObject::index() const
 {
     Q_ASSERT(m_vertexRef);
