@@ -519,9 +519,7 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::modelBoneDidReset, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::undoDidPerform, this, &RenderTarget::updateGizmoAndRender);
     connect(value, &ProjectProxy::redoDidPerform, this, &RenderTarget::updateGizmoAndRender);
-    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::resetCurrentTimeIndex);
-    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::resetLastTimeIndex);
-    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
+    connect(value, &ProjectProxy::rewindDidPerform, this, &RenderTarget::rewind);
     connect(value->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
     CameraRefObject *camera = value->camera();
     connect(camera, &CameraRefObject::lookAtChanged, this, &RenderTarget::markDirty);
@@ -822,18 +820,6 @@ void RenderTarget::loadJson(const QUrl &fileUrl)
     }
 }
 
-void RenderTarget::resetCurrentTimeIndex()
-{
-    m_currentTimeIndex = 0;
-    emit currentTimeIndexChanged();
-}
-
-void RenderTarget::resetLastTimeIndex()
-{
-    m_lastTimeIndex = 0;
-    emit lastTimeIndexChanged();
-}
-
 void RenderTarget::markDirty()
 {
     m_dirty = true;
@@ -861,10 +847,11 @@ void RenderTarget::updateGizmo()
         setSnapGizmoStepSize(m_snapStepSize);
         if (const BoneRefObject *boneProxy = modelProxy->firstTargetBone()) {
             const IBone *boneRef = boneProxy->data();
+            Transform transform;
             float32 m[16];
             m_applicationContext->getMatrix(m, modelProxy->data(), IApplicationContext::kCameraMatrix | IApplicationContext::kWorldMatrix);
-            m_editMatrix = Util::fromMatrix4(glm::make_mat4(m));
-            const Vector3 &v = boneRef->origin();
+            transform.setFromOpenGLMatrix(m);
+            const Vector3 &v = transform.getOrigin();
             translationGizmoRef->SetOffset(v.x(), v.y(), v.z());
             orientationGizmoRef->SetOffset(v.x(), v.y(), v.z());
             if (!boneRef->isMovable() && editMode() == MoveMode) {
@@ -873,6 +860,11 @@ void RenderTarget::updateGizmo()
             if (!boneRef->isRotateable() && editMode() == RotateMode) {
                 setEditMode(SelectMode);
             }
+            transform.setIdentity();
+            transform.setOrigin(boneRef->localTranslation());
+            transform.setRotation(boneRef->localOrientation());
+            transform.getOpenGLMatrix(m);
+            m_editMatrix = Util::fromMatrix4(glm::make_mat4(m));
         }
     }
     else {
@@ -931,7 +923,7 @@ void RenderTarget::draw()
         drawDebug();
         drawModelBones();
         drawCurrentGizmo();
-        m_applicationContext->renderEffectParameterUIWidgets();
+        drawEffectParameterUIWidgets();
         bool flushed = false;
         m_counter.update(m_renderTimer.elapsed(), flushed);
         if (flushed) {
@@ -1231,10 +1223,19 @@ void RenderTarget::disconnectProjectSignals()
     /* disable below signals behavior while loading project */
     disconnect(m_projectProxyRef, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
     disconnect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::prepareUpdatingLight);
-    disconnect(m_projectProxyRef, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
+    disconnect(m_projectProxyRef, &ProjectProxy::rewindDidPerform, this, &RenderTarget::rewind);
     disconnect(m_projectProxyRef->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
     disconnect(m_projectProxyRef->light(), &LightRefObject::directionChanged, this, &RenderTarget::prepareUpdatingLight);
     disconnect(m_projectProxyRef->light(), &LightRefObject::shadowTypeChanged, this, &RenderTarget::prepareUpdatingLight);
+}
+
+void RenderTarget::rewind()
+{
+    m_currentTimeIndex = 0;
+    emit currentTimeIndexChanged();
+    m_lastTimeIndex = 0;
+    emit lastTimeIndexChanged();
+    prepareSyncMotionState();
 }
 
 void RenderTarget::prepareUploadingModelsInProject()
@@ -1255,7 +1256,7 @@ void RenderTarget::activateProject()
     m_grid->setVisible(m_projectProxyRef->isGridVisible());
     connect(this, &RenderTarget::shadowMapSizeChanged, this, &RenderTarget::prepareUpdatingLight);
     connect(m_projectProxyRef, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
-    connect(m_projectProxyRef, &ProjectProxy::rewindDidPerform, this, &RenderTarget::prepareSyncMotionState);
+    connect(m_projectProxyRef, &ProjectProxy::rewindDidPerform, this, &RenderTarget::rewind);
     connect(m_projectProxyRef->world(), &WorldProxy::simulationTypeChanged, this, &RenderTarget::prepareSyncMotionState);
     connect(m_projectProxyRef->light(), &LightRefObject::directionChanged, this, &RenderTarget::prepareUpdatingLight);
     connect(m_projectProxyRef->light(), &LightRefObject::shadowTypeChanged, this, &RenderTarget::prepareUpdatingLight);
@@ -1397,6 +1398,13 @@ void RenderTarget::drawCurrentGizmo()
         gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
         m_currentGizmoRef->Draw();
         gl::popAnnotationGroup(m_applicationContext.data());
+    }
+}
+
+void RenderTarget::drawEffectParameterUIWidgets()
+{
+    if (!m_playing) {
+        m_applicationContext->renderEffectParameterUIWidgets();
     }
 }
 

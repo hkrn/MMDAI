@@ -166,8 +166,6 @@ public slots:
     Q_INVOKABLE void render();
     Q_INVOKABLE void exportImage(const QUrl &fileUrl, const QSize &size, bool checkFileUrl = true);
     Q_INVOKABLE void loadJson(const QUrl &fileUrl);
-    void resetCurrentTimeIndex();
-    void resetLastTimeIndex();
 
 signals:
     void initializedChanged();
@@ -232,6 +230,7 @@ private slots:
     void performDeletingEnqueuedModels();
     void performUpdatingLight();
     void disconnectProjectSignals();
+    void rewind();
     void prepareUploadingModelsInProject();
     void activateProject();
     void markDirty();
@@ -254,6 +253,7 @@ private:
     void drawDebug();
     void drawModelBones();
     void drawCurrentGizmo();
+    void drawEffectParameterUIWidgets();
     void drawOffscreen(QOpenGLFramebufferObject *fbo);
     void updateViewport();
 
