@@ -56,7 +56,20 @@ Tab {
                 readonly property bool isModel: objectTypeGroup.current === modelObjectTypeModel
                 readonly property bool isBone: objectTypeGroup.current === modelObjectTypeBone
                 readonly property bool isMorph: objectTypeGroup.current === modelObjectTypeMorph
+                function __handleBoneSelected() {
+                    modelObjectTypeBone.checked = true
+                }
+                function __handleMorphSelected() {
+                    modelObjectTypeMorph.checked = true
+                }
+                function __handleModelChanged(model) {
+                    if (model) {
+                        model.firstTargetBoneChanged.connect(__handleBoneSelected)
+                        model.firstTargetMorphChanged.connect(__handleMorphSelected)
+                    }
+                }
                 enabled: scene.currentModel
+                Component.onCompleted: scene.uploadingModelDidSucceed.connect(__handleModelChanged)
                 ExclusiveGroup { id: objectTypeGroup }
                 RadioButton {
                     id: modelObjectTypeModel
@@ -457,18 +470,38 @@ Tab {
                     ColumnLayout {
                         RowLayout {
                             ComboBox {
-                                id: category
+                                id: morphCategory
+                                function __handleFirstTargetMorphChanged() {
+                                    var morph = scene.currentModel.firstTargetMorph
+                                    if (morph) {
+                                        var category = morph.category
+                                        for (var i in model) {
+                                            if (model[i].value === category) {
+                                                currentIndex = i
+                                                break
+                                            }
+                                        }
+                                        morphList.currentIndex = -1 /* to update morphList forcely */
+                                        morphList.currentIndex = morphList.model.indexOf(morph)
+                                    }
+                                }
+                                function __handleUploadingModel(model) {
+                                    if (model) {
+                                        model.firstTargetMorphChanged.connect(__handleFirstTargetMorphChanged)
+                                    }
+                                }
+                                Component.onCompleted: scene.uploadingModelDidSucceed.connect(__handleUploadingModel)
                                 model: [
-                                    { "text": qsTr("None"), "category": VPVM.Morph.Unknown },
-                                    { "text": qsTr("Eye"), "category": VPVM.Morph.Eye },
-                                    { "text": qsTr("Lip"), "category": VPVM.Morph.Lip },
-                                    { "text": qsTr("Eyeblow"), "category": VPVM.Morph.Eyeblow },
-                                    { "text": qsTr("Other"), "category": VPVM.Morph.Other }
+                                    { "text": qsTr("None"), "value": VPVM.Morph.Unknown },
+                                    { "text": qsTr("Eye"), "value": VPVM.Morph.Eye },
+                                    { "text": qsTr("Lip"), "value": VPVM.Morph.Lip },
+                                    { "text": qsTr("Eyeblow"), "value": VPVM.Morph.Eyeblow },
+                                    { "text": qsTr("Other"), "value": VPVM.Morph.Other }
                                 ]
                                 onCurrentIndexChanged: {
                                     var currentModel = scene.currentModel
                                     if (currentModel) {
-                                        var category = model[currentIndex].category
+                                        var category = model[currentIndex].value
                                         morphList.model = currentModel.findMorphsByCategory(category)
                                         if (category === VPVM.Morph.Unknown) {
                                             currentModel.firstTargetMorph = null
@@ -483,13 +516,13 @@ Tab {
                             }
                             ComboBox {
                                 id: morphList
+                                visible: morphCategory.model[morphCategory.currentIndex].value !== VPVM.Morph.Unknown
                                 editable: true
                                 textRole: "name"
                                 onCurrentIndexChanged: {
                                     var currentModel = scene.currentModel
-                                    if (currentModel) {
+                                    if (currentIndex != -1 && currentModel) {
                                         var morph = model[currentIndex]
-                                        console.log([ currentIndex, morph ])
                                         if (morph) {
                                             currentModel.firstTargetMorph = morph
                                             morphSlider.value = morph.weight
