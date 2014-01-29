@@ -11,9 +11,10 @@ group: navigation
 VPVM {{ site.data.VPVM.version }}
 -------------
 
-開発版の公開版です
+開発版の公開版です。近いうちに MMDAI2 0.30.0 をこれにリプレースする予定です
 
- - [ドキュメントは今のところ github 上にあります]({{ site.data.VPVM.github }}/wiki/VPVM)
+ - [ふつうのマニュアルっぽいものは今のところ github 上にあります]({{ site.data.VPVM.github }}/wiki/VPVM)
+   - [タグの VPVM で VPVM の使い方逆引きマニュアルを参照する事ができます](tags.html)
  - MMDAI2 0.30.0 とは使い方と UI が大きく異なるので注意
 
 ### [OSX 版をダウンロード]({{ site.data.VPVM.location }}/{{ site.data.VPVM.version }}/VPVM-osx-{{ site.data.VPVM.version }}.zip)
