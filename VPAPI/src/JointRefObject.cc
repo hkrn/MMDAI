@@ -47,13 +47,9 @@ using namespace vpvl2;
 using namespace vpvl2::extensions::qt;
 
 JointRefObject::JointRefObject(ModelProxy *parentModel,
-                               RigidBodyRefObject *bodyA,
-                               RigidBodyRefObject *bodyB,
                                IJoint *jointRef,
                                const QUuid &uuid)
     : m_parentModelRef(parentModel),
-      m_bodyARef(bodyA),
-      m_bodyBRef(bodyB),
       m_jointRef(jointRef),
       m_uuid(uuid)
 {
@@ -64,8 +60,6 @@ JointRefObject::JointRefObject(ModelProxy *parentModel,
 
 JointRefObject::~JointRefObject()
 {
-    m_bodyARef = 0;
-    m_bodyBRef = 0;
     m_jointRef = 0;
 }
 
@@ -81,16 +75,6 @@ ModelProxy *JointRefObject::parentModel() const
     return m_parentModelRef;
 }
 
-RigidBodyRefObject *JointRefObject::bodyA() const
-{
-    return m_bodyARef;
-}
-
-RigidBodyRefObject *JointRefObject::bodyB() const
-{
-    return m_bodyBRef;
-}
-
 QUuid JointRefObject::uuid() const
 {
     return m_uuid;
@@ -100,6 +84,38 @@ int JointRefObject::index() const
 {
     Q_ASSERT(m_jointRef);
     return m_jointRef->index();
+}
+
+RigidBodyRefObject *JointRefObject::parentRigidBodyA() const
+{
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_jointRef);
+    return m_parentModelRef->resolveRigidBodyRef(m_jointRef->rigidBody1Ref());
+}
+
+void JointRefObject::setParentRigidBodyA(RigidBodyRefObject *value)
+{
+    Q_ASSERT(m_jointRef);
+    if (parentRigidBodyA() != value) {
+        m_jointRef->setRigidBody1Ref(value->data());
+        emit parentRigidBodyAChanged();
+    }
+}
+
+RigidBodyRefObject *JointRefObject::parentRigidBodyB() const
+{
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_jointRef);
+    return m_parentModelRef->resolveRigidBodyRef(m_jointRef->rigidBody2Ref());
+}
+
+void JointRefObject::setParentRigidBodyB(RigidBodyRefObject *value)
+{
+    Q_ASSERT(m_jointRef);
+    if (parentRigidBodyB() != value) {
+        m_jointRef->setRigidBody2Ref(value->data());
+        emit parentRigidBodyBChanged();
+    }
 }
 
 QString JointRefObject::name() const

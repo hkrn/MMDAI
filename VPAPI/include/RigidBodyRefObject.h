@@ -52,9 +52,9 @@ class RigidBodyRefObject : public QObject
     Q_ENUMS(ObjectType)
     Q_ENUMS(ShapeType)
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
-    Q_PROPERTY(BoneRefObject *parentBone READ parentBone CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
     Q_PROPERTY(int index READ index CONSTANT FINAL)
+    Q_PROPERTY(BoneRefObject *parentBone READ parentBone WRITE setParentBone NOTIFY parentBoneChanged FINAL)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
     Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged FINAL)
     Q_PROPERTY(QVector3D rotation READ rotation WRITE setRotation NOTIFY rotationChanged FINAL)
@@ -81,16 +81,16 @@ public:
     };
 
     RigidBodyRefObject(ModelProxy *parentModelRef,
-                       BoneRefObject *parentBoneRef,
                        vpvl2::IRigidBody *rigidBodyRef,
                        const QUuid &uuid);
     ~RigidBodyRefObject();
 
     vpvl2::IRigidBody *data() const;
     ModelProxy *parentModel() const;
-    BoneRefObject *parentBone() const;
     QUuid uuid() const;
     int index() const;
+    BoneRefObject *parentBone() const;
+    void setParentBone(BoneRefObject *value);
     QString name() const;
     void setName(const QString &value);
     QVector3D position() const;
@@ -117,6 +117,7 @@ public:
     void setCollisionGroupID(const quint8 &value);
 
 signals:
+    void parentBoneChanged();
     void nameChanged();
     void positionChanged();
     void rotationChanged();
@@ -132,7 +133,6 @@ signals:
 
 private:
     ModelProxy *m_parentModelRef;
-    BoneRefObject *m_parentBoneRef;
     vpvl2::IRigidBody *m_rigidBodyRef;
     const QUuid m_uuid;
 };

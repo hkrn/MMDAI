@@ -51,10 +51,10 @@ class JointRefObject : public QObject
     Q_OBJECT
     Q_ENUMS(Type)
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
-    Q_PROPERTY(RigidBodyRefObject *bodyA READ bodyA CONSTANT FINAL)
-    Q_PROPERTY(RigidBodyRefObject *bodyB READ bodyB CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
     Q_PROPERTY(int index READ index CONSTANT FINAL)
+    Q_PROPERTY(RigidBodyRefObject *parentRigidBodyA READ parentRigidBodyA WRITE setParentRigidBodyA NOTIFY parentRigidBodyAChanged FINAL)
+    Q_PROPERTY(RigidBodyRefObject *parentRigidBodyB READ parentRigidBodyB WRITE setParentRigidBodyB NOTIFY parentRigidBodyBChanged FINAL)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
     Q_PROPERTY(Type type READ type WRITE setType NOTIFY typeChanged FINAL)
     Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged FINAL)
@@ -77,18 +77,18 @@ public:
     };
 
     JointRefObject(ModelProxy *parentModel,
-                   RigidBodyRefObject *bodyA,
-                   RigidBodyRefObject *bodyB,
                    vpvl2::IJoint *jointRef,
                    const QUuid &uuid);
     ~JointRefObject();
 
     vpvl2::IJoint *data() const;
     ModelProxy *parentModel() const;
-    RigidBodyRefObject *bodyA() const;
-    RigidBodyRefObject *bodyB() const;
     QUuid uuid() const;
     int index() const;
+    RigidBodyRefObject *parentRigidBodyA() const;
+    void setParentRigidBodyA(RigidBodyRefObject *value);
+    RigidBodyRefObject *parentRigidBodyB() const;
+    void setParentRigidBodyB(RigidBodyRefObject *value);
     QString name() const;
     void setName(const QString &value);
     Type type() const;
@@ -113,6 +113,8 @@ public:
 signals:
     void nameChanged();
     void typeChanged();
+    void parentRigidBodyAChanged();
+    void parentRigidBodyBChanged();
     void positionChanged();
     void rotationChanged();
     void positionUpperLimitChanged();
@@ -124,8 +126,6 @@ signals:
 
 private:
     ModelProxy *m_parentModelRef;
-    RigidBodyRefObject *m_bodyARef;
-    RigidBodyRefObject *m_bodyBRef;
     vpvl2::IJoint *m_jointRef;
     const QUuid m_uuid;
 };

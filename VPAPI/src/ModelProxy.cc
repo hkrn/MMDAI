@@ -531,7 +531,7 @@ LabelRefObject *ModelProxy::createLabel()
 RigidBodyRefObject *ModelProxy::createRigidBody()
 {
     QScopedPointer<IRigidBody> body(m_model->createRigidBody());
-    QScopedPointer<RigidBodyRefObject> bodyRef(new RigidBodyRefObject(this, 0, body.data(), QUuid::createUuid()));
+    QScopedPointer<RigidBodyRefObject> bodyRef(new RigidBodyRefObject(this, body.data(), QUuid::createUuid()));
     m_allRigidBodies.append(bodyRef.data());
     m_uuid2RigidBodyRefs.insert(bodyRef->uuid(), bodyRef.data());
     m_rigidBody2Refs.insert(body.data(), bodyRef.data());
@@ -543,7 +543,7 @@ RigidBodyRefObject *ModelProxy::createRigidBody()
 JointRefObject *ModelProxy::createJoint()
 {
     QScopedPointer<IJoint> joint(m_model->createJoint());
-    QScopedPointer<JointRefObject> jointRef(new JointRefObject(this, 0, 0, joint.data(), QUuid::createUuid()));
+    QScopedPointer<JointRefObject> jointRef(new JointRefObject(this, joint.data(), QUuid::createUuid()));
     m_allJoints.append(jointRef.data());
     m_uuid2JointRefs.insert(jointRef->uuid(), jointRef.data());
     m_joint2Refs.insert(joint.data(), jointRef.data());
@@ -873,7 +873,7 @@ QQmlListProperty<RigidBodyRefObject> ModelProxy::allRigidBodies()
         const int nbodies = rigidBodyRefs.count();
         for (int i = 0; i < nbodies; i++) {
             IRigidBody *rigidBodyRef = rigidBodyRefs[i];
-            RigidBodyRefObject *rigidBody = new RigidBodyRefObject(this, resolveBoneRef(rigidBodyRef->boneRef()), rigidBodyRef, QUuid::createUuid());
+            RigidBodyRefObject *rigidBody = new RigidBodyRefObject(this, rigidBodyRef, QUuid::createUuid());
             m_allRigidBodies.append(rigidBody);
             m_rigidBody2Refs.insert(rigidBodyRef, rigidBody);
             m_name2RigidBodyRefs.insert(rigidBody->name(), rigidBody);
@@ -891,7 +891,7 @@ QQmlListProperty<JointRefObject> ModelProxy::allJoints()
         const int njoints = jointRefs.count();
         for (int i = 0; i < njoints; i++) {
             IJoint *jointRef = jointRefs[i];
-            JointRefObject *joint = new JointRefObject(this, 0, 0, jointRef, QUuid::createUuid());
+            JointRefObject *joint = new JointRefObject(this, jointRef, QUuid::createUuid());
             m_allJoints.append(joint);
             m_joint2Refs.insert(jointRef, joint);
             m_name2JointRefs.insert(joint->name(), joint);

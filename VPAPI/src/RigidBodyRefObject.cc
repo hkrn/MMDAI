@@ -36,6 +36,7 @@
 */
 
 #include "RigidBodyRefObject.h"
+#include "BoneRefObject.h"
 #include "ModelProxy.h"
 #include "Util.h"
 
@@ -46,11 +47,9 @@ using namespace vpvl2;
 using namespace vpvl2::extensions::qt;
 
 RigidBodyRefObject::RigidBodyRefObject(ModelProxy *parentModelRef,
-                                       BoneRefObject *parentBoneRef,
                                        vpvl2::IRigidBody *rigidBodyRef,
                                        const QUuid &uuid)
     : m_parentModelRef(parentModelRef),
-      m_parentBoneRef(parentBoneRef),
       m_rigidBodyRef(rigidBodyRef),
       m_uuid(uuid)
 {
@@ -76,11 +75,6 @@ ModelProxy *RigidBodyRefObject::parentModel() const
     return m_parentModelRef;
 }
 
-BoneRefObject *RigidBodyRefObject::parentBone() const
-{
-    return m_parentBoneRef;
-}
-
 QUuid RigidBodyRefObject::uuid() const
 {
     return m_uuid;
@@ -90,6 +84,22 @@ int RigidBodyRefObject::index() const
 {
     Q_ASSERT(m_rigidBodyRef);
     return m_rigidBodyRef->index();
+}
+
+BoneRefObject *RigidBodyRefObject::parentBone() const
+{
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_rigidBodyRef);
+    return m_parentModelRef->resolveBoneRef(m_rigidBodyRef->boneRef());
+}
+
+void RigidBodyRefObject::setParentBone(BoneRefObject *value)
+{
+    Q_ASSERT(m_rigidBodyRef);
+    if (parentBone() != value) {
+        m_rigidBodyRef->setBoneRef(value->data());
+        emit parentBoneChanged();
+    }
 }
 
 QString RigidBodyRefObject::name() const
