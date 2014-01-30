@@ -1035,7 +1035,7 @@ float32 Bone::constraintAngle() const
     return m_context->angleLimit;
 }
 
-float32 Bone::coefficient() const
+float32 Bone::inherentCoefficient() const
 {
     return m_context->coefficient;
 }
@@ -1147,12 +1147,18 @@ void Bone::setParentBoneRef(IBone *value)
     }
 }
 
-void Bone::setParentInherentBoneRef(IBone *value, float32 coefficient)
+void Bone::setParentInherentBoneRef(IBone *value)
 {
     if (!value || (value && value->parentModelRef() == m_context->modelRef)) {
         m_context->parentInherentBoneRef = static_cast<Bone *>(value);
         m_context->parentInherentBoneIndex = value ? value->index() : -1;
-        m_context->coefficient = coefficient;
+    }
+}
+
+void Bone::setInherentCoefficient(float32 value)
+{
+    if (!btFuzzyZero(m_context->coefficient - value)) {
+        m_context->coefficient = value;
     }
 }
 

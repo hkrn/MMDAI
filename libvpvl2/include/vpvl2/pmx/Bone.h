@@ -127,7 +127,7 @@ public:
     Vector3 axisX() const;
     Vector3 axisZ() const;
     float32 constraintAngle() const;
-    float32 coefficient() const;
+    float32 inherentCoefficient() const;
     int index() const;
     int layerIndex() const;
     int externalIndex() const;
@@ -146,7 +146,8 @@ public:
     bool isInverseKinematicsEnabled() const;
 
     void setParentBoneRef(IBone *value);
-    void setParentInherentBoneRef(IBone *value, float32 coefficient);
+    void setParentInherentBoneRef(IBone *value);
+    void setInherentCoefficient(float32 value);
     void setEffectorBoneRef(IBone *effector, int numIteration, float angleLimit);
     void setDestinationOriginBoneRef(IBone *value);
     void setName(const IString *value, IEncoding::LanguageType type);

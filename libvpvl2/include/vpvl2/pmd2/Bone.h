@@ -124,12 +124,15 @@ public:
     bool isInverseKinematicsEnabled() const;
     bool isInherentTranslationEnabled() const;
     bool isInherentOrientationEnabled() const;
-    float32 coefficient() const;
+    float32 inherentCoefficient() const;
+    void setInherentCoefficient(float32 value);
+    IBone *destinationOriginBoneRef() const;
+    IBone *parentInherentBoneRef() const;
 
     void setParentBoneRef(IBone * /* value */) {}
-    void setParentInherentBoneRef(IBone * /* value */, float32 /* weight */) {}
+    void setParentInherentBoneRef(IBone * /* value */) {}
     void setEffectorBoneRef(IBone * /* effector */, int /* numIteration */, float /* angleLimit */) {}
-    void setDestinationOriginBoneRef(IBone * /* value */) {}
+    void setDestinationOriginBoneRef(IBone *value);
     void setOrigin(const Vector3 & /* value */) {}
     void setDestinationOrigin(const Vector3 & /* value */) {}
     void setFixedAxis(const Vector3 & /* value */) {}

@@ -117,10 +117,13 @@ public:
     bool isInverseKinematicsEnabled() const { return false; }
     bool isInherentTranslationEnabled() const { return false; }
     bool isInherentOrientationEnabled() const { return false; }
-    float32 coefficient() const { return 1.0f; }
+    float32 inherentCoefficient() const { return 1.0f; }
+    void setInherentCoefficient(float32 /* value */) {}
+    IBone *destinationOriginBoneRef() const { return 0; }
+    IBone *parentInherentBoneRef() const { return 0; }
 
     void setParentBoneRef(IBone * /* value */) {}
-    void setParentInherentBoneRef(IBone * /* value */, float32 /* weight */) {}
+    void setParentInherentBoneRef(IBone * /* value */) {}
     void setEffectorBoneRef(IBone * /* effector */, int /* numIteration */, float /* angleLimit */) {}
     void setDestinationOriginBoneRef(IBone * /* value */) {}
     void setOrigin(const Vector3 & /* value */) {}
@@ -211,10 +214,13 @@ public:
     bool isInverseKinematicsEnabled() const { return false; }
     bool isInherentTranslationEnabled() const { return false; }
     bool isInherentOrientationEnabled() const { return false; }
-    float32 coefficient() const { return 1.0f; }
+    float32 inherentCoefficient() const { return 1.0f; }
+    void setInherentCoefficient(float32 /* value */) {}
+    IBone *destinationOriginBoneRef() const { return 0; }
+    IBone *parentInherentBoneRef() const { return 0; }
 
     void setParentBoneRef(IBone * /* value */) {}
-    void setParentInherentBoneRef(IBone * /* value */, float32 /* weight */) {}
+    void setParentInherentBoneRef(IBone * /* value */) {}
     void setEffectorBoneRef(IBone * /* effector */, int /* numIteration */, float /* angleLimit */) {}
     void setDestinationOriginBoneRef(IBone * /* value */) {}
     void setOrigin(const Vector3 & /* value */) {}

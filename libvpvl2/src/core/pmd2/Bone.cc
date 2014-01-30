@@ -548,9 +548,30 @@ bool Bone::isInherentOrientationEnabled() const
     return false;
 }
 
-float32 Bone::coefficient() const
+float32 Bone::inherentCoefficient() const
 {
     return 1.0f;
+}
+
+void Bone::setInherentCoefficient(float32 /* value */)
+{
+}
+
+IBone *Bone::destinationOriginBoneRef() const
+{
+    return m_context->childBoneRef;
+}
+
+IBone *Bone::parentInherentBoneRef() const
+{
+    return 0;
+}
+
+void Bone::setDestinationOriginBoneRef(IBone *value)
+{
+    if (m_context->childBoneRef != value) {
+        m_context->childBoneRef = value;
+    }
 }
 
 void Bone::setInverseKinematicsEnable(bool value)
