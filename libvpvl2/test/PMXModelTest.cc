@@ -450,7 +450,8 @@ TEST_P(PMXFragmentTest, ReadWriteBone)
     bone.setAxisZ(Vector3(0.51, 0.52, 0.53));
     bone.setExternalIndex(3);
     bone.setParentBoneRef(&parent);
-    bone.setParentInherentBoneRef(&parentInherent, 0.61);
+    bone.setParentInherentBoneRef(&parentInherent);
+    bone.setInherentCoefficient(0.61);
     bone.setEffectorBoneRef(&effector, 3, 0.71);
     bone.setRotateable(true);
     bone.setMovable(true);

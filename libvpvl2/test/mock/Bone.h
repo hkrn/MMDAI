@@ -68,15 +68,21 @@ class MockIBone : public IBone {
       bool());
   MOCK_CONST_METHOD0(isInherentOrientationEnabled,
       bool());
-  MOCK_CONST_METHOD0(coefficient,
+  MOCK_CONST_METHOD0(inherentCoefficient,
       float32());
+  MOCK_METHOD1(setInherentCoefficient,
+      void(float32 value));
+  MOCK_CONST_METHOD0(destinationOriginBoneRef,
+      IBone*());
+  MOCK_CONST_METHOD0(parentInherentBoneRef,
+      IBone*());
   MOCK_METHOD1(setParentBoneRef,
       void(IBone *value));
-  MOCK_METHOD2(setParentInherentBoneRef,
-      void(IBone *value, float32 coefficient));
   MOCK_METHOD3(setEffectorBoneRef,
       void(IBone *effector, int numIteration, float angleLimit));
   MOCK_METHOD1(setDestinationOriginBoneRef,
+      void(IBone *value));
+  MOCK_METHOD1(setParentInherentBoneRef,
       void(IBone *value));
   MOCK_METHOD1(setOrigin,
       void(const Vector3 &value));
