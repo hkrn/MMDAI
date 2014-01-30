@@ -190,26 +190,37 @@ ScrollView {
                 ColumnLayout {
                     RowLayout {
                         Label { text: qsTr("Group Number") }
-                        SpinBox { minimumValue: 0; maximumValue: 16 }
+                        SpinBox {
+                            id: rigidBodyCollisionGroupIDSpinBox
+                            minimumValue: 0
+                            maximumValue: 15
+                            value: targetObject.collisionGroupID
+                        }
+                        Binding {
+                            target: targetObject
+                            property: "collisionGroupID"
+                            value: rigidBodyCollisionGroupIDSpinBox.value
+                        }
                     }
+                    Label { text: qsTr("Collision Group Mask") }
                     GridLayout {
                         columns: 4
-                        CheckBox { text: qsTr("1") }
-                        CheckBox { text: qsTr("2") }
-                        CheckBox { text: qsTr("3") }
-                        CheckBox { text: qsTr("4") }
-                        CheckBox { text: qsTr("5") }
-                        CheckBox { text: qsTr("6") }
-                        CheckBox { text: qsTr("7") }
-                        CheckBox { text: qsTr("8") }
-                        CheckBox { text: qsTr("9") }
-                        CheckBox { text: qsTr("10") }
-                        CheckBox { text: qsTr("11") }
-                        CheckBox { text: qsTr("12") }
-                        CheckBox { text: qsTr("13") }
-                        CheckBox { text: qsTr("14") }
-                        CheckBox { text: qsTr("15") }
-                        CheckBox { text: qsTr("16") }
+                        Repeater {
+                            model: 16
+                            CheckBox {
+                                id: collisionGroupMaskCheckBox
+                                text: index
+                                checked: targetObject.collisionGroupMask & (1 << index)
+                                onCheckedChanged: {
+                                    if (checked) {
+                                        targetObject.collisionGroupMask |= (1 << index)
+                                    }
+                                    else {
+                                        targetObject.collisionGroupMask &= ~(1 << index)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
