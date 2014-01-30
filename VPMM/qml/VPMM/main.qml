@@ -1,3 +1,40 @@
+/**
+
+ Copyright (c) 2010-2014  hkrn
+
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or
+ without modification, are permitted provided that the following
+ conditions are met:
+
+ - Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ - Redistributions in binary form must reproduce the above
+   copyright notice, this list of conditions and the following
+   disclaimer in the documentation and/or other materials provided
+   with the distribution.
+ - Neither the name of the MMDAI project team nor the names of
+   its contributors may be used to endorse or promote products
+   derived from this software without specific prior written
+   permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
 import QtQuick 2.2
 import QtQuick.Controls 1.1
 import QtQuick.Window 2.1
@@ -51,6 +88,17 @@ ApplicationWindow {
 
     ListModel {
         id: verticesModel
+        function indexOf(value) {
+            if (value) {
+                for (var i = 0, l = count, uuid = value.uuid; i < l; i++) {
+                    var item = get(i).item
+                    if (item && item.uuid === uuid) {
+                        return i
+                    }
+                }
+            }
+            return 0
+        }
         function __handleCurrentModelChanged() {
             var model = scene.project.currentModel
             if (model) {
@@ -66,11 +114,23 @@ ApplicationWindow {
     }
     ListModel {
         id: materialsModel
+        function indexOf(value) {
+            if (value) {
+                for (var i = 0, l = count, uuid = value.uuid; i < l; i++) {
+                    var item = get(i).item
+                    if (item && item.uuid === uuid) {
+                        return i
+                    }
+                }
+            }
+            return 0
+        }
         function __handleCurrentModelChanged() {
             var model = scene.project.currentModel
             if (model) {
                 var materials = model.allMaterials
                 clear()
+                append({ "item": null, "text": qsTr("None") })
                 for (var i in materials) {
                     var material = materials[i]
                     append({ "item": material, "text": material.name })
@@ -81,11 +141,23 @@ ApplicationWindow {
     }
     ListModel {
         id: bonesModel
+        function indexOf(value) {
+            if (value) {
+                for (var i = 0, l = count, uuid = value.uuid; i < l; i++) {
+                    var item = get(i).item
+                    if (item && item.uuid === uuid) {
+                        return i
+                    }
+                }
+            }
+            return 0
+        }
         function __handleCurrentModelChanged() {
             var model = scene.project.currentModel
             if (model) {
                 var bones = model.allBones
                 clear()
+                append({ "item": null, "text": qsTr("None") })
                 for (var i in bones) {
                     var bone = bones[i]
                     append({ "item": bone, "text": bone.name })
@@ -96,11 +168,23 @@ ApplicationWindow {
     }
     ListModel {
         id: labelsModel
+        function indexOf(value) {
+            if (value) {
+                for (var i = 0, l = count, uuid = value.uuid; i < l; i++) {
+                    var item = get(i).item
+                    if (item && item.uuid === uuid) {
+                        return i
+                    }
+                }
+            }
+            return 0
+        }
         function __handleCurrentModelChanged() {
             var model = scene.project.currentModel
             if (model) {
                 var labels = model.allLabels
                 clear()
+                append({ "item": null, "text": qsTr("None") })
                 for (var i in labels) {
                     var label = labels[i]
                     append({ "item": label, "text": label.name })
@@ -113,11 +197,23 @@ ApplicationWindow {
     }
     ListModel {
         id: morphsModel
+        function indexOf(value) {
+            if (value) {
+                for (var i = 0, l = count, uuid = value.uuid; i < l; i++) {
+                    var item = get(i).item
+                    if (item && item.uuid === uuid) {
+                        return i
+                    }
+                }
+            }
+            return 0
+        }
         function __handleCurrentModelChanged() {
             var model = scene.project.currentModel
             if (model) {
                 var morphs = model.allMorphs
                 clear()
+                append({ "item": null, "text": qsTr("None") })
                 for (var i in morphs) {
                     var morph = morphs[i]
                     append({ "item": morph, "text": morph.name })
@@ -128,11 +224,23 @@ ApplicationWindow {
     }
     ListModel {
         id: rigidBodiesModel
+        function indexOf(value) {
+            if (value) {
+                for (var i = 0, l = count, uuid = value.uuid; i < l; i++) {
+                    var item = get(i).item
+                    if (item && item.uuid === uuid) {
+                        return i
+                    }
+                }
+            }
+            return 0
+        }
         function __handleCurrentModelChanged() {
             var model = scene.project.currentModel
             if (model) {
                 var bodies = model.allRigidBodies
                 clear()
+                append({ "item": null, "text": qsTr("None") })
                 for (var i in bodies) {
                     var body = bodies[i]
                     append({ "item": body, "text": body.name })
@@ -143,11 +251,24 @@ ApplicationWindow {
     }
     ListModel {
         id: jointsModel
+        function indexOf(value) {
+            if (value) {
+                var uuid = value.uuid
+                for (var i = 0, l = count; i < l; i++) {
+                    var item = get(i).item
+                    if (item && item.uuid === uuid) {
+                        return i
+                    }
+                }
+            }
+            return 0
+        }
         function __handleCurrentModelChanged() {
             var model = scene.project.currentModel
             if (model) {
                 var joints = model.allJoints
                 clear()
+                append({ "item": null, "text": qsTr("None") })
                 for (var i in joints) {
                     var joint = joints[i]
                     append({ "item": joint, "text": joint.name })
@@ -274,11 +395,11 @@ ApplicationWindow {
                                 resizable: true
                             }
                             onDoubleClicked: {
-                                var item = model.get(row).item,
+                                var targetObject = model.get(row).item,
                                         path = objectType.model[objectType.currentIndex].path
                                 var arguments = {
                                     "item": Qt.resolvedUrl(path),
-                                    "properties": { "targetObject": item }
+                                    "properties": { "targetObject": targetObject }
                                 }
                                 stackView.push(arguments)
                             }

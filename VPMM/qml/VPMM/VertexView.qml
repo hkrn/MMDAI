@@ -1,3 +1,40 @@
+/**
+
+ Copyright (c) 2010-2014  hkrn
+
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or
+ without modification, are permitted provided that the following
+ conditions are met:
+
+ - Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ - Redistributions in binary form must reproduce the above
+   copyright notice, this list of conditions and the following
+   disclaimer in the documentation and/or other materials provided
+   with the distribution.
+ - Neither the name of the MMDAI project team nor the names of
+   its contributors may be used to endorse or promote products
+   derived from this software without specific prior written
+   permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+
+*/
+
 import QtQuick 2.2
 import QtQuick.Controls 1.1
 import QtQuick.Layouts 1.1
@@ -124,6 +161,8 @@ Item {
                     Label { text: qsTr("Type") }
                     ComboBox {
                         id: uvType
+                        readonly property int offset: uvTypeModel.get(currentIndex).value
+                        readonly property vector4d value: targetObject.originUV(offset)
                         model: uvTypeModel
                     }
                 }
@@ -154,31 +193,39 @@ Item {
                         visible: uvTypeModel.get(uvType.currentIndex).value > 0
                         Label { text: "X" }
                         SpinBox {
+                            id: vertexOriginUVXSpinBox
                             maximumValue: 100000
                             minimumValue: -maximumValue
                             decimals: 5
                             stepSize: 0.01
+                            value: uvType.value.x
                         }
                         Label { text: "Y" }
                         SpinBox {
+                            id: vertexOriginUVYSpinBox
                             maximumValue: 100000
                             minimumValue: -maximumValue
                             decimals: 5
                             stepSize: 0.01
+                            value: uvType.value.y
                         }
                         Label { text: "Z" }
                         SpinBox {
+                            id: vertexOriginUVZSpinBox
                             maximumValue: 100000
                             minimumValue: -maximumValue
                             decimals: 5
                             stepSize: 0.01
+                            value: uvType.value.z
                         }
                         Label { text: "W" }
                         SpinBox {
+                            id: vertexOriginUVWSpinBox
                             maximumValue: 100000
                             minimumValue: -maximumValue
                             decimals: 5
                             stepSize: 0.01
+                            value: uvType.value.w
                         }
                     }
                 }
@@ -214,10 +261,7 @@ Item {
                     ComboBox {
                         id: transformType
                         model: transformTypeModel
-                        currentIndex: {
-                            console.log([ targetObject.type, transformTypeModel.indexOf(targetObject.type) ])
-                            return transformTypeModel.indexOf(targetObject.type)
-                        }
+                        currentIndex: transformTypeModel.indexOf(targetObject.type)
                     }
                 }
                 ColumnLayout {
@@ -225,7 +269,7 @@ Item {
                         ComboBox {
                             model: bonesModel
                             editable: true
-                            currentIndex: targetObject.bone(0).index
+                            currentIndex: bonesModel.indexOf(targetObject.bone(0))
                             Layout.fillWidth: targetObject.type === VPMM.Vertex.Bdef1
                         }
                         SpinBox {
@@ -243,7 +287,7 @@ Item {
                         ComboBox {
                             model: bonesModel
                             editable: true
-                            currentIndex: targetObject.bone(1).index
+                            currentIndex: bonesModel.indexOf(targetObject.bone(1))
                         }
                         SpinBox {
                             maximumValue: 1
@@ -259,7 +303,7 @@ Item {
                         ComboBox {
                             model: bonesModel
                             editable: true
-                            currentIndex: targetObject.bone(2).index
+                            currentIndex: bonesModel.indexOf(targetObject.bone(2))
                         }
                         SpinBox {
                             maximumValue: 1
@@ -275,7 +319,7 @@ Item {
                         ComboBox {
                             model: bonesModel
                             editable: true
-                            currentIndex: targetObject.bone(3).index
+                            currentIndex: bonesModel.indexOf(targetObject.bone(3))
                         }
                         SpinBox {
                             maximumValue: 1
