@@ -72,6 +72,7 @@ class MaterialRefObject : public QObject
     Q_PROPERTY(bool shadowMapEnabled READ isShadowMapEnabled WRITE setShadowMapEnabled NOTIFY shadowMapEnabledChanged FINAL)
     Q_PROPERTY(bool edgeEnabled READ isEdgeEnabled WRITE setEdgeEnabled NOTIFY edgeEnabledChanged FINAL)
     Q_PROPERTY(bool vertexColorEnabled READ isVertexColorEnabled WRITE setVertexColorEnabled NOTIFY vertexColorEnabledChanged FINAL)
+    Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
     enum SphereTextureType {
@@ -128,6 +129,8 @@ public:
     void setEdgeEnabled(bool value);
     bool isVertexColorEnabled() const;
     void setVertexColorEnabled(bool value);
+    bool isDirty() const;
+    void setDirty(bool value);
 
 signals:
     void nameChanged();
@@ -150,11 +153,13 @@ signals:
     void shadowMapEnabledChanged();
     void edgeEnabledChanged();
     void vertexColorEnabledChanged();
+    void dirtyChanged();
 
 private:
     ModelProxy *m_parentModelRef;
     vpvl2::IMaterial *m_materialRef;
     const QUuid m_uuid;
+    bool m_dirty;
 };
 
 #endif

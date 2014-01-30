@@ -63,6 +63,7 @@ class VertexRefObject : public QObject
     Q_PROPERTY(QVector3D sdefR1 READ sdefR1 WRITE setSdefR1 NOTIFY sdefR1Changed FINAL)
     Q_PROPERTY(qreal edgeSize READ edgeSize WRITE setEdgeSize NOTIFY edgeSizeChanged FINAL)
     Q_PROPERTY(Type type READ type WRITE setType NOTIFY typeChanged FINAL)
+    Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
     enum Type {
@@ -106,6 +107,8 @@ public:
     void setEdgeSize(const qreal &value);
     Type type() const;
     void setType(const Type &value);
+    bool isDirty() const;
+    void setDirty(bool value);
 
 signals:
     void nameChanged();
@@ -117,6 +120,7 @@ signals:
     void sdefR1Changed();
     void edgeSizeChanged();
     void typeChanged();
+    void dirtyChanged();
     void originUVDidChange(int index, const QVector4D &newValue, const QVector4D &oldValue);
     void morphUVDidChange(int index, const QVector4D &newValue, const QVector4D &oldValue);
     void boneDidChange(int index, BoneRefObject *newValue, BoneRefObject *oldValue);
@@ -126,6 +130,7 @@ private:
     ModelProxy *m_parentModelRef;
     vpvl2::IVertex *m_vertexRef;
     const QUuid m_uuid;
+    bool m_dirty;
 };
 
 #endif

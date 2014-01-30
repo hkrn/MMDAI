@@ -80,6 +80,7 @@ class BoneRefObject : public QObject
     Q_PROPERTY(bool inherentOrientationEnabled READ isInherentOrientationEnabled WRITE setInherentOrientationEnabled NOTIFY inherentOrientationEnabledChanged FINAL)
     Q_PROPERTY(bool fixedAxisEnabled READ isFixedAxisEnabled WRITE setFixedAxisEnabled NOTIFY fixedAxisEnabledChanged FINAL)
     Q_PROPERTY(bool localAxesEnabled READ isLocalAxesEnabled WRITE setLocalAxesEnabled NOTIFY localAxesEnabledChanged FINAL)
+    Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
     BoneRefObject(ModelProxy *modelRef, LabelRefObject *labelRef, vpvl2::IBone *boneRef, const QUuid &uuid);
@@ -135,6 +136,8 @@ public:
     void setFixedAxisEnabled(bool value);
     bool isLocalAxesEnabled() const;
     void setLocalAxesEnabled(bool value);
+    bool isDirty() const;
+    void setDirty(bool value);
 
     bool canHandle() const;
     vpvl2::Vector3 rawFixedAxis() const;
@@ -170,6 +173,7 @@ signals:
     void inherentOrientationEnabledChanged();
     void fixedAxisEnabledChanged();
     void localAxesEnabledChanged();
+    void dirtyChanged();
     void boneDidSync();
 
 private:
@@ -179,6 +183,7 @@ private:
     const QUuid m_uuid;
     QVector3D m_originTranslation;
     QQuaternion m_originOrientation;
+    bool m_dirty;
 };
 
 #endif // BONEREFOBJECT_H

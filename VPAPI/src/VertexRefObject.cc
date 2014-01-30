@@ -50,7 +50,8 @@ VertexRefObject::VertexRefObject(ModelProxy *parentModelRef,
                                  const QUuid &uuid)
     : m_parentModelRef(parentModelRef),
       m_vertexRef(vertexRef),
-      m_uuid(uuid)
+      m_uuid(uuid),
+      m_dirty(false)
 {
     Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_vertexRef);
@@ -75,7 +76,7 @@ void VertexRefObject::setOriginUV(int index, const QVector4D &value)
     const QVector4D &oldValue = originUV(index);
     if (!qFuzzyCompare(oldValue, value)) {
         m_vertexRef->setOriginUV(index, Util::toVector4(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit originUVDidChange(index, value, oldValue);
     }
 }
@@ -92,7 +93,7 @@ void VertexRefObject::setMorphUV(int index, const QVector4D &value)
     const QVector4D &oldValue = morphUV(index);
     if (!qFuzzyCompare(oldValue, value)) {
         m_vertexRef->setMorphUV(index, Util::toVector4(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit morphUVDidChange(index, value, oldValue);
     }
 }
@@ -111,7 +112,7 @@ void VertexRefObject::setBone(int index, BoneRefObject *value)
     BoneRefObject *oldValue = bone(index);
     if (value && oldValue != value) {
         m_vertexRef->setBoneRef(index, value->data());
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit boneDidChange(index, value, oldValue);
     }
 }
@@ -129,7 +130,7 @@ void VertexRefObject::setWeight(int index, const qreal &value)
     qreal oldValue = weight(index);
     if (!qFuzzyCompare(oldValue, value)) {
         m_vertexRef->setWeight(index, value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit weightDidChange(index, value, oldValue);
     }
 }
@@ -179,7 +180,7 @@ void VertexRefObject::setOrigin(const QVector3D &value)
     Q_ASSERT(m_vertexRef);
     if (!qFuzzyCompare(origin(), value)) {
         m_vertexRef->setOrigin(Util::toVector3(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit originChanged();
     }
 }
@@ -196,7 +197,7 @@ void VertexRefObject::setNormal(const QVector3D &value)
     Q_ASSERT(m_vertexRef);
     if (!qFuzzyCompare(normal(), value)) {
         m_vertexRef->setNormal(Util::toVector3(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit normalChanged();
     }
 }
@@ -213,7 +214,7 @@ void VertexRefObject::setTextureCoord(const QVector3D &value)
     Q_ASSERT(m_vertexRef);
     if (!qFuzzyCompare(textureCoord(), value)) {
         m_vertexRef->setTextureCoord(Util::toVector3(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit textureCoordChanged();
     }
 }
@@ -230,7 +231,7 @@ void VertexRefObject::setSdefC(const QVector3D &value)
     Q_ASSERT(m_vertexRef);
     if (!qFuzzyCompare(sdefC(), value)) {
         m_vertexRef->setSdefC(Util::toVector3(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit sdefCChanged();
     }
 }
@@ -247,7 +248,7 @@ void VertexRefObject::setSdefR0(const QVector3D &value)
     Q_ASSERT(m_vertexRef);
     if (!qFuzzyCompare(sdefR0(), value)) {
         m_vertexRef->setSdefR0(Util::toVector3(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit sdefR0Changed();
     }
 }
@@ -264,7 +265,7 @@ void VertexRefObject::setSdefR1(const QVector3D &value)
     Q_ASSERT(m_vertexRef);
     if (!qFuzzyCompare(sdefR1(), value)) {
         m_vertexRef->setSdefR1(Util::toVector3(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit sdefR1Changed();
     }
 }
@@ -281,7 +282,7 @@ void VertexRefObject::setEdgeSize(const qreal &value)
     Q_ASSERT(m_vertexRef);
     if (!qFuzzyCompare(edgeSize(), value)) {
         m_vertexRef->setEdgeSize(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit edgeSizeChanged();
     }
 }
@@ -298,7 +299,23 @@ void VertexRefObject::setType(const Type &value)
     Q_ASSERT(m_vertexRef);
     if (type() != value) {
         m_vertexRef->setType(static_cast<IVertex::Type>(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit typeChanged();
+    }
+}
+
+bool VertexRefObject::isDirty() const
+{
+    return m_dirty;
+}
+
+void VertexRefObject::setDirty(bool value)
+{
+    if (isDirty() != value) {
+        m_dirty = value;
+        emit dirtyChanged();
+        if (value) {
+            m_parentModelRef->markDirty();
+        }
     }
 }

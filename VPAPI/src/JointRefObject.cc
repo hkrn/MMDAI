@@ -51,7 +51,8 @@ JointRefObject::JointRefObject(ModelProxy *parentModel,
                                const QUuid &uuid)
     : m_parentModelRef(parentModel),
       m_jointRef(jointRef),
-      m_uuid(uuid)
+      m_uuid(uuid),
+      m_dirty(false)
 {
     Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_jointRef);
@@ -134,7 +135,7 @@ void JointRefObject::setName(const QString &value)
         IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(m_parentModelRef->language());
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_jointRef->setName(s.data(), language);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit nameChanged();
     }
 }
@@ -149,6 +150,7 @@ void JointRefObject::setType(const Type &value)
 {
     if (type() != value) {
         m_jointRef->setType(static_cast<IJoint::Type>(value));
+        setDirty(true);
         emit typeChanged();
     }
 }
@@ -163,6 +165,7 @@ void JointRefObject::setPosition(const QVector3D &value)
 {
     if (!qFuzzyCompare(position(), value)) {
         m_jointRef->setPosition(Util::toVector3(value));
+        setDirty(true);
         emit positionChanged();
     }
 }
@@ -177,6 +180,7 @@ void JointRefObject::setRotation(const QVector3D &value)
 {
     if (!qFuzzyCompare(position(), value)) {
         m_jointRef->setRotation(Util::toVector3(value));
+        setDirty(true);
         emit rotationChanged();
     }
 }
@@ -191,6 +195,7 @@ void JointRefObject::setPositionUpperLimit(const QVector3D &value)
 {
     if (!qFuzzyCompare(positionUpperLimit(), value)) {
         m_jointRef->setPositionUpperLimit(Util::toVector3(value));
+        setDirty(true);
         emit positionUpperLimitChanged();
     }
 }
@@ -205,6 +210,7 @@ void JointRefObject::setRotationUpperLimit(const QVector3D &value)
 {
     if (!qFuzzyCompare(rotationUpperLimit(), value)) {
         m_jointRef->setRotationUpperLimit(Util::toVector3(value));
+        setDirty(true);
         emit rotationUpperLimitChanged();
     }
 }
@@ -219,6 +225,7 @@ void JointRefObject::setPositionLowerLimit(const QVector3D &value)
 {
     if (!qFuzzyCompare(positionLowerLimit(), value)) {
         m_jointRef->setPositionLowerLimit(Util::toVector3(value));
+        setDirty(true);
         emit positionLowerLimitChanged();
     }
 }
@@ -233,6 +240,7 @@ void JointRefObject::setRotationLowerLimit(const QVector3D &value)
 {
     if (!qFuzzyCompare(rotationLowerLimit(), value)) {
         m_jointRef->setRotationLowerLimit(Util::toVector3(value));
+        setDirty(true);
         emit rotationLowerLimitChanged();
     }
 }
@@ -247,6 +255,7 @@ void JointRefObject::setPositionStiffness(const QVector3D &value)
 {
     if (!qFuzzyCompare(positionStiffness(), value)) {
         m_jointRef->setPositionStiffness(Util::toVector3(value));
+        setDirty(true);
         emit positionStiffnessChanged();
     }
 }
@@ -261,6 +270,23 @@ void JointRefObject::setRotationStiffness(const QVector3D &value)
 {
     if (!qFuzzyCompare(rotationStiffness(), value)) {
         m_jointRef->setRotationStiffness(Util::toVector3(value));
+        setDirty(true);
         emit rotationStiffnessChanged();
+    }
+}
+
+bool JointRefObject::isDirty() const
+{
+    return m_dirty;
+}
+
+void JointRefObject::setDirty(bool value)
+{
+    if (isDirty() != value) {
+        m_dirty = value;
+        emit dirtyChanged();
+        if (value) {
+            m_parentModelRef->markDirty();
+        }
     }
 }

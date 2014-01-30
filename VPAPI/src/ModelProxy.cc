@@ -807,6 +807,7 @@ void ModelProxy::setVersion(const qreal &value)
     Q_ASSERT(m_model);
     if (!qFuzzyCompare(version(), value)) {
         m_model->setVersion(value);
+        markDirty();
         emit versionChanged();
     }
 }
@@ -859,6 +860,7 @@ void ModelProxy::setEncodingType(EncodingType value)
     Q_ASSERT(m_model);
     if (encodingType() != value) {
         // FIXME: implement encodingType
+        markDirty();
         emit encodingTypeChanged();
     }
 }

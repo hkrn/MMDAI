@@ -65,6 +65,7 @@ class JointRefObject : public QObject
     Q_PROPERTY(QVector3D rotationLowerLimit READ rotationLowerLimit WRITE setRotationLowerLimit NOTIFY rotationLowerLimitChanged FINAL)
     Q_PROPERTY(QVector3D positionStiffness READ positionStiffness WRITE setPositionStiffness NOTIFY positionStiffnessChanged FINAL)
     Q_PROPERTY(QVector3D rotationStiffness READ rotationStiffness WRITE setRotationStiffness NOTIFY rotationStiffnessChanged FINAL)
+    Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
     enum Type {
@@ -109,6 +110,8 @@ public:
     void setPositionStiffness(const QVector3D &value);
     QVector3D rotationStiffness() const;
     void setRotationStiffness(const QVector3D &value);
+    bool isDirty() const;
+    void setDirty(bool value);
 
 signals:
     void nameChanged();
@@ -123,11 +126,13 @@ signals:
     void rotationLowerLimitChanged();
     void positionStiffnessChanged();
     void rotationStiffnessChanged();
+    void dirtyChanged();
 
 private:
     ModelProxy *m_parentModelRef;
     vpvl2::IJoint *m_jointRef;
     const QUuid m_uuid;
+    bool m_dirty;
 };
 
 #endif

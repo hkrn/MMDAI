@@ -50,7 +50,8 @@ MaterialRefObject::MaterialRefObject(ModelProxy *parentModelRef,
                                      const QUuid &uuid)
     : m_parentModelRef(parentModelRef),
       m_materialRef(materialRef),
-      m_uuid(uuid)
+      m_uuid(uuid),
+      m_dirty(false)
 {
     Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_materialRef);
@@ -102,7 +103,7 @@ void MaterialRefObject::setName(const QString &value)
         IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(m_parentModelRef->language());
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_materialRef->setName(s.data(), language);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit nameChanged();
     }
 }
@@ -119,7 +120,7 @@ void MaterialRefObject::setMainTexturePath(const QString &value)
     if (mainTexturePath() != value) {
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_materialRef->setMainTexture(s.data());
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit mainTexturePathChanged();
     }
 }
@@ -136,7 +137,7 @@ void MaterialRefObject::setSphereTexturePath(const QString &value)
     if (mainTexturePath() != value) {
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_materialRef->setSphereTexture(s.data());
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit sphereTexturePathChanged();
     }
 }
@@ -153,7 +154,7 @@ void MaterialRefObject::setToonTexturePath(const QString &value)
     if (toonTexturePath() != value) {
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_materialRef->setToonTexture(s.data());
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit toonTexturePathChanged();
     }
 }
@@ -170,7 +171,7 @@ void MaterialRefObject::setUserAreaData(const QString &value)
     if (toonTexturePath() != value) {
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_materialRef->setUserDataArea(s.data());
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit userAreaDataChanged();
     }
 }
@@ -186,7 +187,7 @@ void MaterialRefObject::setAmbient(const QColor &value)
     Q_ASSERT(m_materialRef);
     if (ambient() != value) {
         m_materialRef->setAmbient(Util::toColorRGBA(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit ambientChanged();
     }
 }
@@ -202,7 +203,7 @@ void MaterialRefObject::setDiffuse(const QColor &value)
     Q_ASSERT(m_materialRef);
     if (diffuse() != value) {
         m_materialRef->setDiffuse(Util::toColorRGBA(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit diffuseChanged();
     }
 }
@@ -218,7 +219,7 @@ void MaterialRefObject::setSpecular(const QColor &value)
     Q_ASSERT(m_materialRef);
     if (specular() != value) {
         m_materialRef->setSpecular(Util::toColorRGBA(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit specularChanged();
     }
 }
@@ -234,7 +235,7 @@ void MaterialRefObject::setEdgeColor(const QColor &value)
     Q_ASSERT(m_materialRef);
     if (edgeColor() != value) {
         m_materialRef->setEdgeColor(Util::toColorRGBA(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit edgeColorChanged();
     }
 }
@@ -249,7 +250,7 @@ void MaterialRefObject::setSphereTextureType(const SphereTextureType &value)
 {
     if (sphereTextureType() != value) {
         m_materialRef->setSphereTextureRenderMode(static_cast<IMaterial::SphereTextureRenderMode>(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit sphereTextureTypeChanged();
     }
 }
@@ -265,7 +266,7 @@ void MaterialRefObject::setShininess(const qreal &value)
     Q_ASSERT(m_materialRef);
     if (!qFuzzyCompare(shininess(), value)) {
         m_materialRef->setShininess(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit shininessChanged();
     }
 }
@@ -281,7 +282,7 @@ void MaterialRefObject::setEdgeSize(const qreal &value)
     Q_ASSERT(m_materialRef);
     if (!qFuzzyCompare(edgeSize(), value)) {
         m_materialRef->setEdgeSize(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit edgeSizeChanged();
     }
 }
@@ -296,7 +297,7 @@ void MaterialRefObject::setToonTextureIndex(int value)
 {
     if (toonTextureIndex() != value) {
         m_materialRef->setToonTextureIndex(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit toonTextureIndexChanged();
     }
 }
@@ -311,7 +312,7 @@ void MaterialRefObject::setSharedToonTextureEnabled(bool value)
 {
     if (isSharedToonTextureEnabled() != value) {
         m_materialRef->setSharedToonTextureUsed(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit sharedToonTextureEnabledChanged();
     }
 }
@@ -327,7 +328,7 @@ void MaterialRefObject::setCullingDisabled(bool value)
     Q_ASSERT(m_materialRef);
     if (isCullingDisabled() != value) {
         m_materialRef->setCullingDisabled(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit cullingDisabledChanged();
     }
 }
@@ -343,7 +344,7 @@ void MaterialRefObject::setCastingShadowEnabled(bool value)
     Q_ASSERT(m_materialRef);
     if (isCastingShadowEnabled() != value) {
         m_materialRef->setCastingShadowEnabled(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit castingShadowEnabledChanged();
     }
 }
@@ -359,7 +360,7 @@ void MaterialRefObject::setCastingShadowMapEnabled(bool value)
     Q_ASSERT(m_materialRef);
     if (isCastingShadowMapEnabled() != value) {
         m_materialRef->setCastingShadowMapEnabled(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit castingShadowMapEnabledChanged();
     }
 }
@@ -375,7 +376,7 @@ void MaterialRefObject::setShadowMapEnabled(bool value)
     Q_ASSERT(m_materialRef);
     if (isShadowMapEnabled() != value) {
         m_materialRef->setShadowMapEnabled(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit shadowMapEnabledChanged();
     }
 }
@@ -391,7 +392,7 @@ void MaterialRefObject::setEdgeEnabled(bool value)
     Q_ASSERT(m_materialRef);
     if (isEdgeEnabled() != value) {
         m_materialRef->setEdgeEnabled(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit edgeEnabledChanged();
     }
 }
@@ -407,7 +408,23 @@ void MaterialRefObject::setVertexColorEnabled(bool value)
     Q_ASSERT(m_materialRef);
     if (isVertexColorEnabled() != value) {
         m_materialRef->setVertexColorEnabled(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit vertexColorEnabledChanged();
+    }
+}
+
+bool MaterialRefObject::isDirty() const
+{
+    return m_dirty;
+}
+
+void MaterialRefObject::setDirty(bool value)
+{
+    if (isDirty() != value) {
+        m_dirty = value;
+        emit dirtyChanged();
+        if (value) {
+            m_parentModelRef->markDirty();
+        }
     }
 }

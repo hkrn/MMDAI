@@ -51,7 +51,8 @@ RigidBodyRefObject::RigidBodyRefObject(ModelProxy *parentModelRef,
                                        const QUuid &uuid)
     : m_parentModelRef(parentModelRef),
       m_rigidBodyRef(rigidBodyRef),
-      m_uuid(uuid)
+      m_uuid(uuid),
+      m_dirty(false)
 {
     Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_rigidBodyRef);
@@ -118,7 +119,7 @@ void RigidBodyRefObject::setName(const QString &value)
         IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(m_parentModelRef->language());
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_rigidBodyRef->setName(s.data(), language);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit nameChanged();
     }
 }
@@ -134,7 +135,7 @@ void RigidBodyRefObject::setPosition(const QVector3D &value)
     Q_ASSERT(m_rigidBodyRef);
     if (!qFuzzyCompare(position(), value)) {
         m_rigidBodyRef->setPosition(Util::toVector3(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit positionChanged();
     }
 }
@@ -180,7 +181,7 @@ void RigidBodyRefObject::setRotation(const QVector3D &value)
     Q_ASSERT(m_rigidBodyRef);
     if (!qFuzzyCompare(rotation(), value)) {
         m_rigidBodyRef->setRotation(Util::toVector3(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit rotationChanged();
     }
 }
@@ -196,7 +197,7 @@ void RigidBodyRefObject::setMass(const qreal &value)
     Q_ASSERT(m_rigidBodyRef);
     if (qFuzzyCompare(mass(), value)) {
         m_rigidBodyRef->setMass(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit massChanged();
     }
 }
@@ -212,7 +213,7 @@ void RigidBodyRefObject::setLinearDamping(const qreal &value)
     Q_ASSERT(m_rigidBodyRef);
     if (qFuzzyCompare(linearDamping(), value)) {
         m_rigidBodyRef->setLinearDamping(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit linearDampingChanged();
     }
 }
@@ -228,7 +229,7 @@ void RigidBodyRefObject::setAngularDamping(const qreal &value)
     Q_ASSERT(m_rigidBodyRef);
     if (qFuzzyCompare(angularDamping(), value)) {
         m_rigidBodyRef->setAngularDamping(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit angularDampingChanged();
     }
 }
@@ -244,7 +245,7 @@ void RigidBodyRefObject::setFriction(const qreal &value)
     Q_ASSERT(m_rigidBodyRef);
     if (qFuzzyCompare(friction(), value)) {
         m_rigidBodyRef->setFriction(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit frictionChanged();
     }
 }
@@ -260,7 +261,7 @@ void RigidBodyRefObject::setRestitution(const qreal &value)
     Q_ASSERT(m_rigidBodyRef);
     if (qFuzzyCompare(restitution(), value)) {
         m_rigidBodyRef->setRestitution(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit restitutionChanged();
     }
 }
@@ -276,7 +277,7 @@ void RigidBodyRefObject::setCollisionGroupMask(const quint16 &value)
     Q_ASSERT(m_rigidBodyRef);
     if (collisionGroupMask() != value) {
         m_rigidBodyRef->setCollisionMask(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit collisionGroupMaskChanged();
     }
 }
@@ -292,7 +293,23 @@ void RigidBodyRefObject::setCollisionGroupID(const quint8 &value)
     Q_ASSERT(m_rigidBodyRef);
     if (collisionGroupID() != value) {
         m_rigidBodyRef->setCollisionGroupID(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit collisionGroupMaskChanged();
+    }
+}
+
+bool RigidBodyRefObject::isDirty() const
+{
+    return m_dirty;
+}
+
+void RigidBodyRefObject::setDirty(bool value)
+{
+    if (isDirty() != value) {
+        m_dirty = value;
+        emit dirtyChanged();
+        if (value) {
+            m_parentModelRef->markDirty();
+        }
     }
 }

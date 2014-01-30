@@ -52,7 +52,8 @@ using namespace vpvl2::extensions::qt;
 LabelRefObject::LabelRefObject(ModelProxy *modelRef, ILabel *labelRef)
     : QObject(modelRef),
       m_parentModelRef(modelRef),
-      m_labelRef(labelRef)
+      m_labelRef(labelRef),
+      m_dirty(false)
 {
     Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_labelRef);
@@ -64,53 +65,63 @@ LabelRefObject::~LabelRefObject()
     m_labelRef = 0;
 }
 
-void LabelRefObject::addBone(BoneRefObject *object)
+void LabelRefObject::addBone(BoneRefObject *bone)
 {
-    Q_ASSERT(object);
-    m_bones.append(object);
+    Q_ASSERT(bone);
+    if (!m_bones.contains(bone)) {
+        m_bones.append(bone);
+        m_labelRef->addBoneRef(bone->data());
+        setDirty(true);
+        emit bonesChanged();
+    }
 }
 
-void LabelRefObject::addMorph(MorphRefObject *object)
+void LabelRefObject::addMorph(MorphRefObject *morph)
 {
-    Q_ASSERT(object);
-    m_morphs.append(object);
+    Q_ASSERT(morph);
+    if (!m_morphs.contains(morph)) {
+        m_morphs.append(morph);
+        m_labelRef->addMorphRef(morph->data());
+        setDirty(true);
+        emit morphsChanged();
+    }
+}
+
+void LabelRefObject::removeBone(BoneRefObject *bone)
+{
+    if (m_bones.removeOne(bone)) {
+        m_labelRef->removeBoneRef(bone->data());
+        setDirty(true);
+        emit bonesChanged();
+    }
+}
+
+void LabelRefObject::removeMorph(MorphRefObject *morph)
+{
+    if (m_morphs.removeOne(morph)) {
+        m_labelRef->removeMorphRef(morph->data());
+        setDirty(true);
+        emit morphsChanged();
+    }
 }
 
 void LabelRefObject::addObject(QObject *value)
 {
     if (BoneRefObject *bone = qobject_cast<BoneRefObject *>(value)) {
-        if (!m_bones.contains(bone)) {
-            m_bones.append(bone);
-            m_labelRef->addBoneRef(bone->data());
-            m_parentModelRef->markDirty();
-            emit bonesChanged();
-        }
+        addBone(bone);
     }
     else if (MorphRefObject *morph = qobject_cast<MorphRefObject *>(value)) {
-        if (!m_morphs.contains(morph)) {
-            m_morphs.append(morph);
-            m_labelRef->addMorphRef(morph->data());
-            m_parentModelRef->markDirty();
-            emit morphsChanged();
-        }
+        addMorph(morph);
     }
 }
 
 void LabelRefObject::removeObject(QObject *value)
 {
     if (BoneRefObject *bone = qobject_cast<BoneRefObject *>(value)) {
-        if (m_bones.removeOne(bone)) {
-            m_labelRef->removeBoneRef(bone->data());
-            m_parentModelRef->markDirty();
-            emit bonesChanged();
-        }
+        removeBone(bone);
     }
     else if (MorphRefObject *morph = qobject_cast<MorphRefObject *>(value)) {
-        if (m_morphs.removeOne(morph)) {
-            m_labelRef->removeMorphRef(morph->data());
-            m_parentModelRef->markDirty();
-            emit morphsChanged();
-        }
+        removeMorph(morph);
     }
 }
 
@@ -141,7 +152,7 @@ void LabelRefObject::setName(const QString &value)
         IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(m_parentModelRef->language());
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_labelRef->setName(s.data(), language);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit nameChanged();
     }
 }
@@ -175,5 +186,21 @@ void LabelRefObject::setSpecial(bool value)
         m_labelRef->setSpecial(value);
         m_parentModelRef->markDirty();
         emit specialChanged();
+    }
+}
+
+bool LabelRefObject::isDirty() const
+{
+    return m_dirty;
+}
+
+void LabelRefObject::setDirty(bool value)
+{
+    if (isDirty() != value) {
+        m_dirty = value;
+        emit dirtyChanged();
+        if (value) {
+            m_parentModelRef->markDirty();
+        }
     }
 }

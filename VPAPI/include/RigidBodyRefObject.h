@@ -67,6 +67,7 @@ class RigidBodyRefObject : public QObject
     Q_PROPERTY(qreal restitution READ restitution WRITE setRestitution NOTIFY restitutionChanged FINAL)
     Q_PROPERTY(quint16 collisionGroupMask READ collisionGroupMask WRITE setCollisionGroupMask NOTIFY collisionGroupMaskChanged FINAL)
     Q_PROPERTY(quint8 collisionGroupID READ collisionGroupID WRITE setCollisionGroupID NOTIFY collisionGroupIDChanged FINAL)
+    Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
     enum ObjectType {
@@ -115,6 +116,8 @@ public:
     void setCollisionGroupMask(const quint16 &value);
     quint8 collisionGroupID() const;
     void setCollisionGroupID(const quint8 &value);
+    bool isDirty() const;
+    void setDirty(bool value);
 
 signals:
     void parentBoneChanged();
@@ -130,11 +133,13 @@ signals:
     void restitutionChanged();
     void collisionGroupMaskChanged();
     void collisionGroupIDChanged();
+    void dirtyChanged();
 
 private:
     ModelProxy *m_parentModelRef;
     vpvl2::IRigidBody *m_rigidBodyRef;
     const QUuid m_uuid;
+    bool m_dirty;
 };
 
 #endif

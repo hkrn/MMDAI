@@ -55,13 +55,16 @@ class LabelRefObject : public QObject
     Q_PROPERTY(QQmlListProperty<BoneRefObject> bones READ bones NOTIFY bonesChanged FINAL)
     Q_PROPERTY(QQmlListProperty<MorphRefObject> morphs READ morphs NOTIFY morphsChanged FINAL)
     Q_PROPERTY(bool special READ isSpecial WRITE setSpecial NOTIFY specialChanged FINAL)
+    Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged)
 
 public:
     LabelRefObject(ModelProxy *modelRef, vpvl2::ILabel *labelRef);
     ~LabelRefObject();
 
-    void addBone(BoneRefObject *object);
-    void addMorph(MorphRefObject *object);
+    void addBone(BoneRefObject *bone);
+    void addMorph(MorphRefObject *morph);
+    void removeBone(BoneRefObject *bone);
+    void removeMorph(MorphRefObject *morph);
 
     Q_INVOKABLE void addObject(QObject *value);
     Q_INVOKABLE void removeObject(QObject *value);
@@ -74,18 +77,22 @@ public:
     QQmlListProperty<MorphRefObject> morphs();
     bool isSpecial() const;
     void setSpecial(bool value);
+    bool isDirty() const;
+    void setDirty(bool value);
 
 signals:
     void nameChanged();
     void specialChanged();
     void bonesChanged();
     void morphsChanged();
+    void dirtyChanged();
 
 private:
     ModelProxy *m_parentModelRef;
     vpvl2::ILabel *m_labelRef;
     QList<BoneRefObject *> m_bones;
     QList<MorphRefObject *> m_morphs;
+    bool m_dirty;
 };
 
 #endif // LABELREFOBJECT_H

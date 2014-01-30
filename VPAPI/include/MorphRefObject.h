@@ -336,6 +336,7 @@ class MorphRefObject : public QObject
     Q_PROPERTY(int index READ index CONSTANT FINAL)
     Q_PROPERTY(qreal weight READ weight WRITE setWeight NOTIFY weightChanged FINAL)
     Q_PROPERTY(qreal originWeight READ originWeight NOTIFY originWeightChanged FINAL)
+    Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
     enum Category {
@@ -385,7 +386,8 @@ public:
     qreal weight() const;
     void setWeight(const qreal &value);
     qreal originWeight() const;
-
+    bool isDirty() const;
+    void setDirty(bool value);
 
 public slots:
     Q_INVOKABLE void sync();
@@ -404,6 +406,7 @@ signals:
     void weightChanged();
     void originWeightChanged();
     void morphDidSync();
+    void dirtyChanged();
 
 private:
     QList<ChildGroupMorphRefObject *> m_groupMorphs;
@@ -418,6 +421,7 @@ private:
     vpvl2::IMorph *m_morphRef;
     const QUuid m_uuid;
     qreal m_originWeight;
+    bool m_dirty;
 };
 
 #endif // MORPHREFOBJECT_H

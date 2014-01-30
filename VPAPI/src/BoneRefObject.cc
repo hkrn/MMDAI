@@ -52,7 +52,8 @@ BoneRefObject::BoneRefObject(ModelProxy *modelRef, LabelRefObject *labelRef, IBo
       m_parentModelRef(modelRef),
       m_parentLabelRef(labelRef),
       m_boneRef(boneRef),
-      m_uuid(uuid)
+      m_uuid(uuid),
+      m_dirty(false)
 {
     Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_boneRef);
@@ -158,7 +159,7 @@ void BoneRefObject::setName(const QString &value)
         IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_boneRef->setName(s.data(), language);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit nameChanged();
     }
 }
@@ -173,7 +174,7 @@ void BoneRefObject::setOrigin(const QVector3D &value)
     Q_ASSERT(m_boneRef);
     if (!qFuzzyCompare(origin(), value)) {
         m_boneRef->setOrigin(Util::toVector3(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit originChanged();
     }
 }
@@ -188,7 +189,7 @@ void BoneRefObject::setDestinationOrigin(const QVector3D &value)
     Q_ASSERT(m_boneRef);
     if (!qFuzzyCompare(destinationOrigin(), value)) {
         m_boneRef->setDestinationOrigin(Util::toVector3(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit destinationOriginChanged();
     }
 }
@@ -203,7 +204,7 @@ void BoneRefObject::setFixedAxis(const QVector3D &value)
     Q_ASSERT(m_boneRef);
     if (!qFuzzyCompare(fixedAxis(), value)) {
         m_boneRef->setFixedAxis(Util::toVector3(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit fixedAxisChanged();
     }
 }
@@ -266,7 +267,7 @@ void BoneRefObject::setInherentCoefficient(qreal value)
     Q_ASSERT(m_boneRef);
     if (!qFuzzyCompare(inherentCoefficient(), value)) {
         m_boneRef->inherentCoefficient();
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit inherentCoefficientChanged();
     }
 }
@@ -288,7 +289,7 @@ void BoneRefObject::setInverseKinematicsEnabled(bool value)
     Q_ASSERT(m_boneRef);
     if (value != isInverseKinematicsKEnabled()) {
         m_boneRef->setInverseKinematicsEnable(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit inverseKinematicsEnabledChanged();
     }
 }
@@ -304,7 +305,7 @@ void BoneRefObject::setMovable(bool value)
     Q_ASSERT(m_boneRef);
     if (isMovable() != value) {
         m_boneRef->setMovable(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit movableChanged();
     }
 }
@@ -320,7 +321,7 @@ void BoneRefObject::setRotateable(bool value)
     Q_ASSERT(m_boneRef);
     if (isRotateable() != value) {
         m_boneRef->setRotateable(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit rotateableChanged();
     }
 }
@@ -336,7 +337,7 @@ void BoneRefObject::setVisible(bool value)
     Q_ASSERT(m_boneRef);
     if (isVisible() != value) {
         m_boneRef->setVisible(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit visibleChanged();
     }
 }
@@ -352,7 +353,7 @@ void BoneRefObject::setInteractive(bool value)
     Q_ASSERT(m_boneRef);
     if (isInteractive() != value) {
         m_boneRef->setInteractive(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit interactiveChanged();
     }
 }
@@ -368,7 +369,7 @@ void BoneRefObject::setInherentTranslationEnabled(bool value)
     Q_ASSERT(m_boneRef);
     if (isInherentTranslationEnabled() != value) {
         m_boneRef->setInherentTranslationEnable(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit inherentTranslationEnabledChanged();
     }
 }
@@ -384,7 +385,7 @@ void BoneRefObject::setInherentOrientationEnabled(bool value)
     Q_ASSERT(m_boneRef);
     if (isInherentOrientationEnabled() != value) {
         m_boneRef->setInherentOrientationEnable(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit inherentOrientationEnabledChanged();
     }
 }
@@ -400,7 +401,7 @@ void BoneRefObject::setFixedAxisEnabled(bool value)
     Q_ASSERT(m_boneRef);
     if (isFixedAxisEnabled() != value) {
         m_boneRef->setFixedAxisEnable(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit fixedAxisEnabledChanged();
     }
 }
@@ -416,8 +417,24 @@ void BoneRefObject::setLocalAxesEnabled(bool value)
     Q_ASSERT(m_boneRef);
     if (isLocalAxesEnabled() != value) {
         m_boneRef->setLocalAxesEnable(value);
-        m_parentModelRef->markDirty();
+        setDirty(true);
         emit localAxesEnabledChanged();
+    }
+}
+
+bool BoneRefObject::isDirty() const
+{
+    return m_dirty;
+}
+
+void BoneRefObject::setDirty(bool value)
+{
+    if (isDirty() != value) {
+        m_dirty = value;
+        emit dirtyChanged();
+        if (value) {
+            m_parentModelRef->markDirty();
+        }
     }
 }
 

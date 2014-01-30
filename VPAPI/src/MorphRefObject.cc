@@ -95,6 +95,7 @@ void ChildGroupMorphRefObject::setTargetMorph(MorphRefObject *value)
     Q_ASSERT(m_valueRef);
     if (targetMorph() != value) {
         m_valueRef->morph = value->data();
+        m_parentMorphRef->setDirty(true);
         emit targetMorphChanged();
     }
 }
@@ -110,6 +111,7 @@ void ChildGroupMorphRefObject::setFixedWeight(const qreal &value)
     Q_ASSERT(m_valueRef);
     if (!qFuzzyCompare(fixedWeight(), value)) {
         m_valueRef->fixedWeight = value;
+        m_parentMorphRef->setDirty(true);
         emit fixedWeightChanged();
     }
 }
@@ -157,6 +159,7 @@ void ChildVertexMorphRefObject::setTargetVertex(VertexRefObject *value)
     Q_ASSERT(m_valueRef);
     if (targetVertex() != value) {
         m_valueRef->vertex = value->data();
+        m_parentMorphRef->setDirty(true);
         emit targetVertexChanged();
     }
 }
@@ -170,6 +173,7 @@ void ChildVertexMorphRefObject::setPosition(const QVector3D &value)
 {
     if (!qFuzzyCompare(position(), value)) {
         m_valueRef->position = Util::toVector3(value);
+        m_parentMorphRef->setDirty(true);
         emit positionChanged();
     }
 }
@@ -217,6 +221,7 @@ void ChildBoneMorphRefObject::setTargetBone(BoneRefObject *value)
     Q_ASSERT(m_valueRef);
     if (targetBone() != value) {
         m_valueRef->bone = value->data();
+        m_parentMorphRef->setDirty(true);
         emit targetBoneChanged();
     }
 }
@@ -232,6 +237,7 @@ void ChildBoneMorphRefObject::setPosition(const QVector3D &value)
     Q_ASSERT(m_valueRef);
     if (!qFuzzyCompare(position(), value)) {
         m_valueRef->position = Util::toVector3(value);
+        m_parentMorphRef->setDirty(true);
         emit positionChanged();
     }
 }
@@ -247,6 +253,7 @@ void ChildBoneMorphRefObject::setRotation(const QQuaternion &value)
     Q_ASSERT(m_valueRef);
     if (!qFuzzyCompare(rotation(), value)) {
         m_valueRef->rotation = Util::toQuaternion(value);
+        m_parentMorphRef->setDirty(true);
         emit rotationChanged();
     }
 }
@@ -294,6 +301,7 @@ void ChildUVMorphRefObject::setTargetVertex(VertexRefObject *value)
     Q_ASSERT(m_valueRef);
     if (targetVertex() != value) {
         m_valueRef->vertex = value->data();
+        m_parentMorphRef->setDirty(true);
         emit targetVertexChanged();
     }
 }
@@ -309,6 +317,7 @@ void ChildUVMorphRefObject::setPosition(const QVector4D &value)
     Q_ASSERT(m_valueRef);
     if (position() != value) {
         m_valueRef->position = Util::toVector4(value);
+        m_parentMorphRef->setDirty(true);
         emit positionChanged();
     }
 }
@@ -355,6 +364,7 @@ void ChildMaterialMorphRefObject::setAmbient(const QColor &value)
     Q_ASSERT(m_valueRef);
     if (ambient() != value) {
         m_valueRef->ambient = Util::toColorRGB(value);
+        m_parentMorphRef->setDirty(true);
         emit ambientChanged();
     }
 }
@@ -370,6 +380,7 @@ void ChildMaterialMorphRefObject::setDiffuse(const QColor &value)
     Q_ASSERT(m_valueRef);
     if (diffuse() != value) {
         m_valueRef->diffuse = Util::toColorRGBA(value);
+        m_parentMorphRef->setDirty(true);
         emit diffuseChanged();
     }
 }
@@ -385,6 +396,7 @@ void ChildMaterialMorphRefObject::setSpecular(const QColor &value)
     Q_ASSERT(m_valueRef);
     if (specular() != value) {
         m_valueRef->specular = Util::toColorRGB(value);
+        m_parentMorphRef->setDirty(true);
         emit specularChanged();
     }
 }
@@ -400,6 +412,7 @@ void ChildMaterialMorphRefObject::setEdgeColor(const QColor &value)
     Q_ASSERT(m_valueRef);
     if (edgeColor() != value) {
         m_valueRef->edgeColor = Util::toColorRGBA(value);
+        m_parentMorphRef->setDirty(true);
         emit edgeColorChanged();
     }
 }
@@ -415,6 +428,7 @@ void ChildMaterialMorphRefObject::setMainTextureCoefficient(const QVector4D &val
     Q_ASSERT(m_valueRef);
     if (!qFuzzyCompare(mainTextureCoefficient(), value)) {
         m_valueRef->textureWeight = Util::toVector4(value);
+        m_parentMorphRef->setDirty(true);
         emit mainTextureCoefficientChanged();
     }
 }
@@ -430,6 +444,7 @@ void ChildMaterialMorphRefObject::setSphereTextureCoefficient(const QVector4D &v
     Q_ASSERT(m_valueRef);
     if (!qFuzzyCompare(sphereTextureCoefficient(), value)) {
         m_valueRef->sphereTextureWeight = Util::toVector4(value);
+        m_parentMorphRef->setDirty(true);
         emit sphereTextureCoefficientChanged();
     }
 }
@@ -445,6 +460,7 @@ void ChildMaterialMorphRefObject::setToonTextureCoefficient(const QVector4D &val
     Q_ASSERT(m_valueRef);
     if (!qFuzzyCompare(toonTextureCoefficient(), value)) {
         m_valueRef->toonTextureWeight = Util::toVector4(value);
+        m_parentMorphRef->setDirty(true);
         emit toonTextureCoefficientChanged();
     }
 }
@@ -460,6 +476,7 @@ void ChildMaterialMorphRefObject::setShininess(const qreal &value)
     Q_ASSERT(m_valueRef);
     if (!qFuzzyCompare(shininess(), value)) {
         m_valueRef->shininess = value;
+        m_parentMorphRef->setDirty(true);
         emit shininessChanged();
     }
 }
@@ -475,6 +492,7 @@ void ChildMaterialMorphRefObject::setEdgeSize(const qreal &value)
     Q_ASSERT(m_valueRef);
     if (!qFuzzyCompare(edgeSize(), value)) {
         m_valueRef->edgeSize = value;
+        m_parentMorphRef->setDirty(true);
         emit edgeSizeChanged();
     }
 }
@@ -490,6 +508,7 @@ void ChildMaterialMorphRefObject::setOperation(const OperationType &value)
     Q_ASSERT(m_valueRef);
     if (operation() != value) {
         m_valueRef->operation = static_cast<uint8>(value);
+        m_parentMorphRef->setDirty(true);
         emit operationChanged();
     }
 }
@@ -537,6 +556,7 @@ void ChildFlipMorphRefObject::setTargetMorph(MorphRefObject *value)
     Q_ASSERT(m_valueRef);
     if (targetMorph() != value) {
         m_valueRef->morph = value->data();
+        m_parentMorphRef->setDirty(true);
         emit targetMorphChanged();
     }
 }
@@ -552,6 +572,7 @@ void ChildFlipMorphRefObject::setFixedWeight(const qreal &value)
     Q_ASSERT(m_valueRef);
     if (!qFuzzyCompare(fixedWeight(), value)) {
         m_valueRef->fixedWeight = value;
+        m_parentMorphRef->setDirty(true);
         emit fixedWeightChanged();
     }
 }
@@ -598,6 +619,7 @@ void ChildImpulseMorphRefObject::setTargetRigidBody(RigidBodyRefObject *value)
     Q_ASSERT(m_valueRef);
     if (targetRigidBody() != value) {
         m_valueRef->rigidBody = value->data();
+        m_parentMorphRef->setDirty(true);
         emit targetRigidBodyChanged();
     }
 }
@@ -613,6 +635,7 @@ void ChildImpulseMorphRefObject::setVelocity(const QVector3D &value)
     Q_ASSERT(m_valueRef);
     if (!qFuzzyCompare(velocity(), value)) {
         m_valueRef->velocity = Util::toVector3(value);
+        m_parentMorphRef->setDirty(true);
         emit velocityChanged();
     }
 }
@@ -628,6 +651,7 @@ void ChildImpulseMorphRefObject::setTorque(const QVector3D &value)
     Q_ASSERT(m_valueRef);
     if (!qFuzzyCompare(torque(), value)) {
         m_valueRef->torque = Util::toVector3(value);
+        m_parentMorphRef->setDirty(true);
         emit torqueChanged();
     }
 }
@@ -643,6 +667,7 @@ void ChildImpulseMorphRefObject::setLocal(bool value)
     Q_ASSERT(m_valueRef);
     if (isLocal() != value) {
         m_valueRef->isLocal = value;
+        m_parentMorphRef->setDirty(true);
         emit localChanged();
     }
 }
@@ -653,7 +678,8 @@ MorphRefObject::MorphRefObject(ModelProxy *modelRef, LabelRefObject *labelRef, I
       m_parentLabelRef(labelRef),
       m_morphRef(morphRef),
       m_uuid(uuid),
-      m_originWeight(0)
+      m_originWeight(0),
+      m_dirty(false)
 {
     Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_morphRef);
@@ -687,6 +713,7 @@ void MorphRefObject::setOriginWeight(const qreal &value)
 {
     if (!qFuzzyCompare(value, m_originWeight)) {
         m_originWeight = value;
+        setDirty(true);
         emit originWeightChanged();
     }
 }
@@ -829,7 +856,7 @@ void MorphRefObject::setName(const QString &value)
         IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
         QScopedPointer<IString> s(String::create(value.toStdString()));
         m_morphRef->setName(s.data(), language);
-        parentModel->markDirty();
+        setDirty(true);
         emit nameChanged();
     }
 }
@@ -846,7 +873,7 @@ void MorphRefObject::setCategory(const Category &value)
     Q_ASSERT(m_morphRef);
     if (category() != value) {
         m_morphRef->setCategory(static_cast<IMorph::Category>(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
     }
 }
 
@@ -862,7 +889,7 @@ void MorphRefObject::setType(const Type &value)
     Q_ASSERT(m_morphRef);
     if (type() != value) {
         m_morphRef->setType(static_cast<IMorph::Type>(value));
-        m_parentModelRef->markDirty();
+        setDirty(true);
     }
 }
 
@@ -896,3 +923,20 @@ void MorphRefObject::sync()
 {
     emit morphDidSync();
 }
+
+bool MorphRefObject::isDirty() const
+{
+    return m_dirty;
+}
+
+void MorphRefObject::setDirty(bool value)
+{
+    if (isDirty() != value) {
+        m_dirty = value;
+        emit dirtyChanged();
+        if (value) {
+            m_parentModelRef->markDirty();
+        }
+    }
+}
+
