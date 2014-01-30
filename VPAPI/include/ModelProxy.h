@@ -50,6 +50,7 @@
 #include <QUuid>
 #include <QVector3D>
 
+#include <vpvl2/IString.h>
 #include "ProjectProxy.h"
 
 class QAbstractItemModel;
@@ -73,6 +74,7 @@ class ModelProxy : public QObject
 {
     Q_OBJECT
     Q_ENUMS(AxisType)
+    Q_ENUMS(EncodingType)
     Q_ENUMS(ObjectType)
     Q_ENUMS(TransformType)
     Q_PROPERTY(ProjectProxy *parentProject READ parentProject CONSTANT FINAL)
@@ -82,8 +84,10 @@ class ModelProxy : public QObject
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
     Q_PROPERTY(QUrl fileUrl READ fileUrl CONSTANT FINAL)
     Q_PROPERTY(QUrl faviconUrl READ faviconUrl CONSTANT FINAL)
-    Q_PROPERTY(QString name READ name NOTIFY nameChanged FINAL)
-    Q_PROPERTY(QString comment READ comment NOTIFY commentChanged FINAL)
+    Q_PROPERTY(qreal version READ version WRITE setVersion NOTIFY versionChanged FINAL)
+    Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
+    Q_PROPERTY(QString comment READ comment WRITE setComment NOTIFY commentChanged FINAL)
+    Q_PROPERTY(EncodingType encodingType READ encodingType WRITE setEncodingType NOTIFY encodingTypeChanged FINAL)
     Q_PROPERTY(QQmlListProperty<LabelRefObject> allLabels READ allLabels NOTIFY allLabelsChanged FINAL)
     Q_PROPERTY(QQmlListProperty<BoneRefObject> allBones READ allBones NOTIFY allBonesChanged FINAL)
     Q_PROPERTY(QQmlListProperty<MorphRefObject> allMorphs READ allMorphs NOTIFY allMorphsChanged FINAL)
@@ -103,6 +107,7 @@ class ModelProxy : public QObject
     Q_PROPERTY(qreal scaleFactor READ scaleFactor WRITE setScaleFactor NOTIFY scaleFactorChanged FINAL)
     Q_PROPERTY(qreal opacity READ opacity WRITE setOpacity NOTIFY opacityChanged FINAL)
     Q_PROPERTY(qreal edgeWidth READ edgeWidth WRITE setEdgeWidth NOTIFY edgeWidthChanged FINAL)
+    Q_PROPERTY(int numUVA READ numUVA WRITE setNumUVA NOTIFY numUVAChanged FINAL)
     Q_PROPERTY(int orderIndex READ orderIndex WRITE setOrderIndex NOTIFY orderIndexChanged FINAL)
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged FINAL)
     Q_PROPERTY(bool moving READ isMoving NOTIFY movingChanged FINAL)
@@ -113,6 +118,11 @@ public:
         AxisX,
         AxisY,
         AxisZ
+    };
+    enum EncodingType {
+        ShiftJIS = vpvl2::IString::kShiftJIS,
+        UTF8     = vpvl2::IString::kUTF8,
+        UTF16    = vpvl2::IString::kUTF16
     };
     enum ObjectType {
         Vertex,
@@ -155,8 +165,6 @@ public:
     QUuid uuid() const;
     QUrl fileUrl() const;
     QUrl faviconUrl() const;
-    QString name() const;
-    QString comment() const;
     QQmlListProperty<LabelRefObject> allLabels();
     QQmlListProperty<BoneRefObject> allBones();
     QQmlListProperty<MorphRefObject> allMorphs();
@@ -165,6 +173,14 @@ public:
     QQmlListProperty<RigidBodyRefObject> allRigidBodies();
     QQmlListProperty<JointRefObject> allJoints();
     QQmlListProperty<BoneRefObject> targetBones();
+    qreal version() const;
+    void setVersion(const qreal &value);
+    QString name() const;
+    void setName(const QString &value);
+    QString comment() const;
+    void setComment(const QString &value);
+    EncodingType encodingType() const;
+    void setEncodingType(EncodingType value);
     QList<BoneRefObject *> allTargetBones() const;
     BoneRefObject *firstTargetBone() const;
     MorphRefObject *firstTargetMorph() const;
@@ -188,6 +204,8 @@ public:
     qreal opacity() const;
     void setOpacity(qreal value);
     QList<vpvl2::ILabel *> allLabels() const;
+    int numUVA() const;
+    void setNumUVA(int value);
     int orderIndex() const;
     void setOrderIndex(int value);
     bool isVisible() const;
@@ -209,8 +227,10 @@ signals:
     void parentBindingModelChanged();
     void parentBindingBoneChanged();
     void childMotionChanged();
+    void versionChanged();
     void nameChanged();
     void commentChanged();
+    void encodingTypeChanged();
     void allLabelsChanged();
     void allBonesChanged();
     void allMorphsChanged();
@@ -229,6 +249,7 @@ signals:
     void scaleFactorChanged();
     void opacityChanged();
     void edgeWidthChanged();
+    void numUVAChanged();
     void orderIndexChanged();
     void visibleChanged();
     void movingChanged();

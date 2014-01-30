@@ -58,6 +58,8 @@ class BoneRefObject : public QObject
     Q_PROPERTY(BoneRefObject *parentBone READ parentBone CONSTANT FINAL)
     Q_PROPERTY(LabelRefObject *parentLabel READ parentLabel CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
+    Q_PROPERTY(BoneRefObject *destinationOriginBone READ destinationOriginBone WRITE setDestinationOriginBone NOTIFY destinationOriginBoneChanged FINAL)
+    Q_PROPERTY(BoneRefObject *parentInherentBone READ parentInherentBone WRITE setParentInherentBone NOTIFY parentInherentBoneChanged FINAL)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
     Q_PROPERTY(QVector3D origin READ origin WRITE setOrigin NOTIFY originChanged FINAL)
     Q_PROPERTY(QVector3D destinationOrigin READ destinationOrigin WRITE setDestinationOrigin NOTIFY destinationOriginChanged FINAL)
@@ -67,15 +69,15 @@ class BoneRefObject : public QObject
     Q_PROPERTY(QVector3D localEulerOrientation READ localEulerOrientation WRITE setLocalEulerOrientation NOTIFY localOrientationChanged FINAL)
     Q_PROPERTY(QVector3D originLocalTranslation READ originLocalTranslation NOTIFY originLocalTranslationChanged FINAL)
     Q_PROPERTY(QQuaternion originLocalOrientation READ originLocalOrientation NOTIFY originLocalOrientationChanged FINAL)
-    Q_PROPERTY(qreal coefficient READ coefficient WRITE setCoefficient NOTIFY coefficientChanged)
+    Q_PROPERTY(qreal inherentCoefficient READ inherentCoefficient WRITE setInherentCoefficient NOTIFY inherentCoefficientChanged)
     Q_PROPERTY(int index READ index CONSTANT FINAL)
     Q_PROPERTY(bool inverseKinematicsEnabled READ isInverseKinematicsKEnabled WRITE setInverseKinematicsEnabled NOTIFY inverseKinematicsEnabledChanged FINAL)
     Q_PROPERTY(bool movable READ isMovable WRITE setMovable NOTIFY movableChanged FINAL)
     Q_PROPERTY(bool rotateable READ isRotateable WRITE setRotateable NOTIFY rotateableChanged FINAL)
     Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged FINAL)
     Q_PROPERTY(bool interactive READ isInteractive WRITE setInteractive NOTIFY interactiveChanged FINAL)
-    Q_PROPERTY(bool inherenceTranslationEnabled READ isInherenceTranslationEnabled WRITE setInherenceTranslationEnabled NOTIFY inherenceTranslationEnabledChanged FINAL)
-    Q_PROPERTY(bool inherenceOrientationEnabled READ isInherenceOrientationEnabled WRITE setInherenceOrientationEnabled NOTIFY inherenceOrientationEnabledChanged FINAL)
+    Q_PROPERTY(bool inherentTranslationEnabled READ isInherentTranslationEnabled WRITE setInherentTranslationEnabled NOTIFY inherentTranslationEnabledChanged FINAL)
+    Q_PROPERTY(bool inherentOrientationEnabled READ isInherentOrientationEnabled WRITE setInherentOrientationEnabled NOTIFY inherentOrientationEnabledChanged FINAL)
     Q_PROPERTY(bool fixedAxisEnabled READ isFixedAxisEnabled WRITE setFixedAxisEnabled NOTIFY fixedAxisEnabledChanged FINAL)
     Q_PROPERTY(bool localAxesEnabled READ isLocalAxesEnabled WRITE setLocalAxesEnabled NOTIFY localAxesEnabledChanged FINAL)
 
@@ -92,6 +94,10 @@ public:
     LabelRefObject *parentLabel() const;
     QUuid uuid() const;
     QString name() const;
+    BoneRefObject *destinationOriginBone() const;
+    void setDestinationOriginBone(BoneRefObject *value);
+    BoneRefObject *parentInherentBone() const;
+    void setParentInherentBone(BoneRefObject *value);
     void setName(const QString &value);
     QVector3D origin() const;
     void setOrigin(const QVector3D &value);
@@ -107,8 +113,8 @@ public:
     void setLocalEulerOrientation(const QVector3D &value);
     QVector3D originLocalTranslation() const;
     QQuaternion originLocalOrientation() const;
-    qreal coefficient() const;
-    void setCoefficient(qreal value);
+    qreal inherentCoefficient() const;
+    void setInherentCoefficient(qreal value);
     int index() const;
     bool isInverseKinematicsKEnabled() const;
     void setInverseKinematicsEnabled(bool value);
@@ -121,10 +127,10 @@ public:
     bool isInteractive() const;
     void setInteractive(bool value);
     bool hasInverseKinematics() const;
-    bool isInherenceTranslationEnabled() const;
-    void setInherenceTranslationEnabled(bool value);
-    bool isInherenceOrientationEnabled() const;
-    void setInherenceOrientationEnabled(bool value);
+    bool isInherentTranslationEnabled() const;
+    void setInherentTranslationEnabled(bool value);
+    bool isInherentOrientationEnabled() const;
+    void setInherentOrientationEnabled(bool value);
     bool isFixedAxisEnabled() const;
     void setFixedAxisEnabled(bool value);
     bool isLocalAxesEnabled() const;
@@ -143,6 +149,8 @@ public slots:
     Q_INVOKABLE void sync();
 
 signals:
+    void destinationOriginBoneChanged();
+    void parentInherentBoneChanged();
     void nameChanged();
     void originChanged();
     void destinationOriginChanged();
@@ -153,13 +161,13 @@ signals:
     void originLocalTranslationChanged();
     void originLocalOrientationChanged();
     void inverseKinematicsEnabledChanged();
-    void coefficientChanged();
+    void inherentCoefficientChanged();
     void movableChanged();
     void rotateableChanged();
     void visibleChanged();
     void interactiveChanged();
-    void inherenceTranslationEnabledChanged();
-    void inherenceOrientationEnabledChanged();
+    void inherentTranslationEnabledChanged();
+    void inherentOrientationEnabledChanged();
     void fixedAxisEnabledChanged();
     void localAxesEnabledChanged();
     void boneDidSync();

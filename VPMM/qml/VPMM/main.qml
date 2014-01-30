@@ -451,28 +451,70 @@ ApplicationWindow {
                             text: qsTr("Type")
                         }
                         ComboBox {
-                            model: [ "PMD 1.0", "PMX 2.0", "PMX 2.1" ]
+                            id: modelVersionComboBox
+                            function indexOf(value) {
+                                var result = model.filter(function(element){ return element.value === value })
+                                return result.length > 0 ? result[0].value : -1
+                            }
+                            model: [
+                                { "text": "PMD 1.0", "value": 1.0 },
+                                { "text": "PMX 2.0", "value": 2.0 },
+                                { "text": "PMX 2.1", "value": 2.1 }
+                            ]
+                            currentIndex: scene.project.currentModel ? indexOf(scene.project.currentModel.version) : 0
+                        }
+                        Binding {
+                            target: scene.project.currentModel
+                            property: "version"
+                            value: modelVersionComboBox.model[modelVersionComboBox.currentIndex].value
+                            when: modelVersionComboBox.hovered
                         }
                         Label {
                             text: qsTr("Encoding")
                         }
                         ComboBox {
-                            model: [ "Shift_JIS", "UTF-8", "UTF-16" ]
+                            id: modelEncodingTypeComboBox
+                            function indexOf(value) {
+                                var result = model.filter(function(element){ return element.value === value })
+                                return result.length > 0 ? result[0].value : -1
+                            }
+                            model: [
+                                { "text": "Shift_JIS", "value": VPMM.Model.ShiftJIS },
+                                { "text": "UTF-8", "value": VPMM.Model.UTF8 },
+                                { "text": "UTF-16", "value": VPMM.Model.UTF16 }
+                            ]
+                            currentIndex: scene.project.currentModel ? indexOf(scene.project.currentModel.encodingType) : 0
+                        }
+                        Binding {
+                            target: scene.project.currentModel
+                            property: "encodingType"
+                            value: modelEncodingTypeComboBox.model[modelEncodingTypeComboBox.currentIndex].value
+                            when: modelEncodingTypeComboBox.hovered
                         }
                         Label {
                             text: qsTr("Additional UV")
                         }
                         SpinBox {
+                            id: modelUVASpinBox
                             minimumValue: 0
                             maximumValue: 4
+                            value: scene.project.currentModel ? scene.project.currentModel.numUVA : 0
+                        }
+                        Binding {
+                            target: scene.project.currentModel
+                            property: "uavCount"
+                            value: modelUVASpinBox.value
+                            when: modelUVASpinBox.hovered
                         }
                     }
                     TextField {
                         Layout.fillWidth: true
                         placeholderText: qsTr("Input Model Name Here")
+                        text: scene.project.currentModel ? scene.project.currentModel.name : ""
                     }
                     TextArea {
                         Layout.fillWidth: true
+                        text: scene.project.currentModel ? scene.project.currentModel.comment : ""
                     }
                     Item {
                         Layout.fillWidth: true

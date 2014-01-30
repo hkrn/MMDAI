@@ -121,6 +121,34 @@ QString BoneRefObject::name() const
     return Util::toQString((name && name->size() > 0) ? name : m_boneRef->name(IEncoding::kDefaultLanguage));
 }
 
+BoneRefObject *BoneRefObject::destinationOriginBone() const
+{
+    Q_ASSERT(m_parentModelRef);
+    return m_parentModelRef->resolveBoneRef(m_boneRef->destinationOriginBoneRef());
+}
+
+void BoneRefObject::setDestinationOriginBone(BoneRefObject *value)
+{
+    if (destinationOriginBone() != value) {
+        m_boneRef->setDestinationOriginBoneRef(value->data());
+        emit destinationOriginBoneChanged();
+    }
+}
+
+BoneRefObject *BoneRefObject::parentInherentBone() const
+{
+    Q_ASSERT(m_parentModelRef);
+    return m_parentModelRef->resolveBoneRef(m_boneRef->parentInherentBoneRef());
+}
+
+void BoneRefObject::setParentInherentBone(BoneRefObject *value)
+{
+    if (parentInherentBone() != value) {
+        m_boneRef->setParentInherentBoneRef(value->data());
+        emit parentInherentBoneChanged();
+    }
+}
+
 void BoneRefObject::setName(const QString &value)
 {
     Q_ASSERT(m_parentModelRef);
@@ -227,19 +255,19 @@ QQuaternion BoneRefObject::originLocalOrientation() const
     return m_originOrientation;
 }
 
-qreal BoneRefObject::coefficient() const
+qreal BoneRefObject::inherentCoefficient() const
 {
     Q_ASSERT(m_boneRef);
-    return m_boneRef->coefficient();
+    return m_boneRef->inherentCoefficient();
 }
 
-void BoneRefObject::setCoefficient(qreal value)
+void BoneRefObject::setInherentCoefficient(qreal value)
 {
     Q_ASSERT(m_boneRef);
-    if (!qFuzzyCompare(coefficient(), value)) {
-        m_boneRef->coefficient();
+    if (!qFuzzyCompare(inherentCoefficient(), value)) {
+        m_boneRef->inherentCoefficient();
         m_parentModelRef->markDirty();
-        emit coefficientChanged();
+        emit inherentCoefficientChanged();
     }
 }
 
@@ -329,35 +357,35 @@ void BoneRefObject::setInteractive(bool value)
     }
 }
 
-bool BoneRefObject::isInherenceTranslationEnabled() const
+bool BoneRefObject::isInherentTranslationEnabled() const
 {
     Q_ASSERT(m_boneRef);
     return m_boneRef->isInherentTranslationEnabled();
 }
 
-void BoneRefObject::setInherenceTranslationEnabled(bool value)
+void BoneRefObject::setInherentTranslationEnabled(bool value)
 {
     Q_ASSERT(m_boneRef);
-    if (isInherenceTranslationEnabled() != value) {
+    if (isInherentTranslationEnabled() != value) {
         m_boneRef->setInherentTranslationEnable(value);
         m_parentModelRef->markDirty();
-        emit inherenceTranslationEnabledChanged();
+        emit inherentTranslationEnabledChanged();
     }
 }
 
-bool BoneRefObject::isInherenceOrientationEnabled() const
+bool BoneRefObject::isInherentOrientationEnabled() const
 {
     Q_ASSERT(m_boneRef);
     return m_boneRef->isInherentOrientationEnabled();
 }
 
-void BoneRefObject::setInherenceOrientationEnabled(bool value)
+void BoneRefObject::setInherentOrientationEnabled(bool value)
 {
     Q_ASSERT(m_boneRef);
-    if (isInherenceOrientationEnabled() != value) {
+    if (isInherentOrientationEnabled() != value) {
         m_boneRef->setInherentOrientationEnable(value);
         m_parentModelRef->markDirty();
-        emit inherenceOrientationEnabledChanged();
+        emit inherentOrientationEnabledChanged();
     }
 }
 

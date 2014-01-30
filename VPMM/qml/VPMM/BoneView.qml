@@ -92,23 +92,31 @@ ScrollView {
                 RadioButton {
                     id: destinationTypeBone
                     text: qsTr("Bone")
+                    checked: targetObject.destinationOriginBone !== null
                     exclusiveGroup: destinationTypeGroup
                 }
                 RadioButton {
                     id: destinationTypePosition
                     text: qsTr("Position")
-                    checked: true
+                    checked: targetObject.destinationOriginBone === null
                     exclusiveGroup: destinationTypeGroup
                 }
             }
             RowLayout {
-                enabled: destinationTypeGroup.current === destinationTypeBone
+                enabled: destinationTypeBone.checked
                 Label { text: qsTr("Destination Bone") }
                 ComboBox {
+                    id: boneDestinationOriginBoneComboBox
                     model: bonesModel
                     editable: true
                     Layout.fillWidth: true
-                    currentIndex: bonesModel.indexOf(targetObject.destinationBone)
+                    currentIndex: bonesModel.indexOf(targetObject.destinationOriginBone)
+                }
+                Binding {
+                    target: targetObject
+                    property: "destinationOriginBone"
+                    value: bonesModel.get(boneDestinationOriginBoneComboBox.currentIndex).item
+                    when: boneDestinationOriginBoneComboBox.hovered
                 }
             }
             RowLayout {
@@ -148,7 +156,7 @@ ScrollView {
                 }
                 GroupBox {
                     title: qsTr("Destination")
-                    enabled: destinationTypeGroup.current === destinationTypePosition
+                    enabled: destinationTypePosition.checked
                     Layout.fillWidth: true
                     GridLayout {
                         columns: 2
@@ -227,53 +235,61 @@ ScrollView {
                         value: boneInteractiveCheckbox.checked
                     }
                     CheckBox {
-                        id: boneInherenceOrientationCheckbox
-                        text: qsTr("Inherence Orientation")
-                        checked: targetObject.inherenceOrientationEnabled
+                        id: boneInherentOrientationCheckbox
+                        text: qsTr("Inherent Orientation")
+                        checked: targetObject.inherentOrientationEnabled
                     }
                     Binding {
                         target: targetObject
-                        property: "inherenceOrientation"
-                        value: boneInherenceOrientationCheckbox.checked
+                        property: "inherentOrientation"
+                        value: boneInherentOrientationCheckbox.checked
                     }
                     CheckBox {
-                        id: boneInherenceTranslationCheckbox
-                        text: qsTr("Inherence Translation")
-                        checked: targetObject.inherenceTranslationEnabled
+                        id: boneInherentTranslationCheckbox
+                        text: qsTr("Inherent Translation")
+                        checked: targetObject.inherentTranslationEnabled
                     }
                     Binding {
                         target: targetObject
-                        property: "inherenceTranslation"
-                        value: boneInherenceTranslationCheckbox.checked
+                        property: "inherentTranslation"
+                        value: boneInherentTranslationCheckbox.checked
                     }
                 }
             }
             GroupBox {
-                title: qsTr("Inherence")
-                enabled: boneInherenceTranslationCheckbox.checked || boneInherenceOrientationCheckbox.checked
+                title: qsTr("Inherent")
+                enabled: boneInherentTranslationCheckbox.checked || boneInherentOrientationCheckbox.checked
                 Layout.fillWidth: true
                 GridLayout {
                     columns: 2
                     Label { text: qsTr("Bone") }
                     ComboBox {
+                        id: boneInherentBoneComboBox
                         model: bonesModel
                         editable: true
                         Layout.fillWidth: true
+                        currentIndex: bonesModel.indexOf(targetObject.inherentBone)
+                    }
+                    Binding {
+                        target: targetObject
+                        property: "inherentBone"
+                        value: bonesModel.get(boneInherentBoneComboBox.currentIndex).item
+                        when: boneInherentBoneComboBox.hovered
                     }
                     Label { text: qsTr("Coefficient") }
                     SpinBox {
-                        id: boneCoefficientSpinBox
+                        id: boneInherentCoefficientSpinBox
                         maximumValue: 100
                         minimumValue: -maximumValue
                         decimals: 5
                         stepSize: 0.01
-                        value: targetObject.coefficient
+                        value: targetObject.inherentCoefficient
                     }
                     Binding {
                         target: targetObject
-                        property: "coefficient"
-                        value: boneCoefficientSpinBox.value
-                        when: boneCoefficientSpinBox.hovered
+                        property: "inherentCoefficient"
+                        value: boneInherentCoefficientSpinBox.value
+                        when: boneInherentCoefficientSpinBox.hovered
                     }
                 }
             }

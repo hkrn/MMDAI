@@ -796,6 +796,21 @@ QUrl ModelProxy::faviconUrl() const
     return m_faviconUrl;
 }
 
+qreal ModelProxy::version() const
+{
+    Q_ASSERT(m_model);
+    return m_model->version();
+}
+
+void ModelProxy::setVersion(const qreal &value)
+{
+    Q_ASSERT(m_model);
+    if (!qFuzzyCompare(version(), value)) {
+        m_model->setVersion(value);
+        emit versionChanged();
+    }
+}
+
 QString ModelProxy::name() const
 {
     Q_ASSERT(m_model);
@@ -803,11 +818,49 @@ QString ModelProxy::name() const
     return Util::toQString((name && name->size() > 0) ? name : m_model->name(IEncoding::kDefaultLanguage));
 }
 
+void ModelProxy::setName(const QString &value)
+{
+    Q_ASSERT(m_model);
+    if (name() != value) {
+        QScopedPointer<IString> s(String::create(value.toStdString()));
+        m_model->setName(s.data(), static_cast<IEncoding::LanguageType>(language()));
+        markDirty();
+        emit nameChanged();
+    }
+}
+
 QString ModelProxy::comment() const
 {
     Q_ASSERT(m_model);
     const IString *comment = m_model->comment(static_cast<IEncoding::LanguageType>(language()));
     return Util::toQString((comment && comment->size() > 0) ? comment : m_model->comment(IEncoding::kDefaultLanguage));
+}
+
+void ModelProxy::setComment(const QString &value)
+{
+    Q_ASSERT(m_model);
+    if (comment() != value) {
+        QScopedPointer<IString> s(String::create(value.toStdString()));
+        m_model->setComment(s.data(), static_cast<IEncoding::LanguageType>(language()));
+        markDirty();
+        emit commentChanged();
+    }
+}
+
+ModelProxy::EncodingType ModelProxy::encodingType() const
+{
+    Q_ASSERT(m_model);
+    // FIXME: implement encodingType
+    return ShiftJIS;
+}
+
+void ModelProxy::setEncodingType(EncodingType value)
+{
+    Q_ASSERT(m_model);
+    if (encodingType() != value) {
+        // FIXME: implement encodingType
+        emit encodingTypeChanged();
+    }
 }
 
 QQmlListProperty<LabelRefObject> ModelProxy::allLabels()
@@ -1060,6 +1113,22 @@ void ModelProxy::setEdgeWidth(qreal value)
     if (!qFuzzyCompare(value, edgeWidth())) {
         m_model->setEdgeWidth(static_cast<IVertex::EdgeSizePrecision>(value));
         emit edgeWidthChanged();
+    }
+}
+
+int ModelProxy::numUVA() const
+{
+    Q_ASSERT(m_model);
+    // FIXME: implement numUVA
+    return 0;
+}
+
+void ModelProxy::setNumUVA(int value)
+{
+    Q_ASSERT(m_model);
+    if (numUVA() != value) {
+        // FIXME: implement numUVA
+        emit numUVAChanged();
     }
 }
 
