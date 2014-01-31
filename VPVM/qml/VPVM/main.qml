@@ -53,7 +53,7 @@ ApplicationWindow {
 
     function __handleApplicationStateChange() {
         var state = Qt.application.state
-        scene.state = Qt.ApplicationActive ? scene.lastStateAtSuspend : "suspend"
+        scene.state = state === Qt.ApplicationActive ? scene.lastStateAtSuspend : "suspend"
     }
     function __handleRequestedFileUrlChange() {
         var fileUrl = applicationBootstrapOption.requestedFileUrl, fileUrlString = fileUrl.toString()
@@ -1035,6 +1035,7 @@ ApplicationWindow {
     }
 
     SplitView {
+        id: applicationContainer
         anchors.fill: parent
         orientation: Qt.Vertical
         SplitView {

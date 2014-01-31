@@ -68,7 +68,7 @@ Item {
     property bool isHUDAvailable : true
     property real offsetX : 0
     property real offsetY : 0
-    property string lastStateAtSuspend: "stop"
+    property string lastStateAtSuspend: "pause"
     property var __keycode2closures : ({})
     signal toggleTimelineVisible()
     signal toggleTimelineWindowed()
@@ -279,7 +279,11 @@ Item {
             }
         }
     ]
-    onStateChanged: lastStateAtSuspend = state
+    onStateChanged: {
+        if (state !== "suspend") {
+            lastStateAtSuspend = state
+        }
+    }
 
     VPVM.Project {
         id: projectDocument
