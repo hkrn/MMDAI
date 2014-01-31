@@ -37,6 +37,7 @@
 
 import QtQuick 2.2
 import QtQuick.Controls 1.1
+import QtQuick.Dialogs 1.1
 import QtQuick.Window 2.1
 import QtQuick.Layouts 1.1
 import com.github.mmdai.VPMM 1.0 as VPMM
@@ -51,7 +52,19 @@ ApplicationWindow {
 
     function __handleApplicationStateChange() {
         var state = Qt.application.state
-        scene.state = Qt.ApplicationActive ? scene.lastStateAtSuspend : "suspend"
+        scene.state = state === Qt.ApplicationActive ? scene.lastStateAtSuspend : "suspend"
+    }
+    function __handleRequestedFileUrlChange() {
+        var fileUrl = applicationBootstrapOption.requestedFileUrl, fileUrlString = fileUrl.toString()
+        if (/\.(?:pm[xd]|x)$/i.test(fileUrlString)) {
+            scene.project.loadModel(fileUrl)
+        }
+        else if (/\.(?:vmd|mvd)$/.test(fileUrlString)) {
+            scene.project.loadMotion(fileUrl, scene.currentModel, VPVM.Project.ModelMotion)
+        }
+        else if (/\.vpd$/.test(fileUrlString)) {
+            scene.project.loadPose(fileUrl, scene.currentModel)
+        }
     }
     function updateWindowRect() {
         x = applicationPreference.windowRect.x
@@ -73,16 +86,218 @@ ApplicationWindow {
         scene.project.initializeOnce()
         updateWindowRect()
         applicationPreference.windowRectChanged.connect(updateWindowRect)
+        applicationBootstrapOption.requestedFileUrlChanged.connect(__handleRequestedFileUrlChange)
         Qt.application.stateChanged.connect(__handleApplicationStateChange)
     }
 
+    ApplicationWindow {
+        id: progressWindow
+        property string text
+        property real maximumValue
+        property real minimumValue
+        width: 350
+        height: 80
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: applicationLayoutAnchorMargin
+            Layout.alignment: Qt.AlignCenter
+            Text {
+                Layout.fillWidth: true
+                text: progressWindow.text
+            }
+            ProgressBar {
+                Layout.fillWidth: true
+                minimumValue: progressWindow.minimumValue
+                maximumValue: progressWindow.maximumValue
+            }
+            Item { Layout.fillHeight: true }
+        }
+    }
+    FontLoader { id: fontAwesome; source: "FontAwesome.%1".arg(isOSX ? "otf" : "ttf") }
+
+    FileDialog {
+        id: loadModelDialog
+        nameFilters: [
+            qsTr("MikuMikuDance Model File (*.pmd *.pmx)")
+        ]
+        selectExisting: true
+        onAccepted: scene.project.loadModel(loadModelDialog.fileUrl)
+    }
+    Action {
+        id: loadModelAction
+        text: qsTr("Load Model")
+        tooltip: qsTr("Load a model from file. The loaded model will make current.")
+        onTriggered: loadModelDialog.open()
+    }
+    SaveDialog {
+        id: saveModelDialog
+        nameFilters: loadModelDialog.nameFilters
+        title: qsTr("Save Model")
+        suffix: "pmx"
+    }
+    Action {
+        id: saveModelAction
+        text: qsTr("Save Model")
+        tooltip: qsTr("Save the current model to the file.")
+        shortcut: "Ctrl+S"
+        onTriggered: saveModelDialog.save(saveModelDialog.getPath())
+    }
+    Action {
+        id: saveModelAsAction
+        text: qsTr("Save Model As")
+        tooltip: qsTr("Save the current model to the specified file.")
+        shortcut: "Ctrl+Shift+S"
+        function save(fileUrl) {
+            var fileUrlString = fileUrl.toString(),
+                    indexOf = fileUrlString.lastIndexOf("/"),
+                    name = indexOf >= 0 ? fileUrlString.substring(indexOf + 1) : fileUrlString
+            if (fileUrlString !== "") {
+                progressWindow.text = qsTr("Saving Model %1").arg(name)
+                progressWindow.show()
+                scene.project.save(fileUrl)
+                progressWindow.hide()
+            }
+        }
+        onTriggered: save(saveModelDialog.getPathAs())
+    }
+    Action {
+        id: copyAction
+        enabled: scene.project.currentModel
+        text: qsTr("&Copy")
+        tooltip: qsTr("Copy current selected items.")
+        shortcut: "Ctrl+C"
+        onTriggered: {}
+    }
+    Action {
+        id: pasteAction
+        enabled: scene.project.currentModel
+        text: qsTr("&Paste")
+        tooltip: qsTr("Paste copied items.")
+        shortcut: "Ctrl+V"
+        onTriggered: {}
+    }
+    Action {
+        id: cutAction
+        enabled: scene.project.currentModel
+        text: qsTr("Cu&t")
+        tooltip: qsTr("Cut current selected items.")
+        shortcut: "Ctrl+X"
+        onTriggered: {}
+    }
+    Action {
+        id: undoAction
+        enabled: scene.project.canUndo
+        text: qsTr("Undo")
+        tooltip: qsTr("Undo the previous action.")
+        shortcut: "Ctrl+Z"
+        onTriggered: scene.project.undo()
+    }
+    Action {
+        id: redoAction
+        enabled: scene.project.canRedo
+        text: qsTr("Redo")
+        tooltip: qsTr("Redo the previous action.")
+        shortcut: "Ctrl+Shift+Z"
+        onTriggered: scene.project.redo()
+    }
+    Action {
+        id: deleteModelAction
+        text: qsTr("Delete Current Model")
+        tooltip: qsTr("Delete current model. this will delete model and the bound motions, cannot be undone.")
+        enabled: scene.project.currentModel
+        onTriggered: scene.project.deleteModel(scene.project.currentModel)
+    }
+    Action {
+        id: openGlobalPreferenceAction
+        text: qsTr("Preference")
+        tooltip: qsTr("Show global preference dialog.")
+        shortcut: "Ctrl+,"
+        onTriggered: globalPreferenceWindowLoader.open({ "graphicsDevice": scene.graphicsDevice })
+    }
+    Action {
+        id: openAboutAction
+        text: qsTr("About %1").arg(Qt.application.name)
+        tooltip: qsTr("Show information dialog of %1.").arg(Qt.application.name)
+        onTriggered: aboutWindowLoader.open()
+    }
+    Action {
+        id: openAboutQtAction
+        text: qsTr("About Qt 5.2")
+        tooltip: qsTr("Show information dialog of Qt.")
+        onTriggered: VPMM.UIAuxHelper.openAboutQt()
+    }
+    Action {
+        id: updateApplicationAction
+        text: qsTr("Check for Updates...")
+        tooltip: qsTr("Check updates of %1.").arg(Qt.application.name)
+        onTriggered: VPMM.Updater.checkForUpdate()
+    }
+    Action {
+        id: exitApplicationAction
+        text: qsTr("&Exit")
+        tooltip: qsTr("Exit this application.")
+        shortcut: "Ctrl+Q"
+        onTriggered: {
+            if (scene.project.dirty) {
+                confirmSavingProjectBeforeClosingDialog.open()
+            }
+            else {
+                exitApplication()
+            }
+        }
+    }
+
+    SystemPalette { id: systemPalette }
+    color: systemPalette.window
+    statusBar: StatusBar {
+        visible: !scene.isFullView
+        Label {
+            id: statusBarLabel
+            Layout.fillWidth: true
+        }
+    }
     menuBar: MenuBar {
         Menu {
-            title: qsTr("File")
+            id: fileMenu
+            title: isOSX ? qsTr("File") : qsTr("&File")
+            MenuItem { action: loadModelAction }
+            MenuSeparator {}
+            MenuItem { action: saveModelAction }
+            MenuSeparator { visible: exitApplicationMenuItem.visible }
             MenuItem {
-                text: qsTr("Exit")
-                onTriggered: Qt.quit();
+                id: exitApplicationMenuItem
+                visible: !isOSX
+                action: exitApplicationAction
             }
+        }
+        Menu {
+            id: editMenu
+            title: isOSX ? qsTr("Edit") : qsTr("&Edit")
+            MenuItem { action: copyAction }
+            MenuItem { action: pasteAction }
+            MenuItem { action: cutAction }
+            MenuSeparator {}
+            MenuItem { id: undoMenuItem; action: undoAction; enabled: false }
+            MenuItem { id: redoMenuItem; action: redoAction; enabled: false }
+        }
+        Menu {
+            id: modelMenu
+            title: isOSX ? qsTr("Model") : qsTr("&Model")
+            MenuItem { action: deleteModelAction }
+        }
+        Menu {
+            id: windowMenu
+            title: isOSX ? qsTr("Window") : qsTr("&Window")
+            MenuSeparator {}
+            MenuItem { action: openAboutQtAction }
+        }
+        Menu {
+            id: helpMenu
+            title: isOSX ? qsTr("Help") : qsTr("&Help")
+            MenuItem { action: openGlobalPreferenceAction }
+            MenuSeparator { visible: !isOSX }
+            MenuItem { visible: VPMM.Updater.available; action: updateApplicationAction }
+            MenuItem { action: openAboutAction }
         }
     }
 
@@ -100,10 +315,10 @@ ApplicationWindow {
             return 0
         }
         function __handleCurrentModelChanged() {
+            clear()
             var model = scene.project.currentModel
             if (model) {
                 var vertices = model.allVertices
-                clear()
                 for (var i in vertices) {
                     var vertex = vertices[i]
                     append({ "item": vertex, "text": vertex.name })
@@ -126,10 +341,10 @@ ApplicationWindow {
             return 0
         }
         function __handleCurrentModelChanged() {
+            clear()
             var model = scene.project.currentModel
             if (model) {
                 var materials = model.allMaterials
-                clear()
                 append({ "item": null, "text": qsTr("None") })
                 for (var i in materials) {
                     var material = materials[i]
@@ -153,10 +368,10 @@ ApplicationWindow {
             return 0
         }
         function __handleCurrentModelChanged() {
+            clear()
             var model = scene.project.currentModel
             if (model) {
                 var bones = model.allBones
-                clear()
                 append({ "item": null, "text": qsTr("None") })
                 for (var i in bones) {
                     var bone = bones[i]
@@ -180,10 +395,10 @@ ApplicationWindow {
             return 0
         }
         function __handleCurrentModelChanged() {
+            clear()
             var model = scene.project.currentModel
             if (model) {
                 var labels = model.allLabels
-                clear()
                 append({ "item": null, "text": qsTr("None") })
                 for (var i in labels) {
                     var label = labels[i]
@@ -209,10 +424,10 @@ ApplicationWindow {
             return 0
         }
         function __handleCurrentModelChanged() {
+            clear()
             var model = scene.project.currentModel
             if (model) {
                 var morphs = model.allMorphs
-                clear()
                 append({ "item": null, "text": qsTr("None") })
                 for (var i in morphs) {
                     var morph = morphs[i]
@@ -236,10 +451,10 @@ ApplicationWindow {
             return 0
         }
         function __handleCurrentModelChanged() {
+            clear()
             var model = scene.project.currentModel
             if (model) {
                 var bodies = model.allRigidBodies
-                clear()
                 append({ "item": null, "text": qsTr("None") })
                 for (var i in bodies) {
                     var body = bodies[i]
@@ -264,10 +479,10 @@ ApplicationWindow {
             return 0
         }
         function __handleCurrentModelChanged() {
+            clear()
             var model = scene.project.currentModel
             if (model) {
                 var joints = model.allJoints
-                clear()
                 append({ "item": null, "text": qsTr("None") })
                 for (var i in joints) {
                     var joint = joints[i]
@@ -322,15 +537,6 @@ ApplicationWindow {
         id: languageModel
         ListElement { text: "Japanese" }
         ListElement { text: "English" }
-    }
-
-    SystemPalette { id: systemPalette }
-    color: systemPalette.window
-    statusBar: StatusBar {
-        Label {
-            id: statusBarLabel
-            Layout.fillWidth: true
-        }
     }
 
     SplitView {
