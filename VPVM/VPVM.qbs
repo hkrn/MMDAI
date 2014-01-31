@@ -147,15 +147,9 @@ CppApplication {
     }
     Group {
         name: "Application Resources for Debug Build"
-        files: {
-            var files = [ "qml/VPVM/*" ]
-            if (!qbs.toolchain.contains("msvc")) {
-                files.push("libav/libav.qrc")
-            }
-            return files.map(function(x){ return FileInfo.joinPaths(sourceDirectory, x) })
-        }
+        files: FileInfo.joinPaths(sourceDirectory, "qml/VPVM/*")
         qbs.install: qbs.buildVariant === "debug"
-        qbs.installDir: qbs.targetOS.contains("osx") ? FileInfo.joinPaths(applicationBundlePath, "Resources", "qml") : "qml"
+        qbs.installDir: qbs.targetOS.contains("osx") ? applicationBundlePath + "/Resources/qml/VPVM" : "qml/VPVM"
     }
     Properties {
         condition: qbs.targetOS.contains("osx")

@@ -143,9 +143,9 @@ int main(int argc, char *argv[])
     g_loggingThread.setDirectory(loggingDirectory);
     QThreadPool::globalInstance()->start(&g_loggingThread);
 #ifdef QT_NO_DEBUG
-    engine.load(QUrl("qrc:///qml/VPVM/main.qml"));
+    engine.load(QUrl("qrc:///qml/VPMM/main.qml"));
 #else
-    engine.load(Util::resourcePath("qml/main.qml"));
+    engine.load(Util::resourcePath("qml/VPMM/main.qml"));
 #endif
     displayApplicationWindow(engine.rootObjects().value(0), applicationPreference.samples());
 

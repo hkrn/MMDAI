@@ -145,12 +145,9 @@ CppApplication {
     }
     Group {
         name: "Application Resources for Debug Build"
-        files: {
-            var files = [ "qml/VPMM/*" ]
-            return files.map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
-        }
+        files: FileInfo.joinPaths(sourceDirectory, "qml/VPMM/*")
         qbs.install: qbs.buildVariant === "debug"
-        qbs.installDir: qbs.targetOS.contains("osx") ? FileInfo.joinPaths(applicationBundlePath, "Resources", "qml") : "qml"
+        qbs.installDir: qbs.targetOS.contains("osx") ? applicationBundlePath + "/Resources/qml/VPMM" : "qml/VPMM"
     }
     Properties {
         condition: qbs.targetOS.contains("osx")
