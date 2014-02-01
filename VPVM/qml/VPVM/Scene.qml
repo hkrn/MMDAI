@@ -79,7 +79,6 @@ Item {
     signal encodeDidFinish(var isNormalExit)
     signal encodeDidCancel()
     signal notificationDidPost(string message)
-    signal currentTimeIndexDidChange(int timeIndex)
     signal boneTransformTypeDidChange(int type)
     signal boneDidSelect(var bone)
     signal morphDidSelect(var morph)
@@ -95,7 +94,6 @@ Item {
         __keycode2closures[Qt.Key_L] = function(event) { transformMode.state = "local" }
         __keycode2closures[Qt.Key_G] = function(event) { transformMode.state = "global" }
         __keycode2closures[Qt.Key_V] = function(event) { transformMode.state = "view" }
-        __keycode2closures[Qt.Key_P] = function(event) { renderTarget.grabScreenImage() }
         __keycode2closures[Qt.Key_Up] = function(event) {
             if (event.modifiers & Qt.ShiftModifier) {
                 camera.translate(0, 1)
@@ -170,19 +168,23 @@ Item {
         onStoppingNotPerformed: tryStop()
         onAudioSourceDidLoad: notificationDidPost(qsTr("The audio file was loaded normally."))
         onErrorDidHappen: notificationDidPost(qsTr("Could not load the audio file. For more verbose reason, see log."))
-        onTimeIndexChanged: renderTarget.currentTimeIndex = timeIndex
+    }
+    Binding {
+        target: renderTarget
+        property: "currentTimeIndex"
+        value: audioEngine.timeIndex
     }
 
     function seek(timeIndex) {
-        projectDocument.seek(timeIndex)
+        projectDocument.currentTimeIndex = timeIndex
         renderTarget.render()
     }
     function seekNextTimeIndex(step) {
-        projectDocument.seek(projectDocument.currentTimeIndex + step)
+        projectDocument.currentTimeIndex = Math.min(projectDocument.currentTimeIndex + step, projectDocument.durationTimeIndex)
         renderTarget.render()
     }
     function seekPreviousTimeIndex(step) {
-        projectDocument.seek(projectDocument.currentTimeIndex - step)
+        projectDocument.currentTimeIndex = Math.max(projectDocument.currentTimeIndex - step, 0)
         renderTarget.render()
     }
     function resetBone(opaque, type) {
@@ -349,15 +351,11 @@ Item {
         onMotionDidLoad: {
             currentMotion = motion;
             if (!__constructing) {
-                renderTarget.currentTimeIndex = 0
                 rewind()
                 renderTarget.render()
             }
         }
-        onPoseDidLoad: {
-            seek(currentTimeIndex)
-            renderTarget.render()
-        }
+        onPoseDidLoad: renderTarget.render()
         onAudioSourceChanged: {
             if (VPVM.ALAudioContext.deviceAvailable) {
                 audioEngine.source = audioSource
@@ -413,11 +411,6 @@ Item {
             if (initialized && applicationBootstrapOption.hasJson) {
                 renderTarget.loadJson(applicationBootstrapOption.json)
             }
-        }
-        onCurrentTimeIndexChanged: {
-            var timeIndex = currentTimeIndex
-            projectDocument.seek(timeIndex);
-            currentTimeIndexDidChange(timeIndex)
         }
         onCurrentFPSChanged: fpsCountPanel.value = currentFPS > 0 ? currentFPS : "N/A"
         onLastTimeIndexChanged: renderTargetAnimation.setRange(lastTimeIndex, projectDocument.durationTimeIndex)
@@ -506,6 +499,11 @@ Item {
                 }
             }
         }
+    }
+    Binding {
+        target: projectDocument
+        property: "currentTimeIndex"
+        value: renderTarget.currentTimeIndex
     }
     Keys.onPressed: {
         event.accepted = renderTarget.handleKeyPress(event.key, event.modifiers)

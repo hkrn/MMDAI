@@ -167,7 +167,7 @@ ApplicationWindow {
     Action {
         id: newProjectAction
         text: qsTr("New Project")
-        shortcut: "Ctrl+N"
+        shortcut: StandardKey.New
         tooltip: qsTr("Create a new project. If the project exists, it will be deleted and undone.")
         onTriggered: {
             if (scene.project.dirty) {
@@ -215,7 +215,7 @@ ApplicationWindow {
         id: loadProjectAction
         text: qsTr("Load Project")
         tooltip: qsTr("Load a project from file. If the project exists, it will be deleted and undone.")
-        shortcut: "Ctrl+O"
+        shortcut: StandardKey.Open
         onTriggered: {
             if (scene.project.dirty) {
                 confirmSavingProjectBeforeLoadingProjectDialog.open()
@@ -235,14 +235,14 @@ ApplicationWindow {
         id: saveProjectAction
         text: qsTr("Save Project")
         tooltip: qsTr("Save the current project to the file.")
-        shortcut: "Ctrl+S"
+        shortcut: StandardKey.Save
         onTriggered: saveProjectAsAction.save(saveProjectDialog.getPath())
     }
     Action {
         id: saveProjectAsAction
         text: qsTr("Save Project As")
         tooltip: qsTr("Save the current project to the specified file.")
-        shortcut: "Ctrl+Shift+S"
+        shortcut: StandardKey.SaveAs
         function save(fileUrl) {
             var fileUrlString = fileUrl.toString(),
                     indexOf = fileUrlString.lastIndexOf("/"),
@@ -271,6 +271,7 @@ ApplicationWindow {
         id: addModelAction
         text: qsTr("Add Model/Asset")
         tooltip: qsTr("Load a model from file. The loaded model will make current.")
+        shortcut: StandardKey.AddTab
         onTriggered: addModelDialog.open()
     }
     FileDialog {
@@ -413,7 +414,7 @@ ApplicationWindow {
         enabled: scene.currentMotion
         text: qsTr("Selected Keyframe(s)")
         tooltip: qsTr("Delete all selected keyframes.")
-        shortcut: "Del"
+        shortcut: StandardKey.DeleteCompleteLine
         onTriggered: scene.currentMotion.removeAllSelectedKeyframes()
     }
     Action {
@@ -421,7 +422,7 @@ ApplicationWindow {
         enabled: scene.currentMotion
         text: qsTr("All Keyframes at Current Time")
         tooltip: qsTr("Delete all selected keyframes at current time index.")
-        shortcut: "Ctrl+Del"
+        shortcut: StandardKey.Delete
         onTriggered: scene.currentMotion.removeAllKeyframesAt(timeline.timeIndex)
     }
     Action {
@@ -429,7 +430,7 @@ ApplicationWindow {
         enabled: scene.currentMotion && timeline.hasSelectedKeyframes
         text: qsTr("&Copy")
         tooltip: qsTr("Copy current selected keyframes.")
-        shortcut: "Ctrl+C"
+        shortcut: StandardKey.Copy
         onTriggered: scene.currentMotion.copyKeyframes()
     }
     Action {
@@ -437,7 +438,7 @@ ApplicationWindow {
         enabled: scene.currentMotion && scene.currentMotion.canPaste
         text: qsTr("&Paste")
         tooltip: qsTr("Paste copied keyframes.")
-        shortcut: "Ctrl+V"
+        shortcut: StandardKey.Paste
         onTriggered: scene.currentMotion.pasteKeyframes(timeline.timeIndex, false)
     }
     Action {
@@ -445,7 +446,7 @@ ApplicationWindow {
         enabled: scene.currentMotion && timeline.hasSelectedKeyframes && timeline.timeSeconds > 0
         text: qsTr("Cu&t")
         tooltip: qsTr("Cut current selected keyframes.")
-        shortcut: "Ctrl+X"
+        shortcut: StandardKey.Cut
         onTriggered: scene.currentMotion.cutKeyframes()
     }
     Action {
@@ -460,7 +461,7 @@ ApplicationWindow {
         enabled: scene.project.canUndo
         text: qsTr("Undo")
         tooltip: qsTr("Undo the previous action.")
-        shortcut: "Ctrl+Z"
+        shortcut: StandardKey.Undo
         onTriggered: scene.project.undo()
     }
     Action {
@@ -468,7 +469,7 @@ ApplicationWindow {
         enabled: scene.project.canRedo
         text: qsTr("Redo")
         tooltip: qsTr("Redo the previous action.")
-        shortcut: "Ctrl+Shift+Z"
+        shortcut: StandardKey.Redo
         onTriggered: scene.project.redo()
     }
     SaveDialog {
@@ -483,7 +484,7 @@ ApplicationWindow {
         id: exportImageAction
         text: qsTr("Export Image")
         tooltip: qsTr("Export current scene as an image.")
-        shortcut: qsTr("Ctrl+P")
+        shortcut: StandardKey.Print
         onTriggered: scene.exportImage(exportImageDialog.getPathAs(), exportTab.size)
     }
     SaveDialog {
@@ -506,14 +507,14 @@ ApplicationWindow {
         enabled: scene.currentMotion
         text: qsTr("All Selected")
         tooltip: qsTr("Select all keyframes in the timeline.")
-        shortcut: "Ctrl+A"
+        shortcut: StandardKey.SelectAll
     }
     Action {
         id: selectCurrentTimeIndexKeyframesAction
         enabled: scene.currentMotion
         text: qsTr("All Selected at Current TimeIndex")
         tooltip: qsTr("Select all keyframes in the timeline at the current time index.")
-        shortcut: "Ctrl+Shift+A"
+        shortcut: StandardKey.SelectStartOfLine
         onTriggered: timeline.selectKeyframesAtCurrentTimeIndex()
     }
     Action {
@@ -546,14 +547,18 @@ ApplicationWindow {
     }
     Action {
         id: nextTimeIndexAction
+        enabled: scene.currentMotion
         text: qsTr("Next Time Index")
         tooltip: qsTr("Seek current time index to the next time index.")
+        shortcut: StandardKey.FindNext
         onTriggered: scene.seekNextTimeIndex(1)
     }
     Action {
         id: previousTimeIndexAtion
+        enabled: scene.currentMotion
         text: qsTr("Previous Time Index")
         tooltip: qsTr("Seek current time index to the previous time index.")
+        shortcut: StandardKey.FindPrevious
         onTriggered: scene.seekPreviousTimeIndex(1)
     }
     Action {
@@ -815,7 +820,7 @@ ApplicationWindow {
         id: openGlobalPreferenceAction
         text: qsTr("Preference")
         tooltip: qsTr("Show global preference dialog.")
-        shortcut: "Ctrl+,"
+        shortcut: StandardKey.Preferences
         onTriggered: globalPreferenceWindowLoader.open({ "graphicsDevice": scene.graphicsDevice })
     }
     Action {
@@ -840,7 +845,7 @@ ApplicationWindow {
         id: exitApplicationAction
         text: qsTr("&Exit")
         tooltip: qsTr("Exit this application.")
-        shortcut: "Ctrl+Q"
+        shortcut: StandardKey.Quit
         onTriggered: {
             if (scene.project.dirty) {
                 confirmSavingProjectBeforeClosingDialog.open()
@@ -1266,7 +1271,6 @@ ApplicationWindow {
                     motionCreateablesListModel.get(2).motion = motion
                 }
                 onNotificationDidPost: notificationArea.notify(message)
-                onCurrentTimeIndexDidChange: timeline.timeIndex = timeIndex
                 onBoneTransformTypeDidChange: transformModeActionGroup.handleType(type)
                 onBoneDidSelect: timeline.markTrackSelected(bone)
                 onMorphDidSelect: timeline.markTrackSelected(morph)
@@ -1323,6 +1327,11 @@ ApplicationWindow {
                     anchors.top: parent.top
                     width: parent.width
                 }
+            }
+            Binding {
+                target: timeline
+                property: "timeIndex"
+                value: scene.project.currentTimeIndex
             }
         }
         Rectangle {

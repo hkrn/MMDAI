@@ -97,6 +97,7 @@ Tab {
                 title: qsTr("Properties")
                 GridLayout {
                     Layout.fillWidth: true
+                    enabled: scene.currentModel
                     columns: 2
                     Label { text: qsTr("Scale") }
                     SpinBox {
@@ -148,7 +149,7 @@ Tab {
                         Layout.columnSpan: 2
                         Layout.alignment: Qt.AlignCenter
                         text: qsTr("Visible")
-                        checked: scene.currentModel ? scene.currentModel.visible : false
+                        checked: scene.currentModel ? scene.currentModel.visible : true
                     }
                     Binding {
                         target: scene.currentModel
@@ -399,7 +400,7 @@ Tab {
                 CheckBox {
                     id: enableInverseKinematics
                     enabled: scene.hasBoneSelected && scene.currentModel.firstTargetBone.inverseKinematicsEnabled
-                    checked: visible && scene.currentModel.firstTargetBone.inverseKinematicsEnabled
+                    checked: enabled && scene.currentModel.firstTargetBone.inverseKinematicsEnabled
                     text: qsTr("Enable IK (a.k.a Inverse Kinematics)")
                     onCheckedChanged: scene.currentModel.firstTargetBone.inverseKinematicsEnabled = checked
                 }
