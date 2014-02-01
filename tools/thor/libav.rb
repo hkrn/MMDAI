@@ -29,7 +29,7 @@ protected
   end
 
   def get_tag_name
-    "v9.8"
+    "v9.10"
   end
 
   def get_debug_flag_for_configure
