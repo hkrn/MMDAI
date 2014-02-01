@@ -86,7 +86,7 @@ WorldProxy::WorldProxy(ProjectProxy *parent)
       m_sceneWorld(new World()),
       m_modelWorld(new World()),
       m_parentProjectProxyRef(parent),
-      m_simulationType(EnableSimulationPlayOnly),
+      m_simulationType(DisableSimulation),
       m_lastGravity(gravity()),
       m_enableDebug(false),
       m_enableFloor(false),
@@ -212,9 +212,7 @@ void WorldProxy::setPlaying(bool value)
 {
     Q_ASSERT(m_parentProjectProxyRef);
     if (simulationType() == EnableSimulationPlayOnly) {
-        foreach (ModelProxy *modelProxy, m_parentProjectProxyRef->modelProxies()) {
-            modelProxy->data()->setPhysicsEnable(value);
-        }
+        applyAllModels(value);
     }
     m_playing = value;
 }
@@ -228,12 +226,9 @@ void WorldProxy::setSimulationType(SimulationType value)
 {
     Q_ASSERT(m_sceneWorld);
     if (value != simulationType()) {
-        bool enabled = value != DisableSimulation;
-        foreach (ModelProxy *modelProxy, m_parentProjectProxyRef->modelProxies()) {
-            modelProxy->data()->setPhysicsEnable(enabled);
-        }
         XMLProject *project = m_parentProjectProxyRef->projectInstanceRef();
         Q_ASSERT(project);
+        bool enabled = (value == EnableSimulationAnytime);
         project->setWorldRef(0);
         if (enabled) {
             project->setWorldRef(m_sceneWorld->dynamicWorldRef());
@@ -243,6 +238,7 @@ void WorldProxy::setSimulationType(SimulationType value)
             m_lastGravity = gravity();
             setGravity(QVector3D());
         }
+        applyAllModels(enabled);
         m_simulationType = value;
         simulationTypeChanged();
     }
@@ -310,5 +306,12 @@ void WorldProxy::setFloorEnabled(bool value)
         }
         m_enableFloor = value;
         emit enableFloorChanged();
+    }
+}
+
+void WorldProxy::applyAllModels(bool value)
+{
+    foreach (ModelProxy *modelProxy, m_parentProjectProxyRef->modelProxies()) {
+        modelProxy->data()->setPhysicsEnable(value);
     }
 }

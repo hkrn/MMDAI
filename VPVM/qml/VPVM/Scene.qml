@@ -370,14 +370,14 @@ Item {
         id: renderTarget
         readonly property rect defaultViewportSetting: Qt.rect(scene.x + offsetX, scene.y + scene.offsetY, scene.width, scene.height)
         property real sceneFPS : 60
-        function __handleTargetBonesDidBeginTransform() {
-            renderTarget.playing = true
+        function __handleTransformDidBegin() {
+            renderTarget.transforming = true
         }
-        function __handleTargetBonesDidDiscardTransform() {
-            renderTarget.playing = false
+        function __handleTransformDidDiscard() {
+            renderTarget.transforming = false
         }
-        function __handleTargetBonesDidCommitTransform() {
-            renderTarget.playing = false
+        function __handleTransformDidCommit() {
+            renderTarget.transforming = false
             var bones = currentModel.targetBones, timeIndex = projectDocument.currentTimeIndex
             for (var i in bones) {
                 var bone = bones[i]
@@ -415,9 +415,9 @@ Item {
         onCurrentFPSChanged: fpsCountPanel.value = currentFPS > 0 ? currentFPS : "N/A"
         onLastTimeIndexChanged: renderTargetAnimation.setRange(lastTimeIndex, projectDocument.durationTimeIndex)
         onUploadingModelDidSucceed: {
-            model.targetBonesDidBeginTransform.connect(__handleTargetBonesDidBeginTransform)
-            model.targetBonesDidCommitTransform.connect(__handleTargetBonesDidCommitTransform)
-            model.targetBonesDidDiscardTransform.connect(__handleTargetBonesDidDiscardTransform)
+            model.transformDidBegin.connect(__handleTransformDidBegin)
+            model.transformDidCommit.connect(__handleTransformDidCommit)
+            model.transformDidDiscard.connect(__handleTransformDidDiscard)
             model.transformTypeChanged.connect(__handleTransformTypeChanged)
             model.boneDidSelect.connect(__handleBoneDidSelect)
             model.morphDidSelect.connect(__handleMorphDidSelect)

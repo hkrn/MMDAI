@@ -115,7 +115,7 @@ void SkeletonDrawer::setModelProxyRef(const ModelProxy *value)
     indices.reserve(allBones.size() * kNumBoneIndices);
     if (value && m_currentModelRef != value) {
         removeModelRef(m_currentModelRef);
-        connect(value, &ModelProxy::targetBonesDidCommitTransform, this, &SkeletonDrawer::markDirty);
+        connect(value, &ModelProxy::transformDidCommit, this, &SkeletonDrawer::markDirty);
         connect(value, &ModelProxy::firstTargetBoneChanged, this, &SkeletonDrawer::markDirty);
         int offset = 0;
         foreach (const BoneRefObject *bone, allBones) {
@@ -184,7 +184,7 @@ void SkeletonDrawer::update()
 void SkeletonDrawer::removeModelRef(const ModelProxy *modelProxyRef)
 {
     if (modelProxyRef) {
-        disconnect(modelProxyRef, &ModelProxy::targetBonesDidCommitTransform, this, &SkeletonDrawer::markDirty);
+        disconnect(modelProxyRef, &ModelProxy::transformDidCommit, this, &SkeletonDrawer::markDirty);
         disconnect(modelProxyRef, &ModelProxy::firstTargetBoneChanged, this, &SkeletonDrawer::markDirty);
         foreach (const BoneRefObject *bone, modelProxyRef->allBoneRefs()) {
             disconnect(bone, &BoneRefObject::localTranslationChanged, this, &SkeletonDrawer::markDirty);

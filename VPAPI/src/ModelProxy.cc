@@ -256,7 +256,7 @@ void ModelProxy::beginTransform(qreal startY)
     saveTransformState();
     m_baseY = startY;
     m_moving = true;
-    emit targetBonesDidBeginTransform();
+    emit transformDidBegin();
 }
 
 void ModelProxy::translate(qreal value)
@@ -398,7 +398,7 @@ void ModelProxy::discardTransform()
     clearTransformState();
     m_baseY = 0;
     m_moving = false;
-    emit targetBonesDidDiscardTransform();
+    emit transformDidDiscard();
 }
 
 void ModelProxy::commitTransform()
@@ -407,7 +407,7 @@ void ModelProxy::commitTransform()
     clearTransformState();
     m_baseY = 0;
     m_moving = false;
-    emit targetBonesDidCommitTransform();
+    emit transformDidCommit();
 }
 
 void ModelProxy::resetTargets()

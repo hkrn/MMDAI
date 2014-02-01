@@ -960,7 +960,7 @@ ModelProxy *ProjectProxy::createModelProxy(IModel *model, const QUuid &uuid, con
     if (!faviconLocations.isEmpty()) {
         faviconUrl = QUrl::fromLocalFile(finfo.absoluteDir().filePath(faviconLocations.first()));
     }
-    model->setPhysicsEnable(m_worldProxy->simulationType() != WorldProxy::DisableSimulation);
+    model->setPhysicsEnable(m_worldProxy->simulationType() == WorldProxy::EnableSimulationAnytime);
     QUndoStack *stack = new QUndoStack(m_undoGroup.data());
     ModelProxy *modelProxy = new ModelProxy(this, model, uuid, fileUrl, faviconUrl, stack);
     m_undoGroup->addStack(stack);

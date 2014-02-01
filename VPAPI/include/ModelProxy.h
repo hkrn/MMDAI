@@ -258,11 +258,11 @@ signals:
     void visibleChanged();
     void movingChanged();
     void dirtyChanged();
-    void targetBonesDidBeginTransform();
+    void transformDidBegin();
     void targetBonesDidTranslate();
     void targetBonesDidRotate();
-    void targetBonesDidDiscardTransform();
-    void targetBonesDidCommitTransform();
+    void transformDidDiscard();
+    void transformDidCommit();
     void boneDidSelect(BoneRefObject *bone);
     void morphDidSelect(MorphRefObject *morph);
     void modelDidRefresh();

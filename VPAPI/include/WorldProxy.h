@@ -104,6 +104,8 @@ signals:
     void enableFloorChanged();
 
 private:
+    void applyAllModels(bool value);
+
     QScopedPointer<vpvl2::extensions::World> m_sceneWorld;
     QScopedPointer<vpvl2::extensions::World> m_modelWorld;
     QScopedPointer<btRigidBody> m_groundBody;
