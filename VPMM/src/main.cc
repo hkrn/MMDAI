@@ -66,6 +66,8 @@
 #include "ProjectProxy.h"
 #include "RenderTarget.h"
 #include "RigidBodyRefObject.h"
+#include "UIAuxHelper.h"
+#include "Updater.h"
 #include "Util.h"
 #include "Vector3RefObject.h"
 #include "VertexRefObject.h"
@@ -74,6 +76,20 @@
 using namespace vpvl2::extensions;
 
 namespace {
+
+static QObject *createUIAuxHelper(QQmlEngine *engine, QJSEngine *scriptEngine)
+{
+    Q_UNUSED(scriptEngine);
+    QObject *value = new UIAuxHelper(engine);
+    return value;
+}
+
+static QObject *createUpdater(QQmlEngine *engine, QJSEngine *scriptEngine)
+{
+    Q_UNUSED(scriptEngine);
+    QObject *value = new Updater(engine);
+    return value;
+}
 
 static void registerQmlTypes()
 {
@@ -112,6 +128,8 @@ static void registerQmlTypes()
     qmlRegisterType<Vector3RefObject>("com.github.mmdai.VPMM", 1, 0, "Vector3");
     qmlRegisterUncreatableType<VertexRefObject>("com.github.mmdai.VPMM", 1, 0, "Vertex", "");
     qmlRegisterUncreatableType<WorldProxy>("com.github.mmdai.VPMM", 1, 0, "World", "");
+    qmlRegisterSingletonType<UIAuxHelper>("com.github.mmdai.VPMM", 1, 0, "UIAuxHelper", createUIAuxHelper);
+    qmlRegisterSingletonType<Updater>("com.github.mmdai.VPMM", 1, 0, "Updater", createUpdater);
 }
 
 }
