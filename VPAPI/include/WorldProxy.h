@@ -83,6 +83,7 @@ public:
     void rewind();
     void setDebugDrawer(btIDebugDraw *value);
     void debugDraw();
+    void setPlaying(bool value);
 
     SimulationType simulationType() const;
     void setSimulationType(SimulationType value);
@@ -108,11 +109,11 @@ private:
     QScopedPointer<btRigidBody> m_groundBody;
     ProjectProxy *m_parentProjectProxyRef;
     SimulationType m_simulationType;
-    QVector3D m_gravity;
     QVector3D m_lastGravity;
     qreal m_lastTimeIndex;
     bool m_enableDebug;
     bool m_enableFloor;
+    bool m_playing;
 };
 
 #endif // WORLDPROXY_H

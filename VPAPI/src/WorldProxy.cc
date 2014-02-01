@@ -86,19 +86,16 @@ WorldProxy::WorldProxy(ProjectProxy *parent)
       m_sceneWorld(new World()),
       m_modelWorld(new World()),
       m_parentProjectProxyRef(parent),
-      m_simulationType(DisableSimulation),
-      m_gravity(0, -10, 0),
-      m_lastGravity(m_gravity),
+      m_simulationType(EnableSimulationPlayOnly),
+      m_lastGravity(gravity()),
       m_enableDebug(false),
-      m_enableFloor(false)
+      m_enableFloor(false),
+      m_playing(false)
 {
     QScopedPointer<btStaticPlaneShape> ground(new btStaticPlaneShape(Vector3(0, 1, 0), 0));
     btRigidBody::btRigidBodyConstructionInfo info(0, 0, ground.take(), kZeroV3);
     m_groundBody.reset(new btRigidBody(info));
     setFloorEnabled(true);
-#ifndef QT_NO_DEBUG
-    setDebugEnabled(true);
-#endif
 }
 
 WorldProxy::~WorldProxy()
@@ -110,6 +107,7 @@ WorldProxy::~WorldProxy()
 
 BoneRefObject *WorldProxy::ray(const Vector3 &from, const Vector3 &to)
 {
+    Q_ASSERT(m_modelWorld);
     btCollisionWorld::ClosestRayResultCallback callback(from, to);
     btDiscreteDynamicsWorld *worldRef = m_modelWorld->dynamicWorldRef();
     worldRef->stepSimulation(1);
@@ -123,6 +121,7 @@ BoneRefObject *WorldProxy::ray(const Vector3 &from, const Vector3 &to)
 
 void WorldProxy::joinWorld(ModelProxy *value)
 {
+    Q_ASSERT(m_modelWorld);
     btDiscreteDynamicsWorld *world = m_modelWorld->dynamicWorldRef();
     const int numCollidables = world->getNumCollisionObjects();
     for (int i = numCollidables - 1; i >= 0; i--) {
@@ -156,6 +155,7 @@ void WorldProxy::joinWorld(ModelProxy *value)
 
 void WorldProxy::leaveWorld(ModelProxy *value)
 {
+    Q_ASSERT(m_sceneWorld);
     Q_ASSERT(value);
     IModel *modelRef = value->data();
     modelRef->leaveWorld(m_sceneWorld->dynamicWorldRef());
@@ -163,14 +163,17 @@ void WorldProxy::leaveWorld(ModelProxy *value)
 
 void WorldProxy::resetProjectInstance(ProjectProxy *value)
 {
+    Q_ASSERT(m_sceneWorld);
     Q_ASSERT(value);
     value->projectInstanceRef()->setWorldRef(m_sceneWorld->dynamicWorldRef());
 }
 
 void WorldProxy::stepSimulation(qreal timeIndex)
 {
+    Q_ASSERT(m_sceneWorld);
     Q_ASSERT(timeIndex >= 0);
-    if (simulationType() != DisableSimulation) {
+    SimulationType type = simulationType();
+    if (type == EnableSimulationAnytime || (type == EnableSimulationPlayOnly && m_playing)) {
         int delta = qRound(timeIndex - m_lastTimeIndex);
         if (delta > 0) {
             Scalar timestep = delta / Scene::defaultFPS();
@@ -183,6 +186,7 @@ void WorldProxy::stepSimulation(qreal timeIndex)
 
 void WorldProxy::rewind()
 {
+    Q_ASSERT(m_sceneWorld);
     stepSimulation(0);
     XMLProject *project = m_parentProjectProxyRef->projectInstanceRef();
     Q_ASSERT(project);
@@ -194,12 +198,25 @@ void WorldProxy::rewind()
 
 void WorldProxy::setDebugDrawer(btIDebugDraw *value)
 {
+    Q_ASSERT(m_sceneWorld);
     m_sceneWorld->dynamicWorldRef()->setDebugDrawer(value);
 }
 
 void WorldProxy::debugDraw()
 {
+    Q_ASSERT(m_sceneWorld);
     m_sceneWorld->dynamicWorldRef()->debugDrawWorld();
+}
+
+void WorldProxy::setPlaying(bool value)
+{
+    Q_ASSERT(m_parentProjectProxyRef);
+    if (simulationType() == EnableSimulationPlayOnly) {
+        foreach (ModelProxy *modelProxy, m_parentProjectProxyRef->modelProxies()) {
+            modelProxy->data()->setPhysicsEnable(value);
+        }
+    }
+    m_playing = value;
 }
 
 WorldProxy::SimulationType WorldProxy::simulationType() const
@@ -209,6 +226,7 @@ WorldProxy::SimulationType WorldProxy::simulationType() const
 
 void WorldProxy::setSimulationType(SimulationType value)
 {
+    Q_ASSERT(m_sceneWorld);
     if (value != simulationType()) {
         bool enabled = value != DisableSimulation;
         foreach (ModelProxy *modelProxy, m_parentProjectProxyRef->modelProxies()) {
@@ -222,7 +240,7 @@ void WorldProxy::setSimulationType(SimulationType value)
             setGravity(m_lastGravity);
         }
         else {
-            m_lastGravity = m_gravity;
+            m_lastGravity = gravity();
             setGravity(QVector3D());
         }
         m_simulationType = value;
@@ -232,25 +250,28 @@ void WorldProxy::setSimulationType(SimulationType value)
 
 QVector3D WorldProxy::gravity() const
 {
-    return m_gravity;
+    Q_ASSERT(m_sceneWorld);
+    return Util::fromVector3(m_sceneWorld->gravity());
 }
 
 void WorldProxy::setGravity(const QVector3D &value)
 {
-    if (value != gravity()) {
+    Q_ASSERT(m_sceneWorld);
+    if (!qFuzzyCompare(gravity(), value)) {
         m_sceneWorld->setGravity(Util::toVector3(value));
-        m_gravity = value;
         emit gravityChanged();
     }
 }
 
 int WorldProxy::randSeed() const
 {
+    Q_ASSERT(m_sceneWorld);
     return m_sceneWorld->randSeed();
 }
 
 void WorldProxy::setRandSeed(int value)
 {
+    Q_ASSERT(m_sceneWorld);
     if (value != randSeed()) {
         m_sceneWorld->setRandSeed(value);
         emit randSeedChanged();
@@ -279,6 +300,7 @@ bool WorldProxy::isFloorEnabled() const
 
 void WorldProxy::setFloorEnabled(bool value)
 {
+    Q_ASSERT(m_sceneWorld);
     if (value != isFloorEnabled()) {
         if (value) {
             m_sceneWorld->dynamicWorldRef()->addRigidBody(m_groundBody.data(), 0x10, 0);
