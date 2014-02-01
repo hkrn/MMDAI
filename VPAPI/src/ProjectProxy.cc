@@ -448,11 +448,6 @@ bool ProjectProxy::loadPose(const QUrl &fileUrl, ModelProxy *modelProxy)
     return result;
 }
 
-void ProjectProxy::seek(qreal timeIndex)
-{
-    internalSeek(timeIndex, false, false);
-}
-
 void ProjectProxy::rewind()
 {
     foreach (ModelProxy *model, m_modelProxies) {
@@ -1076,6 +1071,11 @@ void ProjectProxy::setModelSetting(const ModelProxy *modelProxy, const QString &
 qreal ProjectProxy::currentTimeIndex() const
 {
     return m_currentTimeIndex;
+}
+
+void ProjectProxy::setCurrentTimeIndex(const qreal &value)
+{
+    internalSeek(value, false, false);
 }
 
 qreal ProjectProxy::durationTimeIndex() const

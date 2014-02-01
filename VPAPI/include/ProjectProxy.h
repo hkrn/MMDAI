@@ -94,7 +94,7 @@ class ProjectProxy : public QObject, protected vpvl2::IProgressReporter
     Q_PROPERTY(qreal audioVolume READ audioVolume WRITE setAudioVolume NOTIFY audioVolumeChanged FINAL)
     Q_PROPERTY(QUrl videoSource READ videoSource WRITE setVideoSource NOTIFY videoSourceChanged FINAL)
     Q_PROPERTY(QColor screenColor READ screenColor WRITE setScreenColor NOTIFY screenColorChanged FINAL)
-    Q_PROPERTY(qreal currentTimeIndex READ currentTimeIndex NOTIFY currentTimeIndexChanged FINAL)
+    Q_PROPERTY(qreal currentTimeIndex READ currentTimeIndex WRITE setCurrentTimeIndex NOTIFY currentTimeIndexChanged FINAL)
     Q_PROPERTY(qreal durationTimeIndex READ durationTimeIndex NOTIFY durationTimeIndexChanged FINAL)
     Q_PROPERTY(qreal durationMilliseconds READ durationMilliseconds NOTIFY durationTimeIndexChanged FINAL)
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged FINAL)
@@ -206,6 +206,7 @@ public:
     bool canUndo() const;
     bool canRedo() const;
     qreal currentTimeIndex() const;
+    void setCurrentTimeIndex(const qreal &value);
     qreal durationTimeIndex() const;
     qreal durationMilliseconds() const;
     QString errorString() const;
@@ -226,7 +227,6 @@ public slots:
     Q_INVOKABLE void deleteModel(ModelProxy *value);
     Q_INVOKABLE bool loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, MotionType type);
     Q_INVOKABLE bool loadPose(const QUrl &fileUrl, ModelProxy *modelProxy);
-    Q_INVOKABLE void seek(qreal timeIndex);
     Q_INVOKABLE void rewind();
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void ray(qreal x, qreal y, int width, int height);
