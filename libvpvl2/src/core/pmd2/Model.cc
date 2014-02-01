@@ -1080,7 +1080,7 @@ vsize Model::estimateSize() const
 
 void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 {
-    if (m_context->physicsEnabled) {
+    if (worldRef) {
         const int nbones = m_context->sortedBoneRefs.count();
         for (int i = 0; i < nbones; i++) {
             Bone *bone = m_context->sortedBoneRefs[i];

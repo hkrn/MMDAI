@@ -1055,29 +1055,28 @@ void Model::leaveWorld(btDiscreteDynamicsWorld *worldRef)
 
 void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
 {
-    if (!worldRef || !m_context->enablePhysics) {
-        return;
+    if (worldRef) {
+        /* update worldTransform first to use it at RigidBody#setKinematic */
+        const int nbones = m_context->bonesBeforePhysics.count();
+        for (int i = 0; i < nbones; i++) {
+            Bone *bone = m_context->bonesBeforePhysics[i];
+            bone->resetIKLink();
+        }
+        updateLocalTransform(m_context->bonesBeforePhysics);
+        const int numRigidBodies = m_context->rigidBodies.count();
+        for (int i = 0; i < numRigidBodies; i++) {
+            RigidBody *rigidBody = m_context->rigidBodies[i];
+            rigidBody->resetBody(worldRef);
+            rigidBody->updateTransform();
+            rigidBody->setActivation(true);
+        }
+        const int njoints = m_context->joints.count();
+        for (int i = 0; i < njoints; i++) {
+            Joint *joint = m_context->joints[i];
+            joint->updateTransform();
+        }
+        updateLocalTransform(m_context->bonesAfterPhysics);
     }
-    /* update worldTransform first to use it at RigidBody#setKinematic */
-    const int nbones = m_context->bonesBeforePhysics.count();
-    for (int i = 0; i < nbones; i++) {
-        Bone *bone = m_context->bonesBeforePhysics[i];
-        bone->resetIKLink();
-    }
-    updateLocalTransform(m_context->bonesBeforePhysics);
-    const int numRigidBodies = m_context->rigidBodies.count();
-    for (int i = 0; i < numRigidBodies; i++) {
-        RigidBody *rigidBody = m_context->rigidBodies[i];
-        rigidBody->resetBody(worldRef);
-        rigidBody->updateTransform();
-        rigidBody->setActivation(true);
-    }
-    const int njoints = m_context->joints.count();
-    for (int i = 0; i < njoints; i++) {
-        Joint *joint = m_context->joints[i];
-        joint->updateTransform();
-    }
-    updateLocalTransform(m_context->bonesAfterPhysics);
 }
 
 void Model::performUpdate()
