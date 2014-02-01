@@ -126,6 +126,16 @@ CppApplication {
         qbs.installDir: qbs.targetOS.contains("osx") ? FileInfo.joinPaths(applicationBundlePath, "Resources", "translations") : "translations"
     }
     Group {
+        name: "Application Dependencies (libav's avconv)"
+        files: {
+            var files = []
+            if (File.exists(FileInfo.joinPaths(sourceDirectory, "libav/avconv"))) {
+                files.push(FileInfo.joinPaths(sourceDirectory, "libav/libav.qrc"))
+            }
+            return files
+        }
+    }
+    Group {
         condition: qbs.buildVariant === "release"
         name: "Application Resources for Release Build"
         files: {
@@ -138,9 +148,6 @@ CppApplication {
             }
             else if (qbs.targetOS.contains("linux")) {
                 files.push("qt/linux.qrc")
-            }
-            if (!qbs.toolchain.contains("msvc")) {
-                files.push("libav/libav.qrc")
             }
             return files.map(function(x){ return FileInfo.joinPaths(sourceDirectory, x) })
         }
@@ -196,7 +203,7 @@ CppApplication {
     }
     Group {
         condition: qbs.targetOS.contains("unix") && !qbs.targetOS.contains("osx")
-        name: "Application Depending Libraries"
+        name: "Application Dependencies (Libraries)"
         files: {
             var found = vpvm.findLibraries(commonLibraries.concat([ "openal", "tbb", "z" ]), cpp.libraryPaths, ".so*")
             if (qbs.targetOS.contains("linux")) {
@@ -216,7 +223,7 @@ CppApplication {
     }
     Group {
         condition: qbs.toolchain.contains("msvc")
-        name: "Application Depending Libraries for MSVC"
+        name: "Application Dependencies (Libraries for MSVC)"
         files: {
             var found = vpvm.findLibraries(commonLibraries.concat([ "OpenAL32", "vpvl2" ]),
                                            cpp.libraryPaths.concat([ "../openal-soft-src/" + libraryInstallDirectory + "/bin", buildDirectory ]
