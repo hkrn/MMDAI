@@ -1023,7 +1023,7 @@ vsize Model::estimateSize() const
 
 void Model::joinWorld(btDiscreteDynamicsWorld *worldRef)
 {
-    if (worldRef && m_context->enablePhysics) {
+    if (worldRef) {
         const int numRigidBodies = m_context->rigidBodies.count();
         for (int i = 0; i < numRigidBodies; i++) {
             RigidBody *rigidBody = m_context->rigidBodies[i];
