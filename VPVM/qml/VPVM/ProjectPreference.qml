@@ -98,17 +98,19 @@ ApplicationWindow {
                                     RadioButton {
                                         id: enablePhysicsAnyTimeButton
                                         text: qsTr("Enable (Anytime)")
+                                        checked: scene.project.world.simulationType === VPVM.World.EnableSimulationAnytime
                                         exclusiveGroup: enablePhysicsExclusiveGroup
                                     }
                                     RadioButton {
                                         id: enablePhysicsPlayOnlyButton
                                         text: qsTr("Enable (Play only)")
+                                        checked: scene.project.world.simulationType === VPVM.World.EnableSimulationPlayOnly
                                         exclusiveGroup: enablePhysicsExclusiveGroup
                                     }
                                     RadioButton {
                                         id: disablePhysicsButton
                                         text: qsTr("Disable")
-                                        checked: true
+                                        checked: scene.project.world.simulationType === VPVM.World.DisableSimulation
                                         exclusiveGroup: enablePhysicsExclusiveGroup
                                     }
                                 }
@@ -120,8 +122,15 @@ ApplicationWindow {
                                     title: qsTr("Gravity and Direction")
                                     Layout.columnSpan: 2
                                     maximumValue: Math.pow(2, 31)
+                                    minimumValue: -maximumValue
                                     decimals: 3
                                     value: scene.project.world.gravity
+                                }
+                                Binding {
+                                    target: scene.project.world
+                                    property: "gravity"
+                                    value: gravitySpinBox.value
+                                    when: gravitySpinBox.hovered
                                 }
                                 GroupBox {
                                     title: qsTr("Parameter")
