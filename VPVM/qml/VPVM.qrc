@@ -24,14 +24,12 @@
         <file>VPVM/RotationButton.qml</file>
         <file>VPVM/SaveDialog.qml</file>
         <file>VPVM/Scene.qml</file>
-        <file>VPVM/ScrollBar.qml</file>
         <file>VPVM/SelectableObjectDelegate.qml</file>
         <file>VPVM/Timeline.qml</file>
         <file>VPVM/TimelineTab.qml</file>
         <file>VPVM/TransformHandleSet.qml</file>
         <file>VPVM/TransformMode.qml</file>
         <file>VPVM/TranslationButton.qml</file>
-        <file>VPVM/Video.qml</file>
         <file>VPVM/WindowLoader.qml</file>
     </qresource>
 </RCC>
