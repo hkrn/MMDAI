@@ -460,7 +460,6 @@ void ProjectProxy::rewind()
         }
     }
     internalSeek(0, true, true);
-    m_worldProxy->rewind();
     emit rewindDidPerform();
 }
 

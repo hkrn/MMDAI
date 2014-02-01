@@ -1142,6 +1142,7 @@ void RenderTarget::synchronizeMotionState()
     Q_ASSERT(window() && m_projectProxyRef);
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::synchronizeMotionState);
     m_projectProxyRef->update(Scene::kUpdateAll | Scene::kForceUpdateAllMorphs | Scene::kResetMotionState);
+    m_projectProxyRef->world()->rewind();
     draw();
 }
 
