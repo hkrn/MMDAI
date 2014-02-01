@@ -486,6 +486,7 @@ Item {
             var closure = __keycode2closures[event.key]
             if (closure) {
                 closure(event)
+                event.accepted = true
             }
         }
         DropArea {
