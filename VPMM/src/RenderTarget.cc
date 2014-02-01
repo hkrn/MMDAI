@@ -1138,8 +1138,8 @@ void RenderTarget::performUploadingEnqueuedModels()
     foreach (const ApplicationContext::ModelProxyPair &pair, succeededModelProxies) {
         ModelProxy *modelProxy = pair.first;
         VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded" << (pair.second ? " from the project." : "."));
-        connect(modelProxy, &ModelProxy::targetBonesDidCommitTransform, this, &RenderTarget::updateGizmoAndRender);
-        connect(modelProxy, &ModelProxy::targetBonesDidDiscardTransform, this, &RenderTarget::updateGizmoAndRender);
+        connect(modelProxy, &ModelProxy::transformDidCommit, this, &RenderTarget::updateGizmoAndRender);
+        connect(modelProxy, &ModelProxy::transformDidDiscard, this, &RenderTarget::updateGizmoAndRender);
         connect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateGizmoAndRender);
         connect(modelProxy, &ModelProxy::firstTargetBoneChanged, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
         connect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
