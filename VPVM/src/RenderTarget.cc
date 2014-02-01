@@ -550,7 +550,9 @@ bool RenderTarget::isPlaying() const
 
 void RenderTarget::setPlaying(bool value)
 {
+    Q_ASSERT(m_projectProxyRef);
     if (m_playing != value) {
+        m_projectProxyRef->world()->setPlaying(value);
         m_playing = value;
         emit playingChanged();
     }
