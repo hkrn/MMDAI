@@ -40,6 +40,7 @@
 #include "RigidBodyRefObject.h"
 #include "Util.h"
 
+#include <QtCore>
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/qt/String.h>
 
@@ -62,6 +63,25 @@ JointRefObject::JointRefObject(ModelProxy *parentModel,
 JointRefObject::~JointRefObject()
 {
     m_jointRef = 0;
+}
+
+QJsonValue JointRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("uuid", uuid().toString());
+    v.insert("name", name());
+    v.insert("type", type());
+    v.insert("parentRigidBodyA", (parentRigidBodyA() ? parentRigidBodyA()->uuid() : QUuid()).toString());
+    v.insert("parentRigidBodyB", (parentRigidBodyB() ? parentRigidBodyB()->uuid() : QUuid()).toString());
+    v.insert("position", Util::toJson(position()));
+    v.insert("rotation", Util::toJson(rotation()));
+    v.insert("positionUpperLimit", Util::toJson(positionUpperLimit()));
+    v.insert("positionLowerLimit", Util::toJson(positionLowerLimit()));
+    v.insert("positionStiffness", Util::toJson(positionStiffness()));
+    v.insert("rotationUpperLimit", Util::toJson(rotationUpperLimit()));
+    v.insert("rotationLowerLimit", Util::toJson(rotationLowerLimit()));
+    v.insert("rotationStiffness", Util::toJson(rotationStiffness()));
+    return v;
 }
 
 IJoint *JointRefObject::data() const

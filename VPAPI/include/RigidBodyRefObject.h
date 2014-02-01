@@ -38,6 +38,7 @@
 #ifndef RIGIDBODYREFOBJECT_H
 #define RIGIDBODYREFOBJECT_H
 
+#include <QJsonValue>
 #include <QObject>
 #include <QUuid>
 #include <QVector3D>
@@ -85,6 +86,8 @@ public:
                        vpvl2::IRigidBody *rigidBodyRef,
                        const QUuid &uuid);
     ~RigidBodyRefObject();
+
+    Q_INVOKABLE QJsonValue toJson() const;
 
     vpvl2::IRigidBody *data() const;
     ModelProxy *parentModel() const;

@@ -40,6 +40,7 @@
 #include "ModelProxy.h"
 #include "Util.h"
 
+#include <QtCore>
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/qt/String.h>
 
@@ -63,6 +64,26 @@ RigidBodyRefObject::~RigidBodyRefObject()
 {
     m_parentModelRef = 0;
     m_rigidBodyRef = 0;
+}
+
+QJsonValue RigidBodyRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("uuid", uuid().toString());
+    v.insert("name", name());
+    v.insert("parentBone", (parentBone() ? parentBone()->uuid() : QUuid()).toString());
+    v.insert("position", Util::toJson(position()));
+    v.insert("rotation", Util::toJson(rotation()));
+    v.insert("objectType", objectType());
+    v.insert("shapeType", shapeType());
+    v.insert("mass", mass());
+    v.insert("linearDamping", linearDamping());
+    v.insert("angularDamping", angularDamping());
+    v.insert("friction", friction());
+    v.insert("restitution", restitution());
+    v.insert("collisionGroupID", collisionGroupID());
+    v.insert("collisionGroupMask", collisionGroupMask());
+    return v;
 }
 
 IRigidBody *RigidBodyRefObject::data() const

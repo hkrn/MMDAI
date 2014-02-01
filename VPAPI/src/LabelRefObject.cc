@@ -125,6 +125,14 @@ void LabelRefObject::removeObject(QObject *value)
     }
 }
 
+QJsonValue LabelRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("name", name());
+    v.insert("special", isSpecial());
+    return v;
+}
+
 ModelProxy *LabelRefObject::parentModel() const
 {
     return m_parentModelRef;

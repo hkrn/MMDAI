@@ -59,16 +59,6 @@ using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::qt;
 
-namespace {
-
-struct LessThan {
-    inline bool operator()(const LabelRefObject *left, const LabelRefObject *right) {
-        return left->index() < right->index();
-    }
-};
-
-}
-
 ModelProxy::ModelProxy(ProjectProxy *project,
                        IModel *model,
                        const QUuid &uuid,
@@ -133,17 +123,37 @@ ModelProxy::~ModelProxy()
     m_baseY = -1;
 }
 
-void ModelProxy::initialize()
+bool ModelProxy::saveJson(const QUrl &fileUrl) const
+{
+    QFile file(fileUrl.toLocalFile());
+    if (file.open(QFile::WriteOnly)) {
+        QJsonDocument document(toJson().toObject());
+        file.write(document.toJson());
+        file.close();
+        return true;
+    }
+    else {
+        qWarning() << file.errorString();
+        return false;
+    }
+}
+
+void ModelProxy::initialize(bool all)
 {
     Q_ASSERT(m_model);
-    Q_ASSERT(m_allLabels.isEmpty());
-    Q_ASSERT(m_allBones.isEmpty());
-    Q_ASSERT(m_allMorphs.isEmpty());
     Array<ILabel *> labelRefs;
     m_model->getLabelRefs(labelRefs);
-    setAllBones(labelRefs);
-    setAllMorphs(labelRefs, m_model.data());
-    qSort(m_allLabels.begin(), m_allLabels.end(), LessThan());
+    initializeBones(labelRefs);
+    initializeMorphs(labelRefs, m_model.data());
+    qSort(m_allLabels.begin(), m_allLabels.end(), Util::LessThan());
+    if (all) {
+        initializeAllBones();
+        initializeAllJoints();
+        initializeAllMaterials();
+        initializeAllMorphs();
+        initializeAllRigidBodies();
+        initializeAllVertices();
+    }
 }
 
 void ModelProxy::addBindingModel(ModelProxy *value)
@@ -165,6 +175,56 @@ void ModelProxy::releaseBindings()
         modelProxy->setParentBindingModel(0);
     }
     m_bindingModels.clear();
+}
+
+QJsonValue ModelProxy::toJson() const
+{
+    QJsonObject v;
+    v.insert("uuid", uuid().toString());
+    v.insert("name", name());
+    v.insert("comment", comment());
+    v.insert("version", version());
+    v.insert("visible", isVisible());
+    v.insert("scaleFactor", scaleFactor());
+    v.insert("opacity", opacity());
+    v.insert("translation", Util::toJson(translation()));
+    v.insert("orientation", Util::toJson(orientation()));
+    QJsonArray vertices;
+    foreach (VertexRefObject *vertex, m_allVertices) {
+        vertices.append(vertex->toJson());
+    }
+    v.insert("vertices", vertices);
+    QJsonArray materials;
+    foreach (MaterialRefObject *material, m_allMaterials) {
+        materials.append(material->toJson());
+    }
+    v.insert("materials", materials);
+    QJsonArray bones;
+    foreach (BoneRefObject *bone, m_allBones) {
+        bones.append(bone->toJson());
+    }
+    v.insert("bones", bones);
+    QJsonArray labels;
+    foreach (LabelRefObject *label, m_allLabels) {
+        labels.append(label->toJson());
+    }
+    v.insert("labels", labels);
+    QJsonArray morphs;
+    foreach (MorphRefObject *morph, m_allMorphs) {
+        morphs.append(morph->toJson());
+    }
+    v.insert("morphs", morphs);
+    QJsonArray rigidBodies;
+    foreach (RigidBodyRefObject *body, m_allRigidBodies) {
+        rigidBodies.append(body->toJson());
+    }
+    v.insert("rigidBodies", rigidBodies);
+    QJsonArray joints;
+    foreach (JointRefObject *joint, m_allJoints) {
+        joints.append(joint->toJson());
+    }
+    v.insert("joints", joints);
+    return v;
 }
 
 void ModelProxy::selectOpaqueObject(QObject *value)
@@ -472,8 +532,10 @@ JointRefObject *ModelProxy::findJointByUuid(const QUuid &uuid) const
 
 VertexRefObject *ModelProxy::createVertex()
 {
+    Q_ASSERT(m_model);
     QScopedPointer<IVertex> vertex(m_model->createVertex());
     QScopedPointer<VertexRefObject> vertexRef(new VertexRefObject(this, vertex.data(), QUuid::createUuid()));
+    initializeAllVertices();
     m_allVertices.append(vertexRef.data());
     m_uuid2VertexRefs.insert(vertexRef->uuid(), vertexRef.data());
     m_vertex2Refs.insert(vertex.data(), vertexRef.data());
@@ -484,8 +546,10 @@ VertexRefObject *ModelProxy::createVertex()
 
 MaterialRefObject *ModelProxy::createMaterial()
 {
+    Q_ASSERT(m_model);
     QScopedPointer<IMaterial> material(m_model->createMaterial());
     QScopedPointer<MaterialRefObject> materialRef(new MaterialRefObject(this, material.data(), QUuid::createUuid()));
+    initializeAllMaterials();
     m_allMaterials.append(materialRef.data());
     m_uuid2MaterialRefs.insert(materialRef->uuid(), materialRef.data());
     m_material2Refs.insert(material.data(), materialRef.data());
@@ -496,6 +560,7 @@ MaterialRefObject *ModelProxy::createMaterial()
 
 BoneRefObject *ModelProxy::createBone()
 {
+    Q_ASSERT(m_model);
     QScopedPointer<IBone> bone(m_model->createBone());
     QScopedPointer<BoneRefObject> boneRef(new BoneRefObject(this, 0, bone.data(), QUuid::createUuid()));
     m_allBones.append(boneRef.data());
@@ -508,6 +573,7 @@ BoneRefObject *ModelProxy::createBone()
 
 MorphRefObject *ModelProxy::createMorph()
 {
+    Q_ASSERT(m_model);
     QScopedPointer<IMorph> morph(m_model->createMorph());
     QScopedPointer<MorphRefObject> morphRef(new MorphRefObject(this, 0, morph.data(), QUuid::createUuid()));
     m_allMorphs.append(morphRef.data());
@@ -520,6 +586,7 @@ MorphRefObject *ModelProxy::createMorph()
 
 LabelRefObject *ModelProxy::createLabel()
 {
+    Q_ASSERT(m_model);
     QScopedPointer<ILabel> label(m_model->createLabel());
     QScopedPointer<LabelRefObject> labelRef(new LabelRefObject(this, label.data()));
     m_allLabels.append(labelRef.data());
@@ -530,8 +597,10 @@ LabelRefObject *ModelProxy::createLabel()
 
 RigidBodyRefObject *ModelProxy::createRigidBody()
 {
+    Q_ASSERT(m_model);
     QScopedPointer<IRigidBody> body(m_model->createRigidBody());
     QScopedPointer<RigidBodyRefObject> bodyRef(new RigidBodyRefObject(this, body.data(), QUuid::createUuid()));
+    initializeAllRigidBodies();
     m_allRigidBodies.append(bodyRef.data());
     m_uuid2RigidBodyRefs.insert(bodyRef->uuid(), bodyRef.data());
     m_rigidBody2Refs.insert(body.data(), bodyRef.data());
@@ -542,8 +611,10 @@ RigidBodyRefObject *ModelProxy::createRigidBody()
 
 JointRefObject *ModelProxy::createJoint()
 {
+    Q_ASSERT(m_model);
     QScopedPointer<IJoint> joint(m_model->createJoint());
     QScopedPointer<JointRefObject> jointRef(new JointRefObject(this, joint.data(), QUuid::createUuid()));
+    initializeAllJoints();
     m_allJoints.append(jointRef.data());
     m_uuid2JointRefs.insert(jointRef->uuid(), jointRef.data());
     m_joint2Refs.insert(joint.data(), jointRef.data());
@@ -554,6 +625,7 @@ JointRefObject *ModelProxy::createJoint()
 
 QObject *ModelProxy::createObject(ObjectType type)
 {
+    Q_ASSERT(m_model);
     QObject *object = 0;
     switch (type) {
     case Vertex: {
@@ -595,6 +667,9 @@ QObject *ModelProxy::createObject(ObjectType type)
 
 bool ModelProxy::removeVertex(VertexRefObject *value)
 {
+    Q_ASSERT(m_model);
+    Q_ASSERT(value);
+    initializeAllVertices();
     m_model->removeVertex(value->data());
     m_vertex2Refs.remove(value->data());
     m_uuid2VertexRefs.remove(value->uuid());
@@ -607,6 +682,9 @@ bool ModelProxy::removeVertex(VertexRefObject *value)
 
 bool ModelProxy::removeMaterial(MaterialRefObject *value)
 {
+    Q_ASSERT(m_model);
+    Q_ASSERT(value);
+    initializeAllMaterials();
     m_model->removeMaterial(value->data());
     m_material2Refs.remove(value->data());
     m_uuid2MaterialRefs.remove(value->uuid());
@@ -619,6 +697,8 @@ bool ModelProxy::removeMaterial(MaterialRefObject *value)
 
 bool ModelProxy::removeBone(BoneRefObject *value)
 {
+    Q_ASSERT(m_model);
+    Q_ASSERT(value);
     m_model->removeBone(value->data());
     m_bone2Refs.remove(value->data());
     m_uuid2BoneRefs.remove(value->uuid());
@@ -631,6 +711,8 @@ bool ModelProxy::removeBone(BoneRefObject *value)
 
 bool ModelProxy::removeMorph(MorphRefObject *value)
 {
+    Q_ASSERT(m_model);
+    Q_ASSERT(value);
     m_model->removeMorph(value->data());
     m_morph2Refs.remove(value->data());
     m_uuid2MorphRefs.remove(value->uuid());
@@ -643,6 +725,8 @@ bool ModelProxy::removeMorph(MorphRefObject *value)
 
 bool ModelProxy::removeLabel(LabelRefObject *value)
 {
+    Q_ASSERT(m_model);
+    Q_ASSERT(value);
     // m_model->removeLabel(label->data());
     if (m_allLabels.removeOne(value)) {
         emit allLabelsChanged();
@@ -653,6 +737,9 @@ bool ModelProxy::removeLabel(LabelRefObject *value)
 
 bool ModelProxy::removeRigidBody(RigidBodyRefObject *value)
 {
+    Q_ASSERT(m_model);
+    Q_ASSERT(value);
+    initializeAllRigidBodies();
     m_model->removeRigidBody(value->data());
     m_rigidBody2Refs.remove(value->data());
     m_uuid2RigidBodyRefs.remove(value->uuid());
@@ -665,6 +752,9 @@ bool ModelProxy::removeRigidBody(RigidBodyRefObject *value)
 
 bool ModelProxy::removeJoint(JointRefObject *value)
 {
+    Q_ASSERT(m_model);
+    Q_ASSERT(value);
+    initializeAllJoints();
     m_model->removeJoint(value->data());
     m_joint2Refs.remove(value->data());
     m_uuid2JointRefs.remove(value->uuid());
@@ -677,6 +767,7 @@ bool ModelProxy::removeJoint(JointRefObject *value)
 
 bool ModelProxy::removeObject(QObject *value)
 {
+    Q_ASSERT(m_model);
     if (VertexRefObject *vertex = qobject_cast<VertexRefObject *>(value)) {
         return removeVertex(vertex);
     }
@@ -887,72 +978,25 @@ QQmlListProperty<MorphRefObject> ModelProxy::allMorphs()
 
 QQmlListProperty<MaterialRefObject> ModelProxy::allMaterials()
 {
-    if (m_allMaterials.isEmpty()) {
-        Array<IMaterial *> materialRefs;
-        m_model->getMaterialRefs(materialRefs);
-        const int nmaterials = materialRefs.count();
-        for (int i = 0; i < nmaterials; i++) {
-            IMaterial *materialRef = materialRefs[i];
-            MaterialRefObject *material = new MaterialRefObject(this, materialRef, QUuid::createUuid());
-            m_allMaterials.append(material);
-            m_material2Refs.insert(materialRef, material);
-            m_name2MaterialRefs.insert(material->name(), material);
-            m_uuid2MaterialRefs.insert(material->uuid(), material);
-        }
-    }
+    initializeAllMaterials();
     return QQmlListProperty<MaterialRefObject>(this, m_allMaterials);
 }
 
 QQmlListProperty<VertexRefObject> ModelProxy::allVertices()
 {
-    if (m_allVertices.isEmpty()) {
-        Array<IVertex *> vertexRefs;
-        m_model->getVertexRefs(vertexRefs);
-        const int nvertices = vertexRefs.count();
-        for (int i = 0; i < nvertices; i++) {
-            IVertex *vertexRef = vertexRefs[i];
-            VertexRefObject *vertex = new VertexRefObject(this, vertexRef, QUuid::createUuid());
-            m_allVertices.append(vertex);
-            m_vertex2Refs.insert(vertexRef, vertex);
-            m_uuid2VertexRefs.insert(vertex->uuid(), vertex);
-        }
-    }
+    initializeAllVertices();
     return QQmlListProperty<VertexRefObject>(this, m_allVertices);
 }
 
 QQmlListProperty<RigidBodyRefObject> ModelProxy::allRigidBodies()
 {
-    if (m_allRigidBodies.isEmpty()) {
-        Array<IRigidBody *> rigidBodyRefs;
-        m_model->getRigidBodyRefs(rigidBodyRefs);
-        const int nbodies = rigidBodyRefs.count();
-        for (int i = 0; i < nbodies; i++) {
-            IRigidBody *rigidBodyRef = rigidBodyRefs[i];
-            RigidBodyRefObject *rigidBody = new RigidBodyRefObject(this, rigidBodyRef, QUuid::createUuid());
-            m_allRigidBodies.append(rigidBody);
-            m_rigidBody2Refs.insert(rigidBodyRef, rigidBody);
-            m_name2RigidBodyRefs.insert(rigidBody->name(), rigidBody);
-            m_uuid2RigidBodyRefs.insert(rigidBody->uuid(), rigidBody);
-        }
-    }
+    initializeAllRigidBodies();
     return QQmlListProperty<RigidBodyRefObject>(this, m_allRigidBodies);
 }
 
 QQmlListProperty<JointRefObject> ModelProxy::allJoints()
 {
-    if (m_allJoints.isEmpty()) {
-        Array<IJoint *> jointRefs;
-        m_model->getJointRefs(jointRefs);
-        const int njoints = jointRefs.count();
-        for (int i = 0; i < njoints; i++) {
-            IJoint *jointRef = jointRefs[i];
-            JointRefObject *joint = new JointRefObject(this, jointRef, QUuid::createUuid());
-            m_allJoints.append(joint);
-            m_joint2Refs.insert(jointRef, joint);
-            m_name2JointRefs.insert(joint->name(), joint);
-            m_uuid2JointRefs.insert(joint->uuid(), joint);
-        }
-    }
+    initializeAllJoints();
     return QQmlListProperty<JointRefObject>(this, m_allJoints);
 }
 
@@ -1231,55 +1275,59 @@ void ModelProxy::resetLanguage()
     emit languageChanged();
 }
 
-void ModelProxy::setAllBones(const Array<ILabel *> &labelRefs)
+void ModelProxy::initializeBones(const Array<ILabel *> &labelRefs)
 {
-    const int nlabels = labelRefs.count();
-    for (int i = 0; i < nlabels; i++) {
-        ILabel *labelRef = labelRefs[i];
-        const int nobjects = labelRef->count();
-        if (nobjects > 0 && labelRef->boneRef(0)) {
-            LabelRefObject *labelObject = new LabelRefObject(this, labelRef);
-            for (int j = 0; j < nobjects; j++) {
-                IBone *boneRef = labelRef->boneRef(j);
-                const QUuid uuid = QUuid::createUuid();
-                BoneRefObject *boneObject = new BoneRefObject(this, labelObject, boneRef, uuid);
-                if (boneRef->isInteractive()) {
-                    labelObject->addBone(boneObject);
+    if (m_allBones.isEmpty()) {
+        const int nlabels = labelRefs.count();
+        for (int i = 0; i < nlabels; i++) {
+            ILabel *labelRef = labelRefs[i];
+            const int nobjects = labelRef->count();
+            if (nobjects > 0 && labelRef->boneRef(0)) {
+                LabelRefObject *labelObject = new LabelRefObject(this, labelRef);
+                for (int j = 0; j < nobjects; j++) {
+                    IBone *boneRef = labelRef->boneRef(j);
+                    const QUuid uuid = QUuid::createUuid();
+                    BoneRefObject *boneObject = new BoneRefObject(this, labelObject, boneRef, uuid);
+                    if (boneRef->isInteractive()) {
+                        labelObject->addBone(boneObject);
+                    }
+                    m_allBones.append(boneObject);
+                    m_bone2Refs.insert(boneRef, boneObject);
+                    m_name2BoneRefs.insert(boneObject->name(), boneObject);
+                    m_uuid2BoneRefs.insert(uuid, boneObject);
                 }
-                m_allBones.append(boneObject);
-                m_bone2Refs.insert(boneRef, boneObject);
-                m_name2BoneRefs.insert(boneObject->name(), boneObject);
-                m_uuid2BoneRefs.insert(uuid, boneObject);
+                m_allLabels.append(labelObject);
             }
-            m_allLabels.append(labelObject);
         }
     }
 }
 
-void ModelProxy::setAllMorphs(const Array<ILabel *> &labelRefs, const IModel *model)
+void ModelProxy::initializeMorphs(const Array<ILabel *> &labelRefs, const IModel *model)
 {
-    const IEncoding *encodingRef = m_parentProjectRef->encodingInstanceRef();
-    const IString *opacityMorphName = encodingRef->stringConstant(IEncoding::kOpacityMorphAsset);
-    const int nlabels = labelRefs.count();
-    for (int i = 0; i < nlabels; i++) {
-        ILabel *labelRef = labelRefs[i];
-        const int nobjects = labelRef->count();
-        if (nobjects > 0 && labelRef->morphRef(0)) {
-            LabelRefObject *labelObject = new LabelRefObject(this, labelRef);
-            for (int j = 0; j < nobjects; j++) {
-                IMorph *morphRef = labelRef->morphRef(j);
-                const QUuid uuid = QUuid::createUuid();
-                MorphRefObject *morphObject = new MorphRefObject(this, labelObject, morphRef, uuid);
-                labelObject->addMorph(morphObject);
-                m_allMorphs.append(morphObject);
-                m_morph2Refs.insert(morphRef, morphObject);
-                m_name2MorphRefs.insert(morphObject->name(), morphObject);
-                m_uuid2MorphRefs.insert(uuid, morphObject);
+    if (m_allMorphs.isEmpty()) {
+        const int nlabels = labelRefs.count();
+        for (int i = 0; i < nlabels; i++) {
+            ILabel *labelRef = labelRefs[i];
+            const int nobjects = labelRef->count();
+            if (nobjects > 0 && labelRef->morphRef(0)) {
+                LabelRefObject *labelObject = new LabelRefObject(this, labelRef);
+                for (int j = 0; j < nobjects; j++) {
+                    IMorph *morphRef = labelRef->morphRef(j);
+                    const QUuid uuid = QUuid::createUuid();
+                    MorphRefObject *morphObject = new MorphRefObject(this, labelObject, morphRef, uuid);
+                    labelObject->addMorph(morphObject);
+                    m_allMorphs.append(morphObject);
+                    m_morph2Refs.insert(morphRef, morphObject);
+                    m_name2MorphRefs.insert(morphObject->name(), morphObject);
+                    m_uuid2MorphRefs.insert(uuid, morphObject);
+                }
+                m_allLabels.append(labelObject);
             }
-            m_allLabels.append(labelObject);
         }
     }
     if (model->type() == IModel::kAssetModel) {
+        const IEncoding *encodingRef = m_parentProjectRef->encodingInstanceRef();
+        const IString *opacityMorphName = encodingRef->stringConstant(IEncoding::kOpacityMorphAsset);
         Array<IMorph *> morphRefs;
         model->getMorphRefs(morphRefs);
         const int nmorphs = morphRefs.count();
@@ -1289,6 +1337,119 @@ void ModelProxy::setAllMorphs(const Array<ILabel *> &labelRefs, const IModel *mo
                 morphRef->setWeight(1);
             }
         }
+    }
+}
+
+void ModelProxy::initializeAllVertices()
+{
+    if (m_allVertices.isEmpty()) {
+        Array<IVertex *> vertexRefs;
+        m_model->getVertexRefs(vertexRefs);
+        const int nvertices = vertexRefs.count();
+        for (int i = 0; i < nvertices; i++) {
+            IVertex *vertexRef = vertexRefs[i];
+            VertexRefObject *vertex = new VertexRefObject(this, vertexRef, QUuid::createUuid());
+            m_allVertices.append(vertex);
+            m_vertex2Refs.insert(vertexRef, vertex);
+            m_uuid2VertexRefs.insert(vertex->uuid(), vertex);
+        }
+        qSort(m_allVertices.begin(), m_allVertices.end(), Util::LessThan());
+    }
+}
+
+void ModelProxy::initializeAllMaterials()
+{
+    if (m_allMaterials.isEmpty()) {
+        Array<IMaterial *> materialRefs;
+        m_model->getMaterialRefs(materialRefs);
+        const int nmaterials = materialRefs.count();
+        for (int i = 0; i < nmaterials; i++) {
+            IMaterial *materialRef = materialRefs[i];
+            MaterialRefObject *material = new MaterialRefObject(this, materialRef, QUuid::createUuid());
+            m_allMaterials.append(material);
+            m_material2Refs.insert(materialRef, material);
+            m_name2MaterialRefs.insert(material->name(), material);
+            m_uuid2MaterialRefs.insert(material->uuid(), material);
+        }
+        qSort(m_allMaterials.begin(), m_allMaterials.end(), Util::LessThan());
+    }
+}
+
+void ModelProxy::initializeAllBones()
+{
+    Array<IBone *> bones;
+    m_model->getBoneRefs(bones);
+    const int nbones = bones.count();
+    for (int i = 0; i < nbones; i++) {
+        IBone *boneRef = bones[i];
+        if (!m_bone2Refs.contains(boneRef)) {
+            const QUuid uuid = QUuid::createUuid();
+            BoneRefObject *boneObject = new BoneRefObject(this, 0, boneRef, uuid);
+            m_allBones.append(boneObject);
+            m_bone2Refs.insert(boneRef, boneObject);
+            m_name2BoneRefs.insert(boneObject->name(), boneObject);
+            m_uuid2BoneRefs.insert(uuid, boneObject);
+        }
+    }
+    qSort(m_allBones.begin(), m_allBones.end(), Util::LessThan());
+}
+
+void ModelProxy::initializeAllMorphs()
+{
+    Array<IMorph *> morphs;
+    m_model->getMorphRefs(morphs);
+    const int nmorphs = morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        IMorph *morphRef = morphs[i];
+        if (MorphRefObject *morphObject = m_morph2Refs.value(morphRef)) {
+            morphObject->initialize();
+        }
+        else {
+            const QUuid uuid = QUuid::createUuid();
+            morphObject = new MorphRefObject(this, 0, morphRef, uuid);
+            morphObject->initialize();
+            m_allMorphs.append(morphObject);
+            m_morph2Refs.insert(morphRef, morphObject);
+            m_name2MorphRefs.insert(morphObject->name(), morphObject);
+            m_uuid2MorphRefs.insert(uuid, morphObject);
+        }
+    }
+    qSort(m_allMorphs.begin(), m_allMorphs.end(), Util::LessThan());
+}
+
+void ModelProxy::initializeAllRigidBodies()
+{
+    if (m_allRigidBodies.isEmpty()) {
+        Array<IRigidBody *> rigidBodyRefs;
+        m_model->getRigidBodyRefs(rigidBodyRefs);
+        const int nbodies = rigidBodyRefs.count();
+        for (int i = 0; i < nbodies; i++) {
+            IRigidBody *rigidBodyRef = rigidBodyRefs[i];
+            RigidBodyRefObject *rigidBody = new RigidBodyRefObject(this, rigidBodyRef, QUuid::createUuid());
+            m_allRigidBodies.append(rigidBody);
+            m_rigidBody2Refs.insert(rigidBodyRef, rigidBody);
+            m_name2RigidBodyRefs.insert(rigidBody->name(), rigidBody);
+            m_uuid2RigidBodyRefs.insert(rigidBody->uuid(), rigidBody);
+        }
+        qSort(m_allRigidBodies.begin(), m_allRigidBodies.end(), Util::LessThan());
+    }
+}
+
+void ModelProxy::initializeAllJoints()
+{
+    if (m_allJoints.isEmpty()) {
+        Array<IJoint *> jointRefs;
+        m_model->getJointRefs(jointRefs);
+        const int njoints = jointRefs.count();
+        for (int i = 0; i < njoints; i++) {
+            IJoint *jointRef = jointRefs[i];
+            JointRefObject *joint = new JointRefObject(this, jointRef, QUuid::createUuid());
+            m_allJoints.append(joint);
+            m_joint2Refs.insert(jointRef, joint);
+            m_name2JointRefs.insert(joint->name(), joint);
+            m_uuid2JointRefs.insert(joint->uuid(), joint);
+        }
+        qSort(m_allJoints.begin(), m_allJoints.end(), Util::LessThan());
     }
 }
 

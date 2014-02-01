@@ -38,6 +38,7 @@
 #ifndef VERTEXREFOBJECT_H
 #define VERTEXREFOBJECT_H
 
+#include <QJsonValue>
 #include <QObject>
 #include <QUuid>
 #include <QVector3D>
@@ -77,14 +78,15 @@ public:
     VertexRefObject(ModelProxy *parentModelRef, vpvl2::IVertex *vertexRef, const QUuid &uuid);
     ~VertexRefObject();
 
-    Q_INVOKABLE QVector4D originUV(int index);
+    Q_INVOKABLE QVector4D originUV(int index) const;
     Q_INVOKABLE void setOriginUV(int index, const QVector4D &value);
-    Q_INVOKABLE QVector4D morphUV(int index);
+    Q_INVOKABLE QVector4D morphUV(int index) const;
     Q_INVOKABLE void setMorphUV(int index, const QVector4D &value);
-    Q_INVOKABLE BoneRefObject *bone(int index);
+    Q_INVOKABLE BoneRefObject *bone(int index) const;
     Q_INVOKABLE void setBone(int index, BoneRefObject *value);
-    Q_INVOKABLE qreal weight(int index);
+    Q_INVOKABLE qreal weight(int index) const;
     Q_INVOKABLE void setWeight(int index, const qreal &value);
+    Q_INVOKABLE QJsonValue toJson() const;
 
     vpvl2::IVertex *data() const;
     ModelProxy *parentModel() const;

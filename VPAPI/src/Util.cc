@@ -35,13 +35,13 @@
 
 */
 
+#include "Util.h"
+
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/qt/String.h>
 
-#include "Util.h"
-
+#include <QtCore>
 #include <QCoreApplication>
-#include <QDir>
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -134,4 +134,43 @@ QString Util::resourcePath(const QString &basePath)
     }
 #endif
     return QDir::cleanPath(QDir(appPath).absoluteFilePath(basePath));
+}
+
+QJsonValue Util::toJson(const QColor &value)
+{
+    QJsonArray v;
+    v.append(value.redF());
+    v.append(value.greenF());
+    v.append(value.blueF());
+    v.append(value.alphaF());
+    return v;
+}
+
+QJsonValue Util::toJson(const QVector3D &value)
+{
+    QJsonArray v;
+    v.append(value.x());
+    v.append(value.y());
+    v.append(value.z());
+    return v;
+}
+
+QJsonValue Util::toJson(const QVector4D &value)
+{
+    QJsonArray v;
+    v.append(value.x());
+    v.append(value.y());
+    v.append(value.z());
+    v.append(value.w());
+    return v;
+}
+
+QJsonValue Util::toJson(const QQuaternion &value)
+{
+    QJsonArray v;
+    v.append(value.x());
+    v.append(value.y());
+    v.append(value.z());
+    v.append(value.scalar());
+    return v;
 }

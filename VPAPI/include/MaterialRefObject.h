@@ -39,6 +39,7 @@
 #define MATERIALREFOBJECT_H
 
 #include <QColor>
+#include <QJsonValue>
 #include <QObject>
 #include <QUuid>
 #include <vpvl2/IMaterial.h>
@@ -84,6 +85,8 @@ public:
 
     MaterialRefObject(ModelProxy *parentModelRef, vpvl2::IMaterial *materialRef, const QUuid &uuid);
     ~MaterialRefObject();
+
+    Q_INVOKABLE QJsonValue toJson() const;
 
     vpvl2::IMaterial *data() const;
     ModelProxy *parentModel() const;

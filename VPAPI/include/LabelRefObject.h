@@ -38,6 +38,7 @@
 #ifndef LABELREFOBJECT_H
 #define LABELREFOBJECT_H
 
+#include <QJsonValue>
 #include <QObject>
 #include <QQmlListProperty>
 #include <vpvl2/ILabel.h>
@@ -68,6 +69,7 @@ public:
 
     Q_INVOKABLE void addObject(QObject *value);
     Q_INVOKABLE void removeObject(QObject *value);
+    Q_INVOKABLE QJsonValue toJson() const;
 
     ModelProxy *parentModel() const;
     QString name() const;

@@ -40,6 +40,7 @@
 #include "ModelProxy.h"
 #include "Util.h"
 
+#include <QtCore>
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/qt/String.h>
 
@@ -64,7 +65,7 @@ VertexRefObject::~VertexRefObject()
     m_vertexRef = 0;
 }
 
-QVector4D VertexRefObject::originUV(int index)
+QVector4D VertexRefObject::originUV(int index) const
 {
     Q_ASSERT(m_vertexRef);
     return Util::fromVector4(m_vertexRef->originUV(index));
@@ -81,7 +82,7 @@ void VertexRefObject::setOriginUV(int index, const QVector4D &value)
     }
 }
 
-QVector4D VertexRefObject::morphUV(int index)
+QVector4D VertexRefObject::morphUV(int index) const
 {
     Q_ASSERT(m_vertexRef);
     return Util::fromVector4(m_vertexRef->morphUV(index));
@@ -98,7 +99,7 @@ void VertexRefObject::setMorphUV(int index, const QVector4D &value)
     }
 }
 
-BoneRefObject *VertexRefObject::bone(int index)
+BoneRefObject *VertexRefObject::bone(int index) const
 {
     Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_vertexRef);
@@ -117,7 +118,7 @@ void VertexRefObject::setBone(int index, BoneRefObject *value)
     }
 }
 
-qreal VertexRefObject::weight(int index)
+qreal VertexRefObject::weight(int index) const
 {
     Q_ASSERT(m_vertexRef);
     return m_vertexRef->weight(index);
@@ -135,6 +136,56 @@ void VertexRefObject::setWeight(int index, const qreal &value)
     }
 }
 
+QJsonValue VertexRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("uuid", uuid().toString());
+    v.insert("origin", Util::toJson(origin()));
+    v.insert("normal", Util::toJson(normal()));
+    v.insert("textureCoord", Util::toJson(textureCoord()));
+    v.insert("edge", edgeSize());
+    v.insert("type", type());
+    if (type() == Sdef) {
+        v.insert("sdefC", Util::toJson(sdefC()));
+        v.insert("sdefR0", Util::toJson(sdefR0()));
+        v.insert("sdefR1", Util::toJson(sdefR1()));
+    }
+    QJsonArray weights;
+    switch (type()) {
+    case Bdef1: {
+        QJsonObject w;
+        w.insert("bone", (bone(0) ? bone(0)->uuid() : QUuid()).toString());
+        w.insert("value", weight(0));
+        weights.append(w);
+        break;
+    }
+    case Bdef2:
+    case Sdef:
+    {
+        for (int i = 0; i < 2; i++) {
+            QJsonObject w;
+            w.insert("bone", (bone(i) ? bone(i)->uuid() : QUuid()).toString());
+            w.insert("value", weight(i));
+            weights.append(w);
+        }
+        break;
+    }
+    case Bdef4:
+    case Qdef: {
+        for (int i = 0; i < 4; i++) {
+            QJsonObject w;
+            w.insert("bone", (bone(i) ? bone(i)->uuid() : QUuid()).toString());
+            w.insert("value", weight(i));
+            weights.append(w);
+        }
+        break;
+    }
+    default:
+        break;
+    }
+    v.insert("weights", weights);
+    return v;
+}
 
 IVertex *VertexRefObject::data() const
 {

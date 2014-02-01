@@ -39,6 +39,7 @@
 #define MODELPROXY_H
 
 #include <QHash>
+#include <QJsonValue>
 #include <QObject>
 #include <QQmlListProperty>
 #include <QQuaternion>
@@ -148,10 +149,13 @@ public:
                QUndoStack *undoStackRef);
     ~ModelProxy();
 
-    void initialize();
+    Q_INVOKABLE bool saveJson(const QUrl &fileUrl) const;
+
+    void initialize(bool all);
     void addBindingModel(ModelProxy *value);
     void removeBindingModel(ModelProxy *value);
     void releaseBindings();
+    QJsonValue toJson() const;
 
     vpvl2::IModel *data() const;
     ProjectProxy *parentProject() const;
@@ -316,8 +320,14 @@ private slots:
     void resetLanguage();
 
 private:
-    void setAllBones(const vpvl2::Array<vpvl2::ILabel *> &labelRefs);
-    void setAllMorphs(const vpvl2::Array<vpvl2::ILabel *> &labelRefs, const vpvl2::IModel *model);
+    void initializeBones(const vpvl2::Array<vpvl2::ILabel *> &labelRefs);
+    void initializeMorphs(const vpvl2::Array<vpvl2::ILabel *> &labelRefs, const vpvl2::IModel *model);
+    void initializeAllVertices();
+    void initializeAllMaterials();
+    void initializeAllBones();
+    void initializeAllMorphs();
+    void initializeAllRigidBodies();
+    void initializeAllJoints();
     void saveTransformState();
     void clearTransformState();
 

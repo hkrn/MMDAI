@@ -66,6 +66,14 @@ ChildGroupMorphRefObject::~ChildGroupMorphRefObject()
     m_valueRef = 0;
 }
 
+QJsonValue ChildGroupMorphRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("targetMorph", targetMorph()->uuid().toString());
+    v.insert("fixedWeight", fixedWeight());
+    return v;
+}
+
 MorphRefObject *ChildGroupMorphRefObject::parentMorph() const
 {
     return m_parentMorphRef;
@@ -130,6 +138,14 @@ ChildVertexMorphRefObject::~ChildVertexMorphRefObject()
     m_valueRef = 0;
 }
 
+QJsonValue ChildVertexMorphRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("targetVertex", targetVertex()->uuid().toString());
+    v.insert("position", Util::toJson(position()));
+    return v;
+}
+
 MorphRefObject *ChildVertexMorphRefObject::parentMorph() const
 {
     return m_parentMorphRef;
@@ -190,6 +206,15 @@ ChildBoneMorphRefObject::~ChildBoneMorphRefObject()
 {
     m_parentMorphRef = 0;
     m_valueRef = 0;
+}
+
+QJsonValue ChildBoneMorphRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("targetBone", targetBone()->uuid().toString());
+    v.insert("position", Util::toJson(position()));
+    v.insert("rotation", Util::toJson(rotation()));
+    return v;
 }
 
 MorphRefObject *ChildBoneMorphRefObject::parentMorph() const
@@ -272,6 +297,14 @@ ChildUVMorphRefObject::~ChildUVMorphRefObject()
     m_valueRef = 0;
 }
 
+QJsonValue ChildUVMorphRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("targetVertex", targetVertex()->uuid().toString());
+    v.insert("position", Util::toJson(position()));
+    return v;
+}
+
 MorphRefObject *ChildUVMorphRefObject::parentMorph() const
 {
     return m_parentMorphRef;
@@ -334,6 +367,22 @@ ChildMaterialMorphRefObject::~ChildMaterialMorphRefObject()
 {
     m_parentMorphRef = 0;
     m_valueRef = 0;
+}
+
+QJsonValue ChildMaterialMorphRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("ambient", Util::toJson(ambient()));
+    v.insert("diffuse", Util::toJson(diffuse()));
+    v.insert("specualr", Util::toJson(specular()));
+    v.insert("edgeColor", Util::toJson(edgeColor()));
+    v.insert("mainTextureCoefficient", Util::toJson(mainTextureCoefficient()));
+    v.insert("sphereTextureCoefficient", Util::toJson(sphereTextureCoefficient()));
+    v.insert("toonTextureCoefficient", Util::toJson(toonTextureCoefficient()));
+    v.insert("shininess", shininess());
+    v.insert("edgeSize", edgeSize());
+    v.insert("operation", operation());
+    return v;
 }
 
 MorphRefObject *ChildMaterialMorphRefObject::parentMorph() const
@@ -527,6 +576,14 @@ ChildFlipMorphRefObject::~ChildFlipMorphRefObject()
     m_valueRef = 0;
 }
 
+QJsonValue ChildFlipMorphRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("targetMorph", targetMorph()->uuid().toString());
+    v.insert("fixedWeight", fixedWeight());
+    return v;
+}
+
 MorphRefObject *ChildFlipMorphRefObject::parentMorph() const
 {
     return m_parentMorphRef;
@@ -589,6 +646,16 @@ ChildImpulseMorphRefObject::~ChildImpulseMorphRefObject()
 {
     m_parentMorphRef = 0;
     m_valueRef = 0;
+}
+
+QJsonValue ChildImpulseMorphRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("targetRigidBody", targetRigidBody()->uuid().toString());
+    v.insert("velocity", Util::toJson(velocity()));
+    v.insert("torque", Util::toJson(torque()));
+    v.insert("local", isLocal());
+    return v;
 }
 
 MorphRefObject *ChildImpulseMorphRefObject::parentMorph() const
@@ -709,6 +776,17 @@ MorphRefObject::~MorphRefObject()
     m_originWeight = 0;
 }
 
+void MorphRefObject::initialize()
+{
+    initializeAllGroupMorphs();
+    initializeAllVertexMorphs();
+    initializeAllMaterialMorphs();
+    initializeAllBoneMorphs();
+    initializeAllUVMorphs();
+    initializeAllFlipMorphs();
+    initializeAllImpulseMorphs();
+}
+
 void MorphRefObject::setOriginWeight(const qreal &value)
 {
     if (!qFuzzyCompare(value, m_originWeight)) {
@@ -716,6 +794,61 @@ void MorphRefObject::setOriginWeight(const qreal &value)
         setDirty(true);
         emit originWeightChanged();
     }
+}
+
+QJsonValue MorphRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("uuid", uuid().toString());
+    v.insert("name", name());
+    v.insert("category", category());
+    v.insert("type", type());
+    QJsonArray children;
+    switch (type()) {
+    case Group:
+        foreach (ChildGroupMorphRefObject *item, m_groupMorphs) {
+            children.append(item->toJson());
+        }
+        break;
+    case Vertex:
+        foreach (ChildVertexMorphRefObject *item, m_vertexMorphs) {
+            children.append(item->toJson());
+        }
+        break;
+    case Material:
+        foreach (ChildMaterialMorphRefObject *item, m_materialMorphs) {
+            children.append(item->toJson());
+        }
+        break;
+    case Bone:
+        foreach (ChildBoneMorphRefObject *item, m_boneMorphs) {
+            children.append(item->toJson());
+        }
+        break;
+    case Texcoord:
+    case UVA1:
+    case UVA2:
+    case UVA3:
+    case UVA4:
+        foreach (ChildUVMorphRefObject *item, m_uvsMorphs) {
+            children.append(item->toJson());
+        }
+        break;
+    case Flip:
+        foreach (ChildFlipMorphRefObject *item, m_flipMorphs) {
+            children.append(item->toJson());
+        }
+        break;
+    case Impulse:
+        foreach (ChildImpulseMorphRefObject *item, m_impulseMorphs) {
+            children.append(item->toJson());
+        }
+        break;
+    default:
+        break;
+    }
+    v.insert("children", children);
+    return v;
 }
 
 vpvl2::IMorph *MorphRefObject::data() const
@@ -735,99 +868,43 @@ LabelRefObject *MorphRefObject::parentLabel() const
 
 QQmlListProperty<ChildGroupMorphRefObject>MorphRefObject::groups()
 {
-    if (m_groupMorphs.isEmpty()) {
-        Array<IMorph::Group *> values;
-        m_morphRef->getGroupMorphs(values);
-        const int nvalues = values.count();
-        for (int i = 0; i < nvalues; i++) {
-            IMorph::Group *value = values[i];
-            m_groupMorphs.append(new ChildGroupMorphRefObject(this, value));
-        }
-    }
+    initializeAllGroupMorphs();
     return QQmlListProperty<ChildGroupMorphRefObject>(this, m_groupMorphs);
 }
 
 QQmlListProperty<ChildVertexMorphRefObject> MorphRefObject::vertices()
 {
-    if (m_vertexMorphs.isEmpty()) {
-        Array<IMorph::Vertex *> values;
-        m_morphRef->getVertexMorphs(values);
-        const int nvalues = values.count();
-        for (int i = 0; i < nvalues; i++) {
-            IMorph::Vertex *value = values[i];
-            m_vertexMorphs.append(new ChildVertexMorphRefObject(this, value));
-        }
-    }
+    initializeAllVertexMorphs();
     return QQmlListProperty<ChildVertexMorphRefObject>(this, m_vertexMorphs);
 }
 
 QQmlListProperty<ChildBoneMorphRefObject> MorphRefObject::bones()
 {
-    if (m_boneMorphs.isEmpty()) {
-        Array<IMorph::Bone *> values;
-        m_morphRef->getBoneMorphs(values);
-        const int nvalues = values.count();
-        for (int i = 0; i < nvalues; i++) {
-            IMorph::Bone *value = values[i];
-            m_boneMorphs.append(new ChildBoneMorphRefObject(this, value));
-        }
-    }
+    initializeAllBoneMorphs();
     return QQmlListProperty<ChildBoneMorphRefObject>(this, m_boneMorphs);
 }
 
 QQmlListProperty<ChildUVMorphRefObject> MorphRefObject::uvs()
 {
-    if (m_uvsMorphs.isEmpty()) {
-        Array<IMorph::UV *> values;
-        m_morphRef->getUVMorphs(values);
-        const int nvalues = values.count();
-        for (int i = 0; i < nvalues; i++) {
-            IMorph::UV *value = values[i];
-            m_uvsMorphs.append(new ChildUVMorphRefObject(this, value));
-        }
-    }
+    initializeAllUVMorphs();
     return QQmlListProperty<ChildUVMorphRefObject>(this, m_uvsMorphs);
 }
 
 QQmlListProperty<ChildMaterialMorphRefObject> MorphRefObject::materials()
 {
-    if (m_materialMorphs.isEmpty()) {
-        Array<IMorph::Material *> values;
-        m_morphRef->getMaterialMorphs(values);
-        const int nvalues = values.count();
-        for (int i = 0; i < nvalues; i++) {
-            IMorph::Material *value = values[i];
-            m_materialMorphs.append(new ChildMaterialMorphRefObject(this, value));
-        }
-    }
+    initializeAllMaterialMorphs();
     return QQmlListProperty<ChildMaterialMorphRefObject>(this, m_materialMorphs);
 }
 
 QQmlListProperty<ChildFlipMorphRefObject> MorphRefObject::flips()
 {
-    if (m_flipMorphs.isEmpty()) {
-        Array<IMorph::Flip *> values;
-        m_morphRef->getFlipMorphs(values);
-        const int nvalues = values.count();
-        for (int i = 0; i < nvalues; i++) {
-            IMorph::Flip *value = values[i];
-            m_flipMorphs.append(new ChildFlipMorphRefObject(this, value));
-        }
-    }
+    initializeAllFlipMorphs();
     return QQmlListProperty<ChildFlipMorphRefObject>(this, m_flipMorphs);
 }
 
 QQmlListProperty<ChildImpulseMorphRefObject> MorphRefObject::impluses()
 {
-    if (m_impulseMorphs.isEmpty()) {
-        Array<IMorph::Impulse *> values;
-        m_morphRef->getImpulseMorphs(values);
-        const int nvalues = values.count();
-        for (int i = 0; i < nvalues; i++) {
-            IMorph::Impulse *value = values[i];
-            m_impulseMorphs.append(new ChildImpulseMorphRefObject(this, value));
-        }
-    }
+    initializeAllImpulseMorphs();
     return QQmlListProperty<ChildImpulseMorphRefObject>(this, m_impulseMorphs);
 }
 
@@ -940,3 +1017,100 @@ void MorphRefObject::setDirty(bool value)
     }
 }
 
+void MorphRefObject::initializeAllGroupMorphs()
+{
+    if (m_groupMorphs.isEmpty()) {
+        Array<IMorph::Group *> values;
+        m_morphRef->getGroupMorphs(values);
+        const int nvalues = values.count();
+        for (int i = 0; i < nvalues; i++) {
+            IMorph::Group *value = values[i];
+            m_groupMorphs.append(new ChildGroupMorphRefObject(this, value));
+        }
+        qSort(m_groupMorphs.begin(), m_groupMorphs.end(), Util::LessThan());
+    }
+}
+
+void MorphRefObject::initializeAllVertexMorphs()
+{
+    if (m_vertexMorphs.isEmpty()) {
+        Array<IMorph::Vertex *> values;
+        m_morphRef->getVertexMorphs(values);
+        const int nvalues = values.count();
+        for (int i = 0; i < nvalues; i++) {
+            IMorph::Vertex *value = values[i];
+            m_vertexMorphs.append(new ChildVertexMorphRefObject(this, value));
+        }
+        qSort(m_vertexMorphs.begin(), m_vertexMorphs.end(), Util::LessThan());
+    }
+}
+
+void MorphRefObject::initializeAllBoneMorphs()
+{
+    if (m_boneMorphs.isEmpty()) {
+        Array<IMorph::Bone *> values;
+        m_morphRef->getBoneMorphs(values);
+        const int nvalues = values.count();
+        for (int i = 0; i < nvalues; i++) {
+            IMorph::Bone *value = values[i];
+            m_boneMorphs.append(new ChildBoneMorphRefObject(this, value));
+        }
+        qSort(m_boneMorphs.begin(), m_boneMorphs.end(), Util::LessThan());
+    }
+}
+
+void MorphRefObject::initializeAllUVMorphs()
+{
+    if (m_uvsMorphs.isEmpty()) {
+        Array<IMorph::UV *> values;
+        m_morphRef->getUVMorphs(values);
+        const int nvalues = values.count();
+        for (int i = 0; i < nvalues; i++) {
+            IMorph::UV *value = values[i];
+            m_uvsMorphs.append(new ChildUVMorphRefObject(this, value));
+        }
+        qSort(m_uvsMorphs.begin(), m_uvsMorphs.end(), Util::LessThan());
+    }
+}
+
+void MorphRefObject::initializeAllMaterialMorphs()
+{
+    if (m_materialMorphs.isEmpty()) {
+        Array<IMorph::Material *> values;
+        m_morphRef->getMaterialMorphs(values);
+        const int nvalues = values.count();
+        for (int i = 0; i < nvalues; i++) {
+            IMorph::Material *value = values[i];
+            m_materialMorphs.append(new ChildMaterialMorphRefObject(this, value));
+        }
+        qSort(m_materialMorphs.begin(), m_materialMorphs.end(), Util::LessThan());
+    }
+}
+
+void MorphRefObject::initializeAllFlipMorphs()
+{
+    if (m_flipMorphs.isEmpty()) {
+        Array<IMorph::Flip *> values;
+        m_morphRef->getFlipMorphs(values);
+        const int nvalues = values.count();
+        for (int i = 0; i < nvalues; i++) {
+            IMorph::Flip *value = values[i];
+            m_flipMorphs.append(new ChildFlipMorphRefObject(this, value));
+        }
+        qSort(m_flipMorphs.begin(), m_flipMorphs.end(), Util::LessThan());
+    }
+}
+
+void MorphRefObject::initializeAllImpulseMorphs()
+{
+    if (m_impulseMorphs.isEmpty()) {
+        Array<IMorph::Impulse *> values;
+        m_morphRef->getImpulseMorphs(values);
+        const int nvalues = values.count();
+        for (int i = 0; i < nvalues; i++) {
+            IMorph::Impulse *value = values[i];
+            m_impulseMorphs.append(new ChildImpulseMorphRefObject(this, value));
+        }
+        qSort(m_impulseMorphs.begin(), m_impulseMorphs.end(), Util::LessThan());
+    }
+}

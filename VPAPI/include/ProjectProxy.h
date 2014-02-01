@@ -148,7 +148,7 @@ public:
     explicit ProjectProxy(QObject *parent = 0);
     ~ProjectProxy();
 
-    Q_INVOKABLE void initializeOnce();
+    Q_INVOKABLE void initializeOnce(bool all = false);
     Q_INVOKABLE void createAsync();
     Q_INVOKABLE void loadAsync(const QUrl &fileUrl);
     Q_INVOKABLE bool save(const QUrl &fileUrl);
@@ -333,6 +333,7 @@ private:
     AccelerationType m_accelerationType;
     LanguageType m_language;
     bool m_initialized;
+    bool m_initializeAll;
 };
 
 #endif // PROJECT_H

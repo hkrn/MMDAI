@@ -241,7 +241,8 @@ ProjectProxy::ProjectProxy(QObject *parent)
       m_currentTimeIndex(0),
       m_accelerationType(ParallelAcceleration),
       m_language(DefaultLauguage),
-      m_initialized(false)
+      m_initialized(false),
+      m_initializeAll(false)
 {
     QMap<QString, IEncoding::ConstantType> str2const;
     str2const.insert("arm", IEncoding::kArm);
@@ -296,12 +297,13 @@ ProjectProxy::~ProjectProxy()
     m_dictionary.releaseAll();
 }
 
-void ProjectProxy::initializeOnce()
+void ProjectProxy::initializeOnce(bool all)
 {
     if (!m_initialized) {
         assignCamera();
         assignLight();
         setDirty(false);
+        m_initializeAll = all;
         m_initialized = true;
     }
 }
@@ -513,7 +515,7 @@ void ProjectProxy::redo()
 void ProjectProxy::internalAddModel(ModelProxy *value, bool selected, bool isProject)
 {
     Q_ASSERT(value);
-    value->initialize();
+    value->initialize(m_initializeAll);
     m_modelProxies.append(value);
     m_instance2ModelProxyRefs.insert(value->data(), value);
     m_uuid2ModelProxyRefs.insert(value->uuid(), value);

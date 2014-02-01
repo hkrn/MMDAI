@@ -39,6 +39,7 @@
 #define MORPHREFOBJECT_H
 
 #include <QColor>
+#include <QJsonValue>
 #include <QObject>
 #include <QQmlListProperty>
 #include <QQuaternion>
@@ -67,6 +68,8 @@ class ChildGroupMorphRefObject : public QObject
 public:
     ChildGroupMorphRefObject(MorphRefObject *parentMorphRef, vpvl2::IMorph::Group *valueRef);
     ~ChildGroupMorphRefObject();
+
+    Q_INVOKABLE QJsonValue toJson() const;
 
     MorphRefObject *parentMorph() const;
     QString name() const;
@@ -99,6 +102,8 @@ public:
     ChildVertexMorphRefObject(MorphRefObject *parentMorphRef, vpvl2::IMorph::Vertex *valueRef);
     ~ChildVertexMorphRefObject();
 
+    Q_INVOKABLE QJsonValue toJson() const;
+
     MorphRefObject *parentMorph() const;
     QString name() const;
     int index() const;
@@ -129,6 +134,8 @@ class ChildBoneMorphRefObject : public QObject
 public:
     ChildBoneMorphRefObject(MorphRefObject *parentMorphRef, vpvl2::IMorph::Bone *valueRef);
     ~ChildBoneMorphRefObject();
+
+    Q_INVOKABLE QJsonValue toJson() const;
 
     MorphRefObject *parentMorph() const;
     QString name() const;
@@ -162,6 +169,8 @@ class ChildUVMorphRefObject : public QObject
 public:
     ChildUVMorphRefObject(MorphRefObject *parentMorphRef, vpvl2::IMorph::UV *valueRef);
     ~ChildUVMorphRefObject();
+
+    Q_INVOKABLE QJsonValue toJson() const;
 
     MorphRefObject *parentMorph() const;
     QString name() const;
@@ -206,6 +215,8 @@ public:
 
     ChildMaterialMorphRefObject(MorphRefObject *parentMorphRef, vpvl2::IMorph::Material *valueRef);
     ~ChildMaterialMorphRefObject();
+
+    Q_INVOKABLE QJsonValue toJson() const;
 
     MorphRefObject *parentMorph() const;
     QString name() const;
@@ -261,6 +272,8 @@ public:
     ChildFlipMorphRefObject(MorphRefObject *parentMorphRef, vpvl2::IMorph::Flip *valueRef);
     ~ChildFlipMorphRefObject();
 
+    Q_INVOKABLE QJsonValue toJson() const;
+
     MorphRefObject *parentMorph() const;
     QString name() const;
     int index() const;
@@ -291,6 +304,8 @@ class ChildImpulseMorphRefObject : public QObject
 public:
     ChildImpulseMorphRefObject(MorphRefObject *parentMorphRef, vpvl2::IMorph::Impulse *valueRef);
     ~ChildImpulseMorphRefObject();
+
+    Q_INVOKABLE QJsonValue toJson() const;
 
     MorphRefObject *parentMorph() const;
     QString name() const;
@@ -363,7 +378,9 @@ public:
     MorphRefObject(ModelProxy *modelRef, LabelRefObject *labelRef, vpvl2::IMorph *morphRef, const QUuid &uuid);
     ~MorphRefObject();
 
+    void initialize();
     void setOriginWeight(const qreal &value);
+    Q_INVOKABLE QJsonValue toJson() const;
 
     vpvl2::IMorph *data() const;
     ModelProxy *parentModel() const;
@@ -409,6 +426,14 @@ signals:
     void dirtyChanged();
 
 private:
+    void initializeAllGroupMorphs();
+    void initializeAllVertexMorphs();
+    void initializeAllBoneMorphs();
+    void initializeAllUVMorphs();
+    void initializeAllMaterialMorphs();
+    void initializeAllFlipMorphs();
+    void initializeAllImpulseMorphs();
+
     QList<ChildGroupMorphRefObject *> m_groupMorphs;
     QList<ChildVertexMorphRefObject *> m_vertexMorphs;
     QList<ChildBoneMorphRefObject *> m_boneMorphs;

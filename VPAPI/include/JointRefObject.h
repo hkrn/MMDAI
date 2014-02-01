@@ -38,6 +38,7 @@
 #ifndef JOINTREFOBJECT_H
 #define JOINTREFOBJECT_H
 
+#include <QJsonValue>
 #include <QObject>
 #include <QUuid>
 #include <QVector3D>
@@ -81,6 +82,8 @@ public:
                    vpvl2::IJoint *jointRef,
                    const QUuid &uuid);
     ~JointRefObject();
+
+    Q_INVOKABLE QJsonValue toJson() const;
 
     vpvl2::IJoint *data() const;
     ModelProxy *parentModel() const;

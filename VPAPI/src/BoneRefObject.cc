@@ -85,6 +85,29 @@ void BoneRefObject::setOriginLocalOrientation(const QQuaternion &value)
     }
 }
 
+QJsonValue BoneRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("uuid", uuid().toString());
+    v.insert("name", name());
+    v.insert("destinationOriginBone", (destinationOriginBone() ? destinationOriginBone()->uuid() : QUuid()).toString());
+    v.insert("parentInherentBone", (parentInherentBone() ? parentInherentBone()->uuid() : QUuid()).toString());
+    v.insert("origin", Util::toJson(origin()));
+    v.insert("destinationOrigin", Util::toJson(destinationOrigin()));
+    v.insert("fixedAxis", Util::toJson(fixedAxis()));
+    v.insert("inherentCoefficient", inherentCoefficient());
+    v.insert("inverseKinematicsEnabled", isInverseKinematicsKEnabled());
+    v.insert("movable", isMovable());
+    v.insert("rotateable", isRotateable());
+    v.insert("visible", isVisible());
+    v.insert("interactive", isInteractive());
+    v.insert("inherentTranslationEnabled", isInherentTranslationEnabled());
+    v.insert("inherentOrientationEnabled", isInherentOrientationEnabled());
+    v.insert("fixedAxisEnabled", isFixedAxisEnabled());
+    v.insert("localAxesEnabled", isLocalAxesEnabled());
+    return v;
+}
+
 vpvl2::IBone *BoneRefObject::data() const
 {
     return m_boneRef;

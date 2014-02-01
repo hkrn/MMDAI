@@ -39,6 +39,7 @@
 #define UTIL_H
 
 #include <QColor>
+#include <QJsonValue>
 #include <QMatrix4x4>
 #include <QQuaternion>
 #include <QString>
@@ -54,6 +55,13 @@ class IString;
 
 class Util {
 public:
+    struct LessThan {
+        template<typename TObject>
+        inline bool operator()(const TObject *left, const TObject *right) {
+            return left->index() < right->index();
+        }
+    };
+
     static const QColor kRed;
     static const QColor kGreen;
     static const QColor kBlue;
@@ -74,6 +82,10 @@ public:
     static vpvl2::Quaternion toQuaternion(const QQuaternion &value);
     static QQuaternion fromQuaternion(const vpvl2::Quaternion &value);
     static QString resourcePath(const QString &basePath);
+    static QJsonValue toJson(const QColor &value);
+    static QJsonValue toJson(const QVector3D &value);
+    static QJsonValue toJson(const QVector4D &value);
+    static QJsonValue toJson(const QQuaternion &value);
 
 private:
     Util();

@@ -39,6 +39,7 @@
 #include "ModelProxy.h"
 #include "Util.h"
 
+#include <QtCore>
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/qt/String.h>
 
@@ -62,6 +63,31 @@ MaterialRefObject::~MaterialRefObject()
 {
     m_parentModelRef = 0;
     m_materialRef = 0;
+}
+
+QJsonValue MaterialRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("uuid", uuid().toString());
+    v.insert("name", name());
+    v.insert("mainTexturePath", mainTexturePath());
+    v.insert("sphereTexturePath", sphereTexturePath());
+    v.insert("toonTexturePath", toonTexturePath());
+    v.insert("userAreaData", userAreaData());
+    v.insert("ambient", Util::toJson(ambient()));
+    v.insert("diffuse", Util::toJson(diffuse()));
+    v.insert("specular", Util::toJson(specular()));
+    v.insert("edgeColor", Util::toJson(edgeColor()));
+    v.insert("sphereTextureType", sphereTextureType());
+    v.insert("shininess", shininess());
+    v.insert("edgeSize", edgeSize());
+    v.insert("toonTextureIndex", toonTextureIndex());
+    v.insert("cullingDisabled", isCullingDisabled());
+    v.insert("castingShadowEnabled", isCastingShadowEnabled());
+    v.insert("castingShadowMapEnabled", isCastingShadowMapEnabled());
+    v.insert("edgeEnabled", isEdgeEnabled());
+    v.insert("vertexColorEnabled", isVertexColorEnabled());
+    return v;
 }
 
 IMaterial *MaterialRefObject::data() const
