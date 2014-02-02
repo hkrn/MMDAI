@@ -441,6 +441,7 @@ bool RenderTarget::handleKeyPress(int key, int modifier)
 void RenderTarget::toggleRunning(bool value)
 {
     Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     if (value) {
         connect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::draw, Qt::DirectConnection);
     }
@@ -735,6 +736,7 @@ GraphicsDevice *RenderTarget::graphicsDevice() const
 void RenderTarget::handleWindowChange(QQuickWindow *window)
 {
     if (window) {
+        Q_ASSERT(window->thread() == thread());
         connect(window, &QQuickWindow::sceneGraphInitialized, this, &RenderTarget::initializeOpenGLContext, Qt::DirectConnection);
         connect(window, &QQuickWindow::frameSwapped, this, &RenderTarget::synchronizeImplicitly, Qt::DirectConnection);
         window->setClearBeforeRendering(false);
@@ -744,6 +746,7 @@ void RenderTarget::handleWindowChange(QQuickWindow *window)
 void RenderTarget::update()
 {
     Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     window()->update();
 }
 
@@ -993,7 +996,8 @@ void RenderTarget::handleFileChange(const QString &filePath)
 
 void RenderTarget::consumeFileChangeQueue()
 {
-    Q_ASSERT(m_applicationContext && window());
+    Q_ASSERT(m_applicationContext);
+    Q_ASSERT(window());
     QMutexLocker locker(&m_fileChangeQueueMutex); Q_UNUSED(locker);
     disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::consumeFileChangeQueue);
     while (!m_fileChangeQueue.isEmpty()) {
@@ -1010,12 +1014,13 @@ void RenderTarget::handleShare()
 {
     disconnect(this, &RenderTarget::offscreenImageDidExport, this, &RenderTarget::handleShare);
     m_sharingService->showPostForm(m_exportImage);
-    m_exportImage.save("/Users/hkrn/test.bmp");
 }
 
 void RenderTarget::draw()
 {
-    Q_ASSERT(m_applicationContext && window());
+    Q_ASSERT(m_applicationContext);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     if (m_projectProxyRef) {
         emit renderWillPerform();
         resetOpenGLStates();
@@ -1042,6 +1047,7 @@ void RenderTarget::draw()
 void RenderTarget::drawOffscreenForImage()
 {
     Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForImage);
     if (m_exportLocation.isValid()) {
         connect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::writeExportedImage);
@@ -1055,6 +1061,7 @@ void RenderTarget::drawOffscreenForImage()
 void RenderTarget::drawOffscreenForVideo()
 {
     Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     EncodingTask *encodingTaskRef = encodingTask();
     QOpenGLFramebufferObject *fbo = encodingTaskRef->generateFramebufferObject(window());
     drawOffscreen(fbo);
@@ -1076,6 +1083,7 @@ void RenderTarget::drawOffscreenForVideo()
 void RenderTarget::writeExportedImage()
 {
     Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::writeExportedImage);
     QFileInfo finfo(m_exportLocation.toLocalFile());
     const QString &suffix = finfo.suffix();
@@ -1116,6 +1124,7 @@ void RenderTarget::writeExportedImage()
 void RenderTarget::launchEncodingTask()
 {
     Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::launchEncodingTask);
     encodingTask()->launch();
     m_exportSize = QSize();
@@ -1130,6 +1139,7 @@ void RenderTarget::prepareSyncMotionState()
 void RenderTarget::prepareUpdatingLight()
 {
     if (QQuickWindow *win = window()) {
+        Q_ASSERT(win->thread() == thread());
         connect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::performUpdatingLight, Qt::DirectConnection);
     }
 }
@@ -1137,6 +1147,7 @@ void RenderTarget::prepareUpdatingLight()
 void RenderTarget::synchronizeExplicitly()
 {
     Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::synchronizeExplicitly);
     if (m_projectProxyRef) {
         m_projectProxyRef->update(Scene::kUpdateAll | Scene::kForceUpdateAllMorphs);
@@ -1149,7 +1160,9 @@ void RenderTarget::synchronizeExplicitly()
 
 void RenderTarget::synchronizeMotionState()
 {
-    Q_ASSERT(window() && m_projectProxyRef);
+    Q_ASSERT(m_projectProxyRef);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::synchronizeMotionState);
     m_projectProxyRef->update(Scene::kUpdateAll | Scene::kForceUpdateAllMorphs | Scene::kResetMotionState);
     m_projectProxyRef->world()->rewind();
@@ -1159,6 +1172,7 @@ void RenderTarget::synchronizeMotionState()
 void RenderTarget::synchronizeImplicitly()
 {
     Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     if (m_projectProxyRef) {
         int flags = m_playing ? Scene::kUpdateAll : (Scene::kUpdateCamera | Scene::kUpdateRenderEngines);
         m_projectProxyRef->update(flags);
@@ -1168,6 +1182,7 @@ void RenderTarget::synchronizeImplicitly()
 void RenderTarget::initializeOpenGLContext()
 {
     Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     if (!Scene::isInitialized()) {
         bool isCoreProfile = window()->format().profile() == QSurfaceFormat::CoreProfile;
         m_applicationContext.reset(new ApplicationContext(m_projectProxyRef, &m_config, isCoreProfile));
@@ -1192,6 +1207,8 @@ void RenderTarget::initializeOpenGLContext()
 
 void RenderTarget::releaseOpenGLResources()
 {
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
     disconnect(m_applicationContext.data(), &ApplicationContext::fileDidChange, this, &RenderTarget::handleFileChange);
     m_applicationContext->deleteAllModelProxies(m_projectProxyRef);
@@ -1210,7 +1227,10 @@ void RenderTarget::releaseOpenGLResources()
 
 void RenderTarget::enqueueUploadingModel(ModelProxy *model, bool isProject)
 {
-    Q_ASSERT(window() && model && m_applicationContext);
+    Q_ASSERT(m_applicationContext);
+    Q_ASSERT(model);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     const QUuid &uuid = model->uuid();
     VPVL2_VLOG(1, "Enqueued uploading the model " << uuid.toString().toStdString() << " a.k.a " << model->name().toStdString());
     m_applicationContext->enqueueUploadingModel(model, isProject);
@@ -1218,7 +1238,10 @@ void RenderTarget::enqueueUploadingModel(ModelProxy *model, bool isProject)
 
 void RenderTarget::enqueueUploadingEffect(ModelProxy *model)
 {
-    Q_ASSERT(window() && model && m_applicationContext);
+    Q_ASSERT(m_applicationContext);
+    Q_ASSERT(model);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     const QUuid &uuid = model->uuid();
     VPVL2_VLOG(1, "Enqueued uploading the effect " << uuid.toString().toStdString());
     m_applicationContext->enqueueUploadingEffect(model);
@@ -1232,6 +1255,8 @@ void RenderTarget::enqueueDeletingModel(ModelProxy *model)
         if (m_modelDrawer) {
             m_modelDrawer->removeModelRef(model);
         }
+        Q_ASSERT(window());
+        Q_ASSERT(window()->thread() == thread());
         m_applicationContext->enqueueDeletingModelProxy(model);
     }
 }
@@ -1260,7 +1285,9 @@ void RenderTarget::commitDeletingModels()
 
 void RenderTarget::performUploadingEnqueuedModels()
 {
-    Q_ASSERT(window() && m_applicationContext);
+    Q_ASSERT(m_applicationContext);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedModels);
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
     QList<ApplicationContext::ModelProxyPair> succeededModelProxies, failedModelProxies;
@@ -1297,7 +1324,9 @@ void RenderTarget::performUploadingEnqueuedModels()
 
 void RenderTarget::performUploadingEnqueuedEffects()
 {
-    Q_ASSERT(window() && m_applicationContext);
+    Q_ASSERT(m_applicationContext);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedEffects);
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
     QList<ModelProxy *> succeededEffects, failedEffects;
@@ -1318,6 +1347,7 @@ void RenderTarget::performDeletingEnqueuedModels()
 {
     Q_ASSERT(m_applicationContext);
     if (QQuickWindow *win = window()) {
+        Q_ASSERT(win->thread() == thread());
         disconnect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::performDeletingEnqueuedModels);
     }
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
@@ -1332,7 +1362,10 @@ void RenderTarget::performDeletingEnqueuedModels()
 
 void RenderTarget::performUpdatingLight()
 {
-    Q_ASSERT(window() && m_applicationContext && m_projectProxyRef);
+    Q_ASSERT(m_applicationContext);
+    Q_ASSERT(m_projectProxyRef);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUpdatingLight);
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
     const LightRefObject *light = m_projectProxyRef->light();
@@ -1413,7 +1446,10 @@ void RenderTarget::prepareUploadingModelsInProject()
 
 void RenderTarget::activateProject()
 {
-    Q_ASSERT(m_applicationContext && m_projectProxyRef);
+    Q_ASSERT(m_applicationContext);
+    Q_ASSERT(m_projectProxyRef);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     disconnect(this, &RenderTarget::enqueuedModelsDidUpload, this, &RenderTarget::activateProject);
     setShadowMapSize(m_projectProxyRef->globalSetting("shadow.texture.size", kDefaultShadowMapSize));
     m_applicationContext->release();
@@ -1473,6 +1509,8 @@ IGizmo *RenderTarget::orientationGizmo() const
 
 void RenderTarget::resetOpenGLStates()
 {
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
     window()->resetOpenGLState();
     Scene::setRequiredOpenGLState();
@@ -1481,6 +1519,8 @@ void RenderTarget::resetOpenGLStates()
 
 void RenderTarget::clearScene()
 {
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     const QColor &color = m_projectProxyRef ? m_projectProxyRef->screenColor() : QColor(Qt::white);
     glClearColor(color.redF(), color.greenF(), color.blueF(), color.alphaF());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -1488,6 +1528,8 @@ void RenderTarget::clearScene()
 
 void RenderTarget::drawVideoFrame()
 {
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     if (m_videoSurface) {
         gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
         m_videoSurface->initialize();
@@ -1498,6 +1540,8 @@ void RenderTarget::drawVideoFrame()
 
 void RenderTarget::drawGrid()
 {
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
     m_grid->draw(m_viewProjectionMatrix);
     gl::popAnnotationGroup(m_applicationContext.data());
@@ -1513,6 +1557,8 @@ void RenderTarget::drawShadowMap()
 
 void RenderTarget::drawScene()
 {
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
     Hash<HashPtr, IEffect *> nextPostEffects;
     Scene *scene = m_projectProxyRef->projectInstanceRef();
@@ -1549,6 +1595,8 @@ void RenderTarget::drawScene()
 void RenderTarget::drawDebug()
 {
     Q_ASSERT(m_projectProxyRef);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     WorldProxy *worldProxy = m_projectProxyRef->world();
     if (worldProxy->isDebugEnabled() && worldProxy->simulationType() != WorldProxy::DisableSimulation) {
         gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
@@ -1576,6 +1624,8 @@ void RenderTarget::drawDebug()
 void RenderTarget::drawModelBones()
 {
     Q_ASSERT(m_projectProxyRef);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     ModelProxy *currentModelRef = m_projectProxyRef->currentModel();
     if (!m_playing && m_editMode == SelectMode && currentModelRef && currentModelRef->isVisible()) {
         gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
@@ -1591,6 +1641,8 @@ void RenderTarget::drawModelBones()
 
 void RenderTarget::drawCurrentGizmo()
 {
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     if (!m_playing && m_currentGizmoRef) {
         gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
         m_currentGizmoRef->Draw();
@@ -1607,6 +1659,8 @@ void RenderTarget::drawEffectParameterUIWidgets()
 
 void RenderTarget::drawOffscreen(QOpenGLFramebufferObject *fbo)
 {
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
     m_applicationContext->setViewportRegion(glm::ivec4(0, 0, fbo->width(), fbo->height()));
     Scene::setRequiredOpenGLState();
@@ -1625,6 +1679,8 @@ void RenderTarget::drawOffscreen(QOpenGLFramebufferObject *fbo)
 void RenderTarget::updateViewport()
 {
     Q_ASSERT(m_applicationContext);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     int w = m_viewport.width(), h = m_viewport.height();
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
     if (isDirty()) {
