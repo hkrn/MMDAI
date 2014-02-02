@@ -788,6 +788,10 @@ void Model::setComment(const IString *value, IEncoding::LanguageType /* type */)
     internal::setString(value, m_comment);
 }
 
+void Model::setEncodingType(IString::Codec /* value */)
+{
+}
+
 void Model::setWorldTranslation(const Vector3 &value)
 {
     m_rootBoneRef->setLocalTranslation(value);

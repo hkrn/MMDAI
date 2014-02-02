@@ -131,6 +131,8 @@ public:
         virtual void physicsEnableWillChange(bool value, IModel *model) = 0;
         virtual void aabbWillChange(const Vector3 &min, const Vector3 &max, IModel *model) = 0;
         virtual void versionWillChange(float32 value, IModel *model) = 0;
+        virtual void maxUVCountWillChange(int value, IModel *model) = 0;
+        virtual void encodingTypeWillChange(IString::Codec value, IModel *model) = 0;
     };
 
     /**
@@ -209,6 +211,8 @@ public:
      * @param type
      */
     virtual const IString *comment(IEncoding::LanguageType type) const = 0;
+
+    virtual IString::Codec encodingType() const = 0;
 
     /**
      * モデルが可視であるかどうかを返します.
@@ -526,6 +530,8 @@ public:
      * @param type
      */
     virtual void setComment(const IString *value, IEncoding::LanguageType type) = 0;
+
+    virtual void setEncodingType(IString::Codec value) = 0;
 
     /**
      * ワールド座標系におけるモデルの補正位置を設定します.

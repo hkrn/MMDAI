@@ -77,6 +77,7 @@ public:
     Type type() const { return kAssetModel; }
     const IString *name(IEncoding::LanguageType /* type */) const { return m_name; }
     const IString *comment(IEncoding::LanguageType /* type */) const { return m_name; }
+    IString::Codec encodingType() const { return IString::kUTF8; }
     bool isVisible() const { return m_visible && !btFuzzyZero(opacity()); }
     bool isPhysicsEnabled() const { return false; }
     ErrorType error() const { return kNoError; }
@@ -113,6 +114,7 @@ public:
     IBone *parentBoneRef() const { return m_parentBoneRef; }
     void setName(const IString *value, IEncoding::LanguageType type);
     void setComment(const IString *value, IEncoding::LanguageType type);
+    void setEncodingType(IString::Codec value);
     void setWorldTranslation(const Vector3 &value);
     void setWorldPositionInternal(const Vector3 &value);
     void setWorldOrientation(const Quaternion &value);

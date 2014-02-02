@@ -75,6 +75,7 @@ struct Flags
     uint8 morphIndexSize;
     uint8 rigidBodyIndexSize;
     void clamp() {
+        btClamp(codec, uint8(0), uint8(1));
         btClamp(additionalUVSize, uint8(0), uint8(4));
         btClamp(vertexIndexSize, uint8(1), uint8(4));
         btClamp(textureIndexSize, uint8(1), uint8(4));
@@ -636,6 +637,7 @@ struct Model::PrivateContext {
           englishNamePtr(0),
           commentPtr(0),
           englishCommentPtr(0),
+          codec(IString::kUTF8),
           edgeColor(kZeroV3),
           aabbMax(kZeroV3),
           aabbMin(kZeroV3),
@@ -680,6 +682,7 @@ struct Model::PrivateContext {
     }
     void parseNamesAndComments(const Model::DataInfo &info) {
         IEncoding *encoding = info.encoding;
+        codec = info.codec;
         internal::setStringDirect(encoding->toString(info.namePtr, info.nameSize, info.codec), namePtr);
         internal::setStringDirect(encodingRef->toString(info.englishNamePtr, info.englishNameSize, info.codec), englishNamePtr);
         internal::setStringDirect(encodingRef->toString(info.commentPtr, info.commentSize, info.codec), commentPtr);
@@ -861,6 +864,7 @@ struct Model::PrivateContext {
     IString *englishNamePtr;
     IString *commentPtr;
     IString *englishCommentPtr;
+    IString::Codec codec;
     Vector3 edgeColor;
     Vector3 aabbMax;
     Vector3 aabbMin;
@@ -949,12 +953,11 @@ void Model::save(uint8 *data, vsize &written) const
     internal::writeBytes("PMX ", sizeof(header.signature), signature);
     header.version = m_context->dataInfo.version;
     internal::writeBytes(&header, sizeof(header), data);
-    IString::Codec codec = IString::kUTF8; // TODO: UTF-16 support
+    IString::Codec codec = m_context->codec;
     Flags flags;
     DataInfo info = m_context->dataInfo;
     flags.codec = codec == IString::kUTF8 ? 1 : 0;
     flags.additionalUVSize = uint8(info.additionalUVSize);
-    info.codec = codec;
     m_context->assignIndexSize(info);
     m_context->assignIndexSize(flags);
     uint8 flagSize = sizeof(flags);
@@ -991,10 +994,9 @@ void Model::save(uint8 *data, vsize &written) const
 vsize Model::estimateSize() const
 {
     vsize size = 0;
-    IString::Codec codec = IString::kUTF8; // TODO: UTF-16 support
     DataInfo info = m_context->dataInfo;
     m_context->assignIndexSize(info);
-    info.codec = codec;
+    IString::Codec codec = info.codec = m_context->codec;
     size += sizeof(Header);
     size += sizeof(uint8) + sizeof(Flags);
     size += internal::estimateSize(m_context->namePtr, codec);
@@ -1777,6 +1779,19 @@ void Model::setVersion(float32 value)
     }
 }
 
+IString::Codec Model::encodingType() const
+{
+    return m_context->codec;
+}
+
+void Model::setEncodingType(IString::Codec value)
+{
+    if (m_context->codec != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, encodingTypeWillChange(value, this));
+        m_context->codec = value;
+    }
+}
+
 int Model::maxUVCount() const
 {
     return int(m_context->dataInfo.additionalUVSize);
@@ -1784,7 +1799,8 @@ int Model::maxUVCount() const
 
 void Model::setMaxUVCount(int value)
 {
-    if (internal::checkBound(value, 0, Vertex::kMaxMorphs)) {
+    if (m_context->dataInfo.additionalUVSize != vsize(value) && internal::checkBound(value, 0, Vertex::kMaxMorphs)) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, maxUVCountWillChange(value, this));
         m_context->dataInfo.additionalUVSize = value;
     }
 }

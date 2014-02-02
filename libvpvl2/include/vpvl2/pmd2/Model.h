@@ -114,6 +114,7 @@ public:
     Type type() const;
     const IString *name(IEncoding::LanguageType type) const;
     const IString *comment(IEncoding::LanguageType type) const;
+    IString::Codec encodingType() const;
     bool isVisible() const;
     ErrorType error() const;
     bool load(const uint8 *data, vsize size);
@@ -150,6 +151,7 @@ public:
     bool isPhysicsEnabled() const;
     void setName(const IString *value, IEncoding::LanguageType type);
     void setComment(const IString *value, IEncoding::LanguageType type);
+    void setEncodingType(IString::Codec value);
     void setWorldTranslation(const Vector3 &value);
     void setWorldOrientation(const Quaternion &value);
     void setOpacity(const Scalar &value);

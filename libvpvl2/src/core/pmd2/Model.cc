@@ -1342,6 +1342,11 @@ const IString *Model::comment(IEncoding::LanguageType type) const
     }
 }
 
+IString::Codec Model::encodingType() const
+{
+    return IString::kShiftJIS;
+}
+
 bool Model::isVisible() const
 {
     return m_context->visible && !btFuzzyZero(m_context->opacity);
@@ -1532,6 +1537,10 @@ void Model::setComment(const IString *value, IEncoding::LanguageType type)
     default:
         break;
     }
+}
+
+void Model::setEncodingType(IString::Codec /* value */)
+{
 }
 
 void Model::setWorldTranslation(const Vector3 &value)

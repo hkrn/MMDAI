@@ -226,6 +226,8 @@ public:
 
     float32 version() const;
     void setVersion(float32 value);
+    IString::Codec encodingType() const;
+    void setEncodingType(IString::Codec value);
     int maxUVCount() const;
     void setMaxUVCount(int value);
     IBone *createBone();
