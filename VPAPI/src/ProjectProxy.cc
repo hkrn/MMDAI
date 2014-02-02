@@ -1034,9 +1034,10 @@ void ProjectProxy::internalDeleteAllMotions(bool fromDestructor)
 {
     m_cameraRefObject->releaseMotion();
     m_lightRefObject->releaseMotion();
-    /* copy motion proxies because m_motionProxies will be mutated using removeOne */
-    QList<MotionProxy *> motionProxies = m_motionProxies;
-    foreach (MotionProxy *motionProxy, motionProxies) {
+    QMutableListIterator<MotionProxy *> it(m_motionProxies);
+    while (it.hasNext()) {
+        MotionProxy *motionProxy = it.next();
+        it.remove();
         deleteMotion(motionProxy, fromDestructor);
     }
 }
@@ -1372,9 +1373,10 @@ void ProjectProxy::release(bool fromDestructor)
     VPVL2_VLOG(1, "The project will be released");
     reset();
     internalDeleteAllMotions(fromDestructor);
-    /* copy motion proxies because m_modelProxies will be mutated using removeOne */
-    QList<ModelProxy *> modelProxies = m_modelProxies;
-    foreach (ModelProxy *modelProxy, modelProxies) {
+    QMutableListIterator<ModelProxy *> it(m_modelProxies);
+    while (it.hasNext()) {
+        ModelProxy *modelProxy = it.next();
+        it.remove();
         internalDeleteModel(modelProxy);
     }
     m_undoGroup.reset(fromDestructor ? 0 : new QUndoGroup());
