@@ -123,6 +123,26 @@ ModelProxy::~ModelProxy()
     m_baseY = -1;
 }
 
+bool ModelProxy::save(const QUrl &fileUrl)
+{
+    QFile file(fileUrl.toLocalFile());
+    if (file.open(QFile::WriteOnly)) {
+        QByteArray bytes;
+        vsize written = 0;
+        bytes.resize(m_model->estimateSize());
+        m_model->setEncodingType(IString::kUTF8);
+        m_model->save(reinterpret_cast<uint8 *>(bytes.data()), written);
+        Q_ASSERT(bytes.size() == int(written));
+        file.write(bytes);
+        file.close();
+        return true;
+    }
+    else {
+        qWarning() << file.errorString();
+        return false;
+    }
+}
+
 bool ModelProxy::saveJson(const QUrl &fileUrl) const
 {
     QFile file(fileUrl.toLocalFile());

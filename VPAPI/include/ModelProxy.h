@@ -155,6 +155,7 @@ public:
                QUndoStack *undoStackRef);
     ~ModelProxy();
 
+    Q_INVOKABLE bool save(const QUrl &fileUrl);
     Q_INVOKABLE bool saveJson(const QUrl &fileUrl) const;
 
     void initialize(bool all);
