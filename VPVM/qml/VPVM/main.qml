@@ -1126,8 +1126,7 @@ ApplicationWindow {
                                 for (var i in keyframes) {
                                     var keyframe = keyframes[i], keyframeTimeIndex = keyframe.timeIndex
                                     if (keyframeTimeIndex === 0 || (timeIndex < oldTimeIndex && keyframeTimeIndex < timeIndex)) {
-                                        // FIXME: warning dialog
-                                        console.log("Cannot merge selected keyframes out of destination time index")
+                                        notificationArea.notify(qsTr("Cannot merge selected keyframes out of destination time index"))
                                         return
                                     }
                                 }
