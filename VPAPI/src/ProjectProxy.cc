@@ -1372,13 +1372,12 @@ void ProjectProxy::release(bool fromDestructor)
     VPVL2_VLOG(1, "The project will be released");
     reset();
     internalDeleteAllMotions(fromDestructor);
-    m_undoGroup->setActiveStack(0);
-    m_undoGroup.reset(fromDestructor ? 0 : new QUndoGroup());
     /* copy motion proxies because m_modelProxies will be mutated using removeOne */
     QList<ModelProxy *> modelProxies = m_modelProxies;
     foreach (ModelProxy *modelProxy, modelProxies) {
         internalDeleteModel(modelProxy);
     }
+    m_undoGroup.reset(fromDestructor ? 0 : new QUndoGroup());
     m_project->setWorldRef(0);
     if (!fromDestructor) {
         connect(m_undoGroup.data(), &QUndoGroup::canUndoChanged, this, &ProjectProxy::canUndoChanged);
