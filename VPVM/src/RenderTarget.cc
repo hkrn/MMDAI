@@ -1139,7 +1139,6 @@ void RenderTarget::prepareSyncMotionState()
 void RenderTarget::prepareUpdatingLight()
 {
     if (QQuickWindow *win = window()) {
-        Q_ASSERT(win->thread() == thread());
         connect(win, &QQuickWindow::beforeRendering, this, &RenderTarget::performUpdatingLight, Qt::DirectConnection);
     }
 }
@@ -1250,13 +1249,13 @@ void RenderTarget::enqueueUploadingEffect(ModelProxy *model)
 void RenderTarget::enqueueDeletingModel(ModelProxy *model)
 {
     Q_ASSERT(m_applicationContext);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     if (model) {
         VPVL2_VLOG(1, "The model " << model->uuid().toString().toStdString() << " a.k.a " << model->name().toStdString() << " will be released from RenderTarget");
         if (m_modelDrawer) {
             m_modelDrawer->removeModelRef(model);
         }
-        Q_ASSERT(window());
-        Q_ASSERT(window()->thread() == thread());
         m_applicationContext->enqueueDeletingModelProxy(model);
     }
 }
@@ -1325,6 +1324,7 @@ void RenderTarget::performUploadingEnqueuedModels()
 void RenderTarget::performUploadingEnqueuedEffects()
 {
     Q_ASSERT(m_applicationContext);
+    Q_ASSERT(m_projectProxyRef);
     Q_ASSERT(window());
     Q_ASSERT(window()->thread() == thread());
     disconnect(window(), &QQuickWindow::beforeRendering, this, &RenderTarget::performUploadingEnqueuedEffects);
@@ -1509,6 +1509,7 @@ IGizmo *RenderTarget::orientationGizmo() const
 
 void RenderTarget::resetOpenGLStates()
 {
+    Q_ASSERT(m_applicationContext);
     Q_ASSERT(window());
     Q_ASSERT(window()->thread() == thread());
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
@@ -1540,6 +1541,7 @@ void RenderTarget::drawVideoFrame()
 
 void RenderTarget::drawGrid()
 {
+    Q_ASSERT(m_applicationContext);
     Q_ASSERT(window());
     Q_ASSERT(window()->thread() == thread());
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
@@ -1549,6 +1551,9 @@ void RenderTarget::drawGrid()
 
 void RenderTarget::drawShadowMap()
 {
+    Q_ASSERT(m_applicationContext);
+    Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
     m_applicationContext->renderShadowMap();
     m_applicationContext->renderOffscreen();
@@ -1557,6 +1562,8 @@ void RenderTarget::drawShadowMap()
 
 void RenderTarget::drawScene()
 {
+    Q_ASSERT(m_applicationContext);
+    Q_ASSERT(m_projectProxyRef);
     Q_ASSERT(window());
     Q_ASSERT(window()->thread() == thread());
     Array<IRenderEngine *> enginesForPreProcess, enginesForStandard, enginesForPostProcess;
@@ -1594,6 +1601,7 @@ void RenderTarget::drawScene()
 
 void RenderTarget::drawDebug()
 {
+    Q_ASSERT(m_applicationContext);
     Q_ASSERT(m_projectProxyRef);
     Q_ASSERT(window());
     Q_ASSERT(window()->thread() == thread());
@@ -1624,10 +1632,11 @@ void RenderTarget::drawDebug()
 void RenderTarget::drawModelBones()
 {
     Q_ASSERT(m_projectProxyRef);
-    Q_ASSERT(window());
-    Q_ASSERT(window()->thread() == thread());
     ModelProxy *currentModelRef = m_projectProxyRef->currentModel();
     if (!m_playing && m_editMode == SelectMode && currentModelRef && currentModelRef->isVisible()) {
+        Q_ASSERT(m_applicationContext);
+        Q_ASSERT(window());
+        Q_ASSERT(window()->thread() == thread());
         gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
         if (m_modelDrawer) {
             float32 m[16];
@@ -1641,9 +1650,10 @@ void RenderTarget::drawModelBones()
 
 void RenderTarget::drawCurrentGizmo()
 {
-    Q_ASSERT(window());
-    Q_ASSERT(window()->thread() == thread());
     if (!m_playing && m_currentGizmoRef) {
+        Q_ASSERT(m_applicationContext);
+        Q_ASSERT(window());
+        Q_ASSERT(window()->thread() == thread());
         gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
         m_currentGizmoRef->Draw();
         gl::popAnnotationGroup(m_applicationContext.data());
@@ -1653,12 +1663,16 @@ void RenderTarget::drawCurrentGizmo()
 void RenderTarget::drawEffectParameterUIWidgets()
 {
     if (!m_playing) {
+        Q_ASSERT(m_applicationContext);
+        Q_ASSERT(window());
+        Q_ASSERT(window()->thread() == thread());
         m_applicationContext->renderEffectParameterUIWidgets();
     }
 }
 
 void RenderTarget::drawOffscreen(QOpenGLFramebufferObject *fbo)
 {
+    Q_ASSERT(m_applicationContext);
     Q_ASSERT(window());
     Q_ASSERT(window()->thread() == thread());
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());

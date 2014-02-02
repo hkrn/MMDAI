@@ -82,6 +82,7 @@ class RenderTarget : public QQuickItem
     Q_FLAGS(VisibleGizmoMask VisibleGizmoMasks)
     Q_PROPERTY(bool initialized READ isInitialized NOTIFY initializedChanged FINAL)
     Q_PROPERTY(bool playing READ isPlaying WRITE setPlaying NOTIFY playingChanged FINAL)
+    Q_PROPERTY(bool transforming READ isPlaying WRITE setTransforming NOTIFY playingChanged FINAL)
     Q_PROPERTY(bool dirty READ isDirty WRITE setDirty NOTIFY dirtyChanged FINAL)
     Q_PROPERTY(bool grabbingGizmo READ grabbingGizmo NOTIFY grabbingGizmoChanged FINAL)
     Q_PROPERTY(bool enableSnapGizmo READ isSnapGizmoEnabled WRITE setSnapGizmoEnabled NOTIFY enableSnapGizmoChanged FINAL)
@@ -138,6 +139,7 @@ public:
     void setProjectProxy(ProjectProxy *value);
     bool isPlaying() const;
     void setPlaying(bool value);
+    void setTransforming(bool value);
     bool isDirty() const;
     void setDirty(bool value);
     bool isSnapGizmoEnabled() const;
