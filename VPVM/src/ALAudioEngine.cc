@@ -60,6 +60,8 @@ ALAudioEngine::ALAudioEngine(QObject *parent)
 {
     connect(this, &ALAudioEngine::sourceChanged, this, &ALAudioEngine::seekableChanged);
     connect(this, &ALAudioEngine::audioSourceDidLoad, this, &ALAudioEngine::sourceChanged);
+    connect(this, &ALAudioEngine::playingDidPerform, this, &ALAudioEngine::playingChanged);
+    connect(this, &ALAudioEngine::stoppingDidPerform, this, &ALAudioEngine::playingChanged);
 }
 
 ALAudioEngine::~ALAudioEngine()
@@ -148,9 +150,14 @@ qreal ALAudioEngine::timeIndex() const
     return 0;
 }
 
-bool ALAudioEngine::seekable() const
+bool ALAudioEngine::isSeekable() const
 {
     return m_source.isEmpty();
+}
+
+bool ALAudioEngine::isPlaying() const
+{
+    return m_timer.isActive();
 }
 
 void ALAudioEngine::timerEvent(QTimerEvent *event)

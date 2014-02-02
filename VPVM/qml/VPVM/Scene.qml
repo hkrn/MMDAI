@@ -173,6 +173,7 @@ Item {
         target: renderTarget
         property: "currentTimeIndex"
         value: audioEngine.timeIndex
+        when: audioEngine.playing
     }
 
     function seek(timeIndex) {
@@ -505,6 +506,7 @@ Item {
         target: projectDocument
         property: "currentTimeIndex"
         value: renderTarget.currentTimeIndex
+        when: renderTarget.playing
     }
     Keys.onPressed: {
         event.accepted = renderTarget.handleKeyPress(event.key, event.modifiers)
