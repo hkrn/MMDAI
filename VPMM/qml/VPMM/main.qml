@@ -83,7 +83,7 @@ ApplicationWindow {
         Qt.quit()
     }
     Component.onCompleted: {
-        scene.project.initializeOnce()
+        scene.project.initializeOnce(true)
         updateWindowRect()
         applicationPreference.windowRectChanged.connect(updateWindowRect)
         applicationBootstrapOption.requestedFileUrlChanged.connect(__handleRequestedFileUrlChange)
@@ -140,7 +140,8 @@ ApplicationWindow {
         text: qsTr("Save Model")
         tooltip: qsTr("Save the current model to the file.")
         shortcut: "Ctrl+S"
-        onTriggered: saveModelDialog.save(saveModelDialog.getPath())
+        enabled: scene.project.currentModel
+        onTriggered: scene.project.currentModel.save(saveModelDialog.getPath())
     }
     Action {
         id: saveModelAsAction
@@ -154,11 +155,24 @@ ApplicationWindow {
             if (fileUrlString !== "") {
                 progressWindow.text = qsTr("Saving Model %1").arg(name)
                 progressWindow.show()
-                scene.project.save(fileUrl)
+                scene.project.currentModel.save(fileUrl)
                 progressWindow.hide()
             }
         }
         onTriggered: save(saveModelDialog.getPathAs())
+    }
+    SaveDialog {
+        id: saveJsonDialog
+        title: qsTr("Save Model As Json")
+        suffix: "json"
+    }
+    Action {
+        id: saveJsonAction
+        text: qsTr("Save Model As Json")
+        tooltip: qsTr("Save the current model to the json file.")
+        shortcut: "Ctrl+Alt+S"
+        enabled: scene.project.currentModel
+        onTriggered: scene.project.currentModel.saveJson(saveJsonDialog.getPath())
     }
     Action {
         id: copyAction
@@ -263,6 +277,9 @@ ApplicationWindow {
             MenuItem { action: loadModelAction }
             MenuSeparator {}
             MenuItem { action: saveModelAction }
+            MenuItem { action: saveModelAsAction }
+            MenuSeparator {}
+            MenuItem { action: saveJsonAction }
             MenuSeparator { visible: exitApplicationMenuItem.visible }
             MenuItem {
                 id: exitApplicationMenuItem
@@ -580,6 +597,11 @@ ApplicationWindow {
                 }
                 StackView {
                     id: stackView
+                    function __handleCurrentModelChange() {
+                        if (!scene.project.currentModel && depth > 1) {
+                            pop(null)
+                        }
+                    }
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     initialItem: Item {
@@ -630,6 +652,7 @@ ApplicationWindow {
                             }
                         }
                     }
+                    Component.onCompleted: scene.project.currentModelChanged.connect(__handleCurrentModelChange)
                 }
             }
         }
@@ -644,7 +667,8 @@ ApplicationWindow {
             }
             Rectangle {
                 id: propertyPanel
-                visible: false
+                visible: true
+                enabled: scene.project.currentModel
                 Layout.minimumHeight: 240
                 Layout.maximumHeight: 400
                 height: 240
@@ -663,9 +687,9 @@ ApplicationWindow {
                                 return result.length > 0 ? result[0].value : -1
                             }
                             model: [
-                                { "text": "PMD 1.0", "value": 1.0 },
-                                { "text": "PMX 2.0", "value": 2.0 },
-                                { "text": "PMX 2.1", "value": 2.1 }
+                                { "text": "PMD 1.0", "value": VPMM.Model.PMD_1_0 },
+                                { "text": "PMX 2.0", "value": VPMM.Model.PMX_2_0 },
+                                { "text": "PMX 2.1", "value": VPMM.Model.PMX_2_1 }
                             ]
                             currentIndex: scene.project.currentModel ? indexOf(scene.project.currentModel.version) : 0
                         }
@@ -704,7 +728,7 @@ ApplicationWindow {
                             id: modelUVASpinBox
                             minimumValue: 0
                             maximumValue: 4
-                            value: scene.project.currentModel ? scene.project.currentModel.numUVA : 0
+                            value: scene.project.currentModel ? scene.project.currentModel.maxUVCount : 0
                         }
                         Binding {
                             target: scene.project.currentModel
