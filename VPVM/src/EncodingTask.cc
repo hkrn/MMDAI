@@ -204,7 +204,6 @@ void EncodingTask::launch()
     m_encoderFilePath = file->fileName();
     file.reset();
     if (QFile::copy(":libav/avconv", m_encoderFilePath)) {
-        qDebug() << QFile::permissions(m_encoderFilePath);
         QFile::setPermissions(m_encoderFilePath, QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
         getArguments(arguments);
         m_process.reset(new QProcess(this));

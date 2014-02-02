@@ -793,6 +793,7 @@ void RenderTarget::exportVideo(const QUrl &fileUrl, const QSize &size, const QSt
     encodingTaskRef->setInputImageFormat(frameImageType);
     encodingTaskRef->setOutputFormat(videoType);
     encodingTaskRef->setOutputPath(fileUrl.toLocalFile());
+    setPlaying(true);
     connect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForVideo, Qt::DirectConnection);
 }
 
@@ -803,6 +804,7 @@ void RenderTarget::cancelExportingVideo()
     disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::launchEncodingTask);
     if (m_encodingTask && m_encodingTask->isRunning()) {
         m_encodingTask->stop();
+        setPlaying(false);
         emit encodeDidCancel();
     }
 }
@@ -1068,6 +1070,7 @@ void RenderTarget::drawOffscreenForVideo()
     drawOffscreen(fbo);
     if (qFuzzyIsNull(m_projectProxyRef->differenceTimeIndex(m_currentTimeIndex))) {
         encodingTaskRef->setEstimatedFrameCount(m_currentTimeIndex);
+        setPlaying(false);
         disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::drawOffscreenForVideo);
         connect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::launchEncodingTask);
     }
