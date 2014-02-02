@@ -178,11 +178,31 @@ ApplicationWindow {
             }
         }
     }
+    MessageDialog {
+        id: confirmSavingProjectBeforeNewMotionDialog
+        title: qsTr("The project has been modified.")
+        text: qsTr("Do you want to save your changes of %1?").arg(scene.project.title)
+        icon: StandardIcon.Question
+        standardButtons: StandardButton.Save | StandardButton.Discard | StandardButton.Cancel
+        onAccepted: {
+            saveProjectAction.trigger()
+            scene.project.initializeMotion(scene.currentModel, VPVM.Project.ModelMotion)
+        }
+        onDiscard: scene.project.initializeMotion(scene.currentModel, VPVM.Project.ModelMotion)
+    }
     Action {
         id: newMotionAction
         tooltip: qsTr("Create a new motion to the current model. If the model is bound to the exist motion, it will be deleted and undone.")
         text: qsTr("New Motion")
-        onTriggered: scene.project.initializeMotion(scene.currentModel, VPVM.Project.ModelMotion)
+        enabled: scene.currentMotion
+        onTriggered: {
+            if (scene.currentMotion.dirty) {
+                confirmSavingProjectBeforeNewMotionDialog.open()
+            }
+            else {
+                scene.project.initializeMotion(scene.currentModel, VPVM.Project.ModelMotion)
+            }
+        }
     }
     FileDialog {
         id: loadProjectDialog

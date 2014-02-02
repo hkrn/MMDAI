@@ -85,6 +85,7 @@ class MotionProxy : public QObject
     Q_PROPERTY(qreal duration READ duration NOTIFY durationTimeIndexChanged FINAL)
     Q_PROPERTY(QQmlListProperty<BaseKeyframeRefObject> selectedKeyframes READ selectedKeyframes CONSTANT FINAL)
     Q_PROPERTY(bool canPaste READ canPaste NOTIFY canPasteChanged FINAL)
+    Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
     MotionProxy(ProjectProxy *projectRef,
@@ -119,6 +120,8 @@ public:
     qreal duration() const;
     QQmlListProperty<BaseKeyframeRefObject> selectedKeyframes();
     bool canPaste() const;
+    bool isDirty() const;
+    void setDirty(bool value);
 
 signals:
     void durationTimeIndexChanged();
@@ -127,6 +130,7 @@ signals:
     void keyframeDidReplace(BaseKeyframeRefObject *dst, BaseKeyframeRefObject *src);
     void timeIndexDidChange(BaseKeyframeRefObject *keyframe, qint64 newTimeIndex, qint64 oldTimeIndex);
     void canPasteChanged();
+    void dirtyChanged();
     void motionWillLoad(int numEstimatedKeyframes);
     void motionBeLoading(int numLoadedKeyframes, int numEstimatedKeyframes);
     void motionDidLoad(int numLoadedKeyframes, int numEstimatedKeyframes);
@@ -151,16 +155,17 @@ private:
     CameraKeyframeRefObject *addCameraKeyframe(const CameraRefObject *value) const;
     LightKeyframeRefObject *addLightKeyframe(const LightRefObject *value) const;
     MorphKeyframeRefObject *addMorphKeyframe(const MorphRefObject *value) const;
-    void updateOrAddKeyframeFromBone(const BoneRefObject *boneRef, const qint64 &timeIndex, QUndoCommand *parent);
-    void updateOrAddKeyframeFromCamera(CameraRefObject *cameraRef, const qint64 &timeIndex, QUndoCommand *parent);
-    void updateOrAddKeyframeFromLight(LightRefObject *lightRef, const qint64 &timeIndex, QUndoCommand *parent);
-    void updateOrAddKeyframeFromMorph(const MorphRefObject *morphRef, const qint64 &timeIndex, QUndoCommand *parent);
+    QUndoCommand *updateOrAddKeyframeFromBone(const BoneRefObject *boneRef, const qint64 &timeIndex, QUndoCommand *parent);
+    QUndoCommand *updateOrAddKeyframeFromCamera(CameraRefObject *cameraRef, const qint64 &timeIndex, QUndoCommand *parent);
+    QUndoCommand *updateOrAddKeyframeFromLight(LightRefObject *lightRef, const qint64 &timeIndex, QUndoCommand *parent);
+    QUndoCommand *updateOrAddKeyframeFromMorph(const MorphRefObject *morphRef, const qint64 &timeIndex, QUndoCommand *parent);
     void loadBoneTrackBundle(vpvl2::IMotion *motionRef, int numBoneKeyframes, int numEstimatedKeyframes, int &numLoadedKeyframes);
     void loadMorphTrackBundle(vpvl2::IMotion *motionRef, int numMorphKeyframes, int numEstimatedKeyframes, int &numLoadedKeyframes);
     void removeKeyframes(const QList<BaseKeyframeRefObject *> &keyframes, QUndoCommand *parent);
     BoneMotionTrack *addBoneTrack(const QString &key);
     MorphMotionTrack *addMorphTrack(const QString &key);
     void bindTrackSignals(BaseMotionTrack *track);
+    void pushUndoCommand(QScopedPointer<QUndoCommand> &command, QUndoCommand *parent);
 
     typedef QHash<QString, BoneMotionTrack *> BoneMotionTrackBundle;
     typedef QHash<QString, MorphMotionTrack *> MorphMotionTrackBundle;
@@ -175,6 +180,7 @@ private:
     QUndoStack *m_undoStackRef;
     QUuid m_uuid;
     QUrl m_fileUrl;
+    bool m_dirty;
 };
 
 #endif // MOTIONPROXY_H

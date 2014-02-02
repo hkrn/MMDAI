@@ -895,7 +895,7 @@ void ProjectProxy::resetAllBones(ModelProxy *model)
                 motionProxy->updateKeyframe(boneRef, static_cast<qint64>(m_currentTimeIndex), command.data());
             }
             motionProxy->undoStack()->push(command.take());
-            setDirty(true);
+            motionProxy->setDirty(true);
             VPVL2_VLOG(2, "resetAll TYPE=BONE");
             emit modelBoneDidReset(0, AllTranslationAndOrientation);
         }
@@ -927,6 +927,7 @@ void ProjectProxy::resetAllMorphs(ModelProxy *model)
                 motionProxy->updateKeyframe(morphRef, static_cast<qint64>(m_currentTimeIndex), command.data());
             }
             motionProxy->undoStack()->push(command.take());
+            motionProxy->setDirty(true);
             VPVL2_VLOG(2, "resetAll TYPE=MORPH");
         }
     }

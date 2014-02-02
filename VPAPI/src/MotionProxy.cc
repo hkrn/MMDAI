@@ -638,7 +638,8 @@ MotionProxy::MotionProxy(ProjectProxy *projectRef,
       m_motion(motion),
       m_undoStackRef(undoStackRef),
       m_uuid(uuid),
-      m_fileUrl(fileUrl)
+      m_fileUrl(fileUrl),
+      m_dirty(false)
 {
     Q_ASSERT(m_projectRef);
     Q_ASSERT(m_undoStackRef);
@@ -659,6 +660,7 @@ MotionProxy::~MotionProxy()
     m_lightMotionTrackRef = 0;
     m_undoStackRef = 0;
     m_projectRef = 0;
+    m_dirty = false;
 }
 
 void MotionProxy::assignModel(ModelProxy *modelProxy, const Factory *factoryRef)
@@ -866,77 +868,64 @@ void MotionProxy::addKeyframe(QObject *opaque, const qint64 &timeIndex, QUndoCom
         }
     }
     if (keyframe) {
+        QScopedPointer<QUndoCommand> command(new AddKeyframeCommand(keyframe, parent));
         keyframe->setTimeIndex(timeIndex);
-        QUndoCommand *command = new AddKeyframeCommand(keyframe, parent);
-        if (!parent) {
-            m_undoStackRef->push(command);
-            m_projectRef->setDirty(true);
-        }
+        pushUndoCommand(command, parent);
     }
 }
 
 void MotionProxy::updateKeyframe(QObject *opaque, const qint64 &timeIndex, QUndoCommand *parent)
 {
-    QUndoCommand *command = 0;
+    QScopedPointer<QUndoCommand> command;
     if (BoneKeyframeRefObject *boneKeyframeRef = qobject_cast<BoneKeyframeRefObject *>(opaque)) {
-        command = new UpdateBoneKeyframeCommand(boneKeyframeRef, this, parent);
+        command.reset(new UpdateBoneKeyframeCommand(boneKeyframeRef, this, parent));
         VPVL2_VLOG(2, "update type=BONE timeIndex=" << timeIndex << " name=" << boneKeyframeRef->name().toStdString());
     }
     else if (CameraKeyframeRefObject *cameraKeyframeRef = qobject_cast<CameraKeyframeRefObject *>(opaque)) {
-        command = new UpdateCameraKeyframeCommand(cameraKeyframeRef, m_projectRef->camera(), parent);
+        command.reset(new UpdateCameraKeyframeCommand(cameraKeyframeRef, m_projectRef->camera(), parent));
         VPVL2_VLOG(2, "update type=CAMERA timeIndex=" << timeIndex);
     }
     else if (LightKeyframeRefObject *lightKeyframeRef = qobject_cast<LightKeyframeRefObject *>(opaque)) {
-        command = new UpdateLightKeyframeCommand(lightKeyframeRef, m_projectRef->light(), parent);
+        command.reset(new UpdateLightKeyframeCommand(lightKeyframeRef, m_projectRef->light(), parent));
         VPVL2_VLOG(2, "update type=LIGHT timeIndex=" << timeIndex);
     }
     else if (MorphKeyframeRefObject *morphKeyframeRef = qobject_cast<MorphKeyframeRefObject *>(opaque)) {
-        command = new UpdateMorphKeyframeCommand(morphKeyframeRef, this, parent);
+        command.reset(new UpdateMorphKeyframeCommand(morphKeyframeRef, this, parent));
         VPVL2_VLOG(2, "update type=MORPH timeIndex=" << timeIndex << " name=" << morphKeyframeRef->name().toStdString());
     }
     else if (const BoneRefObject *boneRef = qobject_cast<BoneRefObject *>(opaque)) {
-        updateOrAddKeyframeFromBone(boneRef, timeIndex, parent);
+        command.reset(updateOrAddKeyframeFromBone(boneRef, timeIndex, parent));
     }
     else if (CameraRefObject *cameraRef = qobject_cast<CameraRefObject *>(opaque)) {
-        updateOrAddKeyframeFromCamera(cameraRef, timeIndex, parent);
+        command.reset(updateOrAddKeyframeFromCamera(cameraRef, timeIndex, parent));
     }
     else if (LightRefObject *lightRef = qobject_cast<LightRefObject *>(opaque)) {
-        updateOrAddKeyframeFromLight(lightRef, timeIndex, parent);
+        command.reset(updateOrAddKeyframeFromLight(lightRef, timeIndex, parent));
     }
     else if (const MorphRefObject *morphRef = qobject_cast<MorphRefObject *>(opaque)) {
-        updateOrAddKeyframeFromMorph(morphRef, timeIndex, parent);
+        command.reset(updateOrAddKeyframeFromMorph(morphRef, timeIndex, parent));
     }
-    if (!parent) {
-        m_undoStackRef->push(command);
-        m_projectRef->setDirty(true);
-    }
+    pushUndoCommand(command, parent);
 }
 
 void MotionProxy::updateKeyframeInterpolation(QObject *opaque, const QVector4D &value, int type, QUndoCommand *parent)
 {
-    QUndoCommand *command = 0;
+    QScopedPointer<QUndoCommand> command;
     if (BoneKeyframeRefObject *boneKeyframeRef = qobject_cast<BoneKeyframeRefObject *>(opaque)) {
-        command = new UpdateBoneKeyframeInterpolationCommand(boneKeyframeRef, this, value, type, parent);
+        command.reset(new UpdateBoneKeyframeInterpolationCommand(boneKeyframeRef, this, value, type, parent));
         VPVL2_VLOG(2, "updateInterpolation type=BONE timeIndex=" << boneKeyframeRef->timeIndex());
     }
     else if (CameraKeyframeRefObject *cameraKeyframeRef = qobject_cast<CameraKeyframeRefObject *>(opaque)) {
-        command = new UpdateCameraKeyframeInterpolationCommand(cameraKeyframeRef, this, value, type, parent);
+        command.reset(new UpdateCameraKeyframeInterpolationCommand(cameraKeyframeRef, this, value, type, parent));
         VPVL2_VLOG(2, "updateInterpolation type=CAMERA timeIndex=" << cameraKeyframeRef->timeIndex());
-    }
-    if (!parent) {
-        m_undoStackRef->push(command);
-        m_projectRef->setDirty(true);
     }
 }
 
 void MotionProxy::removeKeyframe(QObject *opaque, QUndoCommand *parent)
 {
     if (BaseKeyframeRefObject *keyframe = qobject_cast<BaseKeyframeRefObject *>(opaque)) {
-        QUndoCommand *command = new RemoveKeyframeCommand(keyframe, parent);
-        if (!parent) {
-            m_undoStackRef->push(command);
-            m_projectRef->setDirty(true);
-        }
+        QScopedPointer<QUndoCommand> command(new RemoveKeyframeCommand(keyframe, parent));
+        pushUndoCommand(command, parent);
     }
 }
 
@@ -1000,17 +989,14 @@ void MotionProxy::copyKeyframes()
 
 void MotionProxy::pasteKeyframes(const qint64 &timeIndex, bool inversed, QUndoCommand *parent)
 {
-    QUndoCommand *command = 0;
+    QScopedPointer<QUndoCommand> command;
     if (inversed) {
-        command = new InversedPasteKeyframesCommand(this, m_copiedKeyframeRefs, timeIndex, &m_selectedKeyframeRefs, parent);
+        command.reset(new InversedPasteKeyframesCommand(this, m_copiedKeyframeRefs, timeIndex, &m_selectedKeyframeRefs, parent));
     }
     else {
-        command = new PasteKeyframesCommand(this, m_copiedKeyframeRefs, timeIndex, &m_selectedKeyframeRefs, parent);
+        command.reset(new PasteKeyframesCommand(this, m_copiedKeyframeRefs, timeIndex, &m_selectedKeyframeRefs, parent));
     }
-    if (!parent) {
-        m_undoStackRef->push(command);
-        m_projectRef->setDirty(true);
-    }
+    pushUndoCommand(command, parent);
     VPVL2_VLOG(2, "paste timeIndex=" << timeIndex << " inversed=" << inversed);
 }
 
@@ -1070,6 +1056,22 @@ bool MotionProxy::canPaste() const
     return m_copiedKeyframeRefs.size() > 0;
 }
 
+bool MotionProxy::isDirty() const
+{
+    return m_dirty;
+}
+
+void MotionProxy::setDirty(bool value)
+{
+    if (isDirty() != value) {
+        m_dirty = value;
+        emit dirtyChanged();
+        if (value) {
+            m_projectRef->setDirty(value);
+        }
+    }
+}
+
 void MotionProxy::mergeKeyframes(const QList<QObject *> &keyframes, const qint64 &newTimeIndex, const qint64 &oldTimeIndex, QUndoCommand *parent)
 {
     QList<MergeKeyframeCommand::Pair> keyframeRefs;
@@ -1085,10 +1087,8 @@ void MotionProxy::mergeKeyframes(const QList<QObject *> &keyframes, const qint64
         }
     }
     if (!keyframeRefs.isEmpty()) {
-        if (!parent) {
-            m_undoStackRef->push(new MergeKeyframeCommand(keyframeRefs, newTimeIndex, oldTimeIndex, parent));
-            m_projectRef->setDirty(true);
-        }
+        QScopedPointer<QUndoCommand> command(new MergeKeyframeCommand(keyframeRefs, newTimeIndex, oldTimeIndex, parent));
+        pushUndoCommand(command, parent);
         VPVL2_VLOG(2, "merge newTimeIndex=" << newTimeIndex << " oldTimeIndex=" << oldTimeIndex << " length=" << keyframeRefs.size());
     }
 }
@@ -1152,7 +1152,7 @@ MorphKeyframeRefObject *MotionProxy::addMorphKeyframe(const MorphRefObject *valu
     return keyframe;
 }
 
-void MotionProxy::updateOrAddKeyframeFromBone(const BoneRefObject *boneRef, const qint64 &timeIndex, QUndoCommand *parent)
+QUndoCommand *MotionProxy::updateOrAddKeyframeFromBone(const BoneRefObject *boneRef, const qint64 &timeIndex, QUndoCommand *parent)
 {
     const QString &name = boneRef->name();
     if (BoneMotionTrack *track = findBoneMotionTrack(name)) {
@@ -1169,16 +1169,14 @@ void MotionProxy::updateOrAddKeyframeFromBone(const BoneRefObject *boneRef, cons
             QScopedPointer<QUndoCommand> parentCommand(new QUndoCommand(parent));
             new AddKeyframeCommand(newKeyframe2, parentCommand.data());
             new UpdateBoneKeyframeCommand(newKeyframe2, this, parentCommand.data());
-            if (!parent) {
-                m_undoStackRef->push(parentCommand.take());
-                m_projectRef->setDirty(true);
-            }
             VPVL2_VLOG(2, "insert+update type=BONE timeIndex=" << timeIndex << " name=" << track->name().toStdString() << " length=" << track->length());
+            return parentCommand.take();
         }
     }
+    return 0;
 }
 
-void MotionProxy::updateOrAddKeyframeFromCamera(CameraRefObject *cameraRef, const qint64 &timeIndex, QUndoCommand *parent)
+QUndoCommand *MotionProxy::updateOrAddKeyframeFromCamera(CameraRefObject *cameraRef, const qint64 &timeIndex, QUndoCommand *parent)
 {
     CameraMotionTrack *track = cameraRef->track();
     if (CameraKeyframeRefObject *cameraKeyframeRef = qobject_cast<CameraKeyframeRefObject *>(track->findKeyframeByTimeIndex(timeIndex))) {
@@ -1193,15 +1191,13 @@ void MotionProxy::updateOrAddKeyframeFromCamera(CameraRefObject *cameraRef, cons
         QScopedPointer<QUndoCommand> parentCommand(new QUndoCommand(parent));
         new AddKeyframeCommand(newKeyframe2, parentCommand.data());
         new UpdateCameraKeyframeCommand(newKeyframe2, cameraRef, parentCommand.data());
-        if (!parent) {
-            m_undoStackRef->push(parentCommand.take());
-            m_projectRef->setDirty(true);
-        }
         VPVL2_VLOG(2, "insert+update type=CAMERA timeIndex=" << timeIndex << " length=" << track->length());
+        return parentCommand.take();
     }
+    return 0;
 }
 
-void MotionProxy::updateOrAddKeyframeFromLight(LightRefObject *lightRef, const qint64 &timeIndex, QUndoCommand *parent)
+QUndoCommand *MotionProxy::updateOrAddKeyframeFromLight(LightRefObject *lightRef, const qint64 &timeIndex, QUndoCommand *parent)
 {
     LightMotionTrack *track = lightRef->track();
     if (LightKeyframeRefObject *cameraKeyframeRef = qobject_cast<LightKeyframeRefObject *>(track->findKeyframeByTimeIndex(timeIndex))) {
@@ -1215,15 +1211,13 @@ void MotionProxy::updateOrAddKeyframeFromLight(LightRefObject *lightRef, const q
         QScopedPointer<QUndoCommand> parentCommand(new QUndoCommand(parent));
         new AddKeyframeCommand(newKeyframe2, parentCommand.data());
         new UpdateLightKeyframeCommand(newKeyframe2, lightRef, parentCommand.data());
-        if (!parent) {
-            m_undoStackRef->push(parentCommand.take());
-            m_projectRef->setDirty(true);
-        }
         VPVL2_VLOG(2, "insert+update type=LIGHT timeIndex=" << timeIndex << " length=" << track->length());
+        return parentCommand.take();
     }
+    return 0;
 }
 
-void MotionProxy::updateOrAddKeyframeFromMorph(const MorphRefObject *morphRef, const qint64 &timeIndex, QUndoCommand *parent)
+QUndoCommand *MotionProxy::updateOrAddKeyframeFromMorph(const MorphRefObject *morphRef, const qint64 &timeIndex, QUndoCommand *parent)
 {
     const QString &name = morphRef->name();
     if (MorphMotionTrack *track = findMorphMotionTrack(name)) {
@@ -1239,13 +1233,11 @@ void MotionProxy::updateOrAddKeyframeFromMorph(const MorphRefObject *morphRef, c
             QScopedPointer<QUndoCommand> parentCommand(new QUndoCommand(parent));
             new AddKeyframeCommand(newKeyframe2, parentCommand.data());
             new UpdateMorphKeyframeCommand(newKeyframe2, this, parentCommand.data());
-            if (!parent) {
-                m_undoStackRef->push(parentCommand.take());
-                m_projectRef->setDirty(true);
-            }
             VPVL2_VLOG(2, "insert+update type=MORPH timeIndex=" << timeIndex << " name=" << track->name().toStdString() << " length=" << track->length());
+            return parentCommand.take();
         }
     }
+    return 0;
 }
 
 void MotionProxy::loadBoneTrackBundle(IMotion *motionRef,
@@ -1290,10 +1282,8 @@ void MotionProxy::loadMorphTrackBundle(IMotion *motionRef, int numMorphKeyframes
 void MotionProxy::removeKeyframes(const QList<BaseKeyframeRefObject *> &keyframes, QUndoCommand *parent)
 {
     if (!keyframes.isEmpty()) {
-        if (!parent) {
-            m_undoStackRef->push(new RemoveKeyframeCommand(keyframes, parent));
-            m_projectRef->setDirty(true);
-        }
+        QScopedPointer<QUndoCommand> command(new RemoveKeyframeCommand(keyframes, parent));
+        pushUndoCommand(command, parent);
         VPVL2_VLOG(2, "remove length=" << keyframes.size());
     }
 }
@@ -1320,4 +1310,15 @@ void MotionProxy::bindTrackSignals(BaseMotionTrack *track)
     connect(track, &BaseMotionTrack::keyframeDidRemove, this, &MotionProxy::keyframeDidRemove);
     connect(track, &BaseMotionTrack::keyframeDidSwap, this, &MotionProxy::keyframeDidReplace);
     connect(track, &BaseMotionTrack::timeIndexDidChange, this, &MotionProxy::timeIndexDidChange);
+}
+
+void MotionProxy::pushUndoCommand(QScopedPointer<QUndoCommand> &command, QUndoCommand *parent)
+{
+    if (command) {
+        if (!parent) {
+            m_undoStackRef->push(command.data());
+            setDirty(true);
+        }
+        command.take(); /* move reference to QUndoStack or parent QUndoCommand */
+    }
 }
