@@ -106,7 +106,7 @@ ApplicationWindow {
         updateWindowRect()
         applicationPreference.windowRectChanged.connect(updateWindowRect)
         applicationBootstrapOption.requestedFileUrlChanged.connect(__handleRequestedFileUrlChange)
-        Qt.application.stateChanged.connect(__handleApplicationStateChange)
+        // Qt.application.stateChanged.connect(__handleApplicationStateChange)
     }
 
     ApplicationWindow {
