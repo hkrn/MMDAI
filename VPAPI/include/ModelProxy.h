@@ -78,6 +78,7 @@ class ModelProxy : public QObject
     Q_ENUMS(EncodingType)
     Q_ENUMS(ObjectType)
     Q_ENUMS(TransformType)
+    Q_ENUMS(VersionType)
     Q_PROPERTY(ProjectProxy *parentProject READ parentProject CONSTANT FINAL)
     Q_PROPERTY(ModelProxy *parentBindingModel READ parentBindingModel WRITE setParentBindingModel NOTIFY parentBindingModelChanged)
     Q_PROPERTY(BoneRefObject *parentBindingBone READ parentBindingBone WRITE setParentBindingBone NOTIFY parentBindingBoneChanged)
@@ -85,9 +86,9 @@ class ModelProxy : public QObject
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
     Q_PROPERTY(QUrl fileUrl READ fileUrl CONSTANT FINAL)
     Q_PROPERTY(QUrl faviconUrl READ faviconUrl CONSTANT FINAL)
-    Q_PROPERTY(qreal version READ version WRITE setVersion NOTIFY versionChanged FINAL)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
     Q_PROPERTY(QString comment READ comment WRITE setComment NOTIFY commentChanged FINAL)
+    Q_PROPERTY(VersionType version READ version WRITE setVersion NOTIFY versionChanged FINAL)
     Q_PROPERTY(EncodingType encodingType READ encodingType WRITE setEncodingType NOTIFY encodingTypeChanged FINAL)
     Q_PROPERTY(QQmlListProperty<LabelRefObject> allLabels READ allLabels NOTIFY allLabelsChanged FINAL)
     Q_PROPERTY(QQmlListProperty<BoneRefObject> allBones READ allBones NOTIFY allBonesChanged FINAL)
@@ -140,6 +141,11 @@ public:
         GlobalTransform,
         ViewTransform
     };
+    enum VersionType {
+        PMD_1_0,
+        PMX_2_0,
+        PMX_2_1
+    };
 
     ModelProxy(ProjectProxy *project,
                vpvl2::IModel *model,
@@ -177,8 +183,8 @@ public:
     QQmlListProperty<RigidBodyRefObject> allRigidBodies();
     QQmlListProperty<JointRefObject> allJoints();
     QQmlListProperty<BoneRefObject> targetBones();
-    qreal version() const;
-    void setVersion(const qreal &value);
+    VersionType version() const;
+    void setVersion(const VersionType &value);
     QString name() const;
     void setName(const QString &value);
     QString comment() const;

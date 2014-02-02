@@ -887,17 +887,39 @@ QUrl ModelProxy::faviconUrl() const
     return m_faviconUrl;
 }
 
-qreal ModelProxy::version() const
+ModelProxy::VersionType ModelProxy::version() const
 {
     Q_ASSERT(m_model);
-    return m_model->version();
+    qreal version = m_model->version();
+    if (qFuzzyCompare(version, 2.1)) {
+        return PMX_2_1;
+    }
+    else if (qFuzzyCompare(version, 2.0)) {
+        return PMX_2_0;
+    }
+    else if (qFuzzyCompare(version, 1.0)) {
+        return PMD_1_0;
+    }
+    else {
+        return PMD_1_0;
+    }
 }
 
-void ModelProxy::setVersion(const qreal &value)
+void ModelProxy::setVersion(const VersionType &value)
 {
     Q_ASSERT(m_model);
-    if (!qFuzzyCompare(version(), value)) {
-        m_model->setVersion(value);
+    if (version() != value) {
+        switch (value) {
+        case PMX_2_1:
+            m_model->setVersion(2.1);
+            break;
+        case PMX_2_0:
+            m_model->setVersion(2.0);
+            break;
+        case PMD_1_0:
+            m_model->setVersion(1.0);
+            break;
+        }
         markDirty();
         emit versionChanged();
     }
