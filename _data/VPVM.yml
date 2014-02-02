@@ -1,4 +1,7 @@
-version: 0.33.5
+version: 0.33.6
+release:
+  date: 2014/2/2
+  article: ar451116
 location: http://www8092ui.sakura.ne.jp/projects/VPVM/binaries
 blog: http://ch.nicovideo.jp/MMDAI
 bowlroll: http://bowlroll.net
