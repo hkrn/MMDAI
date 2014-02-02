@@ -94,7 +94,7 @@ public:
                 QUndoStack *undoStackRef);
     ~MotionProxy();
 
-    void setModelProxy(ModelProxy *modelProxy, const vpvl2::Factory *factoryRef);
+    void assignModel(ModelProxy *modelProxy, const vpvl2::Factory *factoryRef);
     void setCameraMotionTrack(CameraMotionTrack *track, const vpvl2::Factory *factoryRef);
     void setLightMotionTrack(LightMotionTrack *track, const vpvl2::Factory *factoryRef);
     void refreshBoneTracks();

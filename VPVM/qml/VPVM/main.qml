@@ -182,7 +182,7 @@ ApplicationWindow {
         id: newMotionAction
         tooltip: qsTr("Create a new motion to the current model. If the model is bound to the exist motion, it will be deleted and undone.")
         text: qsTr("New Motion")
-        // FIXME: implement this
+        onTriggered: scene.project.initializeMotion(scene.currentModel, VPVM.Project.ModelMotion)
     }
     FileDialog {
         id: loadProjectDialog

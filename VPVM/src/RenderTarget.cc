@@ -513,6 +513,7 @@ void RenderTarget::setProjectProxy(ProjectProxy *value)
     connect(value, &ProjectProxy::modelDidCommitDeleting, this, &RenderTarget::commitDeletingModels);
     connect(value, &ProjectProxy::effectDidAdd, this, &RenderTarget::enqueueUploadingEffect);
     connect(value, &ProjectProxy::effectDidCommitUploading, this, &RenderTarget::commitUploadingEffects);
+    connect(value, &ProjectProxy::motionDidInitialize, this, &RenderTarget::prepareSyncMotionState);
     connect(value, &ProjectProxy::motionDidLoad, this, &RenderTarget::prepareSyncMotionState);
     connect(value, &ProjectProxy::currentModelChanged, this, &RenderTarget::updateGizmo);
     connect(value, &ProjectProxy::projectDidRelease, this, &RenderTarget::commitDeletingModels);

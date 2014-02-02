@@ -51,8 +51,7 @@ BoneMotionTrack::BoneMotionTrack(MotionProxy *motionProxy, const QString &name)
 
 BoneMotionTrack::~BoneMotionTrack()
 {
-    m_timeIndex2RefObjects.clear();
-    m_keyframe2RefObjects.clear();
+    Q_ASSERT(m_keyframes.size() == m_keyframe2RefObjects.size());
     qDeleteAll(m_keyframes);
     m_keyframes.clear();
     m_parentMotionRef = 0;
@@ -142,7 +141,10 @@ BaseKeyframeRefObject *BoneMotionTrack::copy(BaseKeyframeRefObject *value, const
 
 void BoneMotionTrack::replace(BoneKeyframeRefObject *dst, BoneKeyframeRefObject *src, bool doUpdate)
 {
-    Q_ASSERT(src && dst && dst != src && src->parentTrack() == dst->parentTrack());
+    Q_ASSERT(src);
+    Q_ASSERT(dst);
+    Q_ASSERT(dst != src);
+    Q_ASSERT(src->parentTrack() == dst->parentTrack());
     IMotion *motionRef = m_parentMotionRef->data();
     motionRef->replaceKeyframe(dst->data(), false);
     if (doUpdate) {
@@ -150,6 +152,7 @@ void BoneMotionTrack::replace(BoneKeyframeRefObject *dst, BoneKeyframeRefObject 
     }
     remove(src);
     add(dst, doUpdate);
+    Q_ASSERT(m_keyframes.size() == m_keyframe2RefObjects.size());
     emit keyframeDidSwap(dst, src);
 }
 

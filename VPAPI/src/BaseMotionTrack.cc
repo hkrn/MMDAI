@@ -58,6 +58,8 @@ BaseMotionTrack::BaseMotionTrack(MotionProxy *motionProxy, const QString &name)
 
 BaseMotionTrack::~BaseMotionTrack()
 {
+    m_timeIndex2RefObjects.clear();
+    m_keyframe2RefObjects.clear();
     m_parentMotionRef = 0;
     m_locked = false;
     m_visible = false;
@@ -150,11 +152,9 @@ void BaseMotionTrack::internalRemove(BaseKeyframeRefObject *value)
 {
     Q_ASSERT(value);
     BaseKeyframeRefObjectList::Iterator it = qBinaryFind(m_keyframes.begin(), m_keyframes.end(), value);
-    if (it != m_keyframes.end()) {
-        m_keyframes.erase(it);
-    }
+    Q_ASSERT(it != m_keyframes.end());
+    m_keyframes.erase(it);
     IKeyframe *keyframe = value->baseKeyframeData();
     m_keyframe2RefObjects.remove(keyframe);
     m_timeIndex2RefObjects.remove(value->timeIndex());
 }
-

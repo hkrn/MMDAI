@@ -157,7 +157,9 @@ public:
     Q_INVOKABLE qreal secondsFromTimeIndex(qreal value) const;
     Q_INVOKABLE qreal millisecondsFromTimeIndex(qreal value) const;
     Q_INVOKABLE void resetBone(BoneRefObject *bone, ResetBoneType type);
+    Q_INVOKABLE void resetAllBones(ModelProxy *model);
     Q_INVOKABLE void resetMorph(MorphRefObject *morph);
+    Q_INVOKABLE void resetAllMorphs(ModelProxy *model);
     Q_INVOKABLE void updateParentBindingModel();
 
     ModelProxy *loadModel(const QUrl &fileUrl, const QUuid &uuid, bool skipConfirm);
@@ -225,6 +227,7 @@ public slots:
     Q_INVOKABLE bool loadEffect(const QUrl &fileUrl);
     Q_INVOKABLE void addModel(ModelProxy *value);
     Q_INVOKABLE void deleteModel(ModelProxy *value);
+    Q_INVOKABLE void initializeMotion(ModelProxy *modelProxy, MotionType type);
     Q_INVOKABLE bool loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, MotionType type);
     Q_INVOKABLE bool loadPose(const QUrl &fileUrl, ModelProxy *modelProxy);
     Q_INVOKABLE void rewind();
@@ -253,6 +256,7 @@ signals:
     void modelDidAdd(ModelProxy *model, bool isProject);
     void modelWillRemove(ModelProxy *model);
     void modelDidRemove(ModelProxy *model);
+    void motionDidInitialize();
     void motionDidStartLoading();
     void motionDidLoad(MotionProxy *motion);
     void motionDidFailLoading();

@@ -382,6 +382,30 @@ void ProjectProxy::deleteModel(ModelProxy *value)
     emit modelDidCommitDeleting();
 }
 
+void ProjectProxy::initializeMotion(ModelProxy *modelProxy, MotionType type)
+{
+    if (type == ModelMotion && modelProxy) {
+        MotionProxy *childMotion = modelProxy->childMotion();
+        foreach (BoneRefObject *boneRef, modelProxy->allBoneRefs()) {
+            boneRef->setLocalTranslation(QVector3D());
+            boneRef->setLocalOrientation(QQuaternion());
+        }
+        foreach (MorphRefObject *morphRef, modelProxy->allMorphRefs()) {
+            morphRef->setWeight(0);
+        }
+        modelProxy->setChildMotion(0, true);
+        deleteMotion(childMotion, false);
+        const QUuid &uuid = QUuid::createUuid();
+        QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, modelProxy->data()));
+        MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl());
+        motionProxy->assignModel(modelProxy, m_factory.data());
+        modelProxy->setChildMotion(motionProxy, true);
+        setCurrentMotion(motionProxy);
+        motion.take();
+        emit motionDidInitialize();
+    }
+}
+
 bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, MotionType type)
 {
     Q_ASSERT(fileUrl.isValid());
@@ -398,7 +422,7 @@ bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, Motio
         if (modelProxy && type == ModelMotion) {
             VPVL2_VLOG(1, "The mode motion of " << modelProxy->name().toStdString() << " from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
             deleteMotion(modelProxy->childMotion(), false);
-            motionProxy->setModelProxy(modelProxy, m_factory.data());
+            motionProxy->assignModel(modelProxy, m_factory.data());
             modelProxy->setChildMotion(motionProxy, true);
         }
         else if (type == CameraMotion) {
@@ -527,7 +551,7 @@ void ProjectProxy::internalAddModel(ModelProxy *value, bool selected, bool isPro
     const QUuid &uuid = QUuid::createUuid();
     VPVL2_VLOG(1, "The initial motion of the model " << value->name().toStdString() << " will be allocated as " << uuid.toString().toStdString());
     if (MotionProxy *motionProxy = createMotionProxy(m_factory->newMotion(IMotion::kVMDMotion, value->data()), uuid, QUrl())) {
-        motionProxy->setModelProxy(value, m_factory.data());
+        motionProxy->assignModel(value, m_factory.data());
         value->setChildMotion(motionProxy, true);
         emit motionDidLoad(motionProxy);
     }
@@ -548,9 +572,9 @@ void ProjectProxy::internalDeleteModel(ModelProxy *value, bool emitSignal)
         deleteMotion(value->childMotion(), !emitSignal);
         m_worldProxy->leaveWorld(value);
         setDirty(true);
-        QUndoStack *undoStack = value->undoStack();
-        m_undoGroup->removeStack(undoStack);
-        undoStack->clear();
+        QUndoStack *undoStackRef = value->undoStack();
+        m_undoGroup->removeStack(undoStackRef);
+        undoStackRef->clear();
         m_modelProxies.removeOne(value);
         m_instance2ModelProxyRefs.remove(value->data());
         m_uuid2ModelProxyRefs.remove(value->uuid());
@@ -855,19 +879,25 @@ void ProjectProxy::resetBone(BoneRefObject *bone, ResetBoneType type)
         emit modelBoneDidReset(bone, type);
     }
     else if (m_currentModelRef) {
-        if (MotionProxy *motionProxy = m_currentModelRef->childMotion()) {
+        resetAllBones(m_currentModelRef);
+    }
+}
+
+void ProjectProxy::resetAllBones(ModelProxy *model)
+{
+    if (model) {
+        if (MotionProxy *motionProxy = model->childMotion()) {
             QScopedPointer<QUndoCommand> command(new QUndoCommand());
-            foreach (BoneRefObject *boneRef, m_currentModelRef->allBoneRefs()) {
+            foreach (BoneRefObject *boneRef, model->allBoneRefs()) {
                 boneRef->setLocalTranslation(boneRef->originLocalTranslation());
                 boneRef->setLocalOrientation(boneRef->originLocalOrientation());
                 resetIKEffectorBones(boneRef);
                 motionProxy->updateKeyframe(boneRef, static_cast<qint64>(m_currentTimeIndex), command.data());
             }
-            if (QUndoStack *stack = m_undoGroup->activeStack()) {
-                stack->push(command.take());
-                VPVL2_VLOG(2, "resetAll TYPE=BONE");
-            }
-            emit modelBoneDidReset(0, type);
+            motionProxy->undoStack()->push(command.take());
+            setDirty(true);
+            VPVL2_VLOG(2, "resetAll TYPE=BONE");
+            emit modelBoneDidReset(0, AllTranslationAndOrientation);
         }
     }
 }
@@ -883,16 +913,21 @@ void ProjectProxy::resetMorph(MorphRefObject *morph)
         }
     }
     else if (m_currentModelRef) {
-        if (MotionProxy *motionProxy = m_currentModelRef->childMotion()) {
+        resetAllMorphs(m_currentModelRef);
+    }
+}
+
+void ProjectProxy::resetAllMorphs(ModelProxy *model)
+{
+    if (model) {
+        if (MotionProxy *motionProxy = model->childMotion()) {
             QScopedPointer<QUndoCommand> command(new QUndoCommand());
-            foreach (MorphRefObject *morphRef, m_currentModelRef->allMorphRefs()) {
+            foreach (MorphRefObject *morphRef, model->allMorphRefs()) {
                 morphRef->setWeight(morphRef->originWeight());
                 motionProxy->updateKeyframe(morphRef, static_cast<qint64>(m_currentTimeIndex), command.data());
             }
-            if (QUndoStack *stack = m_undoGroup->activeStack()) {
-                stack->push(command.take());
-                VPVL2_VLOG(2, "resetAll TYPE=MORPH");
-            }
+            motionProxy->undoStack()->push(command.take());
+            VPVL2_VLOG(2, "resetAll TYPE=MORPH");
         }
     }
 }
@@ -1018,9 +1053,9 @@ void ProjectProxy::deleteMotion(MotionProxy *value, bool fromDestructor)
             modelProxy->setChildMotion(0, !fromDestructor);
             value->data()->setParentModelRef(0);
         }
-        QUndoStack *undoStack = value->undoStack();
-        m_undoGroup->removeStack(undoStack);
-        undoStack->clear();
+        QUndoStack *undoStackRef = value->undoStack();
+        m_undoGroup->removeStack(undoStackRef);
+        undoStackRef->clear();
         m_motionProxies.removeOne(value);
         m_instance2MotionProxyRefs.remove(value->data());
         m_uuid2MotionProxyRefs.remove(value->uuid());
@@ -1180,7 +1215,7 @@ void ProjectProxy::internalLoadAsync()
             motionProxy = createMotionProxy(motionRef, QUuid(QString::fromStdString(uuid)), QUrl());
             if (ModelProxy *modelProxy = resolveModelProxy(motionRef->parentModelRef())) {
                 /* this is a model motion */
-                motionProxy->setModelProxy(modelProxy, m_factory.data());
+                motionProxy->assignModel(modelProxy, m_factory.data());
                 modelProxy->setChildMotion(motionProxy, true);
                 if (modelSetting(modelProxy, "selected").toBool()) {
                     /* call setCurrentMotion to paint timeline correctly */
@@ -1337,6 +1372,7 @@ void ProjectProxy::release(bool fromDestructor)
     VPVL2_VLOG(1, "The project will be released");
     reset();
     internalDeleteAllMotions(fromDestructor);
+    m_undoGroup->setActiveStack(0);
     m_undoGroup.reset(fromDestructor ? 0 : new QUndoGroup());
     /* copy motion proxies because m_modelProxies will be mutated using removeOne */
     QList<ModelProxy *> modelProxies = m_modelProxies;

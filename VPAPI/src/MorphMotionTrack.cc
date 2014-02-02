@@ -52,7 +52,9 @@ MorphMotionTrack::MorphMotionTrack(MotionProxy *motionProxy, const QString &name
 
 MorphMotionTrack::~MorphMotionTrack()
 {
+    Q_ASSERT(m_keyframes.size() == m_keyframe2RefObjects.size());
     qDeleteAll(m_keyframes);
+    m_keyframes.clear();
     m_parentMotionRef = 0;
 }
 
@@ -141,7 +143,10 @@ BaseKeyframeRefObject *MorphMotionTrack::copy(BaseKeyframeRefObject *value, cons
 
 void MorphMotionTrack::replace(MorphKeyframeRefObject *dst, MorphKeyframeRefObject *src, bool doUpdate)
 {
-    Q_ASSERT(src && dst && dst != src && src->parentTrack() == dst->parentTrack());
+    Q_ASSERT(src);
+    Q_ASSERT(dst);
+    Q_ASSERT(dst != src);
+    Q_ASSERT(src->parentTrack() == dst->parentTrack());
     IMotion *motionRef = m_parentMotionRef->data();
     motionRef->replaceKeyframe(dst->data(), false);
     if (doUpdate) {
@@ -149,6 +154,7 @@ void MorphMotionTrack::replace(MorphKeyframeRefObject *dst, MorphKeyframeRefObje
     }
     remove(src);
     add(dst, doUpdate);
+    Q_ASSERT(m_keyframes.size() == m_keyframe2RefObjects.size());
     emit keyframeDidSwap(dst, src);
 }
 
