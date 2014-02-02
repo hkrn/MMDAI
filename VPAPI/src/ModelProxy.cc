@@ -942,15 +942,14 @@ void ModelProxy::setComment(const QString &value)
 ModelProxy::EncodingType ModelProxy::encodingType() const
 {
     Q_ASSERT(m_model);
-    // FIXME: implement encodingType
-    return ShiftJIS;
+    return static_cast<EncodingType>(m_model->encodingType());
 }
 
 void ModelProxy::setEncodingType(EncodingType value)
 {
     Q_ASSERT(m_model);
     if (encodingType() != value) {
-        // FIXME: implement encodingType
+        m_model->setEncodingType(static_cast<IString::Codec>(value));
         markDirty();
         emit encodingTypeChanged();
     }
@@ -1162,18 +1161,18 @@ void ModelProxy::setEdgeWidth(qreal value)
     }
 }
 
-int ModelProxy::numUVA() const
+int ModelProxy::maxUVCount() const
 {
     Q_ASSERT(m_model);
-    // FIXME: implement numUVA
-    return 0;
+    return m_model->maxUVCount();
 }
 
-void ModelProxy::setNumUVA(int value)
+void ModelProxy::setMaxUVCount(int value)
 {
     Q_ASSERT(m_model);
-    if (numUVA() != value) {
-        // FIXME: implement numUVA
+    if (maxUVCount() != value) {
+        m_model->setMaxUVCount(value);
+        markDirty();
         emit numUVAChanged();
     }
 }
