@@ -262,16 +262,16 @@ void Material::write(uint8 *&data, const Model::DataInfo & /* info */) const
         textures.append(m_context->sphereTexture);
         IString *s = separator->join(textures);
         uint8 *textureNamePtr = unit.textureName;
-        internal::writeStringAsByteArray(s, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.textureName), textureNamePtr);
+        internal::writeStringAsByteArray(s, m_context->encodingRef, IString::kShiftJIS, sizeof(unit.textureName), textureNamePtr);
         internal::deleteObject(s);
     }
     else if (!m_context->mainTexture && m_context->sphereTexture) {
         uint8 *textureNamePtr = unit.textureName;
-        internal::writeStringAsByteArray(m_context->sphereTexture, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.textureName), textureNamePtr);
+        internal::writeStringAsByteArray(m_context->sphereTexture, m_context->encodingRef, IString::kShiftJIS, sizeof(unit.textureName), textureNamePtr);
     }
     else {
         uint8 *textureNamePtr = unit.textureName;
-        internal::writeStringAsByteArray(m_context->mainTexture, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.textureName), textureNamePtr);
+        internal::writeStringAsByteArray(m_context->mainTexture, m_context->encodingRef, IString::kShiftJIS, sizeof(unit.textureName), textureNamePtr);
     }
     unit.toonTextureIndex = (m_context->toonTextureIndex == 0) ? 0xff : m_context->toonTextureIndex;
     internal::writeBytes(&unit, sizeof(unit), data);

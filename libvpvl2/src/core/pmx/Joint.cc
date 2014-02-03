@@ -225,8 +225,8 @@ void Joint::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 
 void Joint::write(uint8 *&data, const Model::DataInfo &info) const
 {
-    internal::writeString(m_name, info.codec, data);
-    internal::writeString(m_englishName, info.codec, data);
+    internal::writeString(m_name, info.encoding, info.codec, data);
+    internal::writeString(m_englishName, info.encoding, info.codec, data);
     uint8 type = m_type;
     internal::writeBytes(&type, sizeof(type), data);
     vsize rigidBodyIndexSize = info.rigidBodyIndexSize;
@@ -247,8 +247,8 @@ void Joint::write(uint8 *&data, const Model::DataInfo &info) const
 vsize Joint::estimateSize(const Model::DataInfo &info) const
 {
     vsize size = 0;
-    size += internal::estimateSize(m_name, info.codec);
-    size += internal::estimateSize(m_englishName, info.codec);
+    size += internal::estimateSize(m_name, info.encoding, info.codec);
+    size += internal::estimateSize(m_englishName, info.encoding, info.codec);
     size += sizeof(uint8);
     size += info.rigidBodyIndexSize * 2;
     size += sizeof(JointUnit);

@@ -225,16 +225,16 @@ void SoftBody::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 
 void SoftBody::write(uint8 *&data, const Model::DataInfo &info) const
 {
-    internal::writeString(m_context->name, info.codec, data);
-    internal::writeString(m_context->englishName, info.codec, data);
+    internal::writeString(m_context->name, info.encoding, info.codec, data);
+    internal::writeString(m_context->englishName, info.encoding, info.codec, data);
     /* TODO: implement this */
 }
 
 vsize SoftBody::estimateSize(const Model::DataInfo &info) const
 {
     vsize size = 0;
-    size += internal::estimateSize(m_context->name, info.codec);
-    size += internal::estimateSize(m_context->englishName, info.codec);
+    size += internal::estimateSize(m_context->name, info.encoding, info.codec);
+    size += internal::estimateSize(m_context->englishName, info.encoding, info.codec);
     /* TODO: implement this */
     return size;
 }

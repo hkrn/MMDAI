@@ -994,8 +994,8 @@ void Model::save(uint8 *data, vsize &written) const
     uint8 *base = data;
     internal::copyBytes(header.signature, "Pmd", sizeof(header.signature));
     uint8 *namePtr = header.name, *commentPtr = header.comment;
-    internal::writeStringAsByteArray(m_context->namePtr, IString::kShiftJIS, m_context->encodingRef, sizeof(header.name), namePtr);
-    internal::writeStringAsByteArray(m_context->commentPtr, IString::kShiftJIS, m_context->encodingRef, sizeof(header.comment), commentPtr);
+    internal::writeStringAsByteArray(m_context->namePtr, m_context->encodingRef, IString::kShiftJIS, sizeof(header.name), namePtr);
+    internal::writeStringAsByteArray(m_context->commentPtr, m_context->encodingRef, IString::kShiftJIS, sizeof(header.comment), commentPtr);
     internal::writeBytes(&header, sizeof(header), data);
     Vertex::writeVertices(m_context->vertices, m_context->dataInfo, data);
     const int32 nindices = m_context->indices.count();
@@ -1022,8 +1022,8 @@ void Model::save(uint8 *data, vsize &written) const
     Label::writeLabels(m_context->labels, m_context->dataInfo, data);
     internal::writeSignedIndex(m_context->hasEnglish ? 1 : 0, sizeof(uint8), data);
     if (m_context->hasEnglish) {
-        internal::writeStringAsByteArray(m_context->englishNamePtr, IString::kShiftJIS, m_context->encodingRef, kNameSize, data);
-        internal::writeStringAsByteArray(m_context->englishCommentPtr, IString::kShiftJIS, m_context->encodingRef, kCommentSize, data);
+        internal::writeStringAsByteArray(m_context->englishNamePtr, m_context->encodingRef, IString::kShiftJIS, kNameSize, data);
+        internal::writeStringAsByteArray(m_context->englishCommentPtr, m_context->encodingRef, IString::kShiftJIS, kCommentSize, data);
         Bone::writeEnglishNames(m_context->bones, m_context->dataInfo, data);
         Morph::writeEnglishNames(m_context->morphs, m_context->dataInfo, data);
         Label::writeEnglishNames(m_context->labels, m_context->dataInfo, data);
@@ -1032,7 +1032,7 @@ void Model::save(uint8 *data, vsize &written) const
     const int numToonTextures = m_context->customToonTextures.count();
     for (int i = 0; i < kMaxCustomToonTextures; i++) {
         const IString *customToonTextureRef = i < numToonTextures ? m_context->customToonTextures[i] : 0;
-        internal::writeStringAsByteArray(customToonTextureRef, IString::kShiftJIS, m_context->encodingRef, sizeof(customTextureName), customTextureNamePtr);
+        internal::writeStringAsByteArray(customToonTextureRef, m_context->encodingRef, IString::kShiftJIS, sizeof(customTextureName), customTextureNamePtr);
         internal::writeBytes(customTextureName, sizeof(customTextureName), data);
         customTextureNamePtr = customTextureName;
     }

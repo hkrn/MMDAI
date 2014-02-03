@@ -188,7 +188,7 @@ void Joint::write(uint8 *&data, const Model::DataInfo & /* info */) const
     unit.bodyIDA = m_rigidBodyIndex1;
     unit.bodyIDB = m_rigidBodyIndex2;
     uint8 *namePtr = unit.name;
-    internal::writeStringAsByteArray(m_name, IString::kShiftJIS, m_encodingRef, sizeof(unit.name), namePtr);
+    internal::writeStringAsByteArray(m_name, m_encodingRef, IString::kShiftJIS, sizeof(unit.name), namePtr);
     internal::getPositionRaw(m_position, unit.position);
     internal::getPositionRaw(m_rotation, unit.rotation);
     internal::getPositionRaw(m_positionLowerLimit, unit.positionLowerLimit);

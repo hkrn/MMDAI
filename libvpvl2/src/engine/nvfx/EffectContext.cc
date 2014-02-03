@@ -140,7 +140,7 @@ IEffect *EffectContext::compileFromFile(const IString *pathRef, IApplicationCont
     nvFX::IContainer *container = 0;
     if (pathRef) {
         container = nvFX::IContainer::create();
-        if (nvFX::loadEffectFromFile(container, internal::cstr(pathRef, 0))) {
+        if (nvFX::loadEffectFromFile(container, reinterpret_cast<const char *>(pathRef->toByteArray()))) {
             return new nvfx::Effect(this, applicationContextRef, container);
         }
     }
@@ -152,7 +152,7 @@ IEffect *EffectContext::compileFromSource(const IString *source, IApplicationCon
     nvFX::IContainer *container = 0;
     if (source) {
         container = nvFX::IContainer::create();
-        if (nvFX::loadEffect(container, internal::cstr(source, 0))) {
+        if (nvFX::loadEffect(container, reinterpret_cast<const char *>(source->toByteArray()))) {
             return new nvfx::Effect(this, applicationContextRef, container);
         }
     }

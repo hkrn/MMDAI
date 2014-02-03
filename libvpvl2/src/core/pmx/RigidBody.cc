@@ -197,8 +197,8 @@ void RigidBody::read(const uint8 *data, const Model::DataInfo &info, vsize &size
 
 void RigidBody::write(uint8 *&data, const Model::DataInfo &info) const
 {
-    internal::writeString(m_name, info.codec, data);
-    internal::writeString(m_englishName, info.codec, data);
+    internal::writeString(m_name, info.encoding, info.codec, data);
+    internal::writeString(m_englishName, info.encoding, info.codec, data);
     internal::writeSignedIndex(m_boneIndex, info.boneIndexSize, data);
     RigidBodyUnit rbu;
     rbu.angularDamping = m_angularDamping;
@@ -219,8 +219,8 @@ void RigidBody::write(uint8 *&data, const Model::DataInfo &info) const
 vsize RigidBody::estimateSize(const Model::DataInfo &info) const
 {
     vsize size = 0;
-    size += internal::estimateSize(m_name, info.codec);
-    size += internal::estimateSize(m_englishName, info.codec);
+    size += internal::estimateSize(m_name, info.encoding, info.codec);
+    size += internal::estimateSize(m_englishName, info.encoding, info.codec);
     size += info.boneIndexSize;
     size += sizeof(RigidBodyUnit);
     return size;

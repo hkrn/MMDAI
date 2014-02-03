@@ -599,8 +599,8 @@ void Bone::write(uint8 *&data, const Model::DataInfo &info) const
 {
     vsize boneIndexSize = info.boneIndexSize;
     BoneUnit bu;
-    internal::writeString(m_context->namePtr, info.codec, data);
-    internal::writeString(m_context->englishNamePtr, info.codec, data);
+    internal::writeString(m_context->namePtr, info.encoding, info.codec, data);
+    internal::writeString(m_context->englishNamePtr, info.encoding, info.codec, data);
     internal::getPosition(m_context->origin, &bu.vector3[0]);
     internal::writeBytes(&bu, sizeof(bu), data);
     internal::writeSignedIndex(m_context->parentBoneIndex, boneIndexSize, data);
@@ -655,8 +655,8 @@ void Bone::write(uint8 *&data, const Model::DataInfo &info) const
 vsize Bone::estimateSize(const Model::DataInfo &info) const
 {
     vsize size = 0, boneIndexSize = info.boneIndexSize;
-    size += internal::estimateSize(m_context->namePtr, info.codec);
-    size += internal::estimateSize(m_context->englishNamePtr, info.codec);
+    size += internal::estimateSize(m_context->namePtr, info.encoding, info.codec);
+    size += internal::estimateSize(m_context->englishNamePtr, info.encoding, info.codec);
     size += sizeof(BoneUnit);
     size += boneIndexSize;
     size += sizeof(m_context->layerIndex);

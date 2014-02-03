@@ -72,7 +72,7 @@ bool Encoding::initializeOnce()
 
 Encoding::Encoding(const Dictionary *dictionaryRef)
     : m_dictionaryRef(dictionaryRef),
-      m_null(UnicodeString()),
+      m_null(UnicodeString(), IString::kUTF8, &m_converter),
       m_detector(0)
 {
     UErrorCode status = U_ZERO_ERROR;
@@ -103,7 +103,7 @@ IString *Encoding::toString(const uint8 *value, vsize size, IString::Codec codec
         UErrorCode status = U_ZERO_ERROR;
         UnicodeString us(str, int(size), converter, status);
         /* remove head and trail spaces and 0x1a (appended by PMDEditor) */
-        s = new (std::nothrow) String(us.trim().findAndReplace(UChar(0x1a), UChar()), &m_converter);
+        s = new (std::nothrow) String(us.trim().findAndReplace(UChar(0x1a), UChar()), codec, &m_converter);
     }
     return s;
 }
@@ -115,8 +115,19 @@ IString *Encoding::toString(const uint8 *value, IString::Codec codec, vsize maxl
         return toString(value, btMin(maxlen, size), codec);
     }
     else {
-        return new(std::nothrow) String(UnicodeString(), &m_converter);
+        return new(std::nothrow) String(UnicodeString(), IString::kUTF8, &m_converter);
     }
+}
+
+vsize Encoding::estimateSize(const IString *value, IString::Codec codec) const
+{
+    if (const String *s = static_cast<const String *>(value)) {
+        if (UConverter *converter = m_converter.converterFromCodec(codec)) {
+            UErrorCode status = U_ZERO_ERROR;
+            return s->value().extract(0, 0, converter, status);
+        }
+    }
+    return 0;
 }
 
 uint8 *Encoding::toByteArray(const IString *value, IString::Codec codec) const
@@ -144,9 +155,10 @@ uint8 *Encoding::toByteArray(const IString *value, IString::Codec codec) const
     return data;
 }
 
-void Encoding::disposeByteArray(uint8 *value) const
+void Encoding::disposeByteArray(uint8 *&value) const
 {
     internal::deleteObjectArray(value);
+    value = 0;
 }
 
 IString::Codec Encoding::detectCodec(const char *data, vsize length) const
@@ -176,7 +188,7 @@ IString::Codec Encoding::detectCodec(const char *data, vsize length) const
 
 IString *Encoding::createString(const UnicodeString &value) const
 {
-    return new String(value, &m_converter);
+    return new String(value, IString::kUTF8, &m_converter);
 }
 
 } /* namespace icu4c */

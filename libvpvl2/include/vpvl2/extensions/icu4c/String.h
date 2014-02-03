@@ -100,10 +100,10 @@ public:
         }
     };
 
-    static IString *create(const std::string &value, const Converter *converterRef = 0);
+    static IString *create(const std::string &value);
     static std::string toStdString(const UnicodeString &value);
 
-    explicit String(const UnicodeString &value, const Converter *converterRef = 0);
+    explicit String(const UnicodeString &value, IString::Codec codec = IString::kUTF8, const Converter *converterRef = 0);
     ~String();
 
     bool startsWith(const IString *value) const;
@@ -118,12 +118,12 @@ public:
     std::string toStdString() const;
     const uint8 *toByteArray() const;
     vsize size() const;
-    vsize length(Codec codec) const;
 
 private:
     const Converter *m_converterRef;
     const UnicodeString m_value;
-    Array<uint8> m_bytes;
+    const IString::Codec m_codec;
+    const std::string m_utf8;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(String)
 };

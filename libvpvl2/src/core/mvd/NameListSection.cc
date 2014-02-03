@@ -134,10 +134,11 @@ void NameListSection::write(uint8 *data, const Motion::DataInfo &info) const
     header.reserved = header.reserved2 = header.reserved3 = 0;
     internal::writeBytes(&header, sizeof(header), data);
     const IString::Codec codec = info.codec;
+    IEncoding *encodingRef = info.encoding;
     for (int32 i = 0; i < nnames; i++) {
         const IString *name = m_strings[i];
         internal::writeBytes(&i, sizeof(i), data);
-        internal::writeString(name, codec, data);
+        internal::writeString(name, encodingRef, codec, data);
     }
 }
 
@@ -148,10 +149,11 @@ vsize NameListSection::estimateSize(const Motion::DataInfo &info) const
     size += sizeof(NameSectionHeader);
     const int nnames = m_strings.count();
     const IString::Codec codec = info.codec;
+    IEncoding *encodingRef = info.encoding;
     for (int32 i = 0; i < nnames; i++) {
         const IString *name = m_strings[i];
         size += sizeof(i);
-        size += internal::estimateSize(name, codec);
+        size += internal::estimateSize(name, encodingRef, codec);
     }
     return size;
 }

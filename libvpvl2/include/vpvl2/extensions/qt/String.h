@@ -43,6 +43,7 @@
 #include <vpvl2/IString.h>
 #include <QString>
 #include <QStringList>
+#include <QTextCodec>
 
 namespace vpvl2
 {
@@ -61,12 +62,11 @@ public:
         return value.toStdString();
     }
 
-    String(const QString &value)
-        : m_value(value)
+    String(const QString &value, const QTextCodec *converter = QTextCodec::codecForName("UTF-8"))
+        : m_value(value),
+          m_converter(converter),
+          m_utf8(value.toStdString())
     {
-        const QByteArray &bytes = value.toUtf8();
-        m_bytes.resize(bytes.length() + 1);
-        qstrcpy(reinterpret_cast<char *>(&m_bytes[0]), bytes.constData());
     }
     ~String() {
     }
@@ -84,16 +84,16 @@ public:
         tokens.clear();
         if (maxTokens > 0) {
             foreach (const QString &s, m_value.split(static_cast<const String *>(separator)->value())) {
-                tokens.append(new String(s));
+                tokens.append(new String(s, m_converter));
             }
             tokens.resize(maxTokens);
         }
         else if (maxTokens == 0) {
-            tokens.append(new String(m_value));
+            tokens.append(new String(m_value, m_converter));
         }
         else {
             foreach (const QString &s, m_value.split(static_cast<const String *>(separator)->value())) {
-                tokens.append(new String(s));
+                tokens.append(new String(s, m_converter));
             }
         }
     }
@@ -107,13 +107,14 @@ public:
                 s.append(m_value);
             }
         }
-        return new String(s);
+        return new String(s, m_converter);
     }
     IString *clone() const {
-        return new String(m_value);
+        return new String(m_value, m_converter);
     }
     const HashString toHashString() const {
-        return HashString(reinterpret_cast<const char *>(&m_bytes[0]));
+        /* first argument of HashString's construct must be on memory after calling this (toHashString) */
+        return HashString(m_utf8.c_str());
     }
     bool equals(const IString *value) const {
         return value && m_value == static_cast<const String *>(value)->value();
@@ -122,21 +123,19 @@ public:
         return m_value;
     }
     std::string toStdString() const {
-        return toStdString(m_value);
+        return m_utf8;
     }
     const uint8 *toByteArray() const {
-        return &m_bytes[0];
+        return reinterpret_cast<const uint8 *>(m_utf8.c_str());
     }
     vsize size() const {
-        return m_value.length();
-    }
-    vsize length(Codec /* codec */) const {
-        return m_value.length();
+        return m_utf8.size();
     }
 
 private:
     const QString m_value;
-    Array<uint8> m_bytes;
+    const QTextCodec *m_converter;
+    const std::string m_utf8;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(String)
 };
@@ -146,4 +145,3 @@ private:
 } /* namespace vpvl2 */
 
 #endif
-

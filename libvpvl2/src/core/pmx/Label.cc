@@ -268,8 +268,8 @@ void Label::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 
 void Label::write(uint8 *&data, const Model::DataInfo &info) const
 {
-    internal::writeString(m_context->name, info.codec, data);
-    internal::writeString(m_context->englishName, info.codec, data);
+    internal::writeString(m_context->name, info.encoding, info.codec, data);
+    internal::writeString(m_context->englishName, info.encoding, info.codec, data);
     int32 npairs = m_context->pairs.count();
     internal::writeBytes(&m_context->special, sizeof(uint8), data);
     internal::writeBytes(&npairs, sizeof(npairs), data);
@@ -293,8 +293,8 @@ void Label::write(uint8 *&data, const Model::DataInfo &info) const
 vsize Label::estimateSize(const Model::DataInfo &info) const
 {
     vsize size = 0;
-    size += internal::estimateSize(m_context->name, info.codec);
-    size += internal::estimateSize(m_context->englishName, info.codec);
+    size += internal::estimateSize(m_context->name, info.encoding, info.codec);
+    size += internal::estimateSize(m_context->englishName, info.encoding, info.codec);
     size += sizeof(uint8);
     int32 npairs = m_context->pairs.count();
     size += sizeof(npairs);

@@ -113,6 +113,13 @@ public:
     virtual IString *toString(const uint8 *value, IString::Codec codec, vsize maxlen) const = 0;
 
     /**
+     * 文字列のバイト単位の長さを返します.
+     *
+     * @return size_t
+     */
+    virtual vsize estimateSize(const IString *value, IString::Codec codec) const = 0;
+
+    /**
      * value を codec に基づいて変換し、バッファとして返します.
      *
      * libvpvl2 側で toByteArray が呼ばれた後領域を使用後必ず disposeByteArray を呼びます。
@@ -132,7 +139,7 @@ public:
      * @param value
      * @sa toByteArray
      */
-    virtual void disposeByteArray(uint8 *value) const = 0;
+    virtual void disposeByteArray(uint8 *&value) const = 0;
 
     /**
      * 指定された定数から不変の文字列を返します.

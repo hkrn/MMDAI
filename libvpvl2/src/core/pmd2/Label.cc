@@ -210,7 +210,7 @@ void Label::writeLabels(const Array<Label *> &labels, const Model::DataInfo &inf
         Label *label = labels[i];
         Label::Type type = label->type();
         if (type == kSpecialBoneCategoryLabel || type == kBoneCategoryLabel) {
-            internal::writeStringAsByteArray(label->name(IEncoding::kJapanese), IString::kShiftJIS, encodingRef, sizeof(categoryName), categoryNamePtr);
+            internal::writeStringAsByteArray(label->name(IEncoding::kJapanese), encodingRef, IString::kShiftJIS, sizeof(categoryName), categoryNamePtr);
             internal::writeBytes(categoryName, sizeof(categoryName), data);
             categoryNamePtr = categoryName;
         }
@@ -233,7 +233,7 @@ void Label::writeEnglishNames(const Array<Label *> &labels, const Model::DataInf
         Label *label = labels[i];
         Label::Type type = label->type();
         if (type == kSpecialBoneCategoryLabel || type == kBoneCategoryLabel) {
-            internal::writeStringAsByteArray(label->name(IEncoding::kEnglish), IString::kShiftJIS, encodingRef, Bone::kCategoryNameSize, data);
+            internal::writeStringAsByteArray(label->name(IEncoding::kEnglish), encodingRef, IString::kShiftJIS, Bone::kCategoryNameSize, data);
         }
     }
 }

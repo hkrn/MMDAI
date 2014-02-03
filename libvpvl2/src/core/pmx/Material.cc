@@ -418,8 +418,8 @@ void Material::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 
 void Material::write(uint8 *&data, const Model::DataInfo &info) const
 {
-    internal::writeString(m_context->name, info.codec, data);
-    internal::writeString(m_context->englishName, info.codec, data);
+    internal::writeString(m_context->name, info.encoding, info.codec, data);
+    internal::writeString(m_context->englishName, info.encoding, info.codec, data);
     MaterialUnit mu;
     internal::getColor(m_context->ambient.base, mu.ambient);
     internal::getColor(m_context->diffuse.base, mu.diffuse);
@@ -440,20 +440,20 @@ void Material::write(uint8 *&data, const Model::DataInfo &info) const
     else {
         internal::writeSignedIndex(m_context->toonTextureIndex, textureIndexSize, data);
     }
-    internal::writeString(m_context->userDataArea, info.codec, data);
+    internal::writeString(m_context->userDataArea, info.encoding, info.codec, data);
     internal::writeBytes(&m_context->indexRange.count, sizeof(int), data);
 }
 
 vsize Material::estimateSize(const Model::DataInfo &info) const
 {
     vsize size = 0, textureIndexSize = info.textureIndexSize;
-    size += internal::estimateSize(m_context->name, info.codec);
-    size += internal::estimateSize(m_context->englishName, info.codec);
+    size += internal::estimateSize(m_context->name, info.encoding, info.codec);
+    size += internal::estimateSize(m_context->englishName, info.encoding, info.codec);
     size += sizeof(MaterialUnit);
     size += textureIndexSize * 2;
     size += sizeof(uint16);
     size += m_context->useSharedToonTexture ? sizeof(uint8) : textureIndexSize;
-    size += internal::estimateSize(m_context->userDataArea, info.codec);
+    size += internal::estimateSize(m_context->userDataArea, info.encoding, info.codec);
     size += sizeof(int);
     return size;
 }

@@ -76,15 +76,13 @@ public:
         return &m_null;
     }
     IString *toString(const uint8 *value, vsize size, IString::Codec codec) const {
-        const char *str = reinterpret_cast<const char *>(value);
-        IString *s = 0;
-        if (QTextCodec *converter = detectTextCodec(codec)) {
-            QString us = converter->toUnicode(str, size);
-            /* remove head and trail spaces and 0x1a (appended by PMDEditor) */
-            us.replace(QChar(0x1a), QChar());
-            us = us.trimmed();
-            s = new (std::nothrow) String(us);
-        }
+        QTextCodec *converter = detectTextCodec(codec);
+        Q_ASSERT(converter);
+        QString us = converter->toUnicode(reinterpret_cast<const char *>(value), size);
+        /* remove head and trail spaces and 0x1a (appended by PMDEditor) */
+        us.replace(QChar(0x1a), QChar());
+        us = us.trimmed();
+        IString *s = new (std::nothrow) String(us, converter);
         return s;
     }
     IString *toString(const uint8 *value, IString::Codec codec, vsize maxlen) const {
@@ -96,36 +94,40 @@ public:
             return new(std::nothrow) String(QString());
         }
     }
+    vsize estimateSize(const IString *value, IString::Codec codec) const {
+        const String *s = static_cast<const String *>(value);
+        const QTextCodec *converter = detectTextCodec(codec);
+        Q_ASSERT(converter);
+        vsize size = s ? converter->fromUnicode(s->value()).size() : 0;
+        return size;
+    }
     uint8 *toByteArray(const IString *value, IString::Codec codec) const {
         uint8 *data = 0;
-        if (value) {
-            const String *s = static_cast<const String *>(value);
-            const QString &src = s->value();
-            if (QTextCodec *converter = detectTextCodec(codec)) {
-                QByteArray bytes = converter->fromUnicode(src);
-                data = new (std::nothrow) uint8[bytes.length() + 1];
-                if (data) {
-                    qstrcpy(reinterpret_cast<char *>(data), bytes.constData());
-                }
-            }
+        if (const String *s = static_cast<const String *>(value)) {
+            QTextCodec *converter = detectTextCodec(codec);
+            Q_ASSERT(converter);
+            QByteArray bytes = converter->fromUnicode(s->value());
+            data = new (std::nothrow) uint8[bytes.size() + 1];
+            Q_CHECK_PTR(data);
+            qstrcpy(reinterpret_cast<char *>(data), bytes);
         }
         else {
             data = new (std::nothrow) uint8[1];
-            if (data) {
-                data[0] = 0;
-            }
+            Q_CHECK_PTR(data);
+            data[0] = 0;
         }
         return data;
     }
-    void disposeByteArray(uint8 *value) const {
+    void disposeByteArray(uint8 *&value) const {
         delete[] value;
+        value = 0;
     }
     IString::Codec detectCodec(const char *data, vsize length) const {
         const QString &name = QTextCodec::codecForUtfText(QByteArray(data, length))->name();
         if (name == "UTF-8") {
             return IString::kUTF8;
         }
-        else if (name == "UTF-16") {
+        else if (name == "UTF-16LE") {
             return IString::kUTF16;
         }
         else if (name == "Shift-JIS") {
@@ -138,17 +140,14 @@ public:
     }
 
 private:
-    QTextCodec *detectTextCodec(IString::Codec type) const {
+    static QTextCodec *detectTextCodec(IString::Codec type) {
         switch (type) {
         case IString::kShiftJIS:
             return QTextCodec::codecForName("Shift-JIS");
-            break;
         case IString::kUTF8:
             return QTextCodec::codecForName("UTF-8");
-            break;
         case IString::kUTF16:
-            return QTextCodec::codecForName("UTF-16");
-            break;
+            return QTextCodec::codecForName("UTF-16LE");
         case IString::kMaxCodecType:
         default:
             return 0;

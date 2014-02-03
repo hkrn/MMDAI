@@ -953,20 +953,21 @@ void Model::save(uint8 *data, vsize &written) const
     internal::writeBytes("PMX ", sizeof(header.signature), signature);
     header.version = m_context->dataInfo.version;
     internal::writeBytes(&header, sizeof(header), data);
+    IEncoding *encodingRef = m_context->encodingRef;
     IString::Codec codec = m_context->codec;
     Flags flags;
     DataInfo info = m_context->dataInfo;
-    flags.codec = codec == IString::kUTF8 ? 1 : 0;
+    flags.codec = (codec == IString::kUTF8) ? 1 : 0;
     flags.additionalUVSize = uint8(info.additionalUVSize);
     m_context->assignIndexSize(info);
     m_context->assignIndexSize(flags);
     uint8 flagSize = sizeof(flags);
     internal::writeBytes(&flagSize, sizeof(flagSize), data);
     internal::writeBytes(&flags, sizeof(flags), data);
-    internal::writeString(m_context->namePtr, codec, data);
-    internal::writeString(m_context->englishNamePtr, codec, data);
-    internal::writeString(m_context->commentPtr, codec, data);
-    internal::writeString(m_context->englishCommentPtr, codec, data);
+    internal::writeString(m_context->namePtr, encodingRef, codec, data);
+    internal::writeString(m_context->englishNamePtr, encodingRef, codec, data);
+    internal::writeString(m_context->commentPtr, encodingRef, codec, data);
+    internal::writeString(m_context->englishCommentPtr, encodingRef, codec, data);
     Vertex::writeVertices(m_context->vertices, info, data);
     const int nindices = m_context->indices.count();
     internal::writeBytes(&nindices, sizeof(nindices), data);
@@ -978,7 +979,7 @@ void Model::save(uint8 *data, vsize &written) const
     internal::writeBytes(&ntextures, sizeof(ntextures), data);
     for (int i = 0; i < ntextures; i++) {
         const IString *texture = *m_context->name2textureRefs.value(i);
-        internal::writeString(texture, codec, data);
+        internal::writeString(texture, encodingRef, codec, data);
     }
     Material::writeMaterials(m_context->materials, info, data);
     Bone::writeBones(m_context->bones, info, data);
@@ -995,23 +996,24 @@ vsize Model::estimateSize() const
 {
     vsize size = 0;
     DataInfo info = m_context->dataInfo;
+    IEncoding *encodingRef = m_context->encodingRef;
     m_context->assignIndexSize(info);
-    IString::Codec codec = info.codec = m_context->codec;
+    IString::Codec codec = m_context->codec;
     size += sizeof(Header);
     size += sizeof(uint8) + sizeof(Flags);
-    size += internal::estimateSize(m_context->namePtr, codec);
-    size += internal::estimateSize(m_context->englishNamePtr, codec);
-    size += internal::estimateSize(m_context->commentPtr, codec);
-    size += internal::estimateSize(m_context->englishCommentPtr, codec);
+    size += internal::estimateSize(m_context->namePtr, encodingRef, codec);
+    size += internal::estimateSize(m_context->englishNamePtr, encodingRef, codec);
+    size += internal::estimateSize(m_context->commentPtr, encodingRef, codec);
+    size += internal::estimateSize(m_context->englishCommentPtr, encodingRef, codec);
     size += Vertex::estimateTotalSize(m_context->vertices, info);
     const int nindices = m_context->indices.count();
     size += sizeof(nindices);
-    size += m_context->dataInfo.vertexIndexSize * nindices;
+    size += info.vertexIndexSize * nindices;
     const int ntextures = m_context->name2textureRefs.count();
     size += sizeof(ntextures);
     for (int i = 0; i < ntextures; i++) {
         IString *texture = *m_context->name2textureRefs.value(i);
-        size += internal::estimateSize(texture, codec);
+        size += internal::estimateSize(texture, encodingRef, codec);
     }
     size += Material::estimateTotalSize(m_context->materials, info);
     size += Bone::estimateTotalSize(m_context->bones, info);
@@ -1788,7 +1790,7 @@ void Model::setEncodingType(IString::Codec value)
 {
     if (m_context->codec != value) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, encodingTypeWillChange(value, this));
-        m_context->codec = value;
+        m_context->codec = m_context->dataInfo.codec = value;
     }
 }
 

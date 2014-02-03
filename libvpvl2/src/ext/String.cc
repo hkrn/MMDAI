@@ -45,9 +45,9 @@ namespace extensions
 namespace icu4c
 {
 
-IString *String::create(const std::string &value, const Converter *converterRef)
+IString *String::create(const std::string &value)
 {
-    return new String(UnicodeString::fromUTF8(value), converterRef);
+    return new String(UnicodeString::fromUTF8(value), IString::kUTF8, 0);
 }
 
 std::string String::toStdString(const UnicodeString &value)
@@ -61,17 +61,12 @@ std::string String::toStdString(const UnicodeString &value)
     return str;
 }
 
-String::String(const UnicodeString &value, const Converter *converterRef)
+String::String(const UnicodeString &value, Codec codec, const Converter *converterRef)
     : m_converterRef(converterRef),
-      m_value(value)
+      m_value(value),
+      m_codec(codec),
+      m_utf8(toStdString(value))
 {
-    UErrorCode status = U_ZERO_ERROR;
-    int32_t length = value.extract(0, 0, static_cast<UConverter *>(0), status);
-    status = U_ZERO_ERROR;
-    m_bytes.resize(length + 1);
-    value.extract(reinterpret_cast<char *>(&m_bytes[0]),
-            m_bytes.count(),
-            static_cast<UConverter *>(converterRef ? converterRef->utf8 : 0), status);
 }
 
 String::~String()
@@ -101,7 +96,7 @@ void String::split(const IString *separator, int maxTokens, Array<IString *> &to
         const UnicodeString &sep = static_cast<const String *>(separator)->value();
         int32 offset = 0, pos = 0, size = sep.length(), nwords = 0;
         while ((pos = m_value.indexOf(sep, offset)) >= 0) {
-            tokens.append(new String(m_value.tempSubString(offset, pos - offset), m_converterRef));
+            tokens.append(new String(m_value.tempSubString(offset, pos - offset), m_codec, m_converterRef));
             offset = pos + size;
             nwords++;
             if (nwords >= maxTokens) {
@@ -113,21 +108,21 @@ void String::split(const IString *separator, int maxTokens, Array<IString *> &to
             IString *s = tokens[lastArrayOffset];
             const UnicodeString &s2 = static_cast<const String *>(s)->value();
             const UnicodeString &sp = static_cast<const String *>(separator)->value();
-            tokens[lastArrayOffset] = new String(s2 + sp + m_value.tempSubString(offset), m_converterRef);
+            tokens[lastArrayOffset] = new String(s2 + sp + m_value.tempSubString(offset), m_codec, m_converterRef);
             internal::deleteObject(s);
         }
     }
     else if (maxTokens == 0) {
-        tokens.append(new String(m_value, m_converterRef));
+        tokens.append(new String(m_value, m_codec, m_converterRef));
     }
     else {
         const UnicodeString &sep = static_cast<const String *>(separator)->value();
         int32 offset = 0, pos = 0, size = sep.length();
         while ((pos = m_value.indexOf(sep, offset)) >= 0) {
-            tokens.append(new String(m_value.tempSubString(offset, pos - offset), m_converterRef));
+            tokens.append(new String(m_value.tempSubString(offset, pos - offset), m_codec, m_converterRef));
             offset = pos + size;
         }
-        tokens.append(new String(m_value.tempSubString(offset), m_converterRef));
+        tokens.append(new String(m_value.tempSubString(offset), m_codec, m_converterRef));
     }
 }
 
@@ -142,17 +137,18 @@ IString *String::join(const Array<IString *> &tokens) const
             s.append(m_value);
         }
     }
-    return new String(s, m_converterRef);
+    return new String(s, m_codec, m_converterRef);
 }
 
 IString *String::clone() const
 {
-    return new String(m_value, m_converterRef);
+    return new String(m_value, m_codec, m_converterRef);
 }
 
 const HashString String::toHashString() const
 {
-    return HashString(reinterpret_cast<const char *>(&m_bytes[0]));
+    /* first argument of HashString's construct must be on memory after calling this (toHashString) */
+    return HashString(m_utf8.c_str());
 }
 
 bool String::equals(const IString *value) const
@@ -167,43 +163,17 @@ UnicodeString String::value() const
 
 std::string String::toStdString() const
 {
-    return toStdString(m_value);
+    return m_utf8;
 }
 
 const uint8 *String::toByteArray() const
 {
-    return &m_bytes[0];
+    return reinterpret_cast<const uint8 *>(m_utf8.c_str());
 }
 
 vsize String::size() const
 {
     return m_value.length();
-}
-
-vsize String::length(Codec codec) const
-{
-    if (m_converterRef) {
-        if (UConverter *converter = m_converterRef->converterFromCodec(codec)) {
-            UErrorCode status = U_ZERO_ERROR;
-            return m_value.extract(0, 0, converter, status);
-        }
-    }
-    const char *codecString = "utf-8";
-    switch (codec) {
-    case kShiftJIS:
-        codecString = "shift_jis";
-        break;
-    case kUTF8:
-        codecString = "utf-8";
-        break;
-    case kUTF16:
-        codecString = "utf-16le";
-        break;
-    case kMaxCodecType:
-    default:
-        break;
-    }
-    return m_value.extract(0, m_value.length(), 0, codecString);
 }
 
 } /* namespace icu4c */

@@ -215,7 +215,7 @@ void Bone::writeEnglishNames(const Array<Bone *> &bones, const Model::DataInfo &
     const int nbones = bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = bones[i];
-        internal::writeStringAsByteArray(bone->name(IEncoding::kEnglish), IString::kShiftJIS, encodingRef, kNameSize, data);
+        internal::writeStringAsByteArray(bone->name(IEncoding::kEnglish), encodingRef, IString::kShiftJIS, kNameSize, data);
     }
 }
 
@@ -254,7 +254,7 @@ void Bone::write(uint8 *&data, const Model::DataInfo & /* info */) const
     unit.childBoneID = m_context->childBoneIndex;
     unit.parentBoneID = m_context->parentBoneIndex;
     uint8 *namePtr = unit.name;
-    internal::writeStringAsByteArray(m_context->namePtr, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.name), namePtr);
+    internal::writeStringAsByteArray(m_context->namePtr, m_context->encodingRef, IString::kShiftJIS, sizeof(unit.name), namePtr);
     internal::getPosition(m_context->origin, unit.position);
     unit.targetBoneID = m_context->targetBoneIndex;
     unit.type = m_context->type;

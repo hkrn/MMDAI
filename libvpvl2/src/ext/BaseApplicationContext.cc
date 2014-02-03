@@ -172,10 +172,10 @@ static const vpvl2::gl::GLenum kGL_DEPTH_CLAMP = 0x864F;
 class EffectParameterUIBuilder {
 public:
     static TwBar *createBar(IEffect *effectRef) {
-        const char *effectName = reinterpret_cast<const char *>(effectRef->name()->toByteArray());
-        TwBar *bar = TwNewBar(effectName);
+        std::string effectName(reinterpret_cast<const char *>(effectRef->name()->toByteArray()));
+        TwBar *bar = TwNewBar(effectName.c_str());
         TwSetParam(bar, 0, "valueswidth", TW_PARAM_CSTRING, 1, "fit");
-        TwAddVarCB(bar, "Enabled", TW_TYPE_BOOLCPP, setEnableEffect, getEnableEffect, effectRef, (std::string("help='Toggle Enable/Disable Effect of ") + effectName + "'").c_str());
+        TwAddVarCB(bar, "Enabled", TW_TYPE_BOOLCPP, setEnableEffect, getEnableEffect, effectRef, ("help='Toggle Enable/Disable Effect of " + effectName + "'").c_str());
         return bar;
     }
     static void createBoolean(TwBar *bar, IEffect::Parameter *parameterRef, std::ostringstream &stream) {

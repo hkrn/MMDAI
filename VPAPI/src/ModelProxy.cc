@@ -130,10 +130,9 @@ bool ModelProxy::save(const QUrl &fileUrl)
         QByteArray bytes;
         vsize written = 0;
         bytes.resize(m_model->estimateSize());
-        m_model->setEncodingType(IString::kUTF8);
         m_model->save(reinterpret_cast<uint8 *>(bytes.data()), written);
-        Q_ASSERT(bytes.size() == int(written));
-        file.write(bytes);
+        Q_ASSERT(m_model->estimateSize() == written);
+        file.write(bytes.constData(), written);
         file.close();
         return true;
     }

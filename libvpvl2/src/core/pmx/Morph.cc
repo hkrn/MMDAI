@@ -738,8 +738,8 @@ void Morph::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
 
 void Morph::write(uint8 *&data, const Model::DataInfo &info) const
 {
-    internal::writeString(m_context->namePtr, info.codec, data);
-    internal::writeString(m_context->englishNamePtr, info.codec, data);
+    internal::writeString(m_context->namePtr, info.encoding, info.codec, data);
+    internal::writeString(m_context->englishNamePtr, info.encoding, info.codec, data);
     MorphUnit mu;
     mu.category = m_context->category;
     mu.type = m_context->type;
@@ -792,8 +792,8 @@ void Morph::write(uint8 *&data, const Model::DataInfo &info) const
 vsize Morph::estimateSize(const Model::DataInfo &info) const
 {
     vsize size = 0;
-    size += internal::estimateSize(m_context->namePtr, info.codec);
-    size += internal::estimateSize(m_context->englishNamePtr, info.codec);
+    size += internal::estimateSize(m_context->namePtr, info.encoding, info.codec);
+    size += internal::estimateSize(m_context->englishNamePtr, info.encoding, info.codec);
     size += sizeof(MorphUnit);
     switch (m_context->type) {
     case kGroupMorph:

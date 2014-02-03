@@ -144,9 +144,8 @@ struct PMXAccelerator::PrivateContext {
             if (source && devices.size() > 0) {
                 const ::cl::Device &device = devices[0];
                 dumpDevice(device);
-                const char *sourceText = reinterpret_cast<const char *>(source->toByteArray());
-                const vsize sourceSize = source->length(IString::kUTF8);
-                ::cl::Program::Sources sourceData(1, std::make_pair(sourceText, sourceSize));
+                std::string s(reinterpret_cast<const char *>(source->toByteArray()), source->size());
+                ::cl::Program::Sources sourceData(1, std::make_pair(s.c_str(), s.length()));
                 internal::deleteObject(program);
                 program = new ::cl::Program(*context, sourceData);
                 program->build(devices);

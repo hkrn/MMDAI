@@ -144,13 +144,6 @@ public:
     virtual vsize size() const = 0;
 
     /**
-     * 文字列のバイト単位の長さを返します.
-     *
-     * @return size_t
-     */
-    virtual vsize length(IString::Codec codec) const = 0;
-
-    /**
      * 文字列のバイト文字列を返します.
      *
      * これが返すデータは解放されないため、メモリ上に確保して返してはいけません。

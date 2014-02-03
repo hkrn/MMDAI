@@ -95,9 +95,10 @@ static inline void zerofill(void *ptr, vsize size)
 #endif
 }
 
-static inline vsize estimateSize(const IString *string, IString::Codec codec)
+static inline vsize estimateSize(const IString *string, const IEncoding *encodingRef, IString::Codec codec)
 {
-    vsize value = sizeof(int32) + (string ? string->length(codec) : 0);
+    VPVL2_DCHECK_NOTNULL(encodingRef);
+    vsize value = sizeof(int32) + encodingRef->estimateSize(string, codec);
     return value;
 }
 
@@ -428,17 +429,20 @@ static inline void writeUnsignedIndex(int value, vsize size, uint8 *&dst)
     }
 }
 
-static inline void writeString(const IString *string, IString::Codec codec, uint8 *&dst)
+static inline void writeString(const IString *value, const IEncoding *encodingRef, IString::Codec codec, uint8 *&dst)
 {
+    VPVL2_DCHECK_NOTNULL(encodingRef);
     VPVL2_DCHECK_NOTNULL(dst);
-    int32 s = string ? int32(string->length(codec)) : 0;
-    writeBytes(&s, sizeof(s), dst);
-    if (s > 0) {
-        writeBytes(string->toByteArray(), s, dst);
+    int32 size = int32(encodingRef->estimateSize(value, codec));
+    writeBytes(&size, sizeof(size), dst);
+    if (size > 0) {
+        uint8 *bytes = encodingRef->toByteArray(value, codec);
+        writeBytes(bytes, size, dst);
+        encodingRef->disposeByteArray(bytes);
     }
 }
 
-static inline void writeStringAsByteArray(const IString *string, IString::Codec codec, const IEncoding *encodingRef, vsize bufsiz, uint8 *&dst)
+static inline void writeStringAsByteArray(const IString *string, const IEncoding *encodingRef, IString::Codec codec, vsize bufsiz, uint8 *&dst)
 {
     VPVL2_DCHECK_NOTNULL(encodingRef);
     VPVL2_DCHECK_NOTNULL(dst);

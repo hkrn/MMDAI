@@ -187,7 +187,7 @@ void RigidBody::write(uint8 *&data, const Model::DataInfo & /* info */) const
     unit.linearDamping = m_linearDamping;
     unit.mass = m_mass;
     uint8 *namePtr = unit.name;
-    internal::writeStringAsByteArray(m_name, IString::kShiftJIS, m_encodingRef, sizeof(unit.name), namePtr);
+    internal::writeStringAsByteArray(m_name, m_encodingRef, IString::kShiftJIS, sizeof(unit.name), namePtr);
     internal::getPosition(m_position, unit.position);
     unit.restitution = m_restitution;
     internal::getPositionRaw(m_rotation, unit.rotation);

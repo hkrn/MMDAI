@@ -210,7 +210,7 @@ void Morph::writeEnglishNames(const Array<Morph *> &morphs, const Model::DataInf
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         Morph *morph = morphs[i];
-        internal::writeStringAsByteArray(morph->name(IEncoding::kJapanese), IString::kShiftJIS, encodingRef, kNameSize, data);
+        internal::writeStringAsByteArray(morph->name(IEncoding::kJapanese), encodingRef, IString::kShiftJIS, kNameSize, data);
     }
 }
 
@@ -266,7 +266,7 @@ void Morph::write(uint8 *&data, const Model::DataInfo & /* info */) const
 {
     MorphUnit unit;
     uint8 *namePtr = unit.name;
-    internal::writeStringAsByteArray(m_context->namePtr, IString::kShiftJIS, m_context->encodingRef, sizeof(unit.name), namePtr);
+    internal::writeStringAsByteArray(m_context->namePtr, m_context->encodingRef, IString::kShiftJIS, sizeof(unit.name), namePtr);
     unit.nvertices = m_context->vertices.count();
     unit.type = m_context->category;
     internal::writeBytes(&unit, sizeof(unit), data);

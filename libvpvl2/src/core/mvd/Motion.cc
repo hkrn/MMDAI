@@ -492,11 +492,11 @@ void Motion::save(uint8 *data) const
     header.version = 1.0;
     header.encoding = 1;
     internal::writeBytes(&header, sizeof(header), data);
-    internal::writeString(m_context->name, codec, data);
-    internal::writeString(m_context->name2, codec, data);
+    internal::writeString(m_context->name, m_context->encodingRef, codec, data);
+    internal::writeString(m_context->name2, m_context->encodingRef, codec, data);
     float32 fps = 30;
     internal::writeBytes(&fps, sizeof(fps), data);
-    internal::writeString(m_context->reserved, codec, data);
+    internal::writeString(m_context->reserved, m_context->encodingRef, codec, data);
     m_context->nameListSection->write(data, m_context->info);
     data += m_context->nameListSection->estimateSize(m_context->info);
     m_context->boneSection->write(data);
@@ -528,10 +528,10 @@ vsize Motion::estimateSize() const
     vsize size = 0;
     IString::Codec codec = m_context->info.codec;
     size += sizeof(Header);
-    size += internal::estimateSize(m_context->name, codec);
-    size += internal::estimateSize(m_context->name2, codec);
+    size += internal::estimateSize(m_context->name, m_context->encodingRef, codec);
+    size += internal::estimateSize(m_context->name2, m_context->encodingRef, codec);
     size += sizeof(float32);
-    size += internal::estimateSize(m_context->reserved, codec);
+    size += internal::estimateSize(m_context->reserved, m_context->encodingRef, codec);
     size += m_context->nameListSection->estimateSize(m_context->info);
     size += m_context->boneSection->estimateSize();
     size += m_context->morphSection->estimateSize();
