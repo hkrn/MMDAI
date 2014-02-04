@@ -179,7 +179,7 @@ public:
         Uint32 current = SDL_GetTicks();
         const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex((current - base) / Scene::defaultFPS());
         m_scene->seek(timeIndex, Scene::kUpdateAll);
-        m_world->stepSimulation(current - last);
+        m_world->stepSimulation((current - last) / Scene::defaultFPS(), Scene::defaultFPS());
         updateFPS();
         last = current;
         m_applicationContext->renderEffectParameterUIWidgets();

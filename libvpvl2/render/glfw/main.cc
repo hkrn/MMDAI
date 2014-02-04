@@ -330,11 +330,10 @@ public:
         if (m_autoplay) {
             const IKeyframe::TimeIndex &newTimeIndex = IKeyframe::TimeIndex(uint64(((current - base) * 1000) / Scene::defaultFPS()));
             m_scene->seek(newTimeIndex, Scene::kUpdateAll);
-            uint64 delta = newTimeIndex - oldTimeIndex;
-            oldTimeIndex = newTimeIndex;
-            m_world->dynamicWorldRef()->stepSimulation(delta / Scene::defaultFPS(), 2 * delta);
+            m_world->stepSimulation(newTimeIndex - oldTimeIndex, Scene::defaultFPS());
             m_scene->update(Scene::kUpdateAll & ~Scene::kUpdateCamera);
             updateFPS();
+            oldTimeIndex = newTimeIndex;
             last = current;
         }
         else if (m_pressedKey == GLFW_KEY_SPACE) {

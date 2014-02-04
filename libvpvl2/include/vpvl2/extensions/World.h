@@ -58,19 +58,21 @@ public:
     World();
     ~World();
 
+    void addRigidBody(btRigidBody *value);
+    void removeRigidBody(btRigidBody *value);
+    void stepSimulation(const Scalar &deltaTimeIndex, const Scalar &motionFPS);
+
     const Vector3 gravity() const;
     btDiscreteDynamicsWorld *dynamicWorldRef() const;
     void setGravity(const Vector3 &value);
+    Scalar baseFPS() const;
+    void setBaseFPS(const Scalar &value);
+    Scalar timeScale() const;
+    void setTimeScale(const Scalar &value);
     unsigned long randSeed() const;
-    Scalar motionFPS() const;
-    Scalar fixedTimeStep() const;
-    int maxSubSteps() const;
     void setRandSeed(unsigned long value);
-    void setPreferredFPS(const Scalar &value) ;
-    void setMaxSubSteps(int value);
-    void addRigidBody(btRigidBody *value);
-    void removeRigidBody(btRigidBody *value);
-    void stepSimulation(const Scalar &delta);
+    bool isFloorEnabled() const;
+    void setFloorEnabled(bool value);
 
 private:
     struct PrivateContext;

@@ -48,6 +48,7 @@
 #endif
 #include <BulletCollision/BroadphaseCollision/btDbvtBroadphase.h>
 #include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
+#include <BulletCollision/CollisionShapes/btStaticPlaneShape.h>
 #include <BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h>
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
 #ifdef __clang__
@@ -65,24 +66,31 @@ struct World::PrivateContext {
           broadphase(0),
           solver(0),
           world(0),
-          motionFPS(0),
-          fixedTimeStep(0),
-          maxSubSteps(0)
+          baseFPS(60.0f),
+          timeScale(1.0f),
+          enableFloor(true)
     {
         dispatcher = new btCollisionDispatcher(&config);
         broadphase = new btDbvtBroadphase();
         solver = new btSequentialImpulseConstraintSolver();
         world = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, &config);
         world->getSolverInfo().m_solverMode &= ~SOLVER_RANDMIZE_ORDER;
+        ground = new btStaticPlaneShape(Vector3(0, 1, 0), 0);
+        btRigidBody::btRigidBodyConstructionInfo info(0, 0, ground, kZeroV3);
+        groundBody = new btRigidBody(info);
+        world->addRigidBody(groundBody, 0x10, 0);
     }
     ~PrivateContext() {
+        world->removeRigidBody(groundBody);
+        internal::deleteObject(groundBody);
+        internal::deleteObject(ground);
         internal::deleteObject(dispatcher);
         internal::deleteObject(broadphase);
         internal::deleteObject(solver);
         internal::deleteObject(world);
-        motionFPS = 0;
-        maxSubSteps = 0;
-        fixedTimeStep = 0;
+        baseFPS = 0;
+        timeScale = 0;
+        enableFloor = false;
     }
 
     btDefaultCollisionConfiguration config;
@@ -90,9 +98,11 @@ struct World::PrivateContext {
     btDbvtBroadphase *broadphase;
     btSequentialImpulseConstraintSolver *solver;
     btDiscreteDynamicsWorld *world;
-    Scalar motionFPS;
-    Scalar fixedTimeStep;
-    int maxSubSteps;
+    btStaticPlaneShape *ground;
+    btRigidBody *groundBody;
+    Scalar baseFPS;
+    Scalar timeScale;
+    bool enableFloor;
 };
 
 const int World::kDefaultMaxSubSteps = 2;
@@ -101,13 +111,27 @@ World::World()
     : m_context(new PrivateContext())
 {
     setGravity(vpvl2::Vector3(0.0f, -9.8f, 0.0f));
-    setPreferredFPS(vpvl2::Scene::defaultFPS());
-    setMaxSubSteps(kDefaultMaxSubSteps);
 }
 
 World::~World()
 {
     internal::deleteObject(m_context);
+}
+
+void World::addRigidBody(btRigidBody *value)
+{
+    m_context->world->addRigidBody(value);
+}
+
+void World::removeRigidBody(btRigidBody *value)
+{
+    m_context->world->removeRigidBody(value);
+}
+
+void World::stepSimulation(const vpvl2::Scalar &deltaTimeIndex, const vpvl2::Scalar &motionFPS)
+{
+    const Scalar &v = (deltaTimeIndex / motionFPS) * (m_context->baseFPS / motionFPS) * m_context->timeScale;
+    m_context->world->stepSimulation(v, std::numeric_limits<int>::max(), 1.0f / m_context->baseFPS);
 }
 
 const vpvl2::Vector3 World::gravity() const
@@ -125,24 +149,29 @@ void World::setGravity(const vpvl2::Vector3 &value)
     m_context->world->setGravity(value);
 }
 
+Scalar World::baseFPS() const
+{
+    return m_context->baseFPS;
+}
+
+void World::setBaseFPS(const Scalar &value)
+{
+    m_context->baseFPS = value;
+}
+
+Scalar World::timeScale() const
+{
+    return m_context->timeScale;
+}
+
+void World::setTimeScale(const Scalar &value)
+{
+    m_context->timeScale = value;
+}
+
 unsigned long World::randSeed() const
 {
     return m_context->solver->getRandSeed();
-}
-
-Scalar World::motionFPS() const
-{
-    return m_context->motionFPS;
-}
-
-Scalar World::fixedTimeStep() const
-{
-    return m_context->fixedTimeStep;
-}
-
-int World::maxSubSteps() const
-{
-    return m_context->maxSubSteps;
 }
 
 void World::setRandSeed(unsigned long value)
@@ -150,31 +179,23 @@ void World::setRandSeed(unsigned long value)
     m_context->solver->setRandSeed(value);
 }
 
-void World::setPreferredFPS(const Scalar &value)
+bool World::isFloorEnabled() const
 {
-    m_context->motionFPS = value;
-    m_context->fixedTimeStep = 1.0f / value;
+    return m_context->enableFloor;
 }
 
-void World::setMaxSubSteps(int value)
+void World::setFloorEnabled(bool value)
 {
-    m_context->maxSubSteps = value;
+    if (value) {
+        m_context->world->removeRigidBody(m_context->groundBody);
+        m_context->world->addRigidBody(m_context->groundBody, 0x10, 0);
+    }
+    else {
+        m_context->world->removeRigidBody(m_context->groundBody);
+    }
+    m_context->enableFloor = value;
 }
 
-void World::addRigidBody(btRigidBody *value)
-{
-    m_context->world->addRigidBody(value);
-}
-
-void World::removeRigidBody(btRigidBody *value)
-{
-    m_context->world->removeRigidBody(value);
-}
-
-void World::stepSimulation(const vpvl2::Scalar &delta)
-{
-    m_context->world->stepSimulation(delta, m_context->maxSubSteps, m_context->fixedTimeStep);
-}
 
 } /* namespace extensions */
 } /* namespace vpvl2 */

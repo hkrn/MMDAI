@@ -46,7 +46,6 @@
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <BulletCollision/CollisionDispatch/btDefaultCollisionConfiguration.h>
 #include <BulletCollision/CollisionShapes/btSphereShape.h>
-#include <BulletCollision/CollisionShapes/btStaticPlaneShape.h>
 #include <BulletCollision/BroadphaseCollision/btDbvtBroadphase.h>
 #include <BulletDynamics/ConstraintSolver/btSequentialImpulseConstraintSolver.h>
 #include <BulletDynamics/Dynamics/btDiscreteDynamicsWorld.h>
@@ -88,20 +87,15 @@ WorldProxy::WorldProxy(ProjectProxy *parent)
       m_parentProjectProxyRef(parent),
       m_simulationType(DisableSimulation),
       m_lastGravity(gravity()),
+      m_lastTimeIndex(0.0),
       m_enableDebug(false),
-      m_enableFloor(false),
       m_playing(false)
 {
-    QScopedPointer<btStaticPlaneShape> ground(new btStaticPlaneShape(Vector3(0, 1, 0), 0));
-    btRigidBody::btRigidBodyConstructionInfo info(0, 0, ground.take(), kZeroV3);
-    m_groundBody.reset(new btRigidBody(info));
-    setFloorEnabled(true);
 }
 
 WorldProxy::~WorldProxy()
 {
     joinWorld(0);
-    m_sceneWorld->removeRigidBody(m_groundBody.data());
     m_parentProjectProxyRef = 0;
 }
 
@@ -176,9 +170,7 @@ void WorldProxy::stepSimulation(qreal timeIndex)
     if (type == EnableSimulationAnytime || (type == EnableSimulationPlayOnly && m_playing)) {
         int delta = qRound(timeIndex - m_lastTimeIndex);
         if (delta > 0) {
-            Scalar timestep = delta / Scene::defaultFPS();
-            int substeps = qMax(60.0 / Scene::defaultFPS(), 1.0);
-            m_sceneWorld->dynamicWorldRef()->stepSimulation(timestep, substeps * delta);
+            m_sceneWorld->stepSimulation(delta, Scene::defaultFPS());
         }
         m_lastTimeIndex = timeIndex;
     }
@@ -236,7 +228,6 @@ void WorldProxy::setSimulationType(SimulationType value)
         }
         else {
             m_lastGravity = gravity();
-            setGravity(QVector3D());
         }
         applyAllModels(enabled);
         m_simulationType = value;
@@ -256,6 +247,32 @@ void WorldProxy::setGravity(const QVector3D &value)
     if (!qFuzzyCompare(gravity(), value)) {
         m_sceneWorld->setGravity(Util::toVector3(value));
         emit gravityChanged();
+    }
+}
+
+qreal WorldProxy::baseFPS() const
+{
+    return m_sceneWorld->baseFPS();
+}
+
+void WorldProxy::setBaseFPS(const qreal &value)
+{
+    if (!qFuzzyCompare(baseFPS(), value)) {
+        m_sceneWorld->setBaseFPS(value);
+        emit baseFPSChanged();
+    }
+}
+
+qreal WorldProxy::timeScale() const
+{
+    return m_sceneWorld->timeScale();
+}
+
+void WorldProxy::setTimeScale(const qreal &value)
+{
+    if (!qFuzzyCompare(timeScale(), value)) {
+        m_sceneWorld->setTimeScale(value);
+        emit timeScaleChanged();
     }
 }
 
@@ -291,20 +308,15 @@ void WorldProxy::setDebugEnabled(bool value)
 
 bool WorldProxy::isFloorEnabled() const
 {
-    return m_enableFloor;
+    Q_ASSERT(m_sceneWorld);
+    return m_sceneWorld->isFloorEnabled();
 }
 
 void WorldProxy::setFloorEnabled(bool value)
 {
     Q_ASSERT(m_sceneWorld);
-    if (value != isFloorEnabled()) {
-        if (value) {
-            m_sceneWorld->dynamicWorldRef()->addRigidBody(m_groundBody.data(), 0x10, 0);
-        }
-        else {
-            m_sceneWorld->dynamicWorldRef()->removeRigidBody(m_groundBody.data());
-        }
-        m_enableFloor = value;
+    if (isFloorEnabled() != value) {
+        m_sceneWorld->setFloorEnabled(value);
         emit enableFloorChanged();
     }
 }
