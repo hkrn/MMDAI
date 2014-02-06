@@ -94,7 +94,7 @@ struct ProjectDelegate : public XMLProject::IDelegate {
     }
     bool loadModel(const XMLProject::UUID &uuid, const StringMap &settings, IModel::Type /* type */, IModel *&model, IRenderEngine *&engine, int &priority) {
         const std::string &uri = settings.value(XMLProject::kSettingURIKey, std::string());
-        if (ModelProxy *modelProxy = m_projectRef->loadModel(QUrl::fromLocalFile(QString::fromStdString(uri)), QUuid(QString::fromStdString(uuid)), true)) {
+        if (ModelProxy *modelProxy = m_projectRef->internalLoadModel(QUrl::fromLocalFile(QString::fromStdString(uri)), QUuid(QString::fromStdString(uuid)))) {
             m_projectRef->internalAddModel(modelProxy, settings.value("selected", std::string("false")) == "true", true);
             priority = XMLProject::toIntFromString(settings.value(XMLProject::kSettingOrderKey, std::string("0")));;
             /* upload render engine later */
@@ -106,96 +106,108 @@ struct ProjectDelegate : public XMLProject::IDelegate {
     ProjectProxy *m_projectRef;
 };
 
-class LoadingModelTask : public QRunnable {
+class ModelLoader : public QObject, public QRunnable {
+    Q_OBJECT
+
 public:
-    LoadingModelTask(const Factory *factoryRef, const QUrl &fileUrl)
-        : m_factoryRef(factoryRef),
+    ModelLoader(const Factory *factoryRef, const QUrl &fileUrl, bool skipConfirm, QObject *parent)
+        : QObject(parent),
+          m_factoryRef(factoryRef),
           m_fileUrl(fileUrl),
-          m_result(false),
-          m_running(true)
+          m_skipConfirm(skipConfirm)
     {
-        setAutoDelete(false);
+    }
+    ~ModelLoader() {
     }
 
-    inline IModel *takeModel() { return m_model.take(); }
-    inline QString errorString() const { return m_errorString; }
-    inline bool isRunning() const { return m_running; }
-
-private:
-    void run() {
+    void load(QScopedPointer<IModel> &model, QString &errorString) {
         QFile file(m_fileUrl.toLocalFile());
         if (file.open(QFile::ReadOnly)) {
             const QByteArray &bytes = file.readAll();
             const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytes.constData());
-            m_model.reset(m_factoryRef->createModel(ptr, file.size(), m_result));
-            if (m_result) {
+            bool ok = false;
+            model.reset(m_factoryRef->createModel(ptr, file.size(), ok));
+            if (ok) {
                 /* set filename of the model if the name of the model is null such as asset */
-                if (!m_model->name(IEncoding::kDefaultLanguage)) {
+                if (!model->name(IEncoding::kDefaultLanguage)) {
                     const qt::String s(QFileInfo(file.fileName()).fileName());
-                    m_model->setName(&s, IEncoding::kDefaultLanguage);
+                    model->setName(&s, IEncoding::kDefaultLanguage);
                 }
             }
             else {
-                m_errorString = QStringLiteral("errno=%1").arg(m_model->error());
-                m_model.reset();
+                errorString = QStringLiteral("errno=%1").arg(model->error());
+                model.reset();
             }
         }
         else {
-            m_errorString = file.errorString();
+            errorString = file.errorString();
         }
-        m_running = false;
+    }
+
+signals:
+    void modelDidLoad(IModel *model, QUrl fileUrl, bool skipConfirm, QString errorString);
+
+private:
+    void run() {
+        QScopedPointer<IModel> model;
+        QString errorString;
+        load(model, errorString);
+        emit modelDidLoad(model.take(), m_fileUrl, m_skipConfirm, errorString);
     }
 
     const Factory *m_factoryRef;
     const QUrl m_fileUrl;
-    QScopedPointer<IModel> m_model;
-    QString m_errorString;
-    bool m_result;
-    volatile bool m_running;
+    const bool m_skipConfirm;
 };
 
-class LoadingMotionTask : public QRunnable {
+class MotionLoader : public QObject, public QRunnable {
+    Q_OBJECT
+
 public:
-    LoadingMotionTask(const ModelProxy *modelProxy, const Factory *factoryRef, const QUrl &fileUrl)
-        : m_modelProxy(modelProxy),
+    MotionLoader(const Factory *factoryRef,
+                 const QUrl &fileUrl,
+                 ModelProxy *modelProxy,
+                 ProjectProxy::MotionType motionType,
+                 QObject *parent)
+        : QObject(parent),
           m_factoryRef(factoryRef),
           m_fileUrl(fileUrl),
-          m_result(false),
-          m_running(true)
+          m_type(motionType),
+          m_parentModel(modelProxy)
     {
-        setAutoDelete(false);
+    }
+    ~MotionLoader() {
     }
 
-    inline IMotion *takeMotion() { return m_motion.take(); }
-    inline QString errorString() const { return m_errorString; }
-    inline bool isRunning() const { return m_running; }
+signals:
+    void motionDidLoad(IMotion *motion, ModelProxy *parentModel, QUrl fileUrl, int type, QString errorString);
 
 private:
     void run() {
         QFile file(m_fileUrl.toLocalFile());
+        QScopedPointer<IMotion> motion;
+        QString errorString;
         if (file.open(QFile::ReadOnly)) {
             const QByteArray &bytes = file.readAll();
             const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytes.constData());
-            IModel *modelRef = m_modelProxy ? m_modelProxy->data() : 0;
-            m_motion.reset(m_factoryRef->createMotion(ptr, file.size(), modelRef, m_result));
-            if (!m_result) {
-                m_errorString = QStringLiteral("errno=%1").arg(m_motion->error());
-                m_motion.reset();
+            IModel *modelRef = m_parentModel ? m_parentModel->data() : 0;
+            bool ok;
+            motion.reset(m_factoryRef->createMotion(ptr, file.size(), modelRef, ok));
+            if (!ok) {
+                errorString = QStringLiteral("errno=%1").arg(motion->error());
+                motion.reset();
             }
         }
         else {
-            m_errorString = file.errorString();
+            errorString = file.errorString();
         }
-        m_running = false;
+        emit motionDidLoad(motion.take(), m_parentModel, m_fileUrl, m_type, errorString);
     }
 
-    const ModelProxy *m_modelProxy;
     const Factory *m_factoryRef;
     const QUrl m_fileUrl;
-    QScopedPointer<IMotion> m_motion;
-    QString m_errorString;
-    bool m_result;
-    volatile bool m_running;
+    const ProjectProxy::MotionType m_type;
+    ModelProxy *m_parentModel;
 };
 
 static void convertStringFromVariant(const QVariant &value, std::string &result)
@@ -362,12 +374,13 @@ MotionProxy *ProjectProxy::findMotion(const QUuid &uuid)
     return m_uuid2MotionProxyRefs.value(uuid);
 }
 
-bool ProjectProxy::loadModel(const QUrl &fileUrl)
+void ProjectProxy::loadModel(const QUrl &fileUrl)
 {
     Q_ASSERT(fileUrl.isValid());
-    const QUuid &uuid = QUuid::createUuid();
-    ModelProxy *modelProxy = loadModel(fileUrl, uuid, false);
-    return modelProxy;
+    emit modelDidStartLoading();
+    ModelLoader *loader = new ModelLoader(m_factory.data(), fileUrl, false, this);
+    connect(loader, &ModelLoader::modelDidLoad, this, &ProjectProxy::internalLoadModelAsync);
+    QThreadPool::globalInstance()->start(loader);
 }
 
 void ProjectProxy::addModel(ModelProxy *value)
@@ -406,59 +419,27 @@ void ProjectProxy::initializeMotion(ModelProxy *modelProxy, MotionType type)
     }
 }
 
-bool ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, MotionType type)
+void ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *parentModel, MotionType type)
 {
     Q_ASSERT(fileUrl.isValid());
     emit motionDidStartLoading();
-    QScopedPointer<LoadingMotionTask> task(new LoadingMotionTask(modelProxy, m_factory.data(), fileUrl));
-    QThreadPool::globalInstance()->start(task.data());
-    while (task->isRunning()) {
-        qApp->processEvents(QEventLoop::AllEvents);
-    }
-    m_errorString.clear();
-    if (IMotion *motion = task->takeMotion()) {
-        const QUuid &uuid = QUuid::createUuid();
-        MotionProxy *motionProxy = createMotionProxy(motion, uuid, fileUrl);
-        if (modelProxy && type == ModelMotion) {
-            VPVL2_VLOG(1, "The mode motion of " << modelProxy->name().toStdString() << " from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
-            deleteMotion(modelProxy->childMotion(), false);
-            motionProxy->assignModel(modelProxy, m_factory.data());
-            modelProxy->setChildMotion(motionProxy, true);
-        }
-        else if (type == CameraMotion) {
-            VPVL2_VLOG(1, "The camera motion from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
-            m_cameraRefObject->assignCameraRef(m_project->cameraRef(), motionProxy);
-        }
-        else if (type == LightMotion) {
-            VPVL2_VLOG(1, "The light motion from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
-            m_lightRefObject->assignLightRef(m_project->lightRef(), motionProxy);
-        }
-        else {
-            VPVL2_VLOG(1, "The unknown motion from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
-        }
-        emit motionDidLoad(motionProxy);
-    }
-    else {
-        setErrorString(task->errorString());
-        emit motionDidFailLoading();
-    }
-    return modelProxy;
+    MotionLoader *loader = new MotionLoader(m_factory.data(), fileUrl, parentModel, type, this);
+    connect(loader, &MotionLoader::motionDidLoad, this, &ProjectProxy::internalLoadMotionAsync);
+    QThreadPool::globalInstance()->start(loader);
 }
 
-bool ProjectProxy::loadPose(const QUrl &fileUrl, ModelProxy *modelProxy)
+void ProjectProxy::loadPose(const QUrl &fileUrl, ModelProxy *parentModel)
 {
-    bool result = false;
-    if (modelProxy) {
+    if (parentModel) {
         QFile file(fileUrl.toLocalFile());
         if (file.open(QFile::ReadOnly)) {
             Pose pose(m_encoding.data());
             QByteArray bytes = file.readAll();
             std::istringstream stream(bytes.constData());
             if (pose.load(stream)) {
-                IModel *modelRef = modelProxy->data();
+                IModel *modelRef = parentModel->data();
                 pose.bind(modelRef);
-                emit poseDidLoad(modelProxy);
-                result = true;
+                emit poseDidLoad(parentModel);
             }
             else {
                 setErrorString(QStringLiteral("errno=%1").arg(pose.error()));
@@ -471,7 +452,6 @@ bool ProjectProxy::loadPose(const QUrl &fileUrl, ModelProxy *modelProxy)
     else {
         setErrorString(tr("Current model is not set."));
     }
-    return result;
 }
 
 void ProjectProxy::rewind()
@@ -952,29 +932,7 @@ void ProjectProxy::updateParentBindingModel()
     emit parentBindingDidUpdate();
 }
 
-ModelProxy *ProjectProxy::loadModel(const QUrl &fileUrl, const QUuid &uuid, bool skipConfirm)
-{
-    Q_ASSERT(fileUrl.isValid() && !uuid.isNull());
-    ModelProxy *modelProxy = 0;
-    emit modelDidStartLoading();
-    QScopedPointer<LoadingModelTask> task(new LoadingModelTask(m_factory.data(), fileUrl));
-    QThreadPool::globalInstance()->start(task.data());
-    while (task->isRunning()) {
-        qApp->processEvents(QEventLoop::AllEvents);
-    }
-    if (IModel *model = task->takeModel()) {
-        IModel::Type type = model->type();
-        bool newSkipConfirm = skipConfirm || (type != IModel::kPMDModel && type != IModel::kPMXModel);
-        modelProxy = createModelProxy(model, uuid, fileUrl, newSkipConfirm);
-    }
-    else {
-        setErrorString(task->errorString());
-        emit modelDidFailLoading();
-    }
-    return modelProxy;
-}
-
-bool ProjectProxy::loadEffect(const QUrl &fileUrl)
+void ProjectProxy::loadEffect(const QUrl &fileUrl)
 {
     QUndoStack *stack = new QUndoStack(m_undoGroup.data());
     ModelProxy *modelProxy = new ModelProxy(this, m_factory->newModel(IModel::kPMXModel), QUuid::createUuid(), fileUrl, QUrl(), stack);
@@ -984,15 +942,14 @@ bool ProjectProxy::loadEffect(const QUrl &fileUrl)
     m_uuid2ModelProxyRefs.insert(modelProxy->uuid(), modelProxy);
     emit effectDidAdd(modelProxy);
     emit effectDidCommitUploading();
-    return true;
 }
 
-ModelProxy *ProjectProxy::createModelProxy(IModel *model, const QUuid &uuid, const QUrl &fileUrl, bool skipConfirm)
+ModelProxy *ProjectProxy::createModelProxy(IModel *model, const QUuid &uuid, const QUrl &fileUrl)
 {
-    QUrl faviconUrl;
     const QFileInfo finfo(fileUrl.toLocalFile());
     QStringList filters; filters << "favicon.*";
     const QStringList &faviconLocations = finfo.absoluteDir().entryList(filters);
+    QUrl faviconUrl;
     if (!faviconLocations.isEmpty()) {
         faviconUrl = QUrl::fromLocalFile(finfo.absoluteDir().filePath(faviconLocations.first()));
     }
@@ -1000,7 +957,6 @@ ModelProxy *ProjectProxy::createModelProxy(IModel *model, const QUuid &uuid, con
     QUndoStack *stack = new QUndoStack(m_undoGroup.data());
     ModelProxy *modelProxy = new ModelProxy(this, model, uuid, fileUrl, faviconUrl, stack);
     m_undoGroup->addStack(stack);
-    emit modelDidLoad(modelProxy, skipConfirm);
     return modelProxy;
 }
 
@@ -1248,6 +1204,71 @@ void ProjectProxy::internalLoadAsync()
     emit projectDidLoad();
 }
 
+ModelProxy *ProjectProxy::internalLoadModel(const QUrl &fileUrl, const QUuid &uuid)
+{
+    Q_ASSERT(fileUrl.isValid());
+    ModelLoader loader(m_factory.data(), fileUrl, true, this);
+    QScopedPointer<IModel> model;
+    QString errorString;
+    loader.load(model, errorString);
+    ModelProxy *modelProxy = 0;
+    if (model) {
+        modelProxy = createModelProxy(model.take(), uuid, fileUrl);
+        emit modelDidLoad(modelProxy, true);
+    }
+    else {
+        emit modelDidFailLoading();
+    }
+    return modelProxy;
+}
+
+void ProjectProxy::internalLoadModelAsync(IModel *model, const QUrl &fileUrl, bool skipConfirm, const QString &errorString)
+{
+    if (model) {
+        IModel::Type type = model->type();
+        bool newSkipConfirm = skipConfirm || (type != IModel::kPMDModel && type != IModel::kPMXModel);
+        const QUuid &uuid = QUuid::createUuid();
+        ModelProxy *modelProxy = createModelProxy(model, uuid, fileUrl);
+        emit modelDidLoad(modelProxy, newSkipConfirm);
+    }
+    else {
+        setErrorString(errorString);
+        emit modelDidFailLoading();
+    }
+}
+
+void ProjectProxy::internalLoadMotionAsync(IMotion *motion, ModelProxy *parentModel, const QUrl &fileUrl, int type, const QString &errorString)
+{
+    m_errorString.clear();
+    if (motion) {
+        const QUuid &uuid = QUuid::createUuid();
+        MotionProxy *motionProxy = createMotionProxy(motion, uuid, fileUrl);
+        MotionType motionType = static_cast<MotionType>(type);
+        if (parentModel && motionType == ModelMotion) {
+            VPVL2_VLOG(1, "The mode motion of " << parentModel->name().toStdString() << " from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
+            deleteMotion(parentModel->childMotion(), false);
+            motionProxy->assignModel(parentModel, m_factory.data());
+            parentModel->setChildMotion(motionProxy, true);
+        }
+        else if (motionType == CameraMotion) {
+            VPVL2_VLOG(1, "The camera motion from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
+            m_cameraRefObject->assignCameraRef(m_project->cameraRef(), motionProxy);
+        }
+        else if (motionType == LightMotion) {
+            VPVL2_VLOG(1, "The light motion from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
+            m_lightRefObject->assignLightRef(m_project->lightRef(), motionProxy);
+        }
+        else {
+            VPVL2_VLOG(1, "The unknown motion from " << fileUrl.toString().toStdString() << " will be allocated as " << uuid.toString().toStdString());
+        }
+        emit motionDidLoad(motionProxy);
+    }
+    else {
+        setErrorString(errorString);
+        emit motionDidFailLoading();
+    }
+}
+
 void ProjectProxy::resetIKEffectorBones(BoneRefObject *bone)
 {
     const IBone *boneRef = bone->data();
@@ -1388,3 +1409,5 @@ void ProjectProxy::release(bool fromDestructor)
     }
     emit projectDidRelease();
 }
+
+#include "ProjectProxy.moc"

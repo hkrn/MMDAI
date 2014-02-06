@@ -805,7 +805,7 @@ void RenderTarget::loadJson(const QUrl &fileUrl)
                     const QJsonObject &item = v.toObject();
                     fileInfo.setFile(item.value("path").toString());
                     if (fileInfo.exists() && fileInfo.isFile()) {
-                        ModelProxy *modelProxy = m_projectProxyRef->loadModel(QUrl::fromLocalFile(fileInfo.absoluteFilePath()), QUuid::createUuid(), true);
+                        ModelProxy *modelProxy = m_projectProxyRef->internalLoadModel(QUrl::fromLocalFile(fileInfo.absoluteFilePath()), QUuid::createUuid());
                         modelProxy->setScaleFactor(item.value("scaleFactor").toDouble(1.0));
                         modelProxy->setOpacity(item.value("opacity").toDouble(1.0));
                         modelProxy->setEdgeWidth(item.value("edgeWidth").toDouble(1.0));

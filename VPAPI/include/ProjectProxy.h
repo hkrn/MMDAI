@@ -162,11 +162,12 @@ public:
     Q_INVOKABLE void resetAllMorphs(ModelProxy *model);
     Q_INVOKABLE void updateParentBindingModel();
 
-    ModelProxy *loadModel(const QUrl &fileUrl, const QUuid &uuid, bool skipConfirm);
-    ModelProxy *createModelProxy(vpvl2::IModel *model, const QUuid &uuid, const QUrl &fileUrl, bool skipConfirm);
+    void loadModelAsync(const QUrl &fileUrl, const QUuid &uuid, bool skipConfirm);
+    ModelProxy *createModelProxy(vpvl2::IModel *model, const QUuid &uuid, const QUrl &fileUrl);
     MotionProxy *createMotionProxy(vpvl2::IMotion *motion, const QUuid &uuid, const QUrl &fileUrl);
     ModelProxy *resolveModelProxy(const vpvl2::IModel *value) const;
     MotionProxy *resolveMotionProxy(const vpvl2::IMotion *value) const;
+    ModelProxy *internalLoadModel(const QUrl &fileUrl, const QUuid &uuid);
     void internalDeleteAllMotions(bool fromDestructor);
     void deleteMotion(MotionProxy *value, bool fromDestructor);
     QVariant globalSetting(const QString &key, const QVariant &defaultValue = QVariant()) const;
@@ -223,13 +224,13 @@ public:
 public slots:
     Q_INVOKABLE ModelProxy *findModel(const QUuid &uuid);
     Q_INVOKABLE MotionProxy *findMotion(const QUuid &uuid);
-    Q_INVOKABLE bool loadModel(const QUrl &fileUrl);
-    Q_INVOKABLE bool loadEffect(const QUrl &fileUrl);
+    Q_INVOKABLE void loadModel(const QUrl &fileUrl);
+    Q_INVOKABLE void loadEffect(const QUrl &fileUrl);
     Q_INVOKABLE void addModel(ModelProxy *value);
     Q_INVOKABLE void deleteModel(ModelProxy *value);
     Q_INVOKABLE void initializeMotion(ModelProxy *modelProxy, MotionType type);
-    Q_INVOKABLE bool loadMotion(const QUrl &fileUrl, ModelProxy *modelProxy, MotionType type);
-    Q_INVOKABLE bool loadPose(const QUrl &fileUrl, ModelProxy *modelProxy);
+    Q_INVOKABLE void loadMotion(const QUrl &fileUrl, ModelProxy *parentModel, MotionType type);
+    Q_INVOKABLE void loadPose(const QUrl &fileUrl, ModelProxy *parentModel);
     Q_INVOKABLE void rewind();
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void ray(qreal x, qreal y, int width, int height);
@@ -239,6 +240,8 @@ public slots:
     void internalDeleteModel(ModelProxy *value, bool emitSignal = true);
     void internalCreateAsync();
     void internalLoadAsync();
+    void internalLoadModelAsync(vpvl2::IModel *model, const QUrl &fileUrl, bool skipConfirm, const QString &errorString);
+    void internalLoadMotionAsync(vpvl2::IMotion *motion, ModelProxy *parentModel, const QUrl &fileUrl, int type, const QString &errorString);
     void update(int flags);
     void reset();
 
