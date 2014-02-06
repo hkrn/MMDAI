@@ -650,6 +650,8 @@ struct Model::PrivateContext {
           enablePhysics(false)
     {
         internal::zerofill(&dataInfo, sizeof(dataInfo));
+        dataInfo.encoding = encodingRef;
+        dataInfo.version = 2.0f;
     }
     ~PrivateContext() {
     }
@@ -664,6 +666,7 @@ struct Model::PrivateContext {
         rigidBodies.releaseAll();
         joints.releaseAll();
         internal::zerofill(&dataInfo, sizeof(dataInfo));
+        dataInfo.encoding = encodingRef;
         dataInfo.version = 2.0f;
         internal::deleteObject(namePtr);
         internal::deleteObject(englishNamePtr);
