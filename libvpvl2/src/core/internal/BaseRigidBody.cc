@@ -225,6 +225,8 @@ void BaseRigidBody::resetBody(btDiscreteDynamicsWorld *worldRef)
         btDispatcher *dispatcher = worldRef->getDispatcher();
         cache->cleanProxyFromPairs(m_body->getBroadphaseHandle(), dispatcher);
     }
+    m_body->setAngularVelocity(kZeroV3);
+    m_body->setLinearVelocity(kZeroV3);
     m_body->clearForces();
 }
 
