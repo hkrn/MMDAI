@@ -639,8 +639,8 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        bool succeeded = aiGetMaterialFloat(material, AI_MATKEY_OPACITY, &opacity) == aiReturn_SUCCESS;
-        if (succeeded && btFuzzyZero(opacity - 0.98f)) {
+        material->Get(AI_MATKEY_OPACITY, opacity);
+        if (btFuzzyZero(opacity - 0.98f)) {
             continue;
         }
         bindVertexBundle(mesh);
@@ -696,14 +696,14 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     // * emissive
     aiColor4D ambient, diffuse, specular;
     Color color;
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient) == aiReturn_SUCCESS) {
+    if (material->Get(AI_MATKEY_COLOR_AMBIENT, ambient) == aiReturn_SUCCESS) {
         color.setValue(ambient.r, ambient.g, ambient.b, ambient.a);
     }
     else {
         color.setValue(1, 1, 1, 1);
     }
     m_currentEffectEngineRef->emissive.setGeometryColor(color);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse) == aiReturn_SUCCESS) {
+    if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) == aiReturn_SUCCESS) {
         color.setValue(diffuse.r, diffuse.g, diffuse.b, diffuse.a * m_modelRef->opacity());
     }
     else {
@@ -711,7 +711,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     }
     m_currentEffectEngineRef->ambient.setGeometryColor(color);
     m_currentEffectEngineRef->diffuse.setGeometryColor(color);
-    if (aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular) == aiReturn_SUCCESS) {
+    if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) == aiReturn_SUCCESS) {
         static const float kDivide = 10.0;
         color.setValue(specular.r / kDivide, specular.g / kDivide, specular.b / kDivide, specular.a);
     }
@@ -720,8 +720,8 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     }
     m_currentEffectEngineRef->specular.setGeometryColor(color);
     float shininess = 0, strength = 0;
-    int ret1 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shininess);
-    int ret2 = aiGetMaterialFloat(material, AI_MATKEY_SHININESS_STRENGTH, &strength);
+    int ret1 = material->Get(AI_MATKEY_SHININESS, shininess);
+    int ret2 = material->Get(AI_MATKEY_SHININESS_STRENGTH, strength);
     if (ret1 == aiReturn_SUCCESS && ret2 == aiReturn_SUCCESS) {
         m_currentEffectEngineRef->specularPower.setGeometryValue(shininess * strength);
     }
@@ -732,7 +732,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
         m_currentEffectEngineRef->specularPower.setGeometryValue(1);
     }
     int twoside = 0;
-    if (aiGetMaterialInteger(material, AI_MATKEY_TWOSIDED, &twoside) == aiReturn_SUCCESS && twoside && m_cullFaceState) {
+    if (material->Get(AI_MATKEY_TWOSIDED, twoside) == aiReturn_SUCCESS && twoside && m_cullFaceState) {
         disable(kGL_CULL_FACE);
         m_cullFaceState = false;
     }
