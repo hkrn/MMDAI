@@ -82,6 +82,7 @@ struct ProjectDelegate : public XMLProject::IDelegate {
     ProjectDelegate(ProjectProxy *proxy)
         : m_projectRef(proxy)
     {
+        Q_ASSERT(m_projectRef);
     }
     ~ProjectDelegate() {
         m_projectRef = 0;
@@ -116,16 +117,18 @@ public:
           m_fileUrl(fileUrl),
           m_skipConfirm(skipConfirm)
     {
+        Q_ASSERT(m_factoryRef);
+        Q_ASSERT(m_fileUrl.isValid());
     }
     ~ModelLoader() {
     }
 
-    void load(QScopedPointer<IModel> &model, QString &errorString) {
+    bool load(QScopedPointer<IModel> &model, QString &errorString) {
         QFile file(m_fileUrl.toLocalFile());
+        bool ok = false;
         if (file.open(QFile::ReadOnly)) {
             const QByteArray &bytes = file.readAll();
             const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytes.constData());
-            bool ok = false;
             model.reset(m_factoryRef->createModel(ptr, file.size(), ok));
             if (ok) {
                 /* set filename of the model if the name of the model is null such as asset */
@@ -142,6 +145,7 @@ public:
         else {
             errorString = file.errorString();
         }
+        return ok;
     }
 
 signals:
@@ -151,8 +155,8 @@ private:
     void run() {
         QScopedPointer<IModel> model;
         QString errorString;
-        load(model, errorString);
-        emit modelDidLoad(model.take(), m_fileUrl, m_skipConfirm, errorString);
+        bool ok = load(model, errorString);
+        emit modelDidLoad(model.take(), ok ? m_fileUrl : QUrl(), m_skipConfirm, errorString);
     }
 
     const Factory *m_factoryRef;
@@ -175,6 +179,8 @@ public:
           m_type(motionType),
           m_parentModel(modelProxy)
     {
+        Q_ASSERT(m_factoryRef);
+        Q_ASSERT(m_fileUrl.isValid());
     }
     ~MotionLoader() {
     }
@@ -187,11 +193,11 @@ private:
         QFile file(m_fileUrl.toLocalFile());
         QScopedPointer<IMotion> motion;
         QString errorString;
+        bool ok = false;
         if (file.open(QFile::ReadOnly)) {
             const QByteArray &bytes = file.readAll();
             const uint8_t *ptr = reinterpret_cast<const uint8_t *>(bytes.constData());
             IModel *modelRef = m_parentModel ? m_parentModel->data() : 0;
-            bool ok;
             motion.reset(m_factoryRef->createMotion(ptr, file.size(), modelRef, ok));
             if (!ok) {
                 errorString = QStringLiteral("errno=%1").arg(motion->error());
@@ -201,7 +207,7 @@ private:
         else {
             errorString = file.errorString();
         }
-        emit motionDidLoad(motion.take(), m_parentModel, m_fileUrl, m_type, errorString);
+        emit motionDidLoad(motion.take(), m_parentModel, ok ? m_fileUrl : QUrl(), m_type, errorString);
     }
 
     const Factory *m_factoryRef;
@@ -376,11 +382,10 @@ MotionProxy *ProjectProxy::findMotion(const QUuid &uuid)
 
 void ProjectProxy::loadModel(const QUrl &fileUrl)
 {
-    Q_ASSERT(fileUrl.isValid());
-    emit modelDidStartLoading();
     ModelLoader *loader = new ModelLoader(m_factory.data(), fileUrl, false, this);
     connect(loader, &ModelLoader::modelDidLoad, this, &ProjectProxy::internalLoadModelAsync);
     QThreadPool::globalInstance()->start(loader);
+    emit modelDidStartLoading();
 }
 
 void ProjectProxy::addModel(ModelProxy *value)
@@ -421,11 +426,10 @@ void ProjectProxy::initializeMotion(ModelProxy *modelProxy, MotionType type)
 
 void ProjectProxy::loadMotion(const QUrl &fileUrl, ModelProxy *parentModel, MotionType type)
 {
-    Q_ASSERT(fileUrl.isValid());
-    emit motionDidStartLoading();
     MotionLoader *loader = new MotionLoader(m_factory.data(), fileUrl, parentModel, type, this);
     connect(loader, &MotionLoader::motionDidLoad, this, &ProjectProxy::internalLoadMotionAsync);
     QThreadPool::globalInstance()->start(loader);
+    emit motionDidStartLoading();
 }
 
 void ProjectProxy::loadPose(const QUrl &fileUrl, ModelProxy *parentModel)
@@ -1206,7 +1210,6 @@ void ProjectProxy::internalLoadAsync()
 
 ModelProxy *ProjectProxy::internalLoadModel(const QUrl &fileUrl, const QUuid &uuid)
 {
-    Q_ASSERT(fileUrl.isValid());
     ModelLoader loader(m_factory.data(), fileUrl, true, this);
     QScopedPointer<IModel> model;
     QString errorString;
