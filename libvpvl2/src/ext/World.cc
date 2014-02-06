@@ -66,6 +66,8 @@ struct World::PrivateContext {
           broadphase(0),
           solver(0),
           world(0),
+          ground(0),
+          groundBody(0),
           baseFPS(60.0f),
           timeScale(1.0f),
           enableFloor(true)
@@ -126,6 +128,26 @@ void World::addRigidBody(btRigidBody *value)
 void World::removeRigidBody(btRigidBody *value)
 {
     m_context->world->removeRigidBody(value);
+}
+
+void World::deleteAll()
+{
+    btDiscreteDynamicsWorld *world = m_context->world;
+    const int numCollidables = world->getNumCollisionObjects();
+    for (int i = numCollidables - 1; i >= 0; i--) {
+        btCollisionObject *object = world->getCollisionObjectArray().at(i);
+        if (object != m_context->groundBody) {
+            if (btRigidBody *body = btRigidBody::upcast(object)) {
+                world->removeRigidBody(body);
+                delete body->getMotionState();
+            }
+            else {
+                world->removeCollisionObject(object);
+            }
+            delete object->getCollisionShape();
+            delete object;
+        }
+    }
 }
 
 void World::stepSimulation(const vpvl2::Scalar &deltaTimeIndex, const vpvl2::Scalar &motionFPS)

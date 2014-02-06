@@ -116,20 +116,7 @@ BoneRefObject *WorldProxy::ray(const Vector3 &from, const Vector3 &to)
 void WorldProxy::joinWorld(ModelProxy *value)
 {
     Q_ASSERT(m_modelWorld);
-    btDiscreteDynamicsWorld *world = m_modelWorld->dynamicWorldRef();
-    const int numCollidables = world->getNumCollisionObjects();
-    for (int i = numCollidables - 1; i >= 0; i--) {
-        btCollisionObject *object = world->getCollisionObjectArray().at(i);
-        if (btRigidBody *body = btRigidBody::upcast(object)) {
-            world->removeRigidBody(body);
-            delete body->getMotionState();
-        }
-        else {
-            world->removeCollisionObject(object);
-        }
-        delete object->getCollisionShape();
-        delete object;
-    }
+    m_modelWorld->deleteAll();
     if (value) {
         foreach (BoneRefObject *bone, value->allBoneRefs()) {
             const IBone *boneRef = bone->data();
@@ -138,10 +125,10 @@ void WorldProxy::joinWorld(ModelProxy *value)
                 QScopedPointer<btMotionState> state(new SynchronizedBoneMotionState(boneRef));
                 btRigidBody::btRigidBodyConstructionInfo info(0, state.take(), shape.take(), kZeroV3);
                 QScopedPointer<btRigidBody> body(new btRigidBody(info));
-                //body->setActivationState(DISABLE_DEACTIVATION);
+                body->setActivationState(DISABLE_DEACTIVATION);
                 body->setCollisionFlags(body->getCollisionFlags() | btRigidBody::CF_KINEMATIC_OBJECT);
                 body->setUserPointer(bone);
-                world->addRigidBody(body.take());
+                m_modelWorld->addRigidBody(body.take());
             }
         }
     }

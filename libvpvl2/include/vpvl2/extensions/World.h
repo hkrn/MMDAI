@@ -60,6 +60,7 @@ public:
 
     void addRigidBody(btRigidBody *value);
     void removeRigidBody(btRigidBody *value);
+    void deleteAll();
     void stepSimulation(const Scalar &deltaTimeIndex, const Scalar &motionFPS);
 
     const Vector3 gravity() const;
