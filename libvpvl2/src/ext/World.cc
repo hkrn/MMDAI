@@ -41,9 +41,6 @@
 #include <vpvl2/Scene.h>
 #include <vpvl2/internal/util.h>
 
-/* std::numeric_limits */
-#include <limits>
-
 /* Bullet Physics */
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -58,12 +55,18 @@
 #pragma clang diagnostic pop
 #endif
 
+/* std::numeric_limits */
+#include <limits>
+/* prevent errors on MSVC */
+#undef max
+
 namespace vpvl2
 {
 namespace extensions
 {
 
 struct World::PrivateContext {
+    static const int kMaxSubSteps;
     PrivateContext()
         : dispatcher(0),
           broadphase(0),
@@ -110,7 +113,7 @@ struct World::PrivateContext {
     bool enableFloor;
 };
 
-const int World::kDefaultMaxSubSteps = 2;
+const int World::PrivateContext::kMaxSubSteps = std::numeric_limits<int>::max();
 
 World::World()
     : m_context(new PrivateContext())
@@ -156,7 +159,7 @@ void World::deleteAll()
 void World::stepSimulation(const vpvl2::Scalar &deltaTimeIndex, const vpvl2::Scalar &motionFPS)
 {
     const Scalar &v = (deltaTimeIndex / motionFPS) * (m_context->baseFPS / motionFPS) * m_context->timeScale;
-    m_context->world->stepSimulation(v, std::numeric_limits<int>::max(), 1.0f / m_context->baseFPS);
+    m_context->world->stepSimulation(v, PrivateContext::kMaxSubSteps, 1.0f / m_context->baseFPS);
 }
 
 const vpvl2::Vector3 World::gravity() const
