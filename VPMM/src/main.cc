@@ -50,6 +50,7 @@
 #include "CameraRefObject.h"
 #include "GraphicsDevice.h"
 #include "Grid.h"
+#include "Importer.h"
 #include "JointRefObject.h"
 #include "LabelRefObject.h"
 #include "LightKeyframeRefObject.h"
@@ -110,6 +111,7 @@ static void registerQmlTypes()
     qmlRegisterUncreatableType<ChildVertexMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildVertexMorph", "");
     qmlRegisterUncreatableType<GraphicsDevice>("com.github.mmdai.VPMM", 1, 0, "GraphicsDevice", "");
     qmlRegisterUncreatableType<Grid>("com.github.mmdai.VPMM", 1, 0, "Grid", "");
+    qmlRegisterType<Importer>("com.github.mmdai.VPMM", 1, 0, "Importer");
     qmlRegisterUncreatableType<JointRefObject>("com.github.mmdai.VPMM", 1, 0, "Joint", "");
     qmlRegisterUncreatableType<LabelRefObject>("com.github.mmdai.VPMM", 1, 0, "Label", "");
     qmlRegisterUncreatableType<LightKeyframeRefObject>("com.github.mmdai.VPMM", 1, 0, "LightKeyframe", "");

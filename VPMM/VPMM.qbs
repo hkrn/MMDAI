@@ -66,6 +66,7 @@ CppApplication {
         "../libvpvl2/include",
         "../bullet-src/" + libraryInstallDirectory + "/include/bullet",
         "../glm-src",
+        "../assimp-src/include",
         "../alure-src/include",
         "../tbb-src/include",
         "../libgizmo-src/inc",

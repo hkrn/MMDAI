@@ -46,6 +46,7 @@ Item {
     readonly property alias project: projectDocument
     readonly property alias camera : projectDocument.camera
     readonly property alias light  : projectDocument.light
+    readonly property alias importer : modelImporter
     readonly property alias viewport : renderTarget.viewport
     property real offsetX: 0
     property real offsetY: 0
@@ -120,6 +121,10 @@ Item {
             seek(currentTimeIndex)
             renderTarget.render()
         }
+    }
+    VPMM.Importer {
+        id: modelImporter
+        project: projectDocument
     }
     VPMM.RenderTarget {
         id: renderTarget

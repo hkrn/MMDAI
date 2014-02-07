@@ -129,6 +129,16 @@ ApplicationWindow {
         tooltip: qsTr("Load a model from file. The loaded model will make current.")
         onTriggered: loadModelDialog.open()
     }
+    FileDialog {
+        id: importModelDialog
+        selectExisting: true
+        onAccepted: scene.importer.importModel(fileUrl)
+    }
+    Action {
+        id: importModelAction
+        text: qsTr("Import Model")
+        onTriggered: importModelDialog.open()
+    }
     SaveDialog {
         id: saveModelDialog
         nameFilters: loadModelDialog.nameFilters
@@ -275,6 +285,7 @@ ApplicationWindow {
             id: fileMenu
             title: isOSX ? qsTr("File") : qsTr("&File")
             MenuItem { action: loadModelAction }
+            MenuItem { action: importModelAction }
             MenuSeparator {}
             MenuItem { action: saveModelAction }
             MenuItem { action: saveModelAsAction }
