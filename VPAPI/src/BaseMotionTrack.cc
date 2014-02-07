@@ -75,6 +75,11 @@ BaseKeyframeRefObject *BaseMotionTrack::findKeyframeByTimeIndex(const quint64 &t
     return m_timeIndex2RefObjects.value(timeIndex);
 }
 
+QList<BaseKeyframeRefObject *> BaseMotionTrack::keyframes() const
+{
+    return m_keyframes;
+}
+
 bool BaseMotionTrack::contains(BaseKeyframeRefObject *value) const
 {
     BaseKeyframeRefObjectList::ConstIterator it = qBinaryFind(m_keyframes, value);

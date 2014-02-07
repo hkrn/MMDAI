@@ -43,6 +43,7 @@
 #include "MotionProxy.h"
 #include "Util.h"
 
+#include <QtCore>
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/qt/String.h>
 
@@ -144,6 +145,25 @@ void BoneKeyframeRefObject::setLocalOrientation(const QQuaternion &value)
     if (!qFuzzyCompare(value, localOrientation())) {
         m_keyframeRef->setLocalOrientation(Util::toQuaternion(value));
         emit localRotationChanged();
+    }
+}
+
+QVector3D BoneKeyframeRefObject::localEulerOrientation() const
+{
+    Q_ASSERT(m_keyframeRef);
+    Scalar yaw, pitch, roll;
+    Matrix3x3 matrix(m_keyframeRef->localOrientation());
+    matrix.getEulerZYX(yaw, pitch, roll);
+    return QVector3D(qRadiansToDegrees(roll), qRadiansToDegrees(pitch), qRadiansToDegrees(yaw));
+}
+
+void BoneKeyframeRefObject::setLocalEulerOrientation(const QVector3D &value)
+{
+    Q_ASSERT(m_keyframeRef);
+    if (!qFuzzyCompare(localEulerOrientation(), value)) {
+        Quaternion rotation(Quaternion::getIdentity());
+        rotation.setEulerZYX(qDegreesToRadians(value.z()), qDegreesToRadians(value.y()), qDegreesToRadians(value.x()));
+        setLocalOrientation(Util::fromQuaternion(rotation));
     }
 }
 

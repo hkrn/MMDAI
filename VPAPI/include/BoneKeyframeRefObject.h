@@ -56,6 +56,7 @@ class BoneKeyframeRefObject : public BaseKeyframeRefObject
     Q_PROPERTY(BoneRefObject *parentBone READ parentBone CONSTANT FINAL)
     Q_PROPERTY(QVector3D localTranslation READ localTranslation WRITE setLocalTranslation NOTIFY localTranslationChanged FINAL)
     Q_PROPERTY(QQuaternion localOrientation READ localOrientation WRITE setLocalOrientation NOTIFY localRotationChanged FINAL)
+    Q_PROPERTY(QVector3D localEulerOrientation READ localEulerOrientation WRITE setLocalEulerOrientation NOTIFY localRotationChanged FINAL)
 
 public:
     BoneKeyframeRefObject(BoneMotionTrack *trackRef, vpvl2::IBoneKeyframe *data);
@@ -73,6 +74,8 @@ public:
     void setLocalTranslation(const QVector3D &value);
     QQuaternion localOrientation() const;
     void setLocalOrientation(const QQuaternion &value);
+    QVector3D localEulerOrientation() const;
+    void setLocalEulerOrientation(const QVector3D &value);
 
     vpvl2::IBoneKeyframe *data() const;
 

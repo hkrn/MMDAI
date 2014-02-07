@@ -88,6 +88,9 @@ class MotionProxy : public QObject
     Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
+    typedef QHash<QString, BoneMotionTrack *> BoneMotionTrackBundle;
+    typedef QHash<QString, MorphMotionTrack *> MorphMotionTrackBundle;
+
     MotionProxy(ProjectProxy *projectRef,
                 vpvl2::IMotion *motion,
                 const QUuid &uuid,
@@ -122,6 +125,8 @@ public:
     bool canPaste() const;
     bool isDirty() const;
     void setDirty(bool value);
+    const BoneMotionTrackBundle &boneMotionTrackBundle() const;
+    const MorphMotionTrackBundle &morphMotionTrackBundle() const;
 
 signals:
     void durationTimeIndexChanged();
@@ -148,6 +153,8 @@ public slots:
     Q_INVOKABLE void pasteKeyframes(const qint64 &timeIndex, bool inversed, QUndoCommand *parent = 0);
     Q_INVOKABLE void cutKeyframes(QUndoCommand *parent = 0);
     Q_INVOKABLE void mergeKeyframes(const QList<QObject *> &keyframes, const qint64 &newTimeIndex, const qint64 &oldTimeIndex, QUndoCommand *parent = 0);
+    Q_INVOKABLE void scaleBoneKeyframes(const QVector3D &translationScaleFactor, const QVector3D &orientationScaleFactor, QUndoCommand *parent = 0);
+    Q_INVOKABLE void scaleMorphKeyframes(const qreal &scaleFactor, QUndoCommand *parent = 0);
     Q_INVOKABLE void refresh();
 
 private:
@@ -167,8 +174,6 @@ private:
     void bindTrackSignals(BaseMotionTrack *track);
     void pushUndoCommand(QScopedPointer<QUndoCommand> &command, QUndoCommand *parent);
 
-    typedef QHash<QString, BoneMotionTrack *> BoneMotionTrackBundle;
-    typedef QHash<QString, MorphMotionTrack *> MorphMotionTrackBundle;
     ProjectProxy *m_projectRef;
     CameraMotionTrack *m_cameraMotionTrackRef;
     LightMotionTrack *m_lightMotionTrackRef;

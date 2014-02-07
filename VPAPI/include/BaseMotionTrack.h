@@ -62,6 +62,7 @@ public:
     Q_INVOKABLE BaseKeyframeRefObject *findKeyframeAt(int index) const;
     Q_INVOKABLE BaseKeyframeRefObject *findKeyframeByTimeIndex(const quint64 &timeIndex) const;
 
+    QList<BaseKeyframeRefObject *> keyframes() const;
     bool contains(BaseKeyframeRefObject *value) const;
     bool containsKeyframe(const vpvl2::IKeyframe *keyframe) const;
     void add(BaseKeyframeRefObject *value, bool doSort);
