@@ -14,17 +14,19 @@ class MockIMotion : public IMotion {
       IModel*());
   MOCK_METHOD1(setParentModelRef,
       void(IModel *model));
-  MOCK_METHOD1(seek,
+  MOCK_METHOD1(seekSeconds,
+      void(const float64 &seconds));
+  MOCK_METHOD2(seekSceneSeconds,
+      void(const float64 &seconds, Scene *scene));
+  MOCK_METHOD1(seekTimeIndex,
       void(const IKeyframe::TimeIndex &timeIndex));
-  MOCK_METHOD2(seekScene,
+  MOCK_METHOD2(seekSceneTimeIndex,
       void(const IKeyframe::TimeIndex &timeIndex, Scene *scene));
-  MOCK_METHOD1(advance,
-      void(const IKeyframe::TimeIndex &deltaTimeIndex));
-  MOCK_METHOD2(advanceScene,
-      void(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene));
   MOCK_METHOD0(reset,
       void());
-  MOCK_CONST_METHOD0(duration,
+  MOCK_CONST_METHOD0(durationSeconds,
+      float64());
+  MOCK_CONST_METHOD0(durationTimeIndex,
       IKeyframe::TimeIndex());
   MOCK_CONST_METHOD1(isReachedTo,
       bool(const IKeyframe::TimeIndex &timeIndex));

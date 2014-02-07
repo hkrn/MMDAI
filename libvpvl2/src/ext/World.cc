@@ -41,6 +41,9 @@
 #include <vpvl2/Scene.h>
 #include <vpvl2/internal/util.h>
 
+/* std::numeric_limits */
+#include <limits>
+
 /* Bullet Physics */
 #ifdef __clang__
 #pragma clang diagnostic push

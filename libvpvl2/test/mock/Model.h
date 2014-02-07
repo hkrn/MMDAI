@@ -14,6 +14,8 @@ class MockIModel : public IModel {
       const IString*(IEncoding::LanguageType type));
   MOCK_CONST_METHOD1(comment,
       const IString*(IEncoding::LanguageType type));
+  MOCK_CONST_METHOD0(encodingType,
+      IString::Codec());
   MOCK_CONST_METHOD0(isVisible,
       bool());
   MOCK_CONST_METHOD0(error,
@@ -80,6 +82,8 @@ class MockIModel : public IModel {
       void(const IString *value, IEncoding::LanguageType type));
   MOCK_METHOD2(setComment,
       void(const IString *value, IEncoding::LanguageType type));
+  MOCK_METHOD1(setEncodingType,
+      void(IString::Codec value));
   MOCK_METHOD1(setWorldTranslation,
       void(const Vector3 &value));
   MOCK_METHOD1(setWorldOrientation,

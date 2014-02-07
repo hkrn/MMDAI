@@ -68,6 +68,8 @@ public:
     MOCK_METHOD2(physicsEnableWillChange, void(bool value, IModel *model));
     MOCK_METHOD3(aabbWillChange, void(const Vector3 &min, const Vector3 &max, IModel *model));
     MOCK_METHOD2(versionWillChange, void(float32 value, IModel *model));
+    MOCK_METHOD2(maxUVCountWillChange, void(int value, IModel *model));
+    MOCK_METHOD2(encodingTypeWillChange, void(IString::Codec value, IModel *model));
 };
 
 class MockMorphPropertyEventListener : public IMorph::PropertyEventListener {

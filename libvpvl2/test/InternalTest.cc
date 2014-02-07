@@ -1,4 +1,5 @@
 #include "Common.h"
+#include "vpvl2/extensions/icu4c/Encoding.h"
 #include "vpvl2/extensions/icu4c/String.h"
 #include "vpvl2/internal/MotionHelper.h"
 #include "vpvl2/internal/util.h"
@@ -179,10 +180,11 @@ TEST(InternalTest, SetAndGetRotation)
 TEST(InternalTest, WriteNullString)
 {
     QByteArray bytes;
-    vsize size = vpvl2::internal::estimateSize(0, IString::kUTF8);
+    Encoding encoding(0);
+    vsize size = vpvl2::internal::estimateSize(0, &encoding, IString::kUTF8);
     bytes.resize(size);
     uint8 *data = reinterpret_cast<uint8 *>(bytes.data());
-    vpvl2::internal::writeString(0, IString::kUTF8, data);
+    vpvl2::internal::writeString(0, &encoding, IString::kUTF8, data);
     uint8 *ptr = reinterpret_cast<uint8 *>(bytes.data());
     ASSERT_EQ(0, vpvl2::internal::readSignedIndex(ptr, sizeof(int)));
 }
@@ -190,12 +192,13 @@ TEST(InternalTest, WriteNullString)
 TEST(InternalTest, WriteNotNullString)
 {
     QByteArray bytes;
+    Encoding encoding(0);
     String str("Hello World");
-    bytes.resize(vpvl2::internal::estimateSize(&str, IString::kUTF8));
+    bytes.resize(vpvl2::internal::estimateSize(&str, &encoding, IString::kUTF8));
     uint8 *data = reinterpret_cast<uint8 *>(bytes.data());
-    vpvl2::internal::writeString(&str, IString::kUTF8, data);
+    vpvl2::internal::writeString(&str, &encoding, IString::kUTF8, data);
     uint8 *ptr = reinterpret_cast<uint8 *>(bytes.data());
-    vsize length = str.length(IString::kUTF8);
+    vsize length = str.size();
     ASSERT_EQ(length, vsize(vpvl2::internal::readSignedIndex(ptr, sizeof(int))));
     ASSERT_EQ(0, qstrncmp(reinterpret_cast<const char *>(str.toByteArray()), reinterpret_cast<const char *>(ptr), length));
 }
@@ -203,8 +206,9 @@ TEST(InternalTest, WriteNotNullString)
 TEST(InternalTest, EstimateSize)
 {
     String str("Hello World");
-    ASSERT_EQ(vsize(4), vpvl2::internal::estimateSize(0, IString::kUTF8));
-    ASSERT_EQ(vsize(4) + str.length(IString::kUTF8), vpvl2::internal::estimateSize(&str, IString::kUTF8));
+    Encoding encoding(0);
+    ASSERT_EQ(vsize(4), vpvl2::internal::estimateSize(0, &encoding, IString::kUTF8));
+    ASSERT_EQ(vsize(4) + str.size(), vpvl2::internal::estimateSize(&str, &encoding, IString::kUTF8));
 }
 
 TEST(InternalTest, SetString)
