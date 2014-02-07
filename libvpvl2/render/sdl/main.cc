@@ -138,7 +138,7 @@ public:
         ::ui::initializeDictionary(m_config, m_dictionary);
         ::ui::loadAllModels(m_config, m_applicationContext.get(), m_scene.get(), m_factory.get(), m_encoding.get());
         m_scene->setWorldRef(m_world->dynamicWorldRef());
-        m_scene->seek(0, Scene::kUpdateAll);
+        m_scene->seekTimeIndex(0, Scene::kUpdateAll);
         m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
     }
     bool isActive() const {
@@ -178,7 +178,7 @@ public:
         ::ui::drawScreen(*m_scene.get());
         Uint32 current = SDL_GetTicks();
         const IKeyframe::TimeIndex &timeIndex = IKeyframe::TimeIndex((current - base) / Scene::defaultFPS());
-        m_scene->seek(timeIndex, Scene::kUpdateAll);
+        m_scene->seekTimeIndex(timeIndex, Scene::kUpdateAll);
         m_world->stepSimulation((current - last) / Scene::defaultFPS(), Scene::defaultFPS());
         updateFPS();
         last = current;

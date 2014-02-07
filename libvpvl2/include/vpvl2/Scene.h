@@ -350,7 +350,7 @@ public:
     void deleteMotion(IMotion *&motion);
 
     /**
-     * Scene にある全てのモーションを delta 分進めます.
+     * Scene にある全てのモーションを秒数の箇所に移動します.
      *
      * flags 引数によって適用されるモーションが異なります。
      *
@@ -359,11 +359,11 @@ public:
      * :kUpdateLight|照明のモーション
      * :kUpdateAll|上記すべて
      *
-     * @brief advance
-     * @param delta
+     * @brief seek
+     * @param seconds
      * @param flags
      */
-    void advance(const IKeyframe::TimeIndex &delta, int flags);
+    void seek(const float64 &seconds, int flags);
 
     /**
      * Scene にある全てのモーションを timeIndex の箇所に移動します.
@@ -379,7 +379,7 @@ public:
      * @param timeIndex
      * @param flags
      */
-    void seek(const IKeyframe::TimeIndex &timeIndex, int flags);
+    void seekTimeIndex(const IKeyframe::TimeIndex &timeIndex, int flags);
 
     /**
      * モデルとそのレンダリングエンジンの状態を更新します.
@@ -448,12 +448,20 @@ public:
     bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const VPVL2_DECL_NOEXCEPT;
 
     /**
-     * Scene にあるモーションの継続時間（全てのモーションが完了するまでの timeIndex）を返します.
+     * Scene にあるモーションの継続時間（全てのモーションが完了するまでの継続時間）を秒数で返します.
      *
-     * @brief duration
+     * @brief durationSeconds
      * @return
      */
-    IKeyframe::TimeIndex duration() const VPVL2_DECL_NOEXCEPT;
+    float64 durationSeconds() const VPVL2_DECL_NOEXCEPT;
+
+    /**
+     * Scene にあるモーションの継続時間（全てのモーションが完了するまでの継続時間）をフレーム単位で返します.
+     *
+     * @brief durationTimeIndex
+     * @return
+     */
+    IKeyframe::TimeIndex durationTimeIndex() const VPVL2_DECL_NOEXCEPT;
 
     /**
      * Scene が持つ全てのモデルの参照を返します.

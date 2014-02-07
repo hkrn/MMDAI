@@ -405,6 +405,7 @@ struct Scene::PrivateContext VPVL2_DECL_FINAL
           light(sceneRef),
           camera(sceneRef),
           currentTimeIndex(0),
+          currentSeconds(0),
           preferredFPS(Scene::defaultFPS()),
           ownMemory(ownMemory)
     {
@@ -645,6 +646,7 @@ struct Scene::PrivateContext VPVL2_DECL_FINAL
     Light light;
     Camera camera;
     IKeyframe::TimeIndex currentTimeIndex;
+    float64 currentSeconds;
     Scalar preferredFPS;
     bool ownMemory;
 };
@@ -932,53 +934,47 @@ void Scene::deleteMotion(IMotion *&motion)
     motion = 0;
 }
 
-void Scene::advance(const IKeyframe::TimeIndex &delta, int flags)
+void Scene::seek(const float64 &seconds, int flags)
 {
     if (internal::hasFlagBits(flags, kUpdateCamera)) {
         Camera &camera = m_context->camera;
         IMotion *cameraMotion = camera.motion();
         if (cameraMotion) {
-            cameraMotion->advanceScene(delta, this);
+            cameraMotion->seekScene(seconds, this);
         }
     }
     if (internal::hasFlagBits(flags, kUpdateLight)) {
         Light &light = m_context->light;
         IMotion *lightMotion = light.motion();
         if (lightMotion) {
-            lightMotion->advanceScene(delta, this);
+            lightMotion->seekScene(seconds, this);
         }
-    }
-    if (internal::hasFlagBits(flags, kResetMotionState)) {
-        m_context->resetMotionState();
-    }
-    if (internal::hasFlagBits(flags, kForceUpdateAllMorphs)) {
-        m_context->markAllMorphsDirty();
     }
     if (internal::hasFlagBits(flags, kUpdateModels)) {
         const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
             IMotion *motion = motions[i]->value;
-            motion->advance(delta);
+            motion->seek(seconds);
         }
     }
-    m_context->currentTimeIndex += delta;
+    m_context->currentSeconds = seconds;
 }
 
-void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
+void Scene::seekTimeIndex(const IKeyframe::TimeIndex &timeIndex, int flags)
 {
     if (internal::hasFlagBits(flags, kUpdateCamera)) {
         Camera &camera = m_context->camera;
         IMotion *cameraMotion = camera.motion();
         if (cameraMotion) {
-            cameraMotion->seekScene(timeIndex, this);
+            cameraMotion->seekSceneTimeIndex(timeIndex, this);
         }
     }
     if (internal::hasFlagBits(flags, kUpdateLight)) {
         Light &light = m_context->light;
         IMotion *lightMotion = light.motion();
         if (lightMotion) {
-            lightMotion->seekScene(timeIndex, this);
+            lightMotion->seekSceneTimeIndex(timeIndex, this);
         }
     }
     if (internal::hasFlagBits(flags, kUpdateModels)) {
@@ -986,7 +982,7 @@ void Scene::seek(const IKeyframe::TimeIndex &timeIndex, int flags)
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
             IMotion *motion = motions[i]->value;
-            motion->seek(timeIndex);
+            motion->seekTimeIndex(timeIndex);
         }
     }
     m_context->currentTimeIndex = timeIndex;
@@ -1093,16 +1089,28 @@ bool Scene::isReachedTo(const IKeyframe::TimeIndex &timeIndex) const VPVL2_DECL_
     return true;
 }
 
-IKeyframe::TimeIndex Scene::duration() const VPVL2_DECL_NOEXCEPT
+float64 Scene::durationSeconds() const VPVL2_DECL_NOEXCEPT
 {
     const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
     const int nmotions = motions.count();
-    IKeyframe::TimeIndex maxTimeIndex = 0;
+    float64 durationSeconds(0);
     for (int i = 0; i < nmotions; i++) {
         IMotion *motion = motions[i]->value;
-        btSetMax(maxTimeIndex, motion->duration());
+        btSetMax(durationSeconds, motion->durationSeconds());
     }
-    return maxTimeIndex;
+    return durationSeconds;
+}
+
+IKeyframe::TimeIndex Scene::durationTimeIndex() const VPVL2_DECL_NOEXCEPT
+{
+    const Array<PrivateContext::MotionPtr *> &motions = m_context->motions;
+    const int nmotions = motions.count();
+    IKeyframe::TimeIndex durationTimeIndex(0);
+    for (int i = 0; i < nmotions; i++) {
+        IMotion *motion = motions[i]->value;
+        btSetMax(durationTimeIndex, motion->durationTimeIndex());
+    }
+    return durationTimeIndex;
 }
 
 void Scene::getModelRefs(Array<IModel *> &value) const

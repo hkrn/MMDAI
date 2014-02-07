@@ -137,7 +137,7 @@ void CameraAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
             m_fovy = fovyFrom;
         }
         else {
-            const IKeyframe::SmoothPrecision &w = (m_currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+            const IKeyframe::SmoothPrecision &w = interpolateTimeIndex(timeIndexFrom, timeIndexTo);
             IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
             lerpVector3(keyframeForInterpolation, positionFrom, positionTo, w, 0, x);
             lerpVector3(keyframeForInterpolation, positionFrom, positionTo, w, 1, y);

@@ -109,6 +109,9 @@ public:
     virtual void getAllKeyframes(Array<IKeyframe *> &value) const = 0;
     virtual void setAllKeyframes(const Array<IKeyframe *> &value) = 0;
 
+    IKeyframe::SmoothPrecision interpolateTimeIndex(const IKeyframe::TimeIndex &from, const IKeyframe::TimeIndex &to) const {
+        return IKeyframe::SmoothPrecision(m_currentTimeIndex - from) / IKeyframe::SmoothPrecision(to - from);
+    }
     void advance(const IKeyframe::TimeIndex &deltaTimeIndex) {
         seek(m_currentTimeIndex);
         saveCurrentTimeIndex(m_currentTimeIndex + deltaTimeIndex);

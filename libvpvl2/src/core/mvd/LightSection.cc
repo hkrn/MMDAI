@@ -81,7 +81,7 @@ public:
                     direction = directionTo;
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &w = internal::MotionHelper::calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
+                    const IKeyframe::SmoothPrecision &w = internal::MotionHelper::interpolateTimeIndex(currentTimeIndex, timeIndexFrom, timeIndexTo);;
                     color = colorFrom.lerp(colorTo, Scalar(w));
                     direction = directionFrom.lerp(directionTo, Scalar(w));
                 }

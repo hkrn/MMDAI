@@ -273,7 +273,7 @@ public:
                                     );
         m_world->dynamicWorldRef()->setDebugDrawer(m_debugDrawer.get());
         m_scene->setWorldRef(m_world->dynamicWorldRef());
-        m_scene->seek(0, Scene::kUpdateAll);
+        m_scene->seekTimeIndex(0, Scene::kUpdateAll);
         m_scene->update(Scene::kUpdateAll | Scene::kResetMotionState);
 #if 0
         Array<IModel *> models;
@@ -329,7 +329,7 @@ public:
         double current = glfwGetTime();
         if (m_autoplay) {
             const IKeyframe::TimeIndex &newTimeIndex = IKeyframe::TimeIndex(uint64(((current - base) * 1000) / Scene::defaultFPS()));
-            m_scene->seek(newTimeIndex, Scene::kUpdateAll);
+            m_scene->seekTimeIndex(newTimeIndex, Scene::kUpdateAll);
             m_world->stepSimulation(newTimeIndex - oldTimeIndex, Scene::defaultFPS());
             m_scene->update(Scene::kUpdateAll & ~Scene::kUpdateCamera);
             updateFPS();
@@ -337,7 +337,7 @@ public:
             last = current;
         }
         else if (m_pressedKey == GLFW_KEY_SPACE) {
-            m_scene->seek(last, Scene::kUpdateAll);
+            m_scene->seekTimeIndex(last, Scene::kUpdateAll);
             m_world->dynamicWorldRef()->stepSimulation(1 / Scene::defaultFPS(), 2);
             m_scene->update(Scene::kUpdateAll & ~Scene::kUpdateCamera);
             last += 1;

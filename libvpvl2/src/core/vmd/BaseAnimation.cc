@@ -38,7 +38,7 @@
 */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/MotionHelper.h"
 
 #include "vpvl2/vmd/BaseAnimation.h"
 
@@ -125,6 +125,11 @@ void BaseAnimation::setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::
             m_keyframes.append(keyframe);
         }
     }
+}
+
+IKeyframe::SmoothPrecision BaseAnimation::interpolateTimeIndex(const IKeyframe::TimeIndex &from, const IKeyframe::TimeIndex &to) const
+{
+    return internal::MotionHelper::interpolateTimeIndex(m_currentTimeIndex, from, to);
 }
 
 } /* namespace vmd */

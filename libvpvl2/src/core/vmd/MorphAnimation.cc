@@ -189,7 +189,7 @@ void MorphAnimation::calculateFrames(const IKeyframe::TimeIndex &timeIndexAt, Pr
     const IMorph::WeightPrecision &weightFrom = keyframeFrom->weight();
     const IMorph::WeightPrecision &weightTo = keyframeTo->weight();
     if (timeIndexFrom != timeIndexTo) {
-        const IKeyframe::SmoothPrecision &w = (m_currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+        const IKeyframe::SmoothPrecision &w = interpolateTimeIndex(timeIndexFrom, timeIndexTo);
         context->weight = internal::MotionHelper::lerp(weightFrom, weightTo, w);
     }
     else {

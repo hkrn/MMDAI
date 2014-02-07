@@ -58,7 +58,7 @@ public:
     typedef float32 TimeIndex;
 #else
     typedef float64 SmoothPrecision;
-    typedef float64 TimeIndex;
+    typedef uint64 TimeIndex;
 #endif
     typedef int LayerIndex;
     enum Type {

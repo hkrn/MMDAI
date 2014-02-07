@@ -80,7 +80,7 @@ void ProjectAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     const IMorph::WeightPrecision &distanceFrom = keyframeFrom->shadowDistance();
     const IMorph::WeightPrecision &distanceTo = keyframeTo->shadowDistance();
     if (timeIndexFrom != timeIndexTo) {
-        const IKeyframe::SmoothPrecision &w = (m_currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+        const IKeyframe::SmoothPrecision &w = interpolateTimeIndex(timeIndexFrom, timeIndexTo);
         m_shadowDistance = internal::MotionHelper::lerp(distanceFrom, distanceTo, w);
     }
     else {

@@ -84,7 +84,7 @@ void LightAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     const Vector3 &colorFrom = keyframeFrom->color(), &directionFrom = keyframeFrom->direction();
     const Vector3 &colorTo = keyframeTo->color(), &directionTo = keyframeTo->direction();
     if (timeIndexFrom != timeIndexTo) {
-        const IKeyframe::SmoothPrecision &w = (m_currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+        const IKeyframe::SmoothPrecision &w = interpolateTimeIndex(timeIndexFrom, timeIndexTo);
         m_color.setInterpolate3(colorFrom, colorTo, Scalar(w));
         m_direction.setInterpolate3(directionFrom, directionTo, Scalar(w));
     }

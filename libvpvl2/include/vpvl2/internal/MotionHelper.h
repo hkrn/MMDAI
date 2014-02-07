@@ -109,11 +109,11 @@ public:
     {
         return x + (y - x) * t;
     }
-    static inline IKeyframe::SmoothPrecision calculateWeight(const IKeyframe::TimeIndex &currentTimeIndex,
-                                                             const IKeyframe::TimeIndex &timeIndexFrom,
-                                                             const IKeyframe::TimeIndex &timeIndexTo) VPVL2_DECL_NOEXCEPT
+    static inline IKeyframe::SmoothPrecision interpolateTimeIndex(const IKeyframe::TimeIndex &currentTimeIndex,
+                                                                  const IKeyframe::TimeIndex &timeIndexFrom,
+                                                                  const IKeyframe::TimeIndex &timeIndexTo) VPVL2_DECL_NOEXCEPT
     {
-        const IKeyframe::SmoothPrecision &value = (currentTimeIndex - timeIndexFrom) / (timeIndexTo - timeIndexFrom);
+        const IKeyframe::SmoothPrecision &value = IKeyframe::SmoothPrecision(currentTimeIndex - timeIndexFrom) / IKeyframe::SmoothPrecision(timeIndexTo - timeIndexFrom);
         return value;
     }
     static inline IKeyframe::SmoothPrecision calculateInterpolatedWeight(const InterpolationTable &t,

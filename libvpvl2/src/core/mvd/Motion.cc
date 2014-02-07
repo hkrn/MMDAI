@@ -559,16 +559,26 @@ void Motion::setParentModelRef(IModel *value)
     m_context->morphSection->setParentModel(value);
 }
 
-void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
+void Motion::seek(const float64 &seconds)
+{
+    seekTimeIndex(uint64(seconds * m_context->info.fps));
+}
+
+void Motion::seekScene(const float64 &seconds, Scene *scene)
+{
+    seekSceneTimeIndex(uint64(seconds * m_context->info.fps), scene);
+}
+
+void Motion::seekTimeIndex(const IKeyframe::TimeIndex &timeIndex)
 {
     m_context->assetSection->seek(timeIndex);
     m_context->boneSection->seek(timeIndex);
     m_context->modelSection->seek(timeIndex);
     m_context->morphSection->seek(timeIndex);
-    m_context->active = duration() > timeIndex;
+    m_context->active = durationTimeIndex() > timeIndex;
 }
 
-void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
+void Motion::seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
 {
     if (m_context->cameraSection->countKeyframes() > 0) {
         m_context->cameraSection->seek(timeIndex);
@@ -580,36 +590,6 @@ void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
     }
     if (m_context->lightSection->countKeyframes() > 0) {
         m_context->lightSection->seek(timeIndex);
-        ILight *light = scene->lightRef();
-        light->setColor(m_context->lightSection->color());
-        light->setDirection(m_context->lightSection->direction());
-    }
-}
-
-void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
-{
-    m_context->assetSection->advance(deltaTimeIndex);
-    m_context->boneSection->advance(deltaTimeIndex);
-    m_context->effectSection->advance(deltaTimeIndex);
-    m_context->modelSection->advance(deltaTimeIndex);
-    m_context->morphSection->advance(deltaTimeIndex);
-    if (deltaTimeIndex > 0) {
-        m_context->active = !isReachedTo(duration());
-    }
-}
-
-void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene)
-{
-    if (m_context->cameraSection->countKeyframes() > 0) {
-        m_context->cameraSection->advance(deltaTimeIndex);
-        ICamera *camera = scene->cameraRef();
-        camera->setLookAt(m_context->cameraSection->position());
-        camera->setAngle(m_context->cameraSection->angle());
-        camera->setFov(m_context->cameraSection->fov());
-        camera->setDistance(m_context->cameraSection->distance());
-    }
-    if (m_context->lightSection->countKeyframes() > 0) {
-        m_context->lightSection->advance(deltaTimeIndex);
         ILight *light = scene->lightRef();
         light->setColor(m_context->lightSection->color());
         light->setDirection(m_context->lightSection->direction());
@@ -633,9 +613,14 @@ void Motion::reset()
     m_context->active = true;
 }
 
-IKeyframe::TimeIndex Motion::duration() const
+float64 Motion::durationSeconds() const
 {
-    IKeyframe::TimeIndex duration = 0;
+    return durationTimeIndex() * m_context->info.fps;
+}
+
+IKeyframe::TimeIndex Motion::durationTimeIndex() const
+{
+    IKeyframe::TimeIndex duration(0);
     btSetMax(duration, m_context->assetSection->duration());
     btSetMax(duration, m_context->boneSection->duration());
     btSetMax(duration, m_context->cameraSection->duration());

@@ -85,7 +85,7 @@ public:
                     weight = weightTo;
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &w = internal::MotionHelper::calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
+                    const IKeyframe::SmoothPrecision &w = internal::MotionHelper::interpolateTimeIndex(currentTimeIndex, timeIndexFrom, timeIndexTo);;
                     const internal::InterpolationTable &tableForWeight = keyframeTo->tableForWeight();
                     if (tableForWeight.linear) {
                         weight = internal::MotionHelper::lerp(weightFrom, weightTo, w);

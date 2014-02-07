@@ -59,6 +59,8 @@ namespace vpvl2
 namespace vmd
 {
 
+static const float64 kFPS = 30.0f;
+
 struct Motion::PrivateContext {
     PrivateContext(IModel *modelRef, IEncoding *encodingRef)
         : motionPtr(0),
@@ -386,15 +388,25 @@ void Motion::setParentModelRef(IModel *value)
     }
 }
 
-void Motion::seek(const IKeyframe::TimeIndex &timeIndex)
+void Motion::seek(const float64 &seconds)
+{
+    seekTimeIndex(uint64(seconds * kFPS));
+}
+
+void Motion::seekScene(const float64 &seconds, Scene *scene)
+{
+    seekSceneTimeIndex(uint64(seconds * kFPS), scene);
+}
+
+void Motion::seekTimeIndex(const IKeyframe::TimeIndex &timeIndex)
 {
     m_context->boneMotion.seek(timeIndex);
     m_context->morphMotion.seek(timeIndex);
     m_context->modelMotion.seek(timeIndex);
-    m_context->active = duration() > timeIndex;
+    m_context->active = durationTimeIndex() > timeIndex;
 }
 
-void Motion::seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
+void Motion::seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
 {
     if (m_context->cameraMotion.countKeyframes() > 0) {
         m_context->cameraMotion.seek(timeIndex);
@@ -428,7 +440,7 @@ void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
         // The motion is active and continue to advance
         m_context->boneMotion.advance(deltaTimeIndex);
         m_context->morphMotion.advance(deltaTimeIndex);
-        if (isReachedTo(duration())) {
+        if (isReachedTo(durationTimeIndex())) {
             m_context->active = false;
         }
     }
@@ -470,9 +482,14 @@ void Motion::reset()
     m_context->active = true;
 }
 
-IKeyframe::TimeIndex Motion::duration() const
+float64 Motion::durationSeconds() const
 {
-    IKeyframe::TimeIndex duration = 0;
+    return durationTimeIndex() * kFPS;
+}
+
+IKeyframe::TimeIndex Motion::durationTimeIndex() const
+{
+    IKeyframe::TimeIndex duration(0);
     btSetMax(duration, m_context->boneMotion.duration());
     btSetMax(duration, m_context->cameraMotion.duration());
     btSetMax(duration, m_context->lightMotion.duration());

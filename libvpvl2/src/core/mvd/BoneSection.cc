@@ -93,7 +93,7 @@ public:
                     rotation = rotationTo;
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &weight = internal::MotionHelper::calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);
+                    const IKeyframe::SmoothPrecision &weight = internal::MotionHelper::interpolateTimeIndex(currentTimeIndex, timeIndexFrom, timeIndexTo);
                     IKeyframe::SmoothPrecision x = 0, y = 0, z = 0;
                     internal::MotionHelper::interpolate(keyframeTo->tableForX(), positionFrom, positionTo, weight, 0, x);
                     internal::MotionHelper::interpolate(keyframeTo->tableForY(), positionFrom, positionTo, weight, 1, y);

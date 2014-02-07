@@ -169,6 +169,27 @@ public:
     virtual void setParentModelRef(IModel *model) = 0;
 
     /**
+     * モーションを指定された秒数の位置に移動します.
+     *
+     * 引数はモーションの FPS にあわせてフレーム数に変換され、フレーム数として保存されます.
+     *
+     * @brief seek
+     * @param seconds
+     */
+    virtual void seek(const float64 &seconds) = 0;
+
+    /**
+     * モーションを指定された秒数の位置に移動した上で場面を更新します.
+     *
+     * 場面オブジェクトの更新が行われること以外 seek() と同じです。
+     *
+     * @brief seekScene
+     * @param seconds
+     * @param scene
+     */
+    virtual void seekScene(const float64 &seconds, Scene *scene) = 0;
+
+    /**
      * モーションを指定されたフレームの位置に移動します.
      *
      * 内部的にはフレームの位置が保存されています。
@@ -176,38 +197,17 @@ public:
      * @param timeIndex
      * @sa advance
      */
-    virtual void seek(const IKeyframe::TimeIndex &timeIndex) = 0;
+    virtual void seekTimeIndex(const IKeyframe::TimeIndex &timeIndex) = 0;
 
     /**
      * モーションを指定されたフレームの位置に移動した上で場面を更新します.
      *
-     * 場面オブジェクトの更新が行われること以外 seek() と同じです。
+     * 場面オブジェクトの更新が行われること以外 seekTimeIndex() と同じです。
      *
      * @param timeIndex
      * @param Scene
      */
-    virtual void seekScene(const IKeyframe::TimeIndex &timeIndex, Scene *scene) = 0;
-
-    /**
-     * モーションを指定されたフレームの位置分進めます.
-     *
-     * 前回 advance または seek を呼んだ位置から引数の値を加算してフレームを進めます。
-     * 内部的には IMotion::seek() を呼び出しています。
-     *
-     * @param delta
-     * @sa seek
-     */
-    virtual void advance(const IKeyframe::TimeIndex &deltaTimeIndex) = 0;
-
-    /**
-     * モーションを指定されたフレームの位置分進めた上で上で場面を更新します.
-     *
-     * 場面オブジェクトの更新が行われること以外 advance() と同じです。
-     *
-     * @param delta
-     * @param Scene
-     */
-    virtual void advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene) = 0;
+    virtual void seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *scene) = 0;
 
     /**
      * モーションを最初の位置にリセットします.
@@ -216,12 +216,20 @@ public:
     virtual void reset() = 0;
 
     /**
-     * モーションの継続時間（モーションの終端位置となる timeIndex）を返します.
+     * モーションの継続時間を秒単位で返します.
+     *
+     * @brief durationSeconds
+     * @return
+     */
+    virtual float64 durationSeconds() const = 0;
+
+    /**
+     * モーションの継続時間をフレーム数 (timeIndex) 単位で返します.
      *
      * @return float
      * @sa isReachedTo
      */
-    virtual IKeyframe::TimeIndex duration() const = 0;
+    virtual IKeyframe::TimeIndex durationTimeIndex() const = 0;
 
     /**
      * モーションが指定されたフレームの位置まで進んでいるかを返します.

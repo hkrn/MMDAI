@@ -93,7 +93,7 @@ public:
                     keyframe = keyframeTo;
                 }
                 else {
-                    const IKeyframe::SmoothPrecision &w = internal::MotionHelper::calculateWeight(currentTimeIndex, timeIndexFrom, timeIndexTo);;
+                    const IKeyframe::SmoothPrecision &w = internal::MotionHelper::interpolateTimeIndex(currentTimeIndex, timeIndexFrom, timeIndexTo);;
                     const Vector3 &ec = edgeColorFrom.lerp(edgeColorTo, Scalar(w));
                     modelRef->setEdgeColor(Color(ec.x(), ec.y(), ec.z(), edgeColorFrom.w() + edgeColorTo.w() * w));
                     modelRef->setEdgeWidth(Scalar(internal::MotionHelper::lerp(edgeWidthFrom, edgeWidthTo, w)));
