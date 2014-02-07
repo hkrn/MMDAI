@@ -332,7 +332,11 @@ bool Material::loadMaterials(const Array<Material *> &materials,
         material->setIndex(i);
         actualIndices += material->indexRange().count;
     }
-    return actualIndices == expectedIndices;
+    if (actualIndices != expectedIndices) {
+        VPVL2_LOG(WARNING, "Index range didn't match: expected=" << expectedIndices << " actual=" << actualIndices);
+        return false;
+    }
+    return true;
 }
 
 void Material::writeMaterials(const Array<Material *> &materials, const Model::DataInfo &info, uint8 *&data)
