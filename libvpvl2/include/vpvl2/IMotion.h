@@ -176,7 +176,7 @@ public:
      * @brief seek
      * @param seconds
      */
-    virtual void seek(const float64 &seconds) = 0;
+    virtual void seekSeconds(const float64 &seconds) = 0;
 
     /**
      * モーションを指定された秒数の位置に移動した上で場面を更新します.
@@ -187,7 +187,7 @@ public:
      * @param seconds
      * @param scene
      */
-    virtual void seekScene(const float64 &seconds, Scene *scene) = 0;
+    virtual void seekSceneSeconds(const float64 &seconds, Scene *scene) = 0;
 
     /**
      * モーションを指定されたフレームの位置に移動します.
@@ -282,9 +282,9 @@ public:
      * @param keyframes
      */
     virtual void getKeyframeRefs(const IKeyframe::TimeIndex &timeIndex,
-                              const IKeyframe::LayerIndex &layerIndex,
-                              IKeyframe::Type type,
-                              Array<IKeyframe *> &keyframes) = 0;
+                                 const IKeyframe::LayerIndex &layerIndex,
+                                 IKeyframe::Type type,
+                                 Array<IKeyframe *> &keyframes) = 0;
 
     /**
      * キーフレームの位置と名前からボーンのキーフレームを返します.
@@ -299,8 +299,8 @@ public:
      * @sa findBoneKeyframeAt
      */
     virtual IBoneKeyframe *findBoneKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                            const IString *name,
-                                            const IKeyframe::LayerIndex &layerIndex) const = 0;
+                                               const IString *name,
+                                               const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     /**
      * キーフレームの配列の添字からボーン該当するキーフレームの全てを返します.
@@ -326,7 +326,7 @@ public:
      * @sa findCameraKeyframeAt
      */
     virtual ICameraKeyframe *findCameraKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                                const IKeyframe::LayerIndex &layerIndex) const = 0;
+                                                   const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     /**
      * キーフレームの配列の添字からカメラのキーフレームを返します.
@@ -341,8 +341,8 @@ public:
     virtual ICameraKeyframe *findCameraKeyframeRefAt(int index) const = 0;
 
     virtual IEffectKeyframe *findEffectKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                                const IString *name,
-                                                const IKeyframe::LayerIndex &layerIndex) const = 0;
+                                                   const IString *name,
+                                                   const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     virtual IEffectKeyframe *findEffectKeyframeRefAt(int index) const = 0;
 
@@ -358,7 +358,7 @@ public:
      * @sa findLightKeyframeAt
      */
     virtual ILightKeyframe *findLightKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                              const IKeyframe::LayerIndex &layerIndex) const = 0;
+                                                 const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     /**
      * キーフレームの配列の位置から照明のキーフレームを返します.
@@ -373,7 +373,7 @@ public:
     virtual ILightKeyframe *findLightKeyframeRefAt(int index) const = 0;
 
     virtual IModelKeyframe *findModelKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                              const IKeyframe::LayerIndex &layerIndex) const = 0;
+                                                 const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     virtual IModelKeyframe *findModelKeyframeRefAt(int index) const = 0;
 
@@ -390,8 +390,8 @@ public:
      * @sa findMorphKeyframeAt
      */
     virtual IMorphKeyframe *findMorphKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                              const IString *name,
-                                              const IKeyframe::LayerIndex &layerIndex) const = 0;
+                                                 const IString *name,
+                                                 const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     /**
      * キーフレームの配列の添字からモーフのキーフレームを返します.
@@ -406,7 +406,7 @@ public:
     virtual IMorphKeyframe *findMorphKeyframeRefAt(int index) const = 0;
 
     virtual IProjectKeyframe *findProjectKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
-                                                  const IKeyframe::LayerIndex &layerIndex) const = 0;
+                                                     const IKeyframe::LayerIndex &layerIndex) const = 0;
 
     virtual IProjectKeyframe *findProjectKeyframeRefAt(int index) const = 0;
 

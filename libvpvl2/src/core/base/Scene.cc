@@ -934,20 +934,20 @@ void Scene::deleteMotion(IMotion *&motion)
     motion = 0;
 }
 
-void Scene::seek(const float64 &seconds, int flags)
+void Scene::seekSeconds(const float64 &seconds, int flags)
 {
     if (internal::hasFlagBits(flags, kUpdateCamera)) {
         Camera &camera = m_context->camera;
         IMotion *cameraMotion = camera.motion();
         if (cameraMotion) {
-            cameraMotion->seekScene(seconds, this);
+            cameraMotion->seekSceneSeconds(seconds, this);
         }
     }
     if (internal::hasFlagBits(flags, kUpdateLight)) {
         Light &light = m_context->light;
         IMotion *lightMotion = light.motion();
         if (lightMotion) {
-            lightMotion->seekScene(seconds, this);
+            lightMotion->seekSceneSeconds(seconds, this);
         }
     }
     if (internal::hasFlagBits(flags, kUpdateModels)) {
@@ -955,7 +955,7 @@ void Scene::seek(const float64 &seconds, int flags)
         const int nmotions = motions.count();
         for (int i = 0; i < nmotions; i++) {
             IMotion *motion = motions[i]->value;
-            motion->seek(seconds);
+            motion->seekSeconds(seconds);
         }
     }
     m_context->currentSeconds = seconds;

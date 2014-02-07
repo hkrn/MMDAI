@@ -97,8 +97,8 @@ public:
     vsize estimateSize() const;
     void setParentSceneRef(Scene *value);
     void setParentModelRef(IModel *value);
-    void seek(const float64 &seconds);
-    void seekScene(const float64 &seconds, Scene *scene);
+    void seekSeconds(const float64 &seconds);
+    void seekSceneSeconds(const float64 &seconds, Scene *scene);
     void seekTimeIndex(const IKeyframe::TimeIndex &timeIndex);
     void seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *scene);
     void advance(const IKeyframe::TimeIndex &deltaTimeIndex);

@@ -559,12 +559,12 @@ void Motion::setParentModelRef(IModel *value)
     m_context->morphSection->setParentModel(value);
 }
 
-void Motion::seek(const float64 &seconds)
+void Motion::seekSeconds(const float64 &seconds)
 {
     seekTimeIndex(uint64(seconds * m_context->info.fps));
 }
 
-void Motion::seekScene(const float64 &seconds, Scene *scene)
+void Motion::seekSceneSeconds(const float64 &seconds, Scene *scene)
 {
     seekSceneTimeIndex(uint64(seconds * m_context->info.fps), scene);
 }

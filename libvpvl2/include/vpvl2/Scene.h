@@ -363,7 +363,7 @@ public:
      * @param seconds
      * @param flags
      */
-    void seek(const float64 &seconds, int flags);
+    void seekSeconds(const float64 &seconds, int flags);
 
     /**
      * Scene にある全てのモーションを timeIndex の箇所に移動します.
