@@ -786,7 +786,7 @@ bool MotionProxy::save(const QUrl &fileUrl)
 
 qreal MotionProxy::differenceTimeIndex(qreal value) const
 {
-    return m_motion->duration() - value;
+    return m_motion->durationTimeIndex() - value;
 }
 
 qreal MotionProxy::differenceDuration(qreal value) const

@@ -62,7 +62,7 @@ CameraMotionTrack::~CameraMotionTrack()
     m_cameraRef = 0;
 }
 
-BaseKeyframeRefObject *CameraMotionTrack::copy(BaseKeyframeRefObject *value, const qint64 &timeIndex, bool doUpdate)
+BaseKeyframeRefObject *CameraMotionTrack::copy(BaseKeyframeRefObject *value, const quint64 &timeIndex, bool doUpdate)
 {
     Q_ASSERT(value);
     CameraKeyframeRefObject *newKeyframe = 0;

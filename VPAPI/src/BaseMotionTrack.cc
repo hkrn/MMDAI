@@ -70,7 +70,7 @@ BaseKeyframeRefObject *BaseMotionTrack::findKeyframeAt(int index) const
     return m_keyframes.at(index);
 }
 
-BaseKeyframeRefObject *BaseMotionTrack::findKeyframeByTimeIndex(const qint64 &timeIndex) const
+BaseKeyframeRefObject *BaseMotionTrack::findKeyframeByTimeIndex(const quint64 &timeIndex) const
 {
     return m_timeIndex2RefObjects.value(timeIndex);
 }
@@ -100,7 +100,7 @@ void BaseMotionTrack::remove(BaseKeyframeRefObject *value)
     internalRemove(value);
 }
 
-void BaseMotionTrack::replaceTimeIndex(const qint64 &newTimeIndex, const qint64 &oldTimeIndex)
+void BaseMotionTrack::replaceTimeIndex(const quint64 &newTimeIndex, const quint64 &oldTimeIndex)
 {
     BaseKeyframeRefObject *keyframeRef = 0;
     if (m_timeIndex2RefObjects.contains(oldTimeIndex)) {

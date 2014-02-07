@@ -72,12 +72,12 @@ void BaseKeyframeRefObject::setTime(qreal value)
     setTimeIndex(value * Scene::defaultFPS());
 }
 
-qint64 BaseKeyframeRefObject::timeIndex() const
+quint64 BaseKeyframeRefObject::timeIndex() const
 {
-    return static_cast<qint64>(baseKeyframeData()->timeIndex());
+    return baseKeyframeData()->timeIndex();
 }
 
-void BaseKeyframeRefObject::setTimeIndex(const qint64 &value)
+void BaseKeyframeRefObject::setTimeIndex(const quint64 &value)
 {
     IKeyframe *keyframe = baseKeyframeData();
     if (value != keyframe->timeIndex()) {

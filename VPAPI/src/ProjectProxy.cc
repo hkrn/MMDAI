@@ -804,7 +804,7 @@ bool ProjectProxy::canRedo() const
 qreal ProjectProxy::differenceTimeIndex(qreal value) const
 {
     static const qreal kZero = 0.0f;
-    return m_project ? qMax(qreal(m_project->duration()) - qMax(value, kZero), kZero) : 0;
+    return m_project ? qMax(qreal(m_project->durationTimeIndex()) - qMax(value, kZero), kZero) : 0;
 }
 
 qreal ProjectProxy::differenceDuration(qreal value) const
@@ -1329,7 +1329,7 @@ void ProjectProxy::internalSeek(const qreal &timeIndex, bool forceUpdate, bool f
         if (!forceUpdateCamera && !m_cameraRefObject->isSeekable()) {
             flags &= ~Scene::kUpdateCamera;
         }
-        m_project->seek(timeIndex, flags);
+        m_project->seekTimeIndex(uint64(timeIndex), flags);
         m_worldProxy->stepSimulation(timeIndex);
         if (m_currentModelRef) {
             updateOriginValues();

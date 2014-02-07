@@ -57,7 +57,7 @@ public:
     LightMotionTrack(MotionProxy *motionProxy, LightRefObject *parentLight);
     ~LightMotionTrack();
 
-    BaseKeyframeRefObject *copy(BaseKeyframeRefObject *value, const qint64 &timeIndex, bool doUpdate);
+    BaseKeyframeRefObject *copy(BaseKeyframeRefObject *value, const quint64 &timeIndex, bool doUpdate);
     BaseKeyframeRefObject *convert(vpvl2::IKeyframe *value);
     LightKeyframeRefObject *convertLightKeyframe(vpvl2::ILightKeyframe *keyframe);
     void addKeyframe(LightKeyframeRefObject *keyframe, bool doUpdate);

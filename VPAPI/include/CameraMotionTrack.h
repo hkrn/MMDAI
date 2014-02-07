@@ -57,7 +57,7 @@ public:
     CameraMotionTrack(MotionProxy *motionProxy, CameraRefObject *parentCamera);
     ~CameraMotionTrack();
 
-    BaseKeyframeRefObject *copy(BaseKeyframeRefObject *value, const qint64 &timeIndex, bool doUpdate);
+    BaseKeyframeRefObject *copy(BaseKeyframeRefObject *value, const quint64 &timeIndex, bool doUpdate);
     BaseKeyframeRefObject *convert(vpvl2::IKeyframe *value);
     CameraKeyframeRefObject *convertCameraKeyframe(vpvl2::ICameraKeyframe *keyframe);
     void addKeyframe(CameraKeyframeRefObject *keyframe, bool doUpdate);

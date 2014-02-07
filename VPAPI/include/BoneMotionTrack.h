@@ -57,7 +57,7 @@ public:
     BoneMotionTrack(MotionProxy *motionProxy, const QString &name);
     ~BoneMotionTrack();
 
-    BaseKeyframeRefObject *copy(BaseKeyframeRefObject *value, const qint64 &timeIndex, bool doUpdate);
+    BaseKeyframeRefObject *copy(BaseKeyframeRefObject *value, const quint64 &timeIndex, bool doUpdate);
     BaseKeyframeRefObject *convert(vpvl2::IKeyframe *value);
     BoneKeyframeRefObject *convertBoneKeyframe(vpvl2::IBoneKeyframe *keyframe);
     void addKeyframe(BoneKeyframeRefObject *keyframe, bool doUpdate);

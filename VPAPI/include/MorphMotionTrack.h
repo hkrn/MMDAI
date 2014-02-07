@@ -63,7 +63,7 @@ public:
     void addKeyframe(QObject *value, bool doUpdate);
     void removeKeyframe(MorphKeyframeRefObject *keyframe, bool doUpdate);
     void removeKeyframe(QObject *value, bool doUpdate);
-    BaseKeyframeRefObject *copy(BaseKeyframeRefObject *value, const qint64 &timeIndex, bool doUpdate);
+    BaseKeyframeRefObject *copy(BaseKeyframeRefObject *value, const quint64 &timeIndex, bool doUpdate);
     void replace(MorphKeyframeRefObject *dst, MorphKeyframeRefObject *src, bool doUpdate);
     vpvl2::IKeyframe::Type type() const;
 };

@@ -126,7 +126,7 @@ void MorphMotionTrack::removeKeyframe(QObject *value, bool doUpdate)
     }
 }
 
-BaseKeyframeRefObject *MorphMotionTrack::copy(BaseKeyframeRefObject *value, const qint64 &timeIndex, bool doUpdate)
+BaseKeyframeRefObject *MorphMotionTrack::copy(BaseKeyframeRefObject *value, const quint64 &timeIndex, bool doUpdate)
 {
     Q_ASSERT(value);
     MorphKeyframeRefObject *newKeyframe = 0;

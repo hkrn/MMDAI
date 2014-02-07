@@ -60,17 +60,17 @@ public:
     virtual ~BaseMotionTrack();
 
     Q_INVOKABLE BaseKeyframeRefObject *findKeyframeAt(int index) const;
-    Q_INVOKABLE BaseKeyframeRefObject *findKeyframeByTimeIndex(const qint64 &timeIndex) const;
+    Q_INVOKABLE BaseKeyframeRefObject *findKeyframeByTimeIndex(const quint64 &timeIndex) const;
 
     bool contains(BaseKeyframeRefObject *value) const;
     bool containsKeyframe(const vpvl2::IKeyframe *keyframe) const;
     void add(BaseKeyframeRefObject *value, bool doSort);
     void remove(BaseKeyframeRefObject *value);
-    void replaceTimeIndex(const qint64 &newTimeIndex, const qint64 &oldTimeIndex);
+    void replaceTimeIndex(const quint64 &newTimeIndex, const quint64 &oldTimeIndex);
     void refresh();
     void sort();
 
-    virtual BaseKeyframeRefObject *copy(BaseKeyframeRefObject *value, const qint64 &timeIndex, bool doUpdate) = 0;
+    virtual BaseKeyframeRefObject *copy(BaseKeyframeRefObject *value, const quint64 &timeIndex, bool doUpdate) = 0;
     virtual BaseKeyframeRefObject *convert(vpvl2::IKeyframe *value) = 0;
     virtual void addKeyframe(QObject *value, bool doUpdate) = 0;
     virtual void removeKeyframe(QObject *value, bool doUpdate) = 0;
@@ -85,7 +85,7 @@ signals:
     void keyframeDidAdd(BaseKeyframeRefObject *keyframe);
     void keyframeDidRemove(BaseKeyframeRefObject *keyframe);
     void keyframeDidSwap(BaseKeyframeRefObject *dst, BaseKeyframeRefObject *src);
-    void timeIndexDidChange(BaseKeyframeRefObject *keyframe, qint64 newTimeIndex, qint64 oldTimeIndex);
+    void timeIndexDidChange(BaseKeyframeRefObject *keyframe, quint64 newTimeIndex, quint64 oldTimeIndex);
     void lockedChanged();
     void visibleChanged();
 
@@ -96,7 +96,7 @@ protected:
     typedef QList<BaseKeyframeRefObject *> BaseKeyframeRefObjectList;
     MotionProxy *m_parentMotionRef;
     BaseKeyframeRefObjectList m_keyframes;
-    QHash<const qint64, BaseKeyframeRefObject *> m_timeIndex2RefObjects;
+    QHash<const quint64, BaseKeyframeRefObject *> m_timeIndex2RefObjects;
     QHash<const vpvl2::IKeyframe *, BaseKeyframeRefObject *> m_keyframe2RefObjects;
     const QString m_name;
     bool m_locked;

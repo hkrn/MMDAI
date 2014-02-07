@@ -62,7 +62,7 @@ LightMotionTrack::~LightMotionTrack()
     m_lightRef = 0;
 }
 
-BaseKeyframeRefObject *LightMotionTrack::copy(BaseKeyframeRefObject *value, const qint64 &timeIndex, bool doUpdate)
+BaseKeyframeRefObject *LightMotionTrack::copy(BaseKeyframeRefObject *value, const quint64 &timeIndex, bool doUpdate)
 {
     Q_ASSERT(value);
     LightKeyframeRefObject *newKeyframe = 0;

@@ -67,8 +67,8 @@ public:
     MotionProxy *parentMotion() const;
     qreal time() const;
     void setTime(qreal value);
-    qint64 timeIndex() const;
-    void setTimeIndex(const qint64 &value);
+    quint64 timeIndex() const;
+    void setTimeIndex(const quint64 &value);
     int layerIndex() const;
     void setLayerIndex(int value);
 
