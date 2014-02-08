@@ -50,7 +50,9 @@
 #include "vpvl2/vmd/Motion.h"
 
 #if defined(VPVL2_ENABLE_OPENGL)
-#if defined(VPVL2_OS_IOS)
+#if defined(VPVL2_ENABLE_OSMESA)
+#include <GL/osmesa.h>
+#elif defined(VPVL2_OS_IOS)
 #include <OpenGLES/ES2/gl.h>
 #elif defined(VPVL2_OS_OSX)
 #include <OpenGL/gl.h>
@@ -703,6 +705,8 @@ void *Scene::opaqueCurrentPlatformOpenGLContext() VPVL2_DECL_NOEXCEPT
 {
 #if !defined(VPVL2_ENABLE_OPENGL)
     return 0;
+#elif defined(VPVL2_ENABLE_OSMESA)
+    return ::OSMesaGetCurrentContext();
 #elif defined(VPVL2_LINK_EGL)
     return ::eglGetCurrentContext();
 #elif defined(VPVL2_OS_WINDOWS)
@@ -720,6 +724,8 @@ void *Scene::opaqueCurrentPlatformOpenGLDevice() VPVL2_DECL_NOEXCEPT
 {
 #if !defined(VPVL2_ENABLE_OPENGL)
     return 0;
+#elif defined(VPVL2_ENABLE_OSMESA)
+    return ::OSMesaGetCurrentContext();
 #elif defined(VPVL2_LINK_EGL)
     return ::eglGetCurrentDisplay();
 #elif defined(VPVL2_OS_WINDOWS)

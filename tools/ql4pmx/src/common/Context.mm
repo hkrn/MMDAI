@@ -39,6 +39,7 @@
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/Pose.h>
 #include <vpvl2/extensions/World.h>
+#include <unicode/regex.h>
 #include <unicode/udata.h> /* for udata_setCommonData */
 
 #include <fcntl.h>
@@ -51,6 +52,83 @@
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
+
+namespace {
+
+struct Resolver : IApplicationContext::FunctionResolver {
+    static const GLenum kGL_NUM_EXTENSIONS = 0x821D;
+
+    Resolver()
+        : getStringi(reinterpret_cast<PFNGLGETSTRINGIPROC>(resolveSymbol("glGetStringi"))),
+          coreProfile(false)
+    {
+        GLint flags;
+        glGetIntegerv(gl::kGL_CONTEXT_FLAGS, &flags);
+        coreProfile = (flags & gl::kGL_CONTEXT_CORE_PROFILE_BIT) != 0;
+    }
+    ~Resolver() {
+    }
+
+    bool hasExtension(const char *name) const {
+        if (const bool *ptr = supportedTable.find(name)) {
+            return *ptr;
+        }
+        else if (coreProfile) {
+            GLint nextensions;
+            glGetIntegerv(kGL_NUM_EXTENSIONS, &nextensions);
+            const std::string &needle = std::string("GL_") + name;
+            for (int i = 0; i < nextensions; i++) {
+                if (needle == reinterpret_cast<const char *>(getStringi(GL_EXTENSIONS, i))) {
+                    supportedTable.insert(name, true);
+                    return true;
+                }
+            }
+            supportedTable.insert(name, false);
+            return false;
+        }
+        else if (const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS))) {
+            bool found = strstr(extensions, name) != NULL;
+            supportedTable.insert(name, found);
+            return found;
+        }
+        else {
+            supportedTable.insert(name, false);
+            return false;
+        }
+    }
+    void *resolveSymbol(const char *name) const {
+        if (void *const *ptr = addressTable.find(name)) {
+            return *ptr;
+        }
+        else {
+            void *address = reinterpret_cast<void *>(OSMesaGetProcAddress(name));
+            addressTable.insert(name, address);
+            return address;
+        }
+    }
+    int query(QueryType type) const {
+        switch (type) {
+        case kQueryVersion: {
+            return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_VERSION)));
+        }
+        case kQueryShaderVersion: {
+            return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
+        }
+        case kQueryCoreProfile: {
+            return coreProfile;
+        }
+        default:
+            return 0;
+        }
+    }
+    typedef const GLubyte * (GLAPIENTRY * PFNGLGETSTRINGIPROC) (gl::GLenum pname, gl::GLuint index);
+    PFNGLGETSTRINGIPROC getStringi;
+    mutable Hash<HashString, bool> supportedTable;
+    mutable Hash<HashString, void *> addressTable;
+    bool coreProfile;
+};
+
+}
 
 namespace vpvl2 {
 namespace extensions {
@@ -66,24 +144,9 @@ ApplicationContext::~ApplicationContext()
 {
 }
 
-void *ApplicationContext::findProcedureAddress(const void **candidatesPtr) const
+bool ApplicationContext::mapFile(const std::string &path, MapBuffer *buffer) const
 {
-    const char **candidates = reinterpret_cast<const char **>(candidatesPtr);
-    const char *candidate = candidates[0];
-    int i = 0;
-    while (candidate) {
-        void *address = reinterpret_cast<void *>(OSMesaGetProcAddress(candidate));
-        if (address) {
-            return address;
-        }
-        candidate = candidates[++i];
-    }
-    return 0;
-}
-
-bool ApplicationContext::mapFile(const UnicodeString &path, MapBuffer *buffer) const
-{
-    int fd = ::open(String::toStdString(path).c_str(), O_RDONLY);
+    int fd = ::open(path.c_str(), O_RDONLY);
     if (fd == -1) {
         return false;
     }
@@ -109,12 +172,67 @@ bool ApplicationContext::unmapFile(MapBuffer *buffer) const
     return false;
 }
 
-bool ApplicationContext::existsFile(const UnicodeString &path) const
+bool ApplicationContext::existsFile(const std::string &path) const
 {
     NSString *newPath = toNSString(path);
     BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:newPath];
     [newPath release];
     return exists;
+}
+
+bool ApplicationContext::extractFilePath(const std::string &path, std::string &filename, std::string &basename) const
+{
+    UErrorCode status = U_ZERO_ERROR;
+    RegexMatcher filenameMatcher(".+/((.+)\\.\\w+)$", 0, status);
+    filenameMatcher.reset(UnicodeString::fromUTF8(path));
+    if (filenameMatcher.find()) {
+        basename = String::toStdString(filenameMatcher.group(1, status));
+        filename = String::toStdString(filenameMatcher.group(2, status));
+        return true;
+    }
+    return false;
+}
+
+bool ApplicationContext::extractModelNameFromFileName(const std::string &path, std::string &modelName) const
+{
+    UErrorCode status = U_ZERO_ERROR;
+    RegexMatcher extractMatcher("^.+\\[(.+)(?:\\.(?:cg)?fx)?\\]$", 0, status);
+    extractMatcher.reset(UnicodeString::fromUTF8(path));
+    if (extractMatcher.find()) {
+        status = U_ZERO_ERROR;
+        modelName = String::toStdString(extractMatcher.group(1, status));
+        return true;
+    }
+    return false;
+}
+
+void ApplicationContext::getToonColor(const IString *name, Color &value, void *userData)
+{
+}
+
+void ApplicationContext::getTime(float &value, bool sync) const
+{
+    value = sync ? 0 : 0;
+}
+
+void ApplicationContext::getElapsed(float &value, bool sync) const
+{
+    value = sync ? 0 : 0;
+}
+
+void ApplicationContext::uploadAnimatedTexture(float32 offset, float32 speed, float32 seek, void *texture)
+{
+}
+
+IApplicationContext::FunctionResolver *ApplicationContext::sharedFunctionResolverInstance() const
+{
+    static Resolver resolver;
+    return &resolver;
+}
+
+NSString *ApplicationContext::toNSString(const std::string &value)
+{
+    return [[NSString alloc] initWithUTF8String:value.c_str()];
 }
 
 NSString *ApplicationContext::toNSString(const UnicodeString &value)
@@ -139,6 +257,7 @@ void BundleContext::initialize()
 BundleContext::BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFactor)
     : m_mesaContext(0),
       m_icuCommonData(nil),
+      m_encoding(new Encoding(&m_dictionary)),
       m_world(new World()),
       m_scene(new Scene(true)),
       m_scaleFactor(scaleFactor),
@@ -156,20 +275,16 @@ BundleContext::BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFact
         NSString *kernelsDirectoryPath = [resourcePath stringByAppendingPathComponent:@"kernels"];
         NSString *shadersDirectoryPath = [resourcePath stringByAppendingPathComponent:@"shaders"];
         m_icuCommonData = [[NSData alloc] initWithContentsOfFile:[dataDirectoryPath stringByAppendingPathComponent:@"icudt50l.dat"]];
-        m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.toon"),
-                                         UnicodeString::fromUTF8([toonDirectoryPath UTF8String])));
-        m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.kernels"),
-                                         UnicodeString::fromUTF8([kernelsDirectoryPath UTF8String])));
-        m_settings.insert(std::make_pair(UnicodeString::fromUTF8("dir.system.shaders"),
-                                         UnicodeString::fromUTF8([shadersDirectoryPath UTF8String])));
+        m_settings.insert(std::make_pair("dir.system.toon", [toonDirectoryPath UTF8String]));
+        m_settings.insert(std::make_pair("dir.system.kernels", [kernelsDirectoryPath UTF8String]));
+        m_settings.insert(std::make_pair("dir.system.shaders", [shadersDirectoryPath UTF8String]));
         loadDictionary([[dataDirectoryPath stringByAppendingPathComponent:@"words.dic"] UTF8String]);
         [resourcePath release];
         UErrorCode status = U_ZERO_ERROR;
         udata_setCommonData([m_icuCommonData bytes], &status);
-        m_encoding.reset(new Encoding(&m_dictionary));
-        m_factory.reset(new Factory(m_encoding.get()));
-        m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding.get(), &m_settings));
-        m_applicationContext->initialize(false);
+        m_factory.reset(new Factory(m_encoding));
+        m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding, &m_settings));
+        m_applicationContext->initializeOpenGLContext(false);
     }
     else {
         release();
@@ -187,11 +302,11 @@ bool BundleContext::load(const UnicodeString &modelPath)
     String dir(modelPath.tempSubString(0, indexOf));
     ApplicationContext::MapBuffer modelBuffer(m_applicationContext.get());
     bool ok = false;
-    if (m_applicationContext->mapFile(modelPath, &modelBuffer)) {
+    if (m_applicationContext->mapFile(String::toStdString(modelPath), &modelBuffer)) {
         IModelSmartPtr model(m_factory->createModel(modelBuffer.address, modelBuffer.size, ok));
         IRenderEngineSmartPtr engine(m_scene->createRenderEngine(m_applicationContext.get(), model.get(), 0));
         IEffect *effectRef = 0;
-        m_applicationContext->addModelPath(model.get(), modelPath);
+        m_applicationContext->addModelFilePath(model.get(), String::toStdString(modelPath));
         if (engine->upload(&dir)) {
             m_applicationContext->parseOffscreenSemantic(effectRef, &dir);
             model->setEdgeWidth(1.0f);
@@ -206,9 +321,10 @@ bool BundleContext::load(const UnicodeString &modelPath)
 
 void BundleContext::render()
 {
-    m_scene->seek(0, Scene::kUpdateAll);
+    m_scene->seekTimeIndex(0, Scene::kUpdateAll);
     m_scene->update(Scene::kUpdateAll);
-    m_applicationContext->updateCameraMatrices(glm::vec2(m_renderWidth, m_renderHeight));
+    m_applicationContext->setViewportRegion(glm::ivec4(0, 0, m_renderWidth, m_renderHeight));
+    m_applicationContext->updateCameraMatrices();
     draw();
 }
 
@@ -256,7 +372,7 @@ IModel *BundleContext::currentModel() const
 
 IEncoding *BundleContext::encodingRef() const
 {
-    return m_encoding.get();
+    return m_encoding;
 }
 
 NSString *BundleContext::bundleResourcePath(CFBundleRef bundle)
@@ -353,6 +469,8 @@ void BundleContext::release()
         OSMesaDestroyContext(m_mesaContext);
         m_mesaContext = 0;
     }
+    delete m_encoding;
+    m_encoding = 0;
     m_dictionary.releaseAll();
     [m_icuCommonData release];
     m_icuCommonData  = nil;

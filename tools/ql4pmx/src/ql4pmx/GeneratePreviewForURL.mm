@@ -96,7 +96,7 @@ OSStatus GeneratePreviewForURL(void * /* thisInterface */,
                 image = CGBitmapContextCreateImage(bitmapContext);
                 NSString *name = nil, *displayName = nil;
                 NSURL *urlRef = (NSURL *) url;
-                if (const IString *n = model->name()) {
+                if (const IString *n = model->name(IEncoding::kDefaultLanguage)) {
                     name = [[NSString alloc] initWithUTF8String:reinterpret_cast<const char *>(n->toByteArray())];
                     displayName = [[NSString alloc] initWithFormat:@"%@ - %@", [name retain],
                                                                                 [[urlRef lastPathComponent] retain]];

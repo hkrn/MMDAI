@@ -40,7 +40,6 @@
 
 #include <vpvl2/extensions/BaseApplicationContext.h>
 #include <vpvl2/extensions/icu4c/Encoding.h>
-#include <vpvl2/extensions/icu4c/StringMap.h>
 
 #include <GL/osmesa.h>
 #include <Foundation/Foundation.h>
@@ -62,15 +61,23 @@ namespace ql4pmx
 
 class ApplicationContext : public vpvl2::extensions::BaseApplicationContext {
 public:
-    ApplicationContext(vpvl2::Scene *sceneRef, IEncoding *encodingRef, icu4c::StringMap *configRef);
+    ApplicationContext(vpvl2::Scene *sceneRef, IEncoding *encodingRef, StringMap *configRef);
     ~ApplicationContext();
 
     void *findProcedureAddress(const void **candidatesPtr) const;
-    bool mapFile(const UnicodeString &path, MapBuffer *buffer) const;
+    bool mapFile(const std::string &path, MapBuffer *buffer) const;
     bool unmapFile(MapBuffer *buffer) const;
-    bool existsFile(const UnicodeString &path) const;
+    bool existsFile(const std::string &path) const;
+    bool extractFilePath(const std::string &path, std::string &filename, std::string &basename) const;
+    bool extractModelNameFromFileName(const std::string &path, std::string &modelName) const;
+    void getToonColor(const IString *name, Color &value, void *userData);
+    void getTime(float &value, bool sync) const;
+    void getElapsed(float &value, bool sync) const;
+    void uploadAnimatedTexture(float32 offset, float32 speed, float32 seek, void *texture);
+    FunctionResolver *sharedFunctionResolverInstance() const;
 
 private:
+    static NSString *toNSString(const std::string &value);
     static NSString *toNSString(const UnicodeString &value);
 };
 
@@ -102,10 +109,10 @@ private:
 
     OSMesaContext m_mesaContext;
     NSData *m_icuCommonData;
-    vpvl2::extensions::icu4c::StringMap m_settings;
+    vpvl2::extensions::StringMap m_settings;
     vpvl2::extensions::icu4c::Encoding::Dictionary m_dictionary;
+    vpvl2::extensions::icu4c::Encoding *m_encoding;
     vpvl2::extensions::WorldSmartPtr m_world;
-    vpvl2::extensions::icu4c::EncodingSmartPtr m_encoding;
     vpvl2::extensions::FactorySmartPtr m_factory;
     vpvl2::extensions::SceneSmartPtr m_scene;
     ApplicationContextSmartPtr m_applicationContext;

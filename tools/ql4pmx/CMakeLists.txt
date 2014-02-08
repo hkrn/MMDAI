@@ -17,7 +17,7 @@
 # export MESA3D_BINARY_DIR="$MESA_PATH/build/release"
 # export MESA3D_INCLUDE_DIR="$MESA_PATH"
 #
-# CC=clang CXX=clang++ cmake -G Ninja -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_ROOT \
+# cmake -G Ninja -DCMAKE_INSTALL_PREFIX:PATH=$INSTALL_ROOT \
 #     -DVPVL2_BUILD_QT_RENDERER:BOOL=OFF \
 #     -DVPVL2_ENABLE_GLES2:BOOL=OFF \
 #     -DVPVL2_ENABLE_NVIDIA_CG:BOOL=OFF \
@@ -33,6 +33,7 @@
 #     -DVPVL2_LINK_GLEW:BOOL=OFF \
 #     -DVPVL2_LINK_GLOG:BOOL=OFF \
 #     -DVPVL2_LINK_INTEL_TBB:BOOL=OFF \
+#     -DVPVL2_LINK_NVFX:BOOL=ON \
 #     -DVPVL2_LINK_QT:BOOL=OFF \
 #     -DVPVL2_LINK_SDL1:BOOL=OFF \
 #     -DVPVL2_LINK_SDL2:BOOL=OFF \
@@ -40,9 +41,13 @@
 #     -DBUILD_SHARED_LIBS:BOOL=OFF \
 #     -DCMAKE_BUILD_TYPE:STRING=$BUILD_TYPE \
 #     -DCMAKE_INSTALL_NAME_DIR:PATH="$INSTALL_ROOT/lib" \
-#     -DCMAKE_OSX_ARCHITECTURES:INTERNAL="i386;x86_64" \
+#     -DCMAKE_OSX_ARCHITECTURES:INTERNAL="x86_64" \
 #     -DLIBRARY_OUTPUT_PATH:STRING="lib" \
 #     -DVPVL2_ENABLE_OSMESA:BOOL=ON ..
+#
+# cd tools/ql4pmx/build-release
+# cmake -G Ninja \
+#     -DCMAKE_CXX_FLAGS="-fvisibility=hidden -fvisibility-inlines-hidden -mmacosx-version-min=10.6"
 #
 cmake_minimum_required(VERSION 2.8)
 
@@ -52,19 +57,21 @@ function(ql4pmx_link_libraries target)
   vpvl2_link_icu(${target})
   vpvl2_link_assimp(${target})
   vpvl2_link_bullet(${target})
+  vpvl2_link_nvfx(${target})
+  vpvl2_link_zlib(${target})
   target_link_libraries(${target} ${FOUNDATION_FRAMEWORK} ${COCOA_FRAMEWORK} ${QUICKLOOK_FRAMEWORK})
 endfunction()
 
-set(CMAKE_CXX_CFLAGS "${CMAKE_CXX_CFLAGS} -fvisibility=hidden -fvisibility-inlines-hidden")
-set(VPVL2_BASE_DIR_INTERNAL "${CMAKE_CURRENT_SOURCE_DIR}/../..")
-set(VPVL2_CMAKE_DIR "${VPVL2_BASE_DIR_INTERNAL}/libvpvl2/cmake")
+set(VPVL2_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../..")
+set(VPVL2_CMAKE_DIR "${VPVL2_ROOT_DIR}/libvpvl2/cmake")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${VPVL2_CMAKE_DIR})
 include("${VPVL2_CMAKE_DIR}/vpvl2.cmake")
-set(VPVL2_BASE_DIR ${VPVL2_BASE_DIR_INTERNAL})
 
 set(VPVL2_LINK_VPVL OFF)
+set(VPVL2_LINK_NVFX ON)
 set(VPVL2_LINK_GLOG ON)
-set(VPVL2_LINK_ASSIMP ON)
+set(VPVL2_LINK_ASSIMP3 ON)
+set(VPVL2_ENABLE_EXTENSIONS_ARCHIVE ON)
 set(VPVL2_ENABLE_EXTENSIONS_RENDERCONTEXT ON)
 set(VPVL2_ENABLE_EXTENSIONS_STRING ON)
 
@@ -79,14 +86,14 @@ if(NOT CMAKE_BUILD_TYPE)
  set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-get_source_directory(VPVL2_SOURCE_DIR "libvpvl2")
+__get_source_path(VPVL2_SOURCE_DIR "libvpvl2")
 find_path(VPVL2_RESOURCE_DIR NAMES libvpvl2qtcommon.qrc PATH_SUFFIXES "src/qt/resources" PATHS ${VPVL2_SOURCE_DIR} NO_DEFAULT_PATH)
 find_path(VPVL2_INCLUDE_DIR NAMES vpvl2/vpvl2.h PATH_SUFFIXES "build-${CMAKE_BUILD_TYPE}-ql4pmx/install-root/include" PATHS ${VPVL2_SOURCE_DIR} NO_DEFAULT_PATH)
 find_library(VPVL2_LIBRARY vpvl2 PATH_SUFFIXES "build-${CMAKE_BUILD_TYPE}-ql4pmx/install-root/lib" PATHS ${VPVL2_SOURCE_DIR} NO_DEFAULT_PATH)
 
-get_source_directory(MESA3D_SOURCE_DIR "mesa-src")
-find_library(MESA3D_MESA_LIBRARY mesa PATH_SUFFIXES "release" PATHS "${MESA3D_SOURCE_DIR}/build" NO_DEFAULT_PATH)
-find_library(MESA3D_OSMESA_LIBRARY osmesa PATH_SUFFIXES "release" "darwin-x86/mesa/drivers/osmesa" PATHS "${MESA3D_SOURCE_DIR}/build" NO_DEFAULT_PATH)
+__get_source_path(MESA3D_SOURCE_DIR "mesa-src")
+find_library(MESA3D_MESA_LIBRARY mesa PATH_SUFFIXES "release" "darwin-x86_64/mesa" PATHS "${MESA3D_SOURCE_DIR}/build" NO_DEFAULT_PATH)
+find_library(MESA3D_OSMESA_LIBRARY osmesa PATH_SUFFIXES "release" "darwin-x86_64/mesa/drivers/osmesa" PATHS "${MESA3D_SOURCE_DIR}/build" NO_DEFAULT_PATH)
 find_path(MESA3D_INCLUDE_DIR NAMES GL/osmesa.h PATH_SUFFIXES include PATHS ${MESA3D_SOURCE_DIR} NO_DEFAULT_PATH)
 get_filename_component(MESA3D_OSMESA_LIBRARY_DIR ${MESA3D_OSMESA_LIBRARY} PATH)
 
@@ -95,10 +102,11 @@ find_library(COCOA_FRAMEWORK Cocoa)
 find_library(QUICKLOOK_FRAMEWORK QuickLook)
 vpvl2_find_bullet()
 vpvl2_find_assimp()
-vpvl2_find_gli()
 vpvl2_find_glm()
 vpvl2_find_glog()
 vpvl2_find_icu()
+vpvl2_find_nvfx()
+vpvl2_find_zlib()
 
 aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/common" ql4pmx_common)
 aux_source_directory("${CMAKE_CURRENT_SOURCE_DIR}/src/ql4pmx" ql4pmx_sources)
