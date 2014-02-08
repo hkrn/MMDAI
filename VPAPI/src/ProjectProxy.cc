@@ -404,12 +404,21 @@ void ProjectProxy::initializeMotion(ModelProxy *modelProxy, MotionType type)
 {
     if (type == ModelMotion && modelProxy) {
         MotionProxy *childMotion = modelProxy->childMotion();
-        foreach (BoneRefObject *boneRef, modelProxy->allBoneRefs()) {
-            boneRef->setLocalTranslation(QVector3D());
-            boneRef->setLocalOrientation(QQuaternion());
+        if (modelProxy->data()->type() == IModel::kAssetModel) {
+            BoneRefObject *rootBone = modelProxy->findBoneByName(static_cast<const String *>(m_encoding->stringConstant(IEncoding::kRootBone))->value());
+            rootBone->setLocalTranslation(QVector3D());
+            rootBone->setLocalOrientation(QQuaternion());
+            modelProxy->findBoneByName(static_cast<const String *>(m_encoding->stringConstant(IEncoding::kScaleBoneAsset))->value())->setLocalTranslation(QVector3D(10, 10, 10));
+            modelProxy->findMorphByName(static_cast<const String *>(m_encoding->stringConstant(IEncoding::kOpacityMorphAsset))->value())->setWeight(1);
         }
-        foreach (MorphRefObject *morphRef, modelProxy->allMorphRefs()) {
-            morphRef->setWeight(0);
+        else {
+            foreach (BoneRefObject *boneRef, modelProxy->allBoneRefs()) {
+                boneRef->setLocalTranslation(QVector3D());
+                boneRef->setLocalOrientation(QQuaternion());
+            }
+            foreach (MorphRefObject *morphRef, modelProxy->allMorphRefs()) {
+                morphRef->setWeight(0);
+            }
         }
         modelProxy->setChildMotion(0, true);
         deleteMotion(childMotion, false);
