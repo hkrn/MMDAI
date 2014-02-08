@@ -235,7 +235,7 @@ const CGFloat BundleContext::kScaleFactor = 4;
 
 BundleContext::BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFactor)
     : m_mesaContext(0),
-      m_encoding(new Encoding(&m_dictionary)),
+      m_encoding(0),
       m_world(new World()),
       m_scene(new Scene(true)),
       m_scaleFactor(scaleFactor),
@@ -261,6 +261,7 @@ BundleContext::BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFact
         loadDictionary([[dataDirectoryPath stringByAppendingPathComponent:@"words.dic"] UTF8String]);
         [resourcePath release];
         Encoding::initializeOnce();
+        m_encoding = new Encoding(&m_dictionary);
         m_factory.reset(new Factory(m_encoding));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding, &m_settings));
         m_applicationContext->initializeOpenGLContext(false);
