@@ -1,38 +1,39 @@
-/* ----------------------------------------------------------------- */
-/*                                                                   */
-/*  Copyright (c) 2010-2013  hkrn                                    */
-/*                                                                   */
-/* All rights reserved.                                              */
-/*                                                                   */
-/* Redistribution and use in source and binary forms, with or        */
-/* without modification, are permitted provided that the following   */
-/* conditions are met:                                               */
-/*                                                                   */
-/* - Redistributions of source code must retain the above copyright  */
-/*   notice, this list of conditions and the following disclaimer.   */
-/* - Redistributions in binary form must reproduce the above         */
-/*   copyright notice, this list of conditions and the following     */
-/*   disclaimer in the documentation and/or other materials provided */
-/*   with the distribution.                                          */
-/* - Neither the name of the MMDAI project team nor the names of     */
-/*   its contributors may be used to endorse or promote products     */
-/*   derived from this software without specific prior written       */
-/*   permission.                                                     */
-/*                                                                   */
-/* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND            */
-/* CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,       */
-/* INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF          */
-/* MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE          */
-/* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS */
-/* BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,          */
-/* EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED   */
-/* TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,     */
-/* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON */
-/* ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,   */
-/* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY    */
-/* OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE           */
-/* POSSIBILITY OF SUCH DAMAGE.                                       */
-/* ----------------------------------------------------------------- */
+/**
+
+ Copyright (c) 2010-2014  hkrn
+
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or
+ without modification, are permitted provided that the following
+ conditions are met:
+
+ - Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+ - Redistributions in binary form must reproduce the above
+   copyright notice, this list of conditions and the following
+   disclaimer in the documentation and/or other materials provided
+   with the distribution.
+ - Neither the name of the MMDAI project team nor the names of
+   its contributors may be used to endorse or promote products
+   derived from this software without specific prior written
+   permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+ CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+ BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+
+*/
 
 #include "vpvl2/extensions/osx/ql4pmx/Context.h"
 
@@ -59,12 +60,8 @@ struct Resolver : IApplicationContext::FunctionResolver {
     static const GLenum kGL_NUM_EXTENSIONS = 0x821D;
 
     Resolver()
-        : getStringi(reinterpret_cast<PFNGLGETSTRINGIPROC>(resolveSymbol("glGetStringi"))),
-          coreProfile(false)
+        : getStringi(reinterpret_cast<PFNGLGETSTRINGIPROC>(resolveSymbol("glGetStringi")))
     {
-        GLint flags;
-        glGetIntegerv(gl::kGL_CONTEXT_FLAGS, &flags);
-        coreProfile = (flags & gl::kGL_CONTEXT_CORE_PROFILE_BIT) != 0;
     }
     ~Resolver() {
     }
@@ -72,19 +69,6 @@ struct Resolver : IApplicationContext::FunctionResolver {
     bool hasExtension(const char *name) const {
         if (const bool *ptr = supportedTable.find(name)) {
             return *ptr;
-        }
-        else if (coreProfile) {
-            GLint nextensions;
-            glGetIntegerv(kGL_NUM_EXTENSIONS, &nextensions);
-            const std::string &needle = std::string("GL_") + name;
-            for (int i = 0; i < nextensions; i++) {
-                if (needle == reinterpret_cast<const char *>(getStringi(GL_EXTENSIONS, i))) {
-                    supportedTable.insert(name, true);
-                    return true;
-                }
-            }
-            supportedTable.insert(name, false);
-            return false;
         }
         else if (const char *extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS))) {
             bool found = strstr(extensions, name) != NULL;
@@ -115,7 +99,7 @@ struct Resolver : IApplicationContext::FunctionResolver {
             return gl::makeVersion(reinterpret_cast<const char *>(glGetString(GL_SHADING_LANGUAGE_VERSION)));
         }
         case kQueryCoreProfile: {
-            return coreProfile;
+            return false;
         }
         default:
             return 0;
@@ -125,7 +109,6 @@ struct Resolver : IApplicationContext::FunctionResolver {
     PFNGLGETSTRINGIPROC getStringi;
     mutable Hash<HashString, bool> supportedTable;
     mutable Hash<HashString, void *> addressTable;
-    bool coreProfile;
 };
 
 }
@@ -134,6 +117,12 @@ namespace vpvl2 {
 namespace extensions {
 namespace osx {
 namespace ql4pmx {
+
+IApplicationContext::FunctionResolver *ApplicationContext::staticSharedFunctionResolverInstance()
+{
+    static Resolver resolver;
+    return &resolver;
+}
 
 ApplicationContext::ApplicationContext(Scene *sceneRef, IEncoding *encodingRef, StringMap *configRef)
     : BaseApplicationContext(sceneRef, encodingRef, configRef)
@@ -148,14 +137,17 @@ bool ApplicationContext::mapFile(const std::string &path, MapBuffer *buffer) con
 {
     int fd = ::open(path.c_str(), O_RDONLY);
     if (fd == -1) {
+        VPVL2_LOG(WARNING, "Cannot open file: path=" << path << " errno=" << errno);
         return false;
     }
     struct stat sb;
     if (::fstat(fd, &sb) == -1) {
+        VPVL2_LOG(WARNING, "Cannot stat file: path=" << path << " errno=" << errno);
         return false;
     }
     uint8_t *address = static_cast<uint8_t *>(::mmap(0, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
     if (address == reinterpret_cast<uint8_t *>(-1)) {
+        VPVL2_LOG(WARNING, "Cannot mmap file: path=" << path << " errno=" << errno);
         return false;
     }
     buffer->address = address;
@@ -226,8 +218,7 @@ void ApplicationContext::uploadAnimatedTexture(float32 offset, float32 speed, fl
 
 IApplicationContext::FunctionResolver *ApplicationContext::sharedFunctionResolverInstance() const
 {
-    static Resolver resolver;
-    return &resolver;
+    return staticSharedFunctionResolverInstance();
 }
 
 NSString *ApplicationContext::toNSString(const std::string &value)
@@ -242,21 +233,8 @@ NSString *ApplicationContext::toNSString(const UnicodeString &value)
 
 const CGFloat BundleContext::kScaleFactor = 4;
 
-void BundleContext::initialize()
-{
-    static bool g_initialized = false;
-    if (!g_initialized) {
-        google::InstallFailureSignalHandler();
-        google::InitGoogleLogging("ql4pmx.qlgenerator");
-        google::LogToStderr();
-        FLAGS_v = 2;
-        g_initialized = true;
-    }
-}
-
 BundleContext::BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFactor)
     : m_mesaContext(0),
-      m_icuCommonData(nil),
       m_encoding(new Encoding(&m_dictionary)),
       m_world(new World()),
       m_scene(new Scene(true)),
@@ -268,23 +246,28 @@ BundleContext::BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFact
 {
     m_mesaContext = OSMesaCreateContextExt(GL_RGBA, 24, 0, 0, 0);
     m_renderBuffer.reserve(m_renderWidth * m_renderHeight * 4);
-    if (m_mesaContext && OSMesaMakeCurrent(m_mesaContext, &m_renderBuffer[0], GL_UNSIGNED_BYTE, m_renderWidth, m_renderHeight) && Scene::initialize(0)) {
+    if (m_mesaContext && OSMesaMakeCurrent(m_mesaContext, &m_renderBuffer[0], GL_UNSIGNED_BYTE, m_renderWidth, m_renderHeight) &&
+            Scene::initialize(ApplicationContext::staticSharedFunctionResolverInstance())) {
         NSString *resourcePath = bundleResourcePath(bundle);
         NSString *dataDirectoryPath = [resourcePath stringByAppendingPathComponent:@"data"];
+        NSString *effectDirectoryPath = [resourcePath stringByAppendingPathComponent:@"effects"];
         NSString *toonDirectoryPath = [resourcePath stringByAppendingPathComponent:@"images"];
         NSString *kernelsDirectoryPath = [resourcePath stringByAppendingPathComponent:@"kernels"];
         NSString *shadersDirectoryPath = [resourcePath stringByAppendingPathComponent:@"shaders"];
-        m_icuCommonData = [[NSData alloc] initWithContentsOfFile:[dataDirectoryPath stringByAppendingPathComponent:@"icudt50l.dat"]];
         m_settings.insert(std::make_pair("dir.system.toon", [toonDirectoryPath UTF8String]));
+        m_settings.insert(std::make_pair("dir.system.effects", [effectDirectoryPath UTF8String]));
         m_settings.insert(std::make_pair("dir.system.kernels", [kernelsDirectoryPath UTF8String]));
         m_settings.insert(std::make_pair("dir.system.shaders", [shadersDirectoryPath UTF8String]));
         loadDictionary([[dataDirectoryPath stringByAppendingPathComponent:@"words.dic"] UTF8String]);
         [resourcePath release];
-        UErrorCode status = U_ZERO_ERROR;
-        udata_setCommonData([m_icuCommonData bytes], &status);
+        Encoding::initializeOnce();
         m_factory.reset(new Factory(m_encoding));
         m_applicationContext.reset(new ApplicationContext(m_scene.get(), m_encoding, &m_settings));
         m_applicationContext->initializeOpenGLContext(false);
+        VPVL2_VLOG(1, "GL_RENDERER=" << glGetString(GL_RENDERER));
+        VPVL2_VLOG(1, "GL_VERSION=" << glGetString(GL_VERSION));
+        VPVL2_VLOG(1, "GL_VENDOR=" << glGetString(GL_VENDOR));
+        VPVL2_VLOG(1, "GL_SHADING_LANGUAGE_VERSION=" << glGetString(GL_SHADING_LANGUAGE_VERSION));
     }
     else {
         release();
@@ -304,10 +287,13 @@ bool BundleContext::load(const UnicodeString &modelPath)
     bool ok = false;
     if (m_applicationContext->mapFile(String::toStdString(modelPath), &modelBuffer)) {
         IModelSmartPtr model(m_factory->createModel(modelBuffer.address, modelBuffer.size, ok));
-        IRenderEngineSmartPtr engine(m_scene->createRenderEngine(m_applicationContext.get(), model.get(), 0));
-        IEffect *effectRef = 0;
         m_applicationContext->addModelFilePath(model.get(), String::toStdString(modelPath));
-        if (engine->upload(&dir)) {
+        IRenderEngineSmartPtr engine(m_scene->createRenderEngine(m_applicationContext.get(), model.get(), Scene::kEffectCapable));
+        IEffect *effectRef = 0;
+        ApplicationContext::ModelContext modelContext(m_applicationContext.get(), 0, &dir);
+        engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
+        effectRef = engine->effectRef(IEffect::kDefault);
+        if (engine->upload(&modelContext)) {
             m_applicationContext->parseOffscreenSemantic(effectRef, &dir);
             model->setEdgeWidth(1.0f);
             m_scene->addModel(model.release(), engine.release(), 0);
@@ -472,8 +458,6 @@ void BundleContext::release()
     delete m_encoding;
     m_encoding = 0;
     m_dictionary.releaseAll();
-    [m_icuCommonData release];
-    m_icuCommonData  = nil;
 }
 
 } /* namespace ql4pmx */

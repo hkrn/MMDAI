@@ -61,6 +61,8 @@ namespace ql4pmx
 
 class ApplicationContext : public vpvl2::extensions::BaseApplicationContext {
 public:
+    static FunctionResolver *staticSharedFunctionResolverInstance();
+
     ApplicationContext(vpvl2::Scene *sceneRef, IEncoding *encodingRef, StringMap *configRef);
     ~ApplicationContext();
 
@@ -86,7 +88,6 @@ VPVL2_MAKE_SMARTPTR(ApplicationContext);
 class BundleContext {
 public:
     static const CGFloat kScaleFactor;
-    static void initialize();
     static void loadDictionary(icu4c::Encoding::Dictionary &dictionary);
 
     BundleContext(CFBundleRef bundle, int w, int h, CGFloat scaleFactor = kScaleFactor);
@@ -108,7 +109,6 @@ private:
     void release();
 
     OSMesaContext m_mesaContext;
-    NSData *m_icuCommonData;
     vpvl2::extensions::StringMap m_settings;
     vpvl2::extensions::icu4c::Encoding::Dictionary m_dictionary;
     vpvl2::extensions::icu4c::Encoding *m_encoding;
