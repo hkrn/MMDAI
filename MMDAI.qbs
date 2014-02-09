@@ -45,6 +45,7 @@ Project {
         "libvpvl2/libvpvl2.qbs",
         "VPAPI/VPAPI.qbs",
         "VPVM/VPVM.qbs",
-        "VPMM/VPMM.qbs"
+        "VPMM/VPMM.qbs",
+        "VPAPI/test/test.qbs"
     ]
 }
