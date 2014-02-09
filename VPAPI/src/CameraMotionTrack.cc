@@ -54,11 +54,6 @@ CameraMotionTrack::CameraMotionTrack(MotionProxy *motionProxy, CameraRefObject *
 
 CameraMotionTrack::~CameraMotionTrack()
 {
-    m_timeIndex2RefObjects.clear();
-    m_keyframe2RefObjects.clear();
-    qDeleteAll(m_keyframes);
-    m_keyframes.clear();
-    m_parentMotionRef = 0;
     m_cameraRef = 0;
 }
 

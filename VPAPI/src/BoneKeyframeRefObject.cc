@@ -50,34 +50,37 @@
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 
-BoneKeyframeRefObject::BoneKeyframeRefObject(BoneMotionTrack *trackRef, IBoneKeyframe *keyframeRef)
+BoneKeyframeRefObject::BoneKeyframeRefObject(BoneMotionTrack *trackRef, IBoneKeyframe *data)
     : BaseKeyframeRefObject(trackRef->parentMotion()),
       m_parentTrackRef(trackRef),
-      m_keyframeRef(keyframeRef)
+      m_keyframe(data)
 {
     Q_ASSERT(m_parentTrackRef);
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
 }
 
 BoneKeyframeRefObject::~BoneKeyframeRefObject()
 {
+    if (isDeleteable()) {
+        delete m_keyframe;
+    }
     m_parentTrackRef = 0;
-    m_keyframeRef = 0;
+    m_keyframe = 0;
 }
 
 QVector4D BoneKeyframeRefObject::interpolationParameter(int type) const
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     QuadWord value;
-    m_keyframeRef->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(type), value);
+    m_keyframe->getInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(type), value);
     return QVector4D(value.x(), value.y(), value.z(), value.w());
 }
 
 void BoneKeyframeRefObject::setInterpolationParameter(int type, const QVector4D &value)
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     QuadWord v(value.x(), value.y(), value.z(), value.w());
-    m_keyframeRef->setInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(type), v);
+    m_keyframe->setInterpolationParameter(static_cast<IBoneKeyframe::InterpolationType>(type), v);
 }
 
 BaseMotionTrack *BoneKeyframeRefObject::parentTrack() const
@@ -105,61 +108,61 @@ QObject *BoneKeyframeRefObject::opaque() const
 
 QString BoneKeyframeRefObject::name() const
 {
-    Q_ASSERT(m_keyframeRef);
-    return Util::toQString(m_keyframeRef->name());
+    Q_ASSERT(m_keyframe);
+    return Util::toQString(m_keyframe->name());
 }
 
 void BoneKeyframeRefObject::setName(const QString &value)
 {
-    Q_ASSERT(m_keyframeRef);
-    if (!Util::equalsString(value, m_keyframeRef->name())) {
+    Q_ASSERT(m_keyframe);
+    if (!Util::equalsString(value, m_keyframe->name())) {
         qt::String s(value);
-        m_keyframeRef->setName(&s);
+        m_keyframe->setName(&s);
     }
 }
 
 QVector3D BoneKeyframeRefObject::localTranslation() const
 {
-    Q_ASSERT(m_keyframeRef);
-    return Util::fromVector3(m_keyframeRef->localTranslation());
+    Q_ASSERT(m_keyframe);
+    return Util::fromVector3(m_keyframe->localTranslation());
 }
 
 void BoneKeyframeRefObject::setLocalTranslation(const QVector3D &value)
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     if (!qFuzzyCompare(value, localTranslation())) {
-        m_keyframeRef->setLocalTranslation(Util::toVector3(value));
+        m_keyframe->setLocalTranslation(Util::toVector3(value));
         emit localTranslationChanged();
     }
 }
 
 QQuaternion BoneKeyframeRefObject::localOrientation() const
 {
-    Q_ASSERT(m_keyframeRef);
-    return Util::fromQuaternion(m_keyframeRef->localOrientation());
+    Q_ASSERT(m_keyframe);
+    return Util::fromQuaternion(m_keyframe->localOrientation());
 }
 
 void BoneKeyframeRefObject::setLocalOrientation(const QQuaternion &value)
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     if (!qFuzzyCompare(value, localOrientation())) {
-        m_keyframeRef->setLocalOrientation(Util::toQuaternion(value));
+        m_keyframe->setLocalOrientation(Util::toQuaternion(value));
         emit localRotationChanged();
     }
 }
 
 QVector3D BoneKeyframeRefObject::localEulerOrientation() const
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     Scalar yaw, pitch, roll;
-    Matrix3x3 matrix(m_keyframeRef->localOrientation());
+    Matrix3x3 matrix(m_keyframe->localOrientation());
     matrix.getEulerZYX(yaw, pitch, roll);
     return QVector3D(qRadiansToDegrees(roll), qRadiansToDegrees(pitch), qRadiansToDegrees(yaw));
 }
 
 void BoneKeyframeRefObject::setLocalEulerOrientation(const QVector3D &value)
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     if (!qFuzzyCompare(localEulerOrientation(), value)) {
         Quaternion rotation(Quaternion::getIdentity());
         rotation.setEulerZYX(qDegreesToRadians(value.z()), qDegreesToRadians(value.y()), qDegreesToRadians(value.x()));
@@ -169,5 +172,5 @@ void BoneKeyframeRefObject::setLocalEulerOrientation(const QVector3D &value)
 
 IBoneKeyframe *BoneKeyframeRefObject::data() const
 {
-    return m_keyframeRef;
+    return m_keyframe;
 }

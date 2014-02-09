@@ -48,18 +48,21 @@
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 
-MorphKeyframeRefObject::MorphKeyframeRefObject(MorphMotionTrack *trackRef, IMorphKeyframe *keyframeRef)
+MorphKeyframeRefObject::MorphKeyframeRefObject(MorphMotionTrack *trackRef, IMorphKeyframe *data)
     : BaseKeyframeRefObject(trackRef->parentMotion()),
       m_parentTrackRef(trackRef),
-      m_keyframeRef(keyframeRef)
+      m_keyframe(data)
 {
     Q_ASSERT(m_parentTrackRef);
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
 }
 
 MorphKeyframeRefObject::~MorphKeyframeRefObject()
 {
-    m_keyframeRef = 0;
+    if (isDeleteable()) {
+        delete m_keyframe;
+    }
+    m_keyframe = 0;
 }
 
 BaseMotionTrack *MorphKeyframeRefObject::parentTrack() const
@@ -87,35 +90,35 @@ QObject *MorphKeyframeRefObject::opaque() const
 
 QString MorphKeyframeRefObject::name() const
 {
-    Q_ASSERT(m_keyframeRef);
-    return Util::toQString(m_keyframeRef->name());
+    Q_ASSERT(m_keyframe);
+    return Util::toQString(m_keyframe->name());
 }
 
 void MorphKeyframeRefObject::setName(const QString &value)
 {
-    Q_ASSERT(m_keyframeRef);
-    if (!Util::equalsString(value, m_keyframeRef->name())) {
+    Q_ASSERT(m_keyframe);
+    if (!Util::equalsString(value, m_keyframe->name())) {
         qt::String s(value);
-        m_keyframeRef->setName(&s);
+        m_keyframe->setName(&s);
     }
 }
 
 qreal MorphKeyframeRefObject::weight() const
 {
-    Q_ASSERT(m_keyframeRef);
-    return static_cast<qreal>(m_keyframeRef->weight());
+    Q_ASSERT(m_keyframe);
+    return static_cast<qreal>(m_keyframe->weight());
 }
 
 void MorphKeyframeRefObject::setWeight(const qreal &value)
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     if (!qFuzzyCompare(value, weight())) {
-        m_keyframeRef->setWeight(static_cast<IMorph::WeightPrecision>(value));
+        m_keyframe->setWeight(static_cast<IMorph::WeightPrecision>(value));
         emit weightChanged();
     }
 }
 
 IMorphKeyframe *MorphKeyframeRefObject::data() const
 {
-    return m_keyframeRef;
+    return m_keyframe;
 }

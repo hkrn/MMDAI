@@ -80,7 +80,7 @@ signals:
 
 private:
     LightMotionTrack *m_parentTrackRef;
-    vpvl2::ILightKeyframe *m_keyframeRef;
+    vpvl2::ILightKeyframe *m_keyframe;
 };
 
 #endif // LIGHTKEYFRAMEREFOBJECT_H

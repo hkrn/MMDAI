@@ -47,16 +47,19 @@ using namespace vpvl2;
 LightKeyframeRefObject::LightKeyframeRefObject(LightMotionTrack *trackRef, ILightKeyframe *data)
     : BaseKeyframeRefObject(trackRef->parentMotion()),
       m_parentTrackRef(trackRef),
-      m_keyframeRef(data)
+      m_keyframe(data)
 {
     Q_ASSERT(m_parentTrackRef);
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
 }
 
 LightKeyframeRefObject::~LightKeyframeRefObject()
 {
+    if (isDeleteable()) {
+        delete m_keyframe;
+    }
     m_parentTrackRef = 0;
-    m_keyframeRef = 0;
+    m_keyframe = 0;
 }
 
 BaseMotionTrack *LightKeyframeRefObject::parentTrack() const
@@ -87,37 +90,37 @@ void LightKeyframeRefObject::setName(const QString &value)
 
 QVector3D LightKeyframeRefObject::color() const
 {
-    Q_ASSERT(m_keyframeRef);
-    return Util::fromVector3(m_keyframeRef->color());
+    Q_ASSERT(m_keyframe);
+    return Util::fromVector3(m_keyframe->color());
 }
 
 void LightKeyframeRefObject::setColor(const QVector3D &value)
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     if (!qFuzzyCompare(value, color())) {
-        m_keyframeRef->setColor(Util::toVector3(value));
+        m_keyframe->setColor(Util::toVector3(value));
         emit colorChanged();
     }
 }
 
 QVector3D LightKeyframeRefObject::direction() const
 {
-    Q_ASSERT(m_keyframeRef);
-    return Util::fromVector3(m_keyframeRef->direction());
+    Q_ASSERT(m_keyframe);
+    return Util::fromVector3(m_keyframe->direction());
 }
 
 void LightKeyframeRefObject::setDirection(const QVector3D &value)
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     if (!qFuzzyCompare(value, direction())) {
-        m_keyframeRef->setDirection(Util::toVector3(value));
+        m_keyframe->setDirection(Util::toVector3(value));
         emit directionChanged();
     }
 }
 
 ILightKeyframe *LightKeyframeRefObject::data() const
 {
-    return m_keyframeRef;
+    return m_keyframe;
 }
 
 IKeyframe *LightKeyframeRefObject::baseKeyframeData() const

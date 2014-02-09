@@ -66,7 +66,7 @@ CameraRefObject::CameraRefObject(ProjectProxy *project)
 
 CameraRefObject::~CameraRefObject()
 {
-    releaseMotion();
+    release();
     m_cameraRef = 0;
     m_motionRef = 0;
     m_projectRef = 0;
@@ -131,6 +131,7 @@ void CameraRefObject::reset()
 void CameraRefObject::assignCameraRef(ICamera *cameraRef, MotionProxy *motionProxyRef)
 {
     Q_ASSERT(cameraRef);
+    Q_ASSERT(motionProxyRef);
     cameraRef->setMotion(motionProxyRef->data());
     m_track.reset(new CameraMotionTrack(motionProxyRef, this));
     motionProxyRef->setCameraMotionTrack(m_track.data(), m_projectRef->factoryInstanceRef());
@@ -148,15 +149,14 @@ void CameraRefObject::refresh()
     emit cameraDidReset();
 }
 
-MotionProxy *CameraRefObject::releaseMotion()
+void CameraRefObject::release()
 {
-    MotionProxy *previousMotionRef = m_motionRef;
-    if (previousMotionRef) {
+    if (m_cameraRef) {
         m_cameraRef->setMotion(0);
-        m_track.reset();
-        m_motionRef = 0;
     }
-    return previousMotionRef;
+    m_projectRef->deleteMotion(m_motionRef, true);
+    m_track.take(); /* deleted by MotionProxy */
+    m_motionRef = 0;
 }
 
 ProjectProxy *CameraRefObject::project() const

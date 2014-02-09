@@ -58,8 +58,7 @@ BaseMotionTrack::BaseMotionTrack(MotionProxy *motionProxy, const QString &name)
 
 BaseMotionTrack::~BaseMotionTrack()
 {
-    m_timeIndex2RefObjects.clear();
-    m_keyframe2RefObjects.clear();
+    clear();
     m_parentMotionRef = 0;
     m_locked = false;
     m_visible = false;
@@ -129,6 +128,15 @@ void BaseMotionTrack::sort()
     qSort(m_keyframes);
 }
 
+void BaseMotionTrack::clear()
+{
+    Q_ASSERT(m_keyframes.size() == m_keyframe2RefObjects.size());
+    m_timeIndex2RefObjects.clear();
+    m_keyframe2RefObjects.clear();
+    qDeleteAll(m_keyframes);
+    m_keyframes.clear();
+}
+
 MotionProxy *BaseMotionTrack::parentMotion() const
 {
     return m_parentMotionRef;
@@ -151,6 +159,7 @@ void BaseMotionTrack::internalAdd(BaseKeyframeRefObject *value)
     m_keyframes.append(value);
     m_keyframe2RefObjects.insert(keyframe, value);
     m_timeIndex2RefObjects.insert(value->timeIndex(), value);
+    value->setDeleteable(false);
 }
 
 void BaseMotionTrack::internalRemove(BaseKeyframeRefObject *value)
@@ -162,4 +171,5 @@ void BaseMotionTrack::internalRemove(BaseKeyframeRefObject *value)
     IKeyframe *keyframe = value->baseKeyframeData();
     m_keyframe2RefObjects.remove(keyframe);
     m_timeIndex2RefObjects.remove(value->timeIndex());
+    value->setDeleteable(true);
 }

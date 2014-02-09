@@ -47,31 +47,34 @@ using namespace vpvl2;
 CameraKeyframeRefObject::CameraKeyframeRefObject(CameraMotionTrack *trackRef, ICameraKeyframe *data)
     : BaseKeyframeRefObject(trackRef->parentMotion()),
       m_parentTrackRef(trackRef),
-      m_keyframeRef(data)
+      m_keyframe(data)
 {
     Q_ASSERT(m_parentTrackRef);
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
 }
 
 CameraKeyframeRefObject::~CameraKeyframeRefObject()
 {
+    if (isDeleteable()) {
+        delete m_keyframe;
+    }
     m_parentTrackRef = 0;
-    m_keyframeRef = 0;
+    m_keyframe = 0;
 }
 
 QVector4D CameraKeyframeRefObject::interpolationParameter(int type) const
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     QuadWord value;
-    m_keyframeRef->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(type), value);
+    m_keyframe->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(type), value);
     return QVector4D(value.x(), value.y(), value.z(), value.w());
 }
 
 void CameraKeyframeRefObject::setInterpolationParameter(int type, const QVector4D &value)
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     QuadWord v(value.x(), value.y(), value.z(), value.w());
-    m_keyframeRef->setInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(type), v);
+    m_keyframe->setInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(type), v);
 }
 
 BaseMotionTrack *CameraKeyframeRefObject::parentTrack() const
@@ -102,67 +105,67 @@ void CameraKeyframeRefObject::setName(const QString &value)
 
 QVector3D CameraKeyframeRefObject::lookAt() const
 {
-    Q_ASSERT(m_keyframeRef);
-    return Util::fromVector3(m_keyframeRef->lookAt());
+    Q_ASSERT(m_keyframe);
+    return Util::fromVector3(m_keyframe->lookAt());
 }
 
 void CameraKeyframeRefObject::setLookAt(const QVector3D &value)
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     if (!qFuzzyCompare(value, lookAt())) {
-        m_keyframeRef->setLookAt(Util::toVector3(value));
+        m_keyframe->setLookAt(Util::toVector3(value));
         emit lookAtChanged();
     }
 }
 
 QVector3D CameraKeyframeRefObject::angle() const
 {
-    Q_ASSERT(m_keyframeRef);
-    return Util::fromVector3(m_keyframeRef->angle());
+    Q_ASSERT(m_keyframe);
+    return Util::fromVector3(m_keyframe->angle());
 }
 
 void CameraKeyframeRefObject::setAngle(const QVector3D &value)
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     if (!qFuzzyCompare(value, angle())) {
-        m_keyframeRef->setAngle(Util::toVector3(value));
+        m_keyframe->setAngle(Util::toVector3(value));
         emit angleChanged();
     }
 }
 
 qreal CameraKeyframeRefObject::distance() const
 {
-    Q_ASSERT(m_keyframeRef);
-    return static_cast<qreal>(m_keyframeRef->distance());
+    Q_ASSERT(m_keyframe);
+    return static_cast<qreal>(m_keyframe->distance());
 }
 
 void CameraKeyframeRefObject::setDistance(const qreal &value)
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     if (!qFuzzyCompare(value, distance())) {
-        m_keyframeRef->setDistance(static_cast<Scalar>(value));
+        m_keyframe->setDistance(static_cast<Scalar>(value));
         emit distanceChanged();
     }
 }
 
 qreal CameraKeyframeRefObject::fov() const
 {
-    Q_ASSERT(m_keyframeRef);
-    return static_cast<qreal>(m_keyframeRef->fov());
+    Q_ASSERT(m_keyframe);
+    return static_cast<qreal>(m_keyframe->fov());
 }
 
 void CameraKeyframeRefObject::setFov(const qreal &value)
 {
-    Q_ASSERT(m_keyframeRef);
+    Q_ASSERT(m_keyframe);
     if (!qFuzzyCompare(value, fov())) {
-        m_keyframeRef->setFov(static_cast<Scalar>(value));
+        m_keyframe->setFov(static_cast<Scalar>(value));
         emit fovChanged();
     }
 }
 
 ICameraKeyframe *CameraKeyframeRefObject::data() const
 {
-    return m_keyframeRef;
+    return m_keyframe;
 }
 
 IKeyframe *CameraKeyframeRefObject::baseKeyframeData() const

@@ -51,10 +51,6 @@ BoneMotionTrack::BoneMotionTrack(MotionProxy *motionProxy, const QString &name)
 
 BoneMotionTrack::~BoneMotionTrack()
 {
-    Q_ASSERT(m_keyframes.size() == m_keyframe2RefObjects.size());
-    qDeleteAll(m_keyframes);
-    m_keyframes.clear();
-    m_parentMotionRef = 0;
 }
 
 BaseKeyframeRefObject *BoneMotionTrack::convert(IKeyframe *value)

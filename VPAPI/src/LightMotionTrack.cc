@@ -54,11 +54,6 @@ LightMotionTrack::LightMotionTrack(MotionProxy *motionProxy, LightRefObject *cam
 
 LightMotionTrack::~LightMotionTrack()
 {
-    m_timeIndex2RefObjects.clear();
-    m_keyframe2RefObjects.clear();
-    qDeleteAll(m_keyframes);
-    m_keyframes.clear();
-    m_parentMotionRef = 0;
     m_lightRef = 0;
 }
 

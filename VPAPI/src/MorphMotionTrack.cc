@@ -52,10 +52,6 @@ MorphMotionTrack::MorphMotionTrack(MotionProxy *motionProxy, const QString &name
 
 MorphMotionTrack::~MorphMotionTrack()
 {
-    Q_ASSERT(m_keyframes.size() == m_keyframe2RefObjects.size());
-    qDeleteAll(m_keyframes);
-    m_keyframes.clear();
-    m_parentMotionRef = 0;
 }
 
 BaseKeyframeRefObject *MorphMotionTrack::convert(IKeyframe *value)

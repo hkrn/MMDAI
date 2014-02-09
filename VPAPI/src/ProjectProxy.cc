@@ -582,6 +582,11 @@ void ProjectProxy::update(int flags)
     m_project->update(flags);
 }
 
+QUndoGroup *ProjectProxy::undoGroup() const
+{
+    return m_undoGroup.data();
+}
+
 QList<ModelProxy *> ProjectProxy::modelProxies() const
 {
     return m_modelProxies;
@@ -959,12 +964,14 @@ void ProjectProxy::loadEffect(const QUrl &fileUrl)
 
 ModelProxy *ProjectProxy::createModelProxy(IModel *model, const QUuid &uuid, const QUrl &fileUrl)
 {
-    const QFileInfo finfo(fileUrl.toLocalFile());
-    QStringList filters; filters << "favicon.*";
-    const QStringList &faviconLocations = finfo.absoluteDir().entryList(filters);
     QUrl faviconUrl;
-    if (!faviconLocations.isEmpty()) {
-        faviconUrl = QUrl::fromLocalFile(finfo.absoluteDir().filePath(faviconLocations.first()));
+    if (!fileUrl.isEmpty()) {
+        const QFileInfo finfo(fileUrl.toLocalFile());
+        QStringList filters; filters << "favicon.*";
+        const QStringList &faviconLocations = finfo.absoluteDir().entryList(filters);
+        if (!faviconLocations.isEmpty()) {
+            faviconUrl = QUrl::fromLocalFile(finfo.absoluteDir().filePath(faviconLocations.first()));
+        }
     }
     model->setPhysicsEnable(m_worldProxy->simulationType() == WorldProxy::EnableSimulationAnytime);
     QUndoStack *stack = new QUndoStack(m_undoGroup.data());
@@ -1002,8 +1009,8 @@ MotionProxy *ProjectProxy::resolveMotionProxy(const IMotion *value) const
 
 void ProjectProxy::internalDeleteAllMotions(bool fromDestructor)
 {
-    m_cameraRefObject->releaseMotion();
-    m_lightRefObject->releaseMotion();
+    m_cameraRefObject->release();
+    m_lightRefObject->release();
     QMutableListIterator<MotionProxy *> it(m_motionProxies);
     while (it.hasNext()) {
         MotionProxy *motionProxy = it.next();
@@ -1195,12 +1202,12 @@ void ProjectProxy::internalLoadAsync()
             }
             else if (motionProxy->data()->countKeyframes(IKeyframe::kCameraKeyframe) > 1) {
                 /* this is a camera motion and delete previous camera motion */
-                deleteMotion(m_cameraRefObject->releaseMotion(), false);
+                m_cameraRefObject->release();
                 m_cameraRefObject->assignCameraRef(m_cameraRefObject->data(), motionProxy);
             }
             else if (motionProxy->data()->countKeyframes(IKeyframe::kLightKeyframe) > 1) {
                 /* this is a light motion and delete previous light motion */
-                deleteMotion(m_lightRefObject->releaseMotion(), false);
+                m_lightRefObject->release();
                 m_lightRefObject->assignLightRef(m_lightRefObject->data(), motionProxy);
             }
         }
@@ -1301,7 +1308,7 @@ void ProjectProxy::assignCamera()
     const QUuid &uuid = QUuid::createUuid();
     QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, 0));
     VPVL2_VLOG(1, "The camera motion will be allocated as " << uuid.toString().toStdString());
-    deleteMotion(m_cameraRefObject->releaseMotion(), false);
+    m_cameraRefObject->release();
     MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl());
     ICamera *cameraRef = m_project->cameraRef();
     m_cameraRefObject->assignCameraRef(cameraRef, motionProxy);
@@ -1320,7 +1327,7 @@ void ProjectProxy::assignLight()
     const QUuid &uuid = QUuid::createUuid();
     QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDMotion, 0));
     VPVL2_VLOG(1, "The light motion will be allocated as " << uuid.toString().toStdString());
-    deleteMotion(m_lightRefObject->releaseMotion(), false);
+    m_lightRefObject->release();
     MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl());
     ILight *lightRef = m_project->lightRef();
     m_lightRefObject->assignLightRef(lightRef, motionProxy);

@@ -176,6 +176,7 @@ public:
     QVariant modelSetting(const ModelProxy *modelProxy, const QString &key, const QVariant &defaultValue = QVariant()) const;
     void setModelSetting(const ModelProxy *modelProxy, const QString &key, const QVariant &value) const;
 
+    QUndoGroup *undoGroup() const;
     QList<ModelProxy *> modelProxies() const;
     QList<MotionProxy *> motionProxies() const;
     QQmlListProperty<ModelProxy> availableModels();

@@ -85,7 +85,7 @@ public:
     Q_INVOKABLE void reset();
     void assignCameraRef(vpvl2::ICamera *cameraRef, MotionProxy *motionProxyRef);
     void refresh();
-    MotionProxy *releaseMotion();
+    void release();
 
     ProjectProxy *project() const;
     MotionProxy *motion() const;

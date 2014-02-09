@@ -82,12 +82,6 @@ public:
         m_keyframes.append(keyframe);
     }
     ~BaseKeyframeCommand() {
-        foreach (BaseKeyframeRefObject *keyframe, m_keyframes) {
-            if (!keyframe->parentTrack()->contains(keyframe)) {
-                /* move reference to BaseMotionTrack class */
-                delete keyframe;
-            }
-        }
     }
 
 protected:
@@ -271,9 +265,10 @@ private:
     void initialize(const QList<BoneKeyframeRefObject *> &keyframeRefs, const MotionProxy *motionProxyRef) {
         Q_ASSERT(motionProxyRef);
         const ModelProxy *modelProxyRef = motionProxyRef->parentModel();
+        QScopedPointer<BoneKeyframeRefObject> newKeyframe;
         foreach (BoneKeyframeRefObject *keyframeRef, keyframeRefs) {
             BoneMotionTrack *track = qobject_cast<BoneMotionTrack *>(keyframeRef->parentTrack());
-            QScopedPointer<BoneKeyframeRefObject> newKeyframe(new BoneKeyframeRefObject(track, keyframeRef->data()->clone()));
+            newKeyframe.reset(new BoneKeyframeRefObject(track, keyframeRef->data()->clone()));
             IBoneKeyframe *newKeyframeRef = newKeyframe->data();
             BoneRefObject *boneRef = modelProxyRef->findBoneByName(track->name());
             newKeyframeRef->setLocalTranslation(boneRef->rawLocalTranslation());
@@ -465,9 +460,10 @@ private:
     void initialize(const QList<MorphKeyframeRefObject *> &keyframeRefs, const MotionProxy *motionProxyRef) {
         Q_ASSERT(motionProxyRef);
         const ModelProxy *modelProxyRef = motionProxyRef->parentModel();
+        QScopedPointer<MorphKeyframeRefObject> newKeyframe;
         foreach (MorphKeyframeRefObject *keyframeRef, keyframeRefs) {
             MorphMotionTrack *track = qobject_cast<MorphMotionTrack *>(keyframeRef->parentTrack());
-            QScopedPointer<MorphKeyframeRefObject> newKeyframe(new MorphKeyframeRefObject(track, keyframeRef->data()->clone()));
+            newKeyframe.reset(new MorphKeyframeRefObject(track, keyframeRef->data()->clone()));
             IMorphKeyframe *newKeyframeRef = newKeyframe->data();
             MorphRefObject *morphRef = modelProxyRef->findMorphByName(track->name());
             newKeyframeRef->setWeight(morphRef->weight());
@@ -904,26 +900,28 @@ void MotionProxy::assignModel(ModelProxy *modelProxy, const Factory *factoryRef)
     loadBoneTrackBundle(motionRef, numBoneKeyframes, numEstimatedTotalKeyframes, numLoadedKeyframes);
     loadMorphTrackBundle(motionRef, numMorphKeyframes, numEstimatedTotalKeyframes, numLoadedKeyframes);
     emit motionDidLoad(numLoadedKeyframes, numEstimatedTotalKeyframes);
+    QScopedPointer<IBoneKeyframe> boneKeyframe;
     foreach (const BoneRefObject *bone, modelProxy->allBoneRefs()) {
         if (!findBoneMotionTrack(bone)) {
-            QScopedPointer<IBoneKeyframe> keyframe(factoryRef->createBoneKeyframe(motionRef));
-            keyframe->setDefaultInterpolationParameter();
-            keyframe->setTimeIndex(0);
-            keyframe->setLocalOrientation(bone->rawLocalOrientation());
-            keyframe->setLocalTranslation(bone->rawLocalTranslation());
-            keyframe->setName(bone->data()->name(IEncoding::kDefaultLanguage));
+            boneKeyframe.reset(factoryRef->createBoneKeyframe(motionRef));
+            boneKeyframe->setDefaultInterpolationParameter();
+            boneKeyframe->setTimeIndex(0);
+            boneKeyframe->setLocalOrientation(bone->rawLocalOrientation());
+            boneKeyframe->setLocalTranslation(bone->rawLocalTranslation());
+            boneKeyframe->setName(bone->data()->name(IEncoding::kDefaultLanguage));
             BoneMotionTrack *track = addBoneTrack(bone->name());
-            track->addKeyframe(track->convertBoneKeyframe(keyframe.take()), false);
+            track->addKeyframe(track->convertBoneKeyframe(boneKeyframe.take()), false);
         }
     }
+    QScopedPointer<IMorphKeyframe> morphKeyframe;
     foreach (const MorphRefObject *morph, modelProxy->allMorphRefs()) {
         if (!findMorphMotionTrack(morph)) {
-            QScopedPointer<IMorphKeyframe> keyframe(factoryRef->createMorphKeyframe(motionRef));
-            keyframe->setTimeIndex(0);
-            keyframe->setWeight(morph->weight());
-            keyframe->setName(morph->data()->name(IEncoding::kDefaultLanguage));
+            morphKeyframe.reset(factoryRef->createMorphKeyframe(motionRef));
+            morphKeyframe->setTimeIndex(0);
+            morphKeyframe->setWeight(morph->weight());
+            morphKeyframe->setName(morph->data()->name(IEncoding::kDefaultLanguage));
             MorphMotionTrack *track = addMorphTrack(morph->name());
-            track->addKeyframe(track->convertMorphKeyframe(keyframe.take()), false);
+            track->addKeyframe(track->convertMorphKeyframe(morphKeyframe.take()), false);
         }
     }
     refresh();

@@ -76,7 +76,7 @@ signals:
 
 private:
     MorphMotionTrack *m_parentTrackRef;
-    vpvl2::IMorphKeyframe *m_keyframeRef;
+    vpvl2::IMorphKeyframe *m_keyframe;
 };
 
 #endif // MORPHKEYFRAMEREFOBJECT_H

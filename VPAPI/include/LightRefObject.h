@@ -77,7 +77,7 @@ public:
     Q_INVOKABLE void reset();
     void assignLightRef(vpvl2::ILight *lightRef, MotionProxy *motionProxyRef);
     void refresh();
-    MotionProxy *releaseMotion();
+    void release();
 
     ProjectProxy *project() const;
     MotionProxy *motion() const;

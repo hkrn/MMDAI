@@ -47,7 +47,8 @@ using namespace vpvl2;
 
 BaseKeyframeRefObject::BaseKeyframeRefObject(MotionProxy *motionRef)
     : QObject(motionRef),
-      m_parentMotionRef(motionRef)
+      m_parentMotionRef(motionRef),
+      m_deleteable(true)
 {
     Q_ASSERT(m_parentMotionRef);
 }
@@ -99,4 +100,14 @@ void BaseKeyframeRefObject::setLayerIndex(int value)
         keyframe->setLayerIndex(static_cast<IKeyframe::LayerIndex>(value));
         emit layerIndexChanged();
     }
+}
+
+bool BaseKeyframeRefObject::isDeleteable() const
+{
+    return m_deleteable;
+}
+
+void BaseKeyframeRefObject::setDeleteable(bool value)
+{
+    m_deleteable = value;
 }

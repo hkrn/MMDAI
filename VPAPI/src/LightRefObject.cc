@@ -61,7 +61,7 @@ LightRefObject::LightRefObject(ProjectProxy *project)
 
 LightRefObject::~LightRefObject()
 {
-    releaseMotion();
+    release();
     m_lightRef = 0;
     m_motionRef = 0;
     m_projectRef = 0;
@@ -74,20 +74,20 @@ void LightRefObject::reset()
     emit lightDidReset();
 }
 
-MotionProxy *LightRefObject::releaseMotion()
+void LightRefObject::release()
 {
-    MotionProxy *previousMotionRef = m_motionRef;
-    if (previousMotionRef) {
+    if (m_lightRef) {
         m_lightRef->setMotion(0);
-        m_track.reset();
-        m_motionRef = 0;
     }
-    return previousMotionRef;
+    m_projectRef->deleteMotion(m_motionRef, true);
+    m_track.take(); /* deleted by MotionProxy */
+    m_motionRef = 0;
 }
 
 void LightRefObject::assignLightRef(ILight *lightRef, MotionProxy *motionProxyRef)
 {
     Q_ASSERT(lightRef);
+    Q_ASSERT(motionProxyRef);
     lightRef->setMotion(motionProxyRef->data());
     m_motionRef = motionProxyRef;
     m_track.reset(new LightMotionTrack(motionProxyRef, this));

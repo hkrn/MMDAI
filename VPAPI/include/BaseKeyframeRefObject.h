@@ -71,6 +71,8 @@ public:
     void setTimeIndex(const quint64 &value);
     int layerIndex() const;
     void setLayerIndex(int value);
+    bool isDeleteable() const;
+    void setDeleteable(bool value);
 
     virtual BaseMotionTrack *parentTrack() const = 0;
     virtual QObject *opaque() const = 0;
@@ -84,6 +86,7 @@ signals:
 
 private:
     MotionProxy *m_parentMotionRef;
+    bool m_deleteable;
 };
 
 #endif // BASEKEYFRAMEREFOBJECT_H

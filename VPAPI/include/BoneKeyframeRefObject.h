@@ -88,7 +88,7 @@ signals:
 
 private:
     BoneMotionTrack *m_parentTrackRef;
-    vpvl2::IBoneKeyframe *m_keyframeRef;
+    vpvl2::IBoneKeyframe *m_keyframe;
 };
 
 #endif // BONEKEYFRAMEREFOBJECT_H

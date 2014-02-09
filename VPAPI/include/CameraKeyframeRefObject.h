@@ -92,7 +92,7 @@ signals:
 
 private:
     CameraMotionTrack *m_parentTrackRef;
-    vpvl2::ICameraKeyframe *m_keyframeRef;
+    vpvl2::ICameraKeyframe *m_keyframe;
 };
 
 #endif // CAMERAKEYFRAMEREFOBJECT_H

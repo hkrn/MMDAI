@@ -70,6 +70,7 @@ public:
     void replaceTimeIndex(const quint64 &newTimeIndex, const quint64 &oldTimeIndex);
     void refresh();
     void sort();
+    void clear();
 
     virtual BaseKeyframeRefObject *copy(BaseKeyframeRefObject *value, const quint64 &timeIndex, bool doUpdate) = 0;
     virtual BaseKeyframeRefObject *convert(vpvl2::IKeyframe *value) = 0;
