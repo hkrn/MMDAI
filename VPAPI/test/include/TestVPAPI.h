@@ -36,6 +36,8 @@
 */
 
 #include <QtTest>
+#include <vpvl2/IModel.h>
+#include <vpvl2/IMotion.h>
 #include "ProjectProxy.h"
 
 class BaseMotionTrack;
@@ -47,34 +49,55 @@ class TestVPAPI : public QObject
 private slots:
     void initTestCase();
     void project_initialize();
+    void project_create_data();
     void project_create();
     void project_createModelProxy_data();
     void project_createModelProxy();
+    void project_createMotionProxy_data();
     void project_createMotionProxy();
+    void project_addModelProxy_data();
     void project_addModelProxy();
+    void project_initializeMotion_data();
     void project_initializeMotion();
     void project_seek();
     void project_rewind();
+    void project_reset_data();
     void project_reset();
+    void project_deleteModel_data();
     void project_deleteModel();
+    void project_deleteMotion_data();
     void project_deleteMotion();
+    void model_addAndRemoveVertex_data();
     void model_addAndRemoveVertex();
+    void model_addAndRemoveMaterial_data();
     void model_addAndRemoveMaterial();
+    void model_addAndRemoveBone_data();
     void model_addAndRemoveBone();
+    void model_addAndRemoveMorph_data();
     void model_addAndRemoveMorph();
+    void model_addAndRemoveLabel_data();
     void model_addAndRemoveLabel();
+    void model_addAndRemoveRigidBody_data();
     void model_addAndRemoveRigidBody();
+    void model_addAndRemoveJoint_data();
     void model_addAndRemoveJoint();
+    void model_translateTransform_data();
     void model_translateTransform();
+    void model_rotateTransform_data();
     void model_rotateTransform();
+    void model_release_data();
     void model_release();
     void motion_addAndRemoveCameraKeyframe();
     void motion_addAndUpdateCameraKeyframe();
     void motion_addAndRemoveLightKeyframe();
     void motion_addAndUpdateLightKeyframe();
+    void motion_addAndRemoveBoneKeyframe_data();
     void motion_addAndRemoveBoneKeyframe();
+    void motion_addAndUpdateBoneKeyframe_data();
     void motion_addAndUpdateBoneKeyframe();
+    void motion_addAndRemoveMorphKeyframe_data();
     void motion_addAndRemoveMorphKeyframe();
+    void motion_addAndUpdateMorphKeyframe_data();
     void motion_addAndUpdateMorphKeyframe();
 
 private:
@@ -82,4 +105,6 @@ private:
     void removeKeyframe(ProjectProxy &project, BaseMotionTrack *track, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);
 };
 
+Q_DECLARE_METATYPE(vpvl2::IModel::Type)
+Q_DECLARE_METATYPE(vpvl2::IMotion::Type)
 Q_DECLARE_METATYPE(ProjectProxy::LanguageType)

@@ -87,13 +87,21 @@ void TestVPAPI::project_initialize()
     QCOMPARE(project.light()->track()->keyframes().size(), 2);
 }
 
+void TestVPAPI::project_create_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::project_create()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     QSignalSpy projectWillCreate(&project, SIGNAL(projectWillCreate()));
     QSignalSpy projectDidCreate(&project, SIGNAL(projectDidCreate()));
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     project.addModel(project.createModelProxy(model.take(), QUuid::createUuid(), QUrl()));
     project.setTitle(QStringLiteral("hogehoge"));
     project.setAudioSource(QUrl("http://localhost"));
@@ -146,11 +154,23 @@ void TestVPAPI::project_createModelProxy()
     QCOMPARE(modelProxy->language(), language);
 }
 
+void TestVPAPI::project_createMotionProxy_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::addColumn<IMotion::Type>("motionType");
+    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDMotion;
+    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDMotion;
+    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDMotion;
+    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDMotion;
+}
+
 void TestVPAPI::project_createMotionProxy()
 {
+    QFETCH(IModel::Type, modelType);
+    QFETCH(IMotion::Type, motionType);
     ProjectProxy project;
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
-    QScopedPointer<IMotion> motion(project.factoryInstanceRef()->newMotion(IMotion::kVMDMotion, model.data()));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
+    QScopedPointer<IMotion> motion(project.factoryInstanceRef()->newMotion(motionType, model.data()));
     const QUuid &uuid = QUuid::createUuid();
     MotionProxy *motionProxy = project.createMotionProxy(motion.take(), uuid, QUrl());
     QCOMPARE(motionProxy->parentProject(), &project);
@@ -163,14 +183,22 @@ void TestVPAPI::project_createMotionProxy()
     QCOMPARE(project.createMotionProxy(motionProxy->data(), uuid, QUrl()), static_cast<MotionProxy *>(0));
 }
 
+void TestVPAPI::project_addModelProxy_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::project_addModelProxy()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     QSignalSpy modelDidAdd(&project, SIGNAL(modelDidAdd(ModelProxy*,bool)));
     QSignalSpy motionDidLoad(&project, SIGNAL(motionDidLoad(MotionProxy*)));
     QSignalSpy modelDidCommitUploading(&project, SIGNAL(modelDidCommitUploading()));
     QSignalSpy availableModelsChanged(&project, SIGNAL(availableModelsChanged()));
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     const QUuid &uuid = QUuid::createUuid();
     ModelProxy *modelProxy = project.createModelProxy(model.take(), uuid, QUrl());
     QSignalSpy childMotionChanged(modelProxy, SIGNAL(childMotionChanged()));
@@ -191,11 +219,19 @@ void TestVPAPI::project_addModelProxy()
     QCOMPARE(modelProxy->childMotion()->parentModel(), modelProxy);
 }
 
+void TestVPAPI::project_initializeMotion_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::project_initializeMotion()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     QSignalSpy motionDidInitialize(&project, SIGNAL(motionDidInitialize()));
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     const QUuid &uuid = QUuid::createUuid();
     ModelProxy *modelProxy = project.createModelProxy(model.take(), uuid, QUrl());
     QSignalSpy childMotionChanged(modelProxy, SIGNAL(childMotionChanged()));
@@ -239,11 +275,19 @@ void TestVPAPI::project_rewind()
     QCOMPARE(lightDidReset.size(), 2);
 }
 
+void TestVPAPI::project_reset_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::project_reset()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     project.addModel(modelProxy);
     project.setCurrentTimeIndex(42);
@@ -253,14 +297,22 @@ void TestVPAPI::project_reset()
     QCOMPARE(project.currentMotion(), static_cast<MotionProxy *>(0));
 }
 
+void TestVPAPI::project_deleteModel_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::project_deleteModel()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     QSignalSpy modelWillRemove(&project, SIGNAL(modelWillRemove(ModelProxy*)));
     QSignalSpy modelDidRemove(&project, SIGNAL(modelDidRemove(ModelProxy*)));
     QSignalSpy modelDidCommitDeleting(&project, SIGNAL(modelDidCommitDeleting()));
     QSignalSpy availableModelsChanged(&project, SIGNAL(availableModelsChanged()));
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     const QUuid &uuid = QUuid::createUuid();
     ModelProxy *modelProxy = project.createModelProxy(model.take(), uuid, QUrl());
     project.addModel(modelProxy);
@@ -284,11 +336,23 @@ void TestVPAPI::project_deleteModel()
     QCOMPARE(availableModelsChanged.size(), 2);
 }
 
+void TestVPAPI::project_deleteMotion_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::addColumn<IMotion::Type>("motionType");
+    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDMotion;
+    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDMotion;
+    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDMotion;
+    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDMotion;
+}
+
 void TestVPAPI::project_deleteMotion()
 {
+    QFETCH(IModel::Type, modelType);
+    QFETCH(IMotion::Type, motionType);
     ProjectProxy project;
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
-    QScopedPointer<IMotion> motion(project.factoryInstanceRef()->newMotion(IMotion::kVMDMotion, model.data()));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
+    QScopedPointer<IMotion> motion(project.factoryInstanceRef()->newMotion(motionType, model.data()));
     const QUuid &uuid = QUuid::createUuid();
     MotionProxy *motionProxy = project.createMotionProxy(motion.take(), uuid, QUrl());
     motionProxy->undoStack()->push(new QUndoCommand());
@@ -299,11 +363,19 @@ void TestVPAPI::project_deleteMotion()
     QVERIFY(project.projectInstanceRef()->motionUUIDs().empty());
 }
 
+void TestVPAPI::model_addAndRemoveVertex_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::model_addAndRemoveVertex()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     QSignalSpy allVerticesChanged(modelProxy, SIGNAL(allVerticesChanged()));
     VertexRefObject *vertex = modelProxy->createVertex();
@@ -320,11 +392,19 @@ void TestVPAPI::model_addAndRemoveVertex()
     delete vertex;
 }
 
+void TestVPAPI::model_addAndRemoveMaterial_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::model_addAndRemoveMaterial()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     QSignalSpy allMaterialsChanged(modelProxy, SIGNAL(allMaterialsChanged()));
     MaterialRefObject *material = modelProxy->createMaterial();
@@ -341,11 +421,19 @@ void TestVPAPI::model_addAndRemoveMaterial()
     delete material;
 }
 
+void TestVPAPI::model_addAndRemoveBone_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::model_addAndRemoveBone()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     QSignalSpy allBonesChanged(modelProxy, SIGNAL(allBonesChanged()));
     BoneRefObject *bone = modelProxy->createBone();
@@ -362,11 +450,19 @@ void TestVPAPI::model_addAndRemoveBone()
     delete bone;
 }
 
+void TestVPAPI::model_addAndRemoveMorph_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::model_addAndRemoveMorph()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     QSignalSpy allMorphsChanged(modelProxy, SIGNAL(allMorphsChanged()));
     MorphRefObject *morph = modelProxy->createMorph();
@@ -383,11 +479,19 @@ void TestVPAPI::model_addAndRemoveMorph()
     delete morph;
 }
 
+void TestVPAPI::model_addAndRemoveLabel_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::model_addAndRemoveLabel()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     QSignalSpy allLabelsChanged(modelProxy, SIGNAL(allLabelsChanged()));
     LabelRefObject *label = modelProxy->createLabel();
@@ -400,11 +504,19 @@ void TestVPAPI::model_addAndRemoveLabel()
     delete label;
 }
 
+void TestVPAPI::model_addAndRemoveRigidBody_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::model_addAndRemoveRigidBody()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     QSignalSpy allRigidBodiesChanged(modelProxy, SIGNAL(allRigidBodiesChanged()));
     RigidBodyRefObject *rigidBody = modelProxy->createRigidBody();
@@ -421,11 +533,19 @@ void TestVPAPI::model_addAndRemoveRigidBody()
     delete rigidBody;
 }
 
+void TestVPAPI::model_addAndRemoveJoint_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::model_addAndRemoveJoint()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     QSignalSpy allJointsChanged(modelProxy, SIGNAL(allJointsChanged()));
     JointRefObject *joint = modelProxy->createJoint();
@@ -442,11 +562,19 @@ void TestVPAPI::model_addAndRemoveJoint()
     delete joint;
 }
 
+void TestVPAPI::model_translateTransform_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::model_translateTransform()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     QSignalSpy transformDidBegin(modelProxy, SIGNAL(transformDidBegin()));
     QSignalSpy targetBonesDidTranslate(modelProxy, SIGNAL(targetBonesDidTranslate()));
@@ -468,11 +596,19 @@ void TestVPAPI::model_translateTransform()
     QCOMPARE(transformDidDiscard.size(), 1);
 }
 
+void TestVPAPI::model_rotateTransform_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::model_rotateTransform()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     QSignalSpy transformDidBegin(modelProxy, SIGNAL(transformDidBegin()));
     QSignalSpy targetBonesDidRotate(modelProxy, SIGNAL(targetBonesDidRotate()));
@@ -494,15 +630,23 @@ void TestVPAPI::model_rotateTransform()
     QCOMPARE(transformDidDiscard.size(), 1);
 }
 
+void TestVPAPI::model_release_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::model_release()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     project.addModel(modelProxy);
     modelProxy->release();
-    model.reset(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    model.reset(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy2 = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     modelProxy2->release();
     qApp->processEvents();
@@ -604,15 +748,23 @@ void TestVPAPI::motion_addAndUpdateLightKeyframe()
     QCOMPARE(light->motion()->data()->countKeyframes(light->track()->type()), 2);
 }
 
+void TestVPAPI::motion_addAndRemoveBoneKeyframe_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::motion_addAndRemoveBoneKeyframe()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
     QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
     QSignalSpy redoDidPerform(&project, SIGNAL(redoDidPerform()));
     QSignalSpy currentTimeIndexChanged(&project, SIGNAL(currentTimeIndexChanged()));
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     BoneRefObject *bone = modelProxy->createBone();
     bone->setName(QStringLiteral("test"));
@@ -623,14 +775,22 @@ void TestVPAPI::motion_addAndRemoveBoneKeyframe()
     removeKeyframe(project, track, 1, 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
 }
 
+void TestVPAPI::motion_addAndUpdateBoneKeyframe_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::motion_addAndUpdateBoneKeyframe()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
     QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
     QSignalSpy redoDidPerform(&project, SIGNAL(redoDidPerform()));
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     BoneRefObject *bone = modelProxy->createBone();
     bone->setName(QStringLiteral("test"));
@@ -662,15 +822,23 @@ void TestVPAPI::motion_addAndUpdateBoneKeyframe()
     QCOMPARE(motionProxy->data()->countKeyframes(track->type()), 1);
 }
 
+void TestVPAPI::motion_addAndRemoveMorphKeyframe_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::motion_addAndRemoveMorphKeyframe()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
     QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
     QSignalSpy redoDidPerform(&project, SIGNAL(redoDidPerform()));
     QSignalSpy currentTimeIndexChanged(&project, SIGNAL(currentTimeIndexChanged()));
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     MorphRefObject *morph = modelProxy->createMorph();
     morph->setName(QStringLiteral("test"));
@@ -681,14 +849,22 @@ void TestVPAPI::motion_addAndRemoveMorphKeyframe()
     removeKeyframe(project, track, 1, 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
 }
 
+void TestVPAPI::motion_addAndUpdateMorphKeyframe_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::newRow("PMD") << IModel::kPMDModel;
+    QTest::newRow("PMX") << IModel::kPMXModel;
+}
+
 void TestVPAPI::motion_addAndUpdateMorphKeyframe()
 {
+    QFETCH(IModel::Type, modelType);
     ProjectProxy project;
     project.initializeOnce();
     QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
     QSignalSpy redoDidPerform(&project, SIGNAL(redoDidPerform()));
     project.initializeOnce();
-    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     MorphRefObject *morph = modelProxy->createMorph();
     morph->setName(QStringLiteral("test"));
