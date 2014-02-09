@@ -79,16 +79,22 @@ CppApplication {
         "../../zlib-src/" + libraryInstallDirectory + "/lib"
     ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
     cpp.defines: [ "VPVL2_ENABLE_QT", "TW_STATIC", "TW_NO_LIB_PRAGMA" ]
+    cpp.dynamicLibraries: commonLibraries
     Properties {
         condition: qbs.toolchain.contains("msvc")
         consoleApplication: false
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
+        cpp.dynamicLibraries: commonLibraries.concat([ "zlibstatic" + debugLibrarySuffix ])
     }
     Properties {
         condition: qbs.targetOS.contains("osx")
         cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL" ]
         cpp.minimumOsxVersion: "10.6"
-        cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z" ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "tbb" ])
+    }
+    Properties {
+        condition: qbs.targetOS.contains("linux")
+        cpp.dynamicLibraries: commonLibraries.concat([ "tbb", "z" ])
     }
     Depends { name: "vpvl2" }
     Depends { name: "VPAPI" }
