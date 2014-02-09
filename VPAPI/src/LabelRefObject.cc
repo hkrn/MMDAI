@@ -164,6 +164,7 @@ void LabelRefObject::setName(const QString &value)
     if (!m_labelRef->isSpecial() && name() != value) {
         IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(m_parentModelRef->language());
         QScopedPointer<IString> s(String::create(value.toStdString()));
+        m_parentModelRef->renameObject(this, value);
         m_labelRef->setName(s.data(), language);
         setDirty(true);
         emit nameChanged();

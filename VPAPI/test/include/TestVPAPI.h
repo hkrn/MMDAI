@@ -72,10 +72,14 @@ private slots:
     void motion_addAndUpdateCameraKeyframe();
     void motion_addAndRemoveLightKeyframe();
     void motion_addAndUpdateLightKeyframe();
+    void motion_addAndRemoveBoneKeyframe();
+    void motion_addAndUpdateBoneKeyframe();
+    void motion_addAndRemoveMorphKeyframe();
+    void motion_addAndUpdateMorphKeyframe();
 
 private:
-    void addKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);
-    void removeKeyframe(ProjectProxy &project, BaseMotionTrack *track, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);
+    void addKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);
+    void removeKeyframe(ProjectProxy &project, BaseMotionTrack *track, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);
 };
 
 Q_DECLARE_METATYPE(ProjectProxy::LanguageType)

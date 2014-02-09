@@ -162,6 +162,7 @@ public:
     void addBindingModel(ModelProxy *value);
     void removeBindingModel(ModelProxy *value);
     void releaseBindings();
+    void renameObject(QObject *object, const QString &newName);
     QJsonValue toJson() const;
 
     vpvl2::IModel *data() const;

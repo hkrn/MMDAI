@@ -196,6 +196,35 @@ void ModelProxy::releaseBindings()
     m_bindingModels.clear();
 }
 
+void ModelProxy::renameObject(QObject *object, const QString &newName)
+{
+    Q_ASSERT(m_model);
+    if (MaterialRefObject *material = qobject_cast<MaterialRefObject *>(object)) {
+        m_name2MaterialRefs.remove(material->name());
+        m_name2MaterialRefs.insert(newName, material);
+    }
+    else if (BoneRefObject *bone = qobject_cast<BoneRefObject *>(object)) {
+        m_name2BoneRefs.remove(bone->name());
+        m_name2BoneRefs.insert(newName, bone);
+    }
+    else if (MorphRefObject *morph = qobject_cast<MorphRefObject *>(object)) {
+        m_name2MorphRefs.remove(morph->name());
+        m_name2MorphRefs.insert(newName, morph);
+    }
+    else if (LabelRefObject *label = qobject_cast<LabelRefObject *>(object)) {
+        Q_UNUSED(label);
+        /* FIXME: implement this */
+    }
+    else if (RigidBodyRefObject *body = qobject_cast<RigidBodyRefObject *>(object)) {
+        m_name2RigidBodyRefs.remove(body->name());
+        m_name2RigidBodyRefs.insert(newName, body);
+    }
+    else if (JointRefObject *joint = qobject_cast<JointRefObject *>(object)) {
+        m_name2JointRefs.remove(bone->name());
+        m_name2JointRefs.insert(newName, joint);
+    }
+}
+
 QJsonValue ModelProxy::toJson() const
 {
     QJsonObject v;

@@ -932,6 +932,7 @@ void MorphRefObject::setName(const QString &value)
         ModelProxy *parentModel = m_parentModelRef;
         IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(parentModel->language());
         QScopedPointer<IString> s(String::create(value.toStdString()));
+        m_parentModelRef->renameObject(this, value);
         m_morphRef->setName(s.data(), language);
         setDirty(true);
         emit nameChanged();

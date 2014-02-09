@@ -154,6 +154,7 @@ void JointRefObject::setName(const QString &value)
     if (name() != value) {
         IEncoding::LanguageType language = static_cast<IEncoding::LanguageType>(m_parentModelRef->language());
         QScopedPointer<IString> s(String::create(value.toStdString()));
+        m_parentModelRef->renameObject(this, value);
         m_jointRef->setName(s.data(), language);
         setDirty(true);
         emit nameChanged();
