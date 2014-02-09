@@ -71,6 +71,7 @@ public:
     Q_INVOKABLE void removeObject(QObject *value);
     Q_INVOKABLE QJsonValue toJson() const;
 
+    vpvl2::ILabel *data() const;
     ModelProxy *parentModel() const;
     QString name() const;
     void setName(const QString &value);

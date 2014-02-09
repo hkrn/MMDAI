@@ -45,7 +45,9 @@ class TestVPAPI : public QObject
     Q_OBJECT
 
 private slots:
+    void initTestCase();
     void project_initialize();
+    void project_create();
     void project_createModelProxy_data();
     void project_createModelProxy();
     void project_createMotionProxy();
@@ -56,6 +58,16 @@ private slots:
     void project_reset();
     void project_deleteModel();
     void project_deleteMotion();
+    void model_addAndRemoveVertex();
+    void model_addAndRemoveMaterial();
+    void model_addAndRemoveBone();
+    void model_addAndRemoveMorph();
+    void model_addAndRemoveLabel();
+    void model_addAndRemoveRigidBody();
+    void model_addAndRemoveJoint();
+    void model_translateTransform();
+    void model_rotateTransform();
+    void model_release();
     void motion_addAndRemoveCameraKeyframe();
     void motion_addAndUpdateCameraKeyframe();
     void motion_addAndRemoveLightKeyframe();

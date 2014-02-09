@@ -39,13 +39,21 @@
 
 #include "BaseKeyframeRefObject.h"
 #include "BaseMotionTrack.h"
+#include "BoneRefObject.h"
 #include "CameraKeyframeRefObject.h"
 #include "CameraMotionTrack.h"
 #include "CameraRefObject.h"
+#include "JointRefObject.h"
+#include "LabelRefObject.h"
 #include "LightMotionTrack.h"
 #include "LightRefObject.h"
+#include "MaterialRefObject.h"
 #include "ModelProxy.h"
+#include "MorphRefObject.h"
 #include "MotionProxy.h"
+#include "RigidBodyRefObject.h"
+#include "VertexRefObject.h"
+#include "WorldProxy.h"
 
 #include <vpvl2/vpvl2.h>
 #include <QtCore>
@@ -54,11 +62,19 @@
 
 using namespace vpvl2;
 
+void TestVPAPI::initTestCase()
+{
+    qRegisterMetaType<ModelProxy *>("ModelProxy");
+    qRegisterMetaType<MotionProxy *>("MotionProxy");
+}
+
 void TestVPAPI::project_initialize()
 {
     ProjectProxy project;
     project.initializeOnce();
     QVERIFY(!project.isDirty());
+    QVERIFY(project.modelProxies().isEmpty());
+    QCOMPARE(project.motionProxies().size(), 2);
     QVERIFY(project.motionProxies().contains(project.camera()->motion()));
     QVERIFY(project.motionProxies().contains(project.light()->motion()));
     QCOMPARE(project.camera()->motion()->parentProject(), &project);
@@ -67,6 +83,44 @@ void TestVPAPI::project_initialize()
     QCOMPARE(project.light()->motion()->parentModel(), static_cast<ModelProxy *>(0));
     QCOMPARE(project.camera()->track()->keyframes().size(), 2);
     QCOMPARE(project.light()->track()->keyframes().size(), 2);
+}
+
+void TestVPAPI::project_create()
+{
+    ProjectProxy project;
+    QSignalSpy projectWillCreate(&project, SIGNAL(projectWillCreate()));
+    QSignalSpy projectDidCreate(&project, SIGNAL(projectDidCreate()));
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    project.addModel(project.createModelProxy(model.take(), QUuid::createUuid(), QUrl()));
+    project.setTitle(QStringLiteral("hogehoge"));
+    project.setAudioSource(QUrl("http://localhost"));
+    project.setVideoSource(QUrl("http://localhost"));
+    project.setAccelerationType(ProjectProxy::NoAcceleration);
+    project.setLanguage(ProjectProxy::English);
+    project.setScreenColor(Qt::red);
+    project.setGridVisible(false);
+    project.setLoop(true);
+    project.setScreenColor(Qt::red);
+    project.createAsync();
+    project.enqueuedModelsDidDelete();
+    qApp->processEvents();
+    QVERIFY(!project.isDirty());
+    QVERIFY(project.modelProxies().isEmpty());
+    QCOMPARE(project.motionProxies().size(), 2);
+    QVERIFY(project.motionProxies().contains(project.camera()->motion()));
+    QVERIFY(project.motionProxies().contains(project.light()->motion()));
+    QCOMPARE(projectWillCreate.size(), 1);
+    QCOMPARE(projectDidCreate.size(), 1);
+    QCOMPARE(project.title(), tr("Untitled Project"));
+    QVERIFY(project.audioSource().isEmpty());
+    QVERIFY(project.videoSource().isEmpty());
+    QCOMPARE(project.accelerationType(), ProjectProxy::ParallelAcceleration);
+    QCOMPARE(project.language(), ProjectProxy::DefaultLauguage);
+    QCOMPARE(project.screenColor(), QColor(Qt::white));
+    QVERIFY(project.isGridVisible());
+    QVERIFY(!project.isLoop());
+    QCOMPARE(project.screenColor(), QColor(Qt::white));
 }
 
 void TestVPAPI::project_createModelProxy_data()
@@ -241,6 +295,215 @@ void TestVPAPI::project_deleteMotion()
     QVERIFY(project.motionProxies().isEmpty());
     QCOMPARE(project.currentMotion(), static_cast<MotionProxy *>(0));
     QVERIFY(project.projectInstanceRef()->motionUUIDs().empty());
+}
+
+void TestVPAPI::model_addAndRemoveVertex()
+{
+    ProjectProxy project;
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    QSignalSpy allVerticesChanged(modelProxy, SIGNAL(allVerticesChanged()));
+    VertexRefObject *vertex = modelProxy->createVertex();
+    QCOMPARE(vertex->parentModel(), modelProxy);
+    QCOMPARE(modelProxy->findVertexByUuid(vertex->uuid()), vertex);
+    QVERIFY(modelProxy->allVertexRefs().contains(vertex));
+    QCOMPARE(modelProxy->data()->count(IModel::kVertex), 1);
+    QVERIFY(modelProxy->removeVertex(vertex));
+    QVERIFY(!modelProxy->removeVertex(vertex));
+    QCOMPARE(modelProxy->findVertexByUuid(vertex->uuid()), static_cast<VertexRefObject *>(0));
+    QVERIFY(!modelProxy->allVertexRefs().contains(vertex));
+    QCOMPARE(modelProxy->data()->count(IModel::kVertex), 0);
+    QCOMPARE(allVerticesChanged.size(), 2);
+    delete vertex;
+}
+
+void TestVPAPI::model_addAndRemoveMaterial()
+{
+    ProjectProxy project;
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    QSignalSpy allMaterialsChanged(modelProxy, SIGNAL(allMaterialsChanged()));
+    MaterialRefObject *material = modelProxy->createMaterial();
+    QCOMPARE(material->parentModel(), modelProxy);
+    QCOMPARE(modelProxy->findMaterialByUuid(material->uuid()), material);
+    QVERIFY(modelProxy->allMaterialRefs().contains(material));
+    QCOMPARE(modelProxy->data()->count(IModel::kMaterial), 1);
+    QVERIFY(modelProxy->removeMaterial(material));
+    QVERIFY(!modelProxy->removeMaterial(material));
+    QCOMPARE(modelProxy->findMaterialByUuid(material->uuid()), static_cast<MaterialRefObject *>(0));
+    QVERIFY(!modelProxy->allMaterialRefs().contains(material));
+    QCOMPARE(modelProxy->data()->count(IModel::kMaterial), 0);
+    QCOMPARE(allMaterialsChanged.size(), 2);
+    delete material;
+}
+
+void TestVPAPI::model_addAndRemoveBone()
+{
+    ProjectProxy project;
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    QSignalSpy allBonesChanged(modelProxy, SIGNAL(allBonesChanged()));
+    BoneRefObject *bone = modelProxy->createBone();
+    QCOMPARE(bone->parentModel(), modelProxy);
+    QCOMPARE(modelProxy->findBoneByUuid(bone->uuid()), bone);
+    QVERIFY(modelProxy->allBoneRefs().contains(bone));
+    QCOMPARE(modelProxy->data()->count(IModel::kBone), 1);
+    QVERIFY(modelProxy->removeBone(bone));
+    QVERIFY(!modelProxy->removeBone(bone));
+    QCOMPARE(modelProxy->findBoneByUuid(bone->uuid()), static_cast<BoneRefObject *>(0));
+    QVERIFY(!modelProxy->allBoneRefs().contains(bone));
+    QCOMPARE(modelProxy->data()->count(IModel::kBone), 0);
+    QCOMPARE(allBonesChanged.size(), 2);
+    delete bone;
+}
+
+void TestVPAPI::model_addAndRemoveMorph()
+{
+    ProjectProxy project;
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    QSignalSpy allMorphsChanged(modelProxy, SIGNAL(allMorphsChanged()));
+    MorphRefObject *morph = modelProxy->createMorph();
+    QCOMPARE(morph->parentModel(), modelProxy);
+    QCOMPARE(modelProxy->findMorphByUuid(morph->uuid()), morph);
+    QVERIFY(modelProxy->allMorphRefs().contains(morph));
+    QCOMPARE(modelProxy->data()->count(IModel::kMorph), 1);
+    QVERIFY(modelProxy->removeMorph(morph));
+    QVERIFY(!modelProxy->removeMorph(morph));
+    QCOMPARE(modelProxy->findMorphByUuid(morph->uuid()), static_cast<MorphRefObject *>(0));
+    QVERIFY(!modelProxy->allMorphRefs().contains(morph));
+    QCOMPARE(modelProxy->data()->count(IModel::kMorph), 0);
+    QCOMPARE(allMorphsChanged.size(), 2);
+    delete morph;
+}
+
+void TestVPAPI::model_addAndRemoveLabel()
+{
+    ProjectProxy project;
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    QSignalSpy allLabelsChanged(modelProxy, SIGNAL(allLabelsChanged()));
+    LabelRefObject *label = modelProxy->createLabel();
+    QCOMPARE(label->parentModel(), modelProxy);
+    QVERIFY(modelProxy->allLabelRefs().contains(label));
+    QVERIFY(modelProxy->removeLabel(label));
+    QVERIFY(!modelProxy->removeLabel(label));
+    QVERIFY(!modelProxy->allLabelRefs().contains(label));
+    QCOMPARE(allLabelsChanged.size(), 2);
+    delete label;
+}
+
+void TestVPAPI::model_addAndRemoveRigidBody()
+{
+    ProjectProxy project;
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    QSignalSpy allRigidBodiesChanged(modelProxy, SIGNAL(allRigidBodiesChanged()));
+    RigidBodyRefObject *rigidBody = modelProxy->createRigidBody();
+    QCOMPARE(rigidBody->parentModel(), modelProxy);
+    QCOMPARE(modelProxy->findRigidBodyByUuid(rigidBody->uuid()), rigidBody);
+    QVERIFY(modelProxy->allRigidBodyRefs().contains(rigidBody));
+    QCOMPARE(modelProxy->data()->count(IModel::kRigidBody), 1);
+    QVERIFY(modelProxy->removeRigidBody(rigidBody));
+    QVERIFY(!modelProxy->removeRigidBody(rigidBody));
+    QCOMPARE(modelProxy->findMaterialByUuid(rigidBody->uuid()), static_cast<MaterialRefObject *>(0));
+    QVERIFY(!modelProxy->allRigidBodyRefs().contains(rigidBody));
+    QCOMPARE(modelProxy->data()->count(IModel::kRigidBody), 0);
+    QCOMPARE(allRigidBodiesChanged.size(), 2);
+    delete rigidBody;
+}
+
+void TestVPAPI::model_addAndRemoveJoint()
+{
+    ProjectProxy project;
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    QSignalSpy allJointsChanged(modelProxy, SIGNAL(allJointsChanged()));
+    JointRefObject *joint = modelProxy->createJoint();
+    QCOMPARE(joint->parentModel(), modelProxy);
+    QCOMPARE(modelProxy->findJointByUuid(joint->uuid()), joint);
+    QVERIFY(modelProxy->allJointRefs().contains(joint));
+    QCOMPARE(modelProxy->data()->count(IModel::kJoint), 1);
+    QVERIFY(modelProxy->removeJoint(joint));
+    QVERIFY(!modelProxy->removeJoint(joint));
+    QCOMPARE(modelProxy->findJointByUuid(joint->uuid()), static_cast<JointRefObject *>(0));
+    QVERIFY(!modelProxy->allJointRefs().contains(joint));
+    QCOMPARE(modelProxy->data()->count(IModel::kJoint), 0);
+    QCOMPARE(allJointsChanged.size(), 2);
+    delete joint;
+}
+
+void TestVPAPI::model_translateTransform()
+{
+    ProjectProxy project;
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    QSignalSpy transformDidBegin(modelProxy, SIGNAL(transformDidBegin()));
+    QSignalSpy targetBonesDidTranslate(modelProxy, SIGNAL(targetBonesDidTranslate()));
+    QSignalSpy transformDidCommit(modelProxy, SIGNAL(transformDidCommit()));
+    QSignalSpy transformDidDiscard(modelProxy, SIGNAL(transformDidDiscard()));
+    modelProxy->beginTransform(0);
+    QVERIFY(modelProxy->isMoving());
+    modelProxy->translate(1);
+    modelProxy->commitTransform();
+    QVERIFY(!modelProxy->isMoving());
+    modelProxy->beginTransform(0);
+    QVERIFY(modelProxy->isMoving());
+    modelProxy->translate(1);
+    modelProxy->discardTransform();
+    QVERIFY(!modelProxy->isMoving());
+    QCOMPARE(transformDidBegin.size(), 2);
+    QCOMPARE(targetBonesDidTranslate.size(), 2);
+    QCOMPARE(transformDidCommit.size(), 1);
+    QCOMPARE(transformDidDiscard.size(), 1);
+}
+
+void TestVPAPI::model_rotateTransform()
+{
+    ProjectProxy project;
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    QSignalSpy transformDidBegin(modelProxy, SIGNAL(transformDidBegin()));
+    QSignalSpy targetBonesDidRotate(modelProxy, SIGNAL(targetBonesDidRotate()));
+    QSignalSpy transformDidCommit(modelProxy, SIGNAL(transformDidCommit()));
+    QSignalSpy transformDidDiscard(modelProxy, SIGNAL(transformDidDiscard()));
+    modelProxy->beginTransform(0);
+    QVERIFY(modelProxy->isMoving());
+    modelProxy->rotate(1);
+    modelProxy->commitTransform();
+    QVERIFY(!modelProxy->isMoving());
+    modelProxy->beginTransform(0);
+    QVERIFY(modelProxy->isMoving());
+    modelProxy->rotate(1);
+    modelProxy->discardTransform();
+    QVERIFY(!modelProxy->isMoving());
+    QCOMPARE(transformDidBegin.size(), 2);
+    QCOMPARE(targetBonesDidRotate.size(), 2);
+    QCOMPARE(transformDidCommit.size(), 1);
+    QCOMPARE(transformDidDiscard.size(), 1);
+}
+
+void TestVPAPI::model_release()
+{
+    ProjectProxy project;
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    project.addModel(modelProxy);
+    modelProxy->release();
+    model.reset(project.factoryInstanceRef()->newModel(IModel::kPMXModel));
+    ModelProxy *modelProxy2 = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    modelProxy2->release();
+    qApp->processEvents();
 }
 
 void TestVPAPI::motion_addAndRemoveCameraKeyframe()

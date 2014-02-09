@@ -609,7 +609,7 @@ LabelRefObject *ModelProxy::createLabel()
     QScopedPointer<ILabel> label(m_model->createLabel());
     QScopedPointer<LabelRefObject> labelRef(new LabelRefObject(this, label.data()));
     m_allLabels.append(labelRef.data());
-    m_model->addLabel(label.data());
+    m_model->addLabel(label.take());
     emit allLabelsChanged();
     return labelRef.take();
 }
@@ -746,7 +746,7 @@ bool ModelProxy::removeLabel(LabelRefObject *value)
 {
     Q_ASSERT(m_model);
     Q_ASSERT(value);
-    // m_model->removeLabel(label->data());
+    m_model->removeLabel(value->data());
     if (m_allLabels.removeOne(value)) {
         emit allLabelsChanged();
         return true;

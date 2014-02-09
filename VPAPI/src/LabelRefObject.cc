@@ -133,6 +133,11 @@ QJsonValue LabelRefObject::toJson() const
     return v;
 }
 
+ILabel *LabelRefObject::data() const
+{
+    return m_labelRef;
+}
+
 ModelProxy *LabelRefObject::parentModel() const
 {
     return m_parentModelRef;
