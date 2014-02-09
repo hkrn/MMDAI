@@ -107,7 +107,7 @@ namespace pmx
 {
 
 struct Morph::PrivateContext {
-    PrivateContext(IModel *modelRef)
+    PrivateContext(Model *modelRef)
         : parentModelRef(modelRef),
           namePtr(0),
           englishNamePtr(0),
@@ -490,7 +490,7 @@ struct Morph::PrivateContext {
     PointerArray<Group> groups;
     PointerArray<Flip> flips;
     PointerArray<Impulse> impulses;
-    IModel *parentModelRef;
+    Model *parentModelRef;
     IString *namePtr;
     IString *englishNamePtr;
     Array<PropertyEventListener *> eventRefs;
@@ -503,7 +503,7 @@ struct Morph::PrivateContext {
     bool dirty;
 };
 
-Morph::Morph(IModel *modelRef)
+Morph::Morph(Model *modelRef)
     : m_context(new PrivateContext(modelRef))
 {
 }
@@ -1040,6 +1040,7 @@ const IString *Morph::name(IEncoding::LanguageType type) const
 
 void Morph::setName(const IString *value, IEncoding::LanguageType type)
 {
+    m_context->parentModelRef->removeMorph(this);
     switch (type) {
     case IEncoding::kDefaultLanguage:
     case IEncoding::kJapanese:
@@ -1057,6 +1058,7 @@ void Morph::setName(const IString *value, IEncoding::LanguageType type)
     default:
         break;
     }
+    m_context->parentModelRef->addMorphHash(this);
 }
 
 IModel *Morph::parentModelRef() const

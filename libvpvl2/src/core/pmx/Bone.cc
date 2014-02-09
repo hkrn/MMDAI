@@ -89,8 +89,8 @@ namespace pmx
 {
 
 struct Bone::PrivateContext {
-    PrivateContext(IModel *modelRef)
-        : modelRef(modelRef),
+    PrivateContext(Model *modelRef)
+        : parentModelRef(modelRef),
           parentBoneRef(0),
           effectorBoneRef(0),
           parentInherentBoneRef(0),
@@ -130,7 +130,7 @@ struct Bone::PrivateContext {
         constraints.releaseAll();
         internal::deleteObject(namePtr);
         internal::deleteObject(englishNamePtr);
-        modelRef = 0;
+        parentModelRef = 0;
         parentBoneRef = 0;
         effectorBoneRef = 0;
         parentInherentBoneRef = 0;
@@ -239,7 +239,7 @@ struct Bone::PrivateContext {
         }
     }
 
-    IModel *modelRef;
+    Model *parentModelRef;
     PointerArray<IKConstraint> constraints;
     Bone *parentBoneRef;
     Bone *effectorBoneRef;
@@ -277,7 +277,7 @@ struct Bone::PrivateContext {
     bool enableInverseKinematics;
 };
 
-Bone::Bone(IModel *modelRef)
+Bone::Bone(Model *modelRef)
     : m_context(new PrivateContext(modelRef))
 {
 }
@@ -954,7 +954,7 @@ void Bone::setLocalOrientation(const Quaternion &value)
 
 IModel *Bone::parentModelRef() const
 {
-    return m_context->modelRef;
+    return m_context->parentModelRef;
 }
 
 IBone *Bone::parentBoneRef() const
@@ -1141,7 +1141,7 @@ void Bone::setLocalTransform(const Transform &value)
 
 void Bone::setParentBoneRef(IBone *value)
 {
-    if (!value || (value && value->parentModelRef() == m_context->modelRef)) {
+    if (!value || (value && value->parentModelRef() == m_context->parentModelRef)) {
         m_context->parentBoneRef = static_cast<Bone *>(value);
         m_context->parentBoneIndex = value ? value->index() : -1;
     }
@@ -1149,7 +1149,7 @@ void Bone::setParentBoneRef(IBone *value)
 
 void Bone::setParentInherentBoneRef(IBone *value)
 {
-    if (!value || (value && value->parentModelRef() == m_context->modelRef)) {
+    if (!value || (value && value->parentModelRef() == m_context->parentModelRef)) {
         m_context->parentInherentBoneRef = static_cast<Bone *>(value);
         m_context->parentInherentBoneIndex = value ? value->index() : -1;
     }
@@ -1164,7 +1164,7 @@ void Bone::setInherentCoefficient(float32 value)
 
 void Bone::setEffectorBoneRef(IBone *effector, int numIteration, float angleLimit)
 {
-    if (!effector || (effector && effector->parentModelRef() == m_context->modelRef)) {
+    if (!effector || (effector && effector->parentModelRef() == m_context->parentModelRef)) {
         m_context->effectorBoneRef = static_cast<Bone *>(effector);
         m_context->effectorBoneIndex = effector ? effector->index() : -1;
         m_context->numIteration = numIteration;
@@ -1174,7 +1174,7 @@ void Bone::setEffectorBoneRef(IBone *effector, int numIteration, float angleLimi
 
 void Bone::setDestinationOriginBoneRef(IBone *value)
 {
-    if (!value || (value && value->parentModelRef() == m_context->modelRef)) {
+    if (!value || (value && value->parentModelRef() == m_context->parentModelRef)) {
         m_context->destinationOriginBoneRef = static_cast<Bone *>(value);
         m_context->destinationOriginBoneIndex = value ? value->index() : -1;
         internal::toggleFlag(kHasDestinationOrigin, value ? true : false, m_context->flags);
@@ -1183,6 +1183,7 @@ void Bone::setDestinationOriginBoneRef(IBone *value)
 
 void Bone::setName(const IString *value, IEncoding::LanguageType type)
 {
+    m_context->parentModelRef->removeBoneHash(this);
     switch (type) {
     case IEncoding::kDefaultLanguage:
     case IEncoding::kJapanese:
@@ -1200,6 +1201,7 @@ void Bone::setName(const IString *value, IEncoding::LanguageType type)
     default:
         break;
     }
+    m_context->parentModelRef->addBoneHash(this);
 }
 
 void Bone::setOrigin(const Vector3 &value)

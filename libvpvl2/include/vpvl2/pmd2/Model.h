@@ -204,6 +204,10 @@ public:
     void removeVertex(IVertex *value);
     IProgressReporter *progressReporterRef() const;
     void setProgressReporterRef(IProgressReporter *value);
+    void addBoneHash(Bone *bone);
+    void removeBoneHash(const Bone *bone);
+    void addMorphHash(Morph *morph);
+    void removeMorphHash(const Morph *morph);
 
     const PointerArray<Vertex> &vertices() const;
     const Array<int> &indices() const;

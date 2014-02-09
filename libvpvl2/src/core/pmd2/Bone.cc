@@ -317,6 +317,7 @@ const IString *Bone::name(IEncoding::LanguageType type) const
 
 void Bone::setName(const IString *value, IEncoding::LanguageType type)
 {
+    m_context->parentModelRef->removeBoneHash(this);
     switch (type) {
     case IEncoding::kDefaultLanguage:
     case IEncoding::kJapanese:
@@ -334,6 +335,7 @@ void Bone::setName(const IString *value, IEncoding::LanguageType type)
     default:
         break;
     }
+    m_context->parentModelRef->addBoneHash(this);
 }
 
 int Bone::index() const

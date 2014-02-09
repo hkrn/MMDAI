@@ -78,7 +78,7 @@ public:
     /**
      * Constructor
      */
-    Bone(IModel *modelRef);
+    Bone(Model *modelRef);
     ~Bone();
 
     static bool preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info);

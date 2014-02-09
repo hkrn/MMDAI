@@ -1909,6 +1909,12 @@ void Model::setIndices(const Array<int> &value)
 void Model::addBone(IBone *value)
 {
     internal::ModelHelper::addObject(this, value, m_context->bones);
+    if (const IString *name = value->name(IEncoding::kJapanese)) {
+        m_context->name2boneRefs.insert(name->toHashString(), value);
+    }
+    if (const IString *name = value->name(IEncoding::kEnglish)) {
+        m_context->name2boneRefs.insert(name->toHashString(), value);
+    }
     Bone::sortBones(m_context->bones, m_context->bonesBeforePhysics, m_context->bonesAfterPhysics);
 }
 
@@ -1930,6 +1936,12 @@ void Model::addMaterial(IMaterial *value)
 void Model::addMorph(IMorph *value)
 {
     internal::ModelHelper::addObject(this, value, m_context->morphs);
+    if (const IString *name = value->name(IEncoding::kJapanese)) {
+        m_context->name2morphRefs.insert(name->toHashString(), value);
+    }
+    if (const IString *name = value->name(IEncoding::kEnglish)) {
+        m_context->name2morphRefs.insert(name->toHashString(), value);
+    }
 }
 
 void Model::addRigidBody(IRigidBody *value)
@@ -1995,6 +2007,49 @@ IProgressReporter *Model::progressReporterRef() const
 void Model::setProgressReporterRef(IProgressReporter *value)
 {
     m_context->progressReporterRef = value;
+}
+
+void Model::addBoneHash(Bone *bone)
+{
+    VPVL2_DCHECK(bone);
+    if (const IString *name = bone->name(IEncoding::kJapanese)) {
+        m_context->name2boneRefs.insert(name->toHashString(), bone);
+    }
+    if (const IString *name = bone->name(IEncoding::kEnglish)) {
+        m_context->name2boneRefs.insert(name->toHashString(), bone);
+    }
+}
+
+void Model::removeBoneHash(const Bone *bone)
+{
+    VPVL2_DCHECK(bone);
+    if (const IString *name = bone->name(IEncoding::kJapanese)) {
+        m_context->name2boneRefs.remove(name->toHashString());
+    }
+    if (const IString *name = bone->name(IEncoding::kEnglish)) {
+        m_context->name2boneRefs.remove(name->toHashString());
+    }
+}
+
+void Model::addMorphHash(Morph *morph)
+{
+    if (const IString *name = morph->name(IEncoding::kJapanese)) {
+        m_context->name2morphRefs.insert(name->toHashString(), morph);
+    }
+    if (const IString *name = morph->name(IEncoding::kEnglish)) {
+        m_context->name2morphRefs.insert(name->toHashString(), morph);
+    }
+}
+
+void Model::removeMorphHash(const Morph *morph)
+{
+    VPVL2_DCHECK(morph);
+    if (const IString *name = morph->name(IEncoding::kJapanese)) {
+        m_context->name2boneRefs.remove(name->toHashString());
+    }
+    if (const IString *name = morph->name(IEncoding::kEnglish)) {
+        m_context->name2boneRefs.remove(name->toHashString());
+    }
 }
 
 int Model::addTexture(const IString *value)

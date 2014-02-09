@@ -310,6 +310,7 @@ const IString *Morph::name(IEncoding::LanguageType type) const
 
 void Morph::setName(const IString *value, IEncoding::LanguageType type)
 {
+    m_context->parentModelRef->removeMorphHash(this);
     switch (type) {
     case IEncoding::kDefaultLanguage:
     case IEncoding::kJapanese:
@@ -327,6 +328,7 @@ void Morph::setName(const IString *value, IEncoding::LanguageType type)
     default:
         break;
     }
+    m_context->parentModelRef->addMorphHash(this);
 }
 
 void Morph::addEventListenerRef(PropertyEventListener *value)

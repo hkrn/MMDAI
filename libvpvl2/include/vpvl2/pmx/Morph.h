@@ -59,7 +59,7 @@ namespace pmx
 class VPVL2_API Morph VPVL2_DECL_FINAL : public IMorph
 {
 public:
-    Morph(IModel *modelRef);
+    Morph(Model *modelRef);
     ~Morph();
 
     static bool preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info);
