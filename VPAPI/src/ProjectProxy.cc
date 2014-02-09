@@ -885,7 +885,7 @@ void ProjectProxy::resetAllBones(ModelProxy *model)
                 boneRef->setLocalTranslation(boneRef->originLocalTranslation());
                 boneRef->setLocalOrientation(boneRef->originLocalOrientation());
                 resetIKEffectorBones(boneRef);
-                motionProxy->updateKeyframe(boneRef, static_cast<qint64>(m_currentTimeIndex), command.data());
+                motionProxy->updateKeyframe(boneRef, static_cast<quint64>(m_currentTimeIndex), command.data());
             }
             motionProxy->undoStack()->push(command.take());
             motionProxy->setDirty(true);

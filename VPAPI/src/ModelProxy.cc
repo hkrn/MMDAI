@@ -1373,7 +1373,13 @@ void ModelProxy::initializeMorphs(const Array<ILabel *> &labelRefs, const IModel
         const int nmorphs = morphRefs.count();
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morphRef = morphRefs[i];
-            if (morphRef->name(IEncoding::kJapanese)->equals(opacityMorphName)) {
+            const QUuid uuid = QUuid::createUuid();
+            MorphRefObject *morphObject = new MorphRefObject(this, 0, morphRef, uuid);
+            m_allMorphs.append(morphObject);
+            m_morph2Refs.insert(morphRef, morphObject);
+            m_name2MorphRefs.insert(morphObject->name(), morphObject);
+            m_uuid2MorphRefs.insert(uuid, morphObject);
+            if (morphRef->name(IEncoding::kDefaultLanguage)->equals(opacityMorphName)) {
                 morphRef->setWeight(1);
             }
         }

@@ -101,8 +101,6 @@ public:
     void assignModel(ModelProxy *modelProxy, const vpvl2::Factory *factoryRef);
     void setCameraMotionTrack(CameraMotionTrack *track, const vpvl2::Factory *factoryRef);
     void setLightMotionTrack(LightMotionTrack *track, const vpvl2::Factory *factoryRef);
-    void refreshBoneTracks();
-    void refreshMorphTracks();
 
     Q_INVOKABLE bool save(const QUrl &fileUrl);
     Q_INVOKABLE qreal differenceTimeIndex(qreal value) const;
@@ -111,7 +109,7 @@ public:
     Q_INVOKABLE BoneMotionTrack *findBoneMotionTrack(const QString &name) const;
     Q_INVOKABLE MorphMotionTrack *findMorphMotionTrack(const MorphRefObject *value) const;
     Q_INVOKABLE MorphMotionTrack *findMorphMotionTrack(const QString &name) const;
-    Q_INVOKABLE BaseKeyframeRefObject *resolveKeyframeAt(const qint64 &timeIndex, QObject *opaque) const;
+    Q_INVOKABLE BaseKeyframeRefObject *resolveKeyframeAt(const quint64 &timeIndex, QObject *opaque) const;
 
     vpvl2::IMotion *data() const;
     ProjectProxy *parentProject() const;
@@ -133,7 +131,7 @@ signals:
     void keyframeDidAdd(BaseKeyframeRefObject *keyframe);
     void keyframeDidRemove(BaseKeyframeRefObject *keyframe);
     void keyframeDidReplace(BaseKeyframeRefObject *dst, BaseKeyframeRefObject *src);
-    void timeIndexDidChange(BaseKeyframeRefObject *keyframe, qint64 newTimeIndex, qint64 oldTimeIndex);
+    void timeIndexDidChange(BaseKeyframeRefObject *keyframe, quint64 newTimeIndex, quint64 oldTimeIndex);
     void canPasteChanged();
     void dirtyChanged();
     void motionWillLoad(int numEstimatedKeyframes);
@@ -142,19 +140,20 @@ signals:
 
 public slots:
     Q_INVOKABLE void applyParentModel();
-    Q_INVOKABLE void addKeyframe(QObject *opaque, const qint64 &timeIndex, QUndoCommand *parent = 0);
-    Q_INVOKABLE void updateKeyframe(QObject *opaque, const qint64 &timeIndex, QUndoCommand *parent = 0);
+    Q_INVOKABLE void addKeyframe(QObject *opaque, const quint64 &timeIndex, QUndoCommand *parent = 0);
+    Q_INVOKABLE void updateKeyframe(QObject *opaque, const quint64 &timeIndex, QUndoCommand *parent = 0);
     Q_INVOKABLE void updateKeyframeInterpolation(QObject *opaque, const QVector4D &value, int type, QUndoCommand *parent = 0);
     Q_INVOKABLE void removeKeyframe(QObject *opaque, QUndoCommand *parent = 0);
     Q_INVOKABLE void removeAllSelectedKeyframes(QUndoCommand *parent = 0);
-    Q_INVOKABLE void removeAllKeyframesAt(const qint64 &timeIndex, QUndoCommand *parent = 0);
-    Q_INVOKABLE void removeAllKeyframesIn(const QList<qint64> &timeIndices, QUndoCommand *parent = 0);
+    Q_INVOKABLE void removeAllKeyframesAt(const quint64 &timeIndex, QUndoCommand *parent = 0);
+    Q_INVOKABLE void removeAllKeyframesIn(const QList<quint64> &timeIndices, QUndoCommand *parent = 0);
     Q_INVOKABLE void copyKeyframes();
-    Q_INVOKABLE void pasteKeyframes(const qint64 &timeIndex, bool inversed, QUndoCommand *parent = 0);
+    Q_INVOKABLE void pasteKeyframes(const quint64 &timeIndex, bool inversed, QUndoCommand *parent = 0);
     Q_INVOKABLE void cutKeyframes(QUndoCommand *parent = 0);
-    Q_INVOKABLE void mergeKeyframes(const QList<QObject *> &keyframes, const qint64 &newTimeIndex, const qint64 &oldTimeIndex, QUndoCommand *parent = 0);
-    Q_INVOKABLE void scaleBoneKeyframes(const QVector3D &translationScaleFactor, const QVector3D &orientationScaleFactor, QUndoCommand *parent = 0);
-    Q_INVOKABLE void scaleMorphKeyframes(const qreal &scaleFactor, QUndoCommand *parent = 0);
+    Q_INVOKABLE void mergeKeyframes(const QList<QObject *> &keyframes, const quint64 &newTimeIndex, const quint64 &oldTimeIndex, QUndoCommand *parent = 0);
+    Q_INVOKABLE void translateAllBoneKeyframes(const QVector3D &value, QUndoCommand *parent = 0);
+    Q_INVOKABLE void scaleAllBoneKeyframes(const QVector3D &translationScaleFactor, const QVector3D &orientationScaleFactor, QUndoCommand *parent = 0);
+    Q_INVOKABLE void scaleAllMorphKeyframes(const qreal &scaleFactor, QUndoCommand *parent = 0);
     Q_INVOKABLE void refresh();
 
 private:
@@ -162,10 +161,10 @@ private:
     CameraKeyframeRefObject *addCameraKeyframe(const CameraRefObject *value) const;
     LightKeyframeRefObject *addLightKeyframe(const LightRefObject *value) const;
     MorphKeyframeRefObject *addMorphKeyframe(const MorphRefObject *value) const;
-    QUndoCommand *updateOrAddKeyframeFromBone(const BoneRefObject *boneRef, const qint64 &timeIndex, QUndoCommand *parent);
-    QUndoCommand *updateOrAddKeyframeFromCamera(CameraRefObject *cameraRef, const qint64 &timeIndex, QUndoCommand *parent);
-    QUndoCommand *updateOrAddKeyframeFromLight(LightRefObject *lightRef, const qint64 &timeIndex, QUndoCommand *parent);
-    QUndoCommand *updateOrAddKeyframeFromMorph(const MorphRefObject *morphRef, const qint64 &timeIndex, QUndoCommand *parent);
+    QUndoCommand *updateOrAddKeyframeFromBone(const BoneRefObject *boneRef, const quint64 &timeIndex, QUndoCommand *parent);
+    QUndoCommand *updateOrAddKeyframeFromCamera(CameraRefObject *cameraRef, const quint64 &timeIndex, QUndoCommand *parent);
+    QUndoCommand *updateOrAddKeyframeFromLight(LightRefObject *lightRef, const quint64 &timeIndex, QUndoCommand *parent);
+    QUndoCommand *updateOrAddKeyframeFromMorph(const MorphRefObject *morphRef, const quint64 &timeIndex, QUndoCommand *parent);
     void loadBoneTrackBundle(vpvl2::IMotion *motionRef, int numBoneKeyframes, int numEstimatedKeyframes, int &numLoadedKeyframes);
     void loadMorphTrackBundle(vpvl2::IMotion *motionRef, int numMorphKeyframes, int numEstimatedKeyframes, int &numLoadedKeyframes);
     void removeKeyframes(const QList<BaseKeyframeRefObject *> &keyframes, QUndoCommand *parent);

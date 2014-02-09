@@ -172,8 +172,8 @@ public:
     typedef QPair<BaseKeyframeRefObject *, BaseKeyframeRefObject *> Pair;
 
     MergeKeyframeCommand(const QList<Pair> &keyframes,
-                         const qint64 &newTimeIndex,
-                         const qint64 &oldTimeIndex,
+                         const quint64 &newTimeIndex,
+                         const quint64 &oldTimeIndex,
                          QUndoCommand *parent)
         : QUndoCommand(parent),
           m_keyframes(keyframes),
@@ -210,8 +210,8 @@ public:
 
 private:
     const QList<Pair> m_keyframes;
-    const qint64 m_newTimeIndex;
-    const qint64 m_oldTimeIndex;
+    const quint64 m_newTimeIndex;
+    const quint64 m_oldTimeIndex;
 };
 
 class UpdateBoneKeyframeCommand : public QUndoCommand {
@@ -231,7 +231,10 @@ public:
         initialize(keyframeRefs, motionProxy);
     }
     ~UpdateBoneKeyframeCommand() {
-        foreach (BoneKeyframeRefObject *newKeyframe, m_newKeyframes) {
+        QHashIterator<BoneKeyframeRefObject *, BoneKeyframeRefObject *> it(m_new2oldKeyframeRefs);
+        while (it.hasNext()) {
+            it.next();
+            BoneKeyframeRefObject *newKeyframe = it.key();
             if (!newKeyframe->parentTrack()->contains(newKeyframe)) {
                 delete newKeyframe;
             }
@@ -240,22 +243,28 @@ public:
     }
 
     virtual void undo() {
-        foreach (BoneKeyframeRefObject *keyframeRef, m_oldKeyframeRefs) {
+        QHashIterator<BoneKeyframeRefObject *, BoneKeyframeRefObject *> it(m_old2newKeyframeRefs);
+        while (it.hasNext()) {
+            it.next();
+            BoneKeyframeRefObject *keyframeRef = it.key();
             BoneMotionTrack *track = qobject_cast<BoneMotionTrack *>(keyframeRef->parentTrack());
             Q_ASSERT(track);
             track->replace(keyframeRef, m_old2newKeyframeRefs.value(keyframeRef), false);
             setLocalTransform(keyframeRef);
         }
-        m_motionProxyRef->refreshBoneTracks();
+        refreshTracks();
     }
     virtual void redo() {
-        foreach (BoneKeyframeRefObject *newKeyframe, m_newKeyframes) {
+        QHashIterator<BoneKeyframeRefObject *, BoneKeyframeRefObject *> it(m_new2oldKeyframeRefs);
+        while (it.hasNext()) {
+            it.next();
+            BoneKeyframeRefObject *newKeyframe = it.key();
             BoneMotionTrack *track = qobject_cast<BoneMotionTrack *>(newKeyframe->parentTrack());
             Q_ASSERT(track);
             track->replace(newKeyframe, m_new2oldKeyframeRefs.value(newKeyframe), false);
             setLocalTransform(newKeyframe);
         }
-        m_motionProxyRef->refreshBoneTracks();
+        refreshTracks();
     }
 
 private:
@@ -269,12 +278,17 @@ private:
             BoneRefObject *boneRef = modelProxyRef->findBoneByName(track->name());
             newKeyframeRef->setLocalTranslation(boneRef->rawLocalTranslation());
             newKeyframeRef->setLocalOrientation(boneRef->rawLocalOrientation());
+            m_tracks.insert(keyframeRef->parentTrack());
             m_old2newKeyframeRefs.insert(keyframeRef, newKeyframe.data());
-            m_new2oldKeyframeRefs.insert(newKeyframe.data(), keyframeRef);
-            m_newKeyframes.append(newKeyframe.take());
-            m_oldKeyframeRefs.append(keyframeRef);
+            m_new2oldKeyframeRefs.insert(newKeyframe.take(), keyframeRef);
         }
         setText(QApplication::tr("Update Bone Keyframe(s)"));
+    }
+    void refreshTracks() {
+        foreach (BaseMotionTrack *track, m_tracks) {
+            track->sort();
+        }
+        m_motionProxyRef->data()->update(IKeyframe::kBoneKeyframe);
     }
     void setLocalTransform(const BoneKeyframeRefObject *boneKeyframeRef) {
         if (BoneRefObject *boneRef = m_motionProxyRef->parentModel()->findBoneByName(boneKeyframeRef->name())) {
@@ -286,8 +300,7 @@ private:
 
     QHash<BoneKeyframeRefObject *, BoneKeyframeRefObject *> m_old2newKeyframeRefs;
     QHash<BoneKeyframeRefObject *, BoneKeyframeRefObject *> m_new2oldKeyframeRefs;
-    QList<BoneKeyframeRefObject *> m_newKeyframes;
-    QList<BoneKeyframeRefObject *> m_oldKeyframeRefs;
+    QSet<BaseMotionTrack *> m_tracks;
     MotionProxy *m_motionProxyRef;
 };
 
@@ -412,7 +425,10 @@ public:
         initialize(keyframeRefs, motionProxy);
     }
     ~UpdateMorphKeyframeCommand() {
-        foreach (MorphKeyframeRefObject *newKeyframe, m_newKeyframes) {
+        QHashIterator<MorphKeyframeRefObject *, MorphKeyframeRefObject *> it(m_new2oldKeyframeRefs);
+        while (it.hasNext()) {
+            it.next();
+            MorphKeyframeRefObject *newKeyframe = it.key();
             if (!newKeyframe->parentTrack()->contains(newKeyframe)) {
                 delete newKeyframe;
             }
@@ -421,22 +437,28 @@ public:
     }
 
     virtual void undo() {
-        foreach (MorphKeyframeRefObject *keyframeRef, m_oldKeyframeRefs) {
+        QHashIterator<MorphKeyframeRefObject *, MorphKeyframeRefObject *> it(m_old2newKeyframeRefs);
+        while (it.hasNext()) {
+            it.next();
+            MorphKeyframeRefObject *keyframeRef = it.key();
             MorphMotionTrack *track = qobject_cast<MorphMotionTrack *>(keyframeRef->parentTrack());
             Q_ASSERT(track);
             track->replace(keyframeRef, m_old2newKeyframeRefs.value(keyframeRef), false);
             setWeight(keyframeRef);
         }
-        m_motionProxyRef->refreshMorphTracks();
+        refreshTracks();
     }
     virtual void redo() {
-        foreach (MorphKeyframeRefObject *newKeyframe, m_newKeyframes) {
+        QHashIterator<MorphKeyframeRefObject *, MorphKeyframeRefObject *> it(m_new2oldKeyframeRefs);
+        while (it.hasNext()) {
+            it.next();
+            MorphKeyframeRefObject *newKeyframe = it.key();
             MorphMotionTrack *track = qobject_cast<MorphMotionTrack *>(newKeyframe->parentTrack());
             Q_ASSERT(track);
             track->replace(newKeyframe, m_new2oldKeyframeRefs.value(newKeyframe), false);
             setWeight(newKeyframe);
         }
-        m_motionProxyRef->refreshMorphTracks();
+        refreshTracks();
     }
 
 private:
@@ -449,12 +471,17 @@ private:
             IMorphKeyframe *newKeyframeRef = newKeyframe->data();
             MorphRefObject *morphRef = modelProxyRef->findMorphByName(track->name());
             newKeyframeRef->setWeight(morphRef->weight());
+            m_tracks.insert(keyframeRef->parentTrack());
             m_old2newKeyframeRefs.insert(keyframeRef, newKeyframe.data());
-            m_new2oldKeyframeRefs.insert(newKeyframe.data(), keyframeRef);
-            m_newKeyframes.append(newKeyframe.take());
-            m_oldKeyframeRefs.append(keyframeRef);
+            m_new2oldKeyframeRefs.insert(newKeyframe.take(), keyframeRef);
         }
         setText(QApplication::tr("Update Morph Keyframe(s)"));
+    }
+    void refreshTracks() {
+        foreach (BaseMotionTrack *track, m_tracks) {
+            track->sort();
+        }
+        m_motionProxyRef->data()->update(IKeyframe::kMorphKeyframe);
     }
     void setWeight(const MorphKeyframeRefObject *morphKeyframeRef) {
         if (MorphRefObject *morphRef = m_motionProxyRef->parentModel()->findMorphByName(morphKeyframeRef->name())) {
@@ -465,8 +492,7 @@ private:
 
     QHash<MorphKeyframeRefObject *, MorphKeyframeRefObject *> m_old2newKeyframeRefs;
     QHash<MorphKeyframeRefObject *, MorphKeyframeRefObject *> m_new2oldKeyframeRefs;
-    QList<MorphKeyframeRefObject *> m_newKeyframes;
-    QList<MorphKeyframeRefObject *> m_oldKeyframeRefs;
+    QSet<BaseMotionTrack *> m_tracks;
     MotionProxy *m_motionProxyRef;
 };
 
@@ -672,132 +698,161 @@ private:
     QList<BaseKeyframeRefObject *> m_cutKeyframes;
 };
 
-class ScaleBoneKeyframesCommand : public QUndoCommand {
+template<typename TTrack, typename TKeyframeRefObject, typename TKeyframe>
+class BaseAllKeyframesCommand : public QUndoCommand {
 public:
-    ScaleBoneKeyframesCommand(MotionProxy *motionProxyRef,
-                              const QVector3D &translationScaleFactor,
-                              const QVector3D &orientationScaleFactor,
-                              QUndoCommand *parent)
-        : QUndoCommand(parent),
+    BaseAllKeyframesCommand(QUndoCommand *parent)
+        : QUndoCommand(parent)
+    {
+    }
+    virtual ~BaseAllKeyframesCommand() {
+        qDeleteAll(m_keyframes);
+        m_keyframes.clear();
+    }
+
+    void saveAllKeyframes(const QHash<QString, TTrack *> &trackBundle) {
+        QHashIterator<QString, TTrack *> it(trackBundle);
+        while (it.hasNext()) {
+            it.next();
+            const TTrack *track = it.value();
+            foreach (BaseKeyframeRefObject *item, track->keyframes()) {
+                TKeyframeRefObject *keyframe = qobject_cast<TKeyframeRefObject *>(item);
+                Q_ASSERT(keyframe);
+                m_keyframes.insert(keyframe, keyframe->data()->clone());
+            }
+        }
+    }
+    void handleUndo(const QHash<QString, TTrack *> &trackBundle) {
+        QHashIterator<QString, TTrack *> it(trackBundle);
+        QByteArray bytes;
+        while (it.hasNext()) {
+            it.next();
+            const TTrack *track = it.value();
+            foreach (BaseKeyframeRefObject *item, track->keyframes()) {
+                TKeyframeRefObject *keyframe = qobject_cast<TKeyframeRefObject *>(item);
+                Q_ASSERT(keyframe);
+                if (const TKeyframe *k = m_keyframes.value(keyframe)) {
+                    bytes.resize(k->estimateSize());
+                    k->write(reinterpret_cast<uint8 *>(bytes.data()));
+                    keyframe->data()->read(reinterpret_cast<const uint8 *>(bytes.constData()));
+                }
+            }
+        }
+    }
+    void handleRedo(const QHash<QString, TTrack *> &trackBundle) {
+        QHashIterator<QString, TTrack *> it(trackBundle);
+        while (it.hasNext()) {
+            it.next();
+            const TTrack *track = it.value();
+            foreach (BaseKeyframeRefObject *item, track->keyframes()) {
+                TKeyframeRefObject *keyframe = qobject_cast<TKeyframeRefObject *>(item);
+                Q_ASSERT(keyframe);
+                //keyframe->setLocalTranslation(keyframe->localTranslation() + m_translation);
+            }
+        }
+    }
+
+protected:
+    virtual void handleKeyframe(TKeyframeRefObject *value) = 0;
+
+    QHash<const TKeyframeRefObject *, TKeyframe *> m_keyframes;
+};
+
+class TranslateAllBoneKeyframesCommand : public BaseAllKeyframesCommand<BoneMotionTrack, BoneKeyframeRefObject, vpvl2::IBoneKeyframe> {
+public:
+    TranslateAllBoneKeyframesCommand(MotionProxy *motionProxyRef,
+                                     const QVector3D &value,
+                                     QUndoCommand *parent)
+        : BaseAllKeyframesCommand<BoneMotionTrack, BoneKeyframeRefObject, vpvl2::IBoneKeyframe>(parent),
+          m_motionProxyRef(motionProxyRef),
+          m_translation(value)
+    {
+        saveAllKeyframes(m_motionProxyRef->boneMotionTrackBundle());
+        setText(QApplication::tr("Scale Bone Keyframes"));
+    }
+    ~TranslateAllBoneKeyframesCommand() {
+    }
+
+    virtual void undo() {
+        handleUndo(m_motionProxyRef->boneMotionTrackBundle());
+    }
+    virtual void redo() {
+        handleRedo(m_motionProxyRef->boneMotionTrackBundle());
+    }
+
+private:
+    void handleKeyframe(BoneKeyframeRefObject *value) {
+        value->setLocalTranslation(value->localTranslation() + m_translation);
+    }
+
+    MotionProxy *m_motionProxyRef;
+    const QVector3D m_translation;
+};
+
+class ScaleAllBoneKeyframesCommand : public BaseAllKeyframesCommand<BoneMotionTrack, BoneKeyframeRefObject, vpvl2::IBoneKeyframe> {
+public:
+    ScaleAllBoneKeyframesCommand(MotionProxy *motionProxyRef,
+                                 const QVector3D &translationScaleFactor,
+                                 const QVector3D &orientationScaleFactor,
+                                 QUndoCommand *parent)
+        : BaseAllKeyframesCommand<BoneMotionTrack, BoneKeyframeRefObject, vpvl2::IBoneKeyframe>(parent),
           m_motionProxyRef(motionProxyRef),
           m_translationScaleFactor(translationScaleFactor),
           m_orientationScaleFactor(orientationScaleFactor)
     {
-        QHashIterator<QString, BoneMotionTrack *> it(m_motionProxyRef->boneMotionTrackBundle());
-        while (it.hasNext()) {
-            it.next();
-            BoneMotionTrack *track = it.value();
-            foreach (BaseKeyframeRefObject *item, track->keyframes()) {
-                BoneKeyframeRefObject *keyframe = qobject_cast<BoneKeyframeRefObject *>(item);
-                Q_ASSERT(keyframe);
-                m_keyframes.insert(keyframe, keyframe->data()->clone());
-            }
-        }
+        saveAllKeyframes(m_motionProxyRef->boneMotionTrackBundle());
         setText(QApplication::tr("Scale Bone Keyframes"));
     }
-    ~ScaleBoneKeyframesCommand() {
-        qDeleteAll(m_keyframes);
-        m_keyframes.clear();
+    ~ScaleAllBoneKeyframesCommand() {
     }
 
     virtual void undo() {
-        QHashIterator<QString, BoneMotionTrack *> it(m_motionProxyRef->boneMotionTrackBundle());
-        QByteArray bytes;
-        while (it.hasNext()) {
-            it.next();
-            BoneMotionTrack *track = it.value();
-            foreach (BaseKeyframeRefObject *item, track->keyframes()) {
-                BoneKeyframeRefObject *keyframe = qobject_cast<BoneKeyframeRefObject *>(item);
-                Q_ASSERT(keyframe);
-                if (const vpvl2::IBoneKeyframe *k = m_keyframes.value(keyframe)) {
-                    bytes.resize(k->estimateSize());
-                    k->write(reinterpret_cast<uint8 *>(bytes.data()));
-                    keyframe->data()->read(reinterpret_cast<const uint8 *>(bytes.constData()));
-                }
-            }
-        }
+        handleUndo(m_motionProxyRef->boneMotionTrackBundle());
     }
     virtual void redo() {
-        QHashIterator<QString, BoneMotionTrack *> it(m_motionProxyRef->boneMotionTrackBundle());
-        while (it.hasNext()) {
-            it.next();
-            BoneMotionTrack *track = it.value();
-            foreach (BaseKeyframeRefObject *item, track->keyframes()) {
-                BoneKeyframeRefObject *keyframe = qobject_cast<BoneKeyframeRefObject *>(item);
-                Q_ASSERT(keyframe);
-                keyframe->setLocalTranslation(keyframe->localTranslation() * m_translationScaleFactor);
-                keyframe->setLocalEulerOrientation(keyframe->localEulerOrientation() * m_orientationScaleFactor);
-            }
-        }
+        handleRedo(m_motionProxyRef->boneMotionTrackBundle());
     }
 
 private:
+    void handleKeyframe(BoneKeyframeRefObject *value) {
+        value->setLocalTranslation(value->localTranslation() * m_translationScaleFactor);
+        value->setLocalEulerOrientation(value->localEulerOrientation() * m_orientationScaleFactor);
+    }
+
     MotionProxy *m_motionProxyRef;
     const QVector3D m_translationScaleFactor;
     const QVector3D m_orientationScaleFactor;
-    QHash<const BoneKeyframeRefObject *, vpvl2::IBoneKeyframe *> m_keyframes;
 };
 
-class ScaleMorphKeyframesCommand : public QUndoCommand {
+class ScaleAllMorphKeyframesCommand : public BaseAllKeyframesCommand<MorphMotionTrack, MorphKeyframeRefObject, vpvl2::IMorphKeyframe> {
 public:
-    ScaleMorphKeyframesCommand(MotionProxy *motionProxyRef,
-                               const qreal &scaleFactor,
-                               QUndoCommand *parent)
-        : QUndoCommand(parent),
+    ScaleAllMorphKeyframesCommand(MotionProxy *motionProxyRef,
+                                  const qreal &scaleFactor,
+                                  QUndoCommand *parent)
+        : BaseAllKeyframesCommand<MorphMotionTrack, MorphKeyframeRefObject, vpvl2::IMorphKeyframe>(parent),
           m_motionProxyRef(motionProxyRef),
           m_scaleFactor(scaleFactor)
     {
-        QHashIterator<QString, MorphMotionTrack *> it(m_motionProxyRef->morphMotionTrackBundle());
-        while (it.hasNext()) {
-            it.next();
-            MorphMotionTrack *track = it.value();
-            foreach (BaseKeyframeRefObject *item, track->keyframes()) {
-                MorphKeyframeRefObject *keyframe = qobject_cast<MorphKeyframeRefObject *>(item);
-                Q_ASSERT(keyframe);
-                m_keyframes.insert(keyframe, keyframe->data()->clone());
-            }
-        }
+        saveAllKeyframes(m_motionProxyRef->morphMotionTrackBundle());
         setText(QApplication::tr("Scale Morph Keyframes"));
     }
-    ~ScaleMorphKeyframesCommand() {
-        qDeleteAll(m_keyframes);
-        m_keyframes.clear();
+    ~ScaleAllMorphKeyframesCommand() {
     }
 
     virtual void undo() {
-        QHashIterator<QString, MorphMotionTrack *> it(m_motionProxyRef->morphMotionTrackBundle());
-        QByteArray bytes;
-        while (it.hasNext()) {
-            it.next();
-            MorphMotionTrack *track = it.value();
-            foreach (BaseKeyframeRefObject *item, track->keyframes()) {
-                MorphKeyframeRefObject *keyframe = qobject_cast<MorphKeyframeRefObject *>(item);
-                Q_ASSERT(keyframe);
-                if (const vpvl2::IMorphKeyframe *k = m_keyframes.value(keyframe)) {
-                    bytes.resize(k->estimateSize());
-                    k->write(reinterpret_cast<uint8 *>(bytes.data()));
-                    keyframe->data()->read(reinterpret_cast<const uint8 *>(bytes.constData()));
-                }
-            }
-        }
+        handleUndo(m_motionProxyRef->morphMotionTrackBundle());
     }
     virtual void redo() {
-        QHashIterator<QString, MorphMotionTrack *> it(m_motionProxyRef->morphMotionTrackBundle());
-        while (it.hasNext()) {
-            it.next();
-            MorphMotionTrack *track = it.value();
-            foreach (BaseKeyframeRefObject *item, track->keyframes()) {
-                MorphKeyframeRefObject *keyframe = qobject_cast<MorphKeyframeRefObject *>(item);
-                Q_ASSERT(keyframe);
-                keyframe->setWeight(keyframe->weight() * m_scaleFactor);
-            }
-        }
+        handleRedo(m_motionProxyRef->morphMotionTrackBundle());
     }
 
 private:
+    void handleKeyframe(MorphKeyframeRefObject *value) {
+        value->setWeight(value->weight() * m_scaleFactor);
+    }
+
     MotionProxy *m_motionProxyRef;
     const qreal m_scaleFactor;
-    QHash<const MorphKeyframeRefObject *, vpvl2::IMorphKeyframe *> m_keyframes;
 };
 
 }
@@ -919,26 +974,6 @@ void MotionProxy::setLightMotionTrack(LightMotionTrack *track, const Factory *fa
     m_lightMotionTrackRef = track;
 }
 
-void MotionProxy::refreshBoneTracks()
-{
-    QHashIterator<QString, BoneMotionTrack *> it(m_boneMotionTrackBundle);
-    while (it.hasNext()) {
-        it.next();
-        it.value()->sort();
-    }
-    m_motion->update(IKeyframe::kBoneKeyframe);
-}
-
-void MotionProxy::refreshMorphTracks()
-{
-    QHashIterator<QString, MorphMotionTrack *> it(m_morphMotionTrackBundle);
-    while (it.hasNext()) {
-        it.next();
-        it.value()->sort();
-    }
-    m_motion->update(IKeyframe::kMorphKeyframe);
-}
-
 bool MotionProxy::save(const QUrl &fileUrl)
 {
     if (fileUrl.isEmpty() || !fileUrl.isValid()) {
@@ -988,7 +1023,7 @@ MorphMotionTrack *MotionProxy::findMorphMotionTrack(const QString &name) const
     return m_morphMotionTrackBundle.value(name);
 }
 
-BaseKeyframeRefObject *MotionProxy::resolveKeyframeAt(const qint64 &timeIndex, QObject *opaque) const
+BaseKeyframeRefObject *MotionProxy::resolveKeyframeAt(const quint64 &timeIndex, QObject *opaque) const
 {
     if (const BoneRefObject *boneRef = qobject_cast<const BoneRefObject *>(opaque)) {
         const BoneMotionTrack *track = findBoneMotionTrack(boneRef);
@@ -1016,7 +1051,7 @@ void MotionProxy::applyParentModel()
     }
 }
 
-void MotionProxy::addKeyframe(QObject *opaque, const qint64 &timeIndex, QUndoCommand *parent)
+void MotionProxy::addKeyframe(QObject *opaque, const quint64 &timeIndex, QUndoCommand *parent)
 {
     BaseKeyframeRefObject *keyframe = 0;
     if (const BoneRefObject *bone = qobject_cast<const BoneRefObject *>(opaque)) {
@@ -1048,7 +1083,7 @@ void MotionProxy::addKeyframe(QObject *opaque, const qint64 &timeIndex, QUndoCom
     }
 }
 
-void MotionProxy::updateKeyframe(QObject *opaque, const qint64 &timeIndex, QUndoCommand *parent)
+void MotionProxy::updateKeyframe(QObject *opaque, const quint64 &timeIndex, QUndoCommand *parent)
 {
     QScopedPointer<QUndoCommand> command;
     if (BoneKeyframeRefObject *boneKeyframeRef = qobject_cast<BoneKeyframeRefObject *>(opaque)) {
@@ -1114,17 +1149,17 @@ void MotionProxy::removeAllSelectedKeyframes(QUndoCommand *parent)
     removeKeyframes(keyframes, parent);
 }
 
-void MotionProxy::removeAllKeyframesAt(const qint64 &timeIndex, QUndoCommand *parent)
+void MotionProxy::removeAllKeyframesAt(const quint64 &timeIndex, QUndoCommand *parent)
 {
-    QList<qint64> timeIndices;
+    QList<quint64> timeIndices;
     timeIndices.append(timeIndex);
     removeAllKeyframesIn(timeIndices, parent);
 }
 
-void MotionProxy::removeAllKeyframesIn(const QList<qint64> &timeIndices, QUndoCommand *parent)
+void MotionProxy::removeAllKeyframesIn(const QList<quint64> &timeIndices, QUndoCommand *parent)
 {
     QList<BaseKeyframeRefObject *> keyframes;
-    foreach (const qint64 &timeIndex, timeIndices) {
+    foreach (const quint64 &timeIndex, timeIndices) {
         if (timeIndex > 0) {
             QHashIterator<QString, BoneMotionTrack *> it(m_boneMotionTrackBundle);
             while (it.hasNext()) {
@@ -1161,7 +1196,7 @@ void MotionProxy::copyKeyframes()
     emit canPasteChanged();
 }
 
-void MotionProxy::pasteKeyframes(const qint64 &timeIndex, bool inversed, QUndoCommand *parent)
+void MotionProxy::pasteKeyframes(const quint64 &timeIndex, bool inversed, QUndoCommand *parent)
 {
     QScopedPointer<QUndoCommand> command;
     if (inversed) {
@@ -1256,7 +1291,7 @@ const MotionProxy::MorphMotionTrackBundle &MotionProxy::morphMotionTrackBundle()
     return m_morphMotionTrackBundle;
 }
 
-void MotionProxy::mergeKeyframes(const QList<QObject *> &keyframes, const qint64 &newTimeIndex, const qint64 &oldTimeIndex, QUndoCommand *parent)
+void MotionProxy::mergeKeyframes(const QList<QObject *> &keyframes, const quint64 &newTimeIndex, const quint64 &oldTimeIndex, QUndoCommand *parent)
 {
     QList<MergeKeyframeCommand::Pair> keyframeRefs;
     foreach (QObject *item, keyframes) {
@@ -1277,22 +1312,38 @@ void MotionProxy::mergeKeyframes(const QList<QObject *> &keyframes, const qint64
     }
 }
 
-void MotionProxy::scaleBoneKeyframes(const QVector3D &translationScaleFactor, const QVector3D &orientationScaleFactor, QUndoCommand *parent)
+void MotionProxy::translateAllBoneKeyframes(const QVector3D &value, QUndoCommand *parent)
 {
-    QScopedPointer<QUndoCommand> command(new ScaleBoneKeyframesCommand(this, translationScaleFactor, orientationScaleFactor, parent));
+    QScopedPointer<QUndoCommand> command(new TranslateAllBoneKeyframesCommand(this, value, parent));
     pushUndoCommand(command, parent);
 }
 
-void MotionProxy::scaleMorphKeyframes(const qreal &scaleFactor, QUndoCommand *parent)
+void MotionProxy::scaleAllBoneKeyframes(const QVector3D &translationScaleFactor, const QVector3D &orientationScaleFactor, QUndoCommand *parent)
 {
-    QScopedPointer<QUndoCommand> command(new ScaleMorphKeyframesCommand(this, scaleFactor, parent));
+    QScopedPointer<QUndoCommand> command(new ScaleAllBoneKeyframesCommand(this, translationScaleFactor, orientationScaleFactor, parent));
+    pushUndoCommand(command, parent);
+}
+
+void MotionProxy::scaleAllMorphKeyframes(const qreal &scaleFactor, QUndoCommand *parent)
+{
+    QScopedPointer<QUndoCommand> command(new ScaleAllMorphKeyframesCommand(this, scaleFactor, parent));
     pushUndoCommand(command, parent);
 }
 
 void MotionProxy::refresh()
 {
-    refreshBoneTracks();
-    refreshMorphTracks();
+    QHashIterator<QString, BoneMotionTrack *> it(m_boneMotionTrackBundle);
+    while (it.hasNext()) {
+        it.next();
+        it.value()->sort();
+    }
+    m_motion->update(IKeyframe::kBoneKeyframe);
+    QHashIterator<QString, MorphMotionTrack *> it2(m_morphMotionTrackBundle);
+    while (it2.hasNext()) {
+        it2.next();
+        it2.value()->sort();
+    }
+    m_motion->update(IKeyframe::kMorphKeyframe);
     emit durationTimeIndexChanged();
 }
 
@@ -1348,7 +1399,7 @@ MorphKeyframeRefObject *MotionProxy::addMorphKeyframe(const MorphRefObject *valu
     return keyframe;
 }
 
-QUndoCommand *MotionProxy::updateOrAddKeyframeFromBone(const BoneRefObject *boneRef, const qint64 &timeIndex, QUndoCommand *parent)
+QUndoCommand *MotionProxy::updateOrAddKeyframeFromBone(const BoneRefObject *boneRef, const quint64 &timeIndex, QUndoCommand *parent)
 {
     const QString &name = boneRef->name();
     if (BoneMotionTrack *track = findBoneMotionTrack(name)) {
@@ -1372,7 +1423,7 @@ QUndoCommand *MotionProxy::updateOrAddKeyframeFromBone(const BoneRefObject *bone
     return 0;
 }
 
-QUndoCommand *MotionProxy::updateOrAddKeyframeFromCamera(CameraRefObject *cameraRef, const qint64 &timeIndex, QUndoCommand *parent)
+QUndoCommand *MotionProxy::updateOrAddKeyframeFromCamera(CameraRefObject *cameraRef, const quint64 &timeIndex, QUndoCommand *parent)
 {
     CameraMotionTrack *track = cameraRef->track();
     if (CameraKeyframeRefObject *cameraKeyframeRef = qobject_cast<CameraKeyframeRefObject *>(track->findKeyframeByTimeIndex(timeIndex))) {
@@ -1393,7 +1444,7 @@ QUndoCommand *MotionProxy::updateOrAddKeyframeFromCamera(CameraRefObject *camera
     return 0;
 }
 
-QUndoCommand *MotionProxy::updateOrAddKeyframeFromLight(LightRefObject *lightRef, const qint64 &timeIndex, QUndoCommand *parent)
+QUndoCommand *MotionProxy::updateOrAddKeyframeFromLight(LightRefObject *lightRef, const quint64 &timeIndex, QUndoCommand *parent)
 {
     LightMotionTrack *track = lightRef->track();
     if (LightKeyframeRefObject *cameraKeyframeRef = qobject_cast<LightKeyframeRefObject *>(track->findKeyframeByTimeIndex(timeIndex))) {
@@ -1413,7 +1464,7 @@ QUndoCommand *MotionProxy::updateOrAddKeyframeFromLight(LightRefObject *lightRef
     return 0;
 }
 
-QUndoCommand *MotionProxy::updateOrAddKeyframeFromMorph(const MorphRefObject *morphRef, const qint64 &timeIndex, QUndoCommand *parent)
+QUndoCommand *MotionProxy::updateOrAddKeyframeFromMorph(const MorphRefObject *morphRef, const quint64 &timeIndex, QUndoCommand *parent)
 {
     const QString &name = morphRef->name();
     if (MorphMotionTrack *track = findMorphMotionTrack(name)) {
