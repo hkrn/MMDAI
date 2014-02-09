@@ -67,54 +67,54 @@ namespace {
 
 class BaseKeyframeCommand : public QUndoCommand {
 public:
-    BaseKeyframeCommand(const QList<BaseKeyframeRefObject *> &keyframes, QUndoCommand *parent)
+    BaseKeyframeCommand(const QList<BaseKeyframeRefObject *> &keyframeRefs, QUndoCommand *parent)
         : QUndoCommand(parent),
-          m_keyframes(keyframes)
+          m_keyframeRefs(keyframeRefs)
     {
-        Q_ASSERT(!m_keyframes.isEmpty());
-        foreach (BaseKeyframeRefObject *keyframe, keyframes) {
-            m_tracks.insert(keyframe->parentTrack());
+        Q_ASSERT(!m_keyframeRefs.isEmpty());
+        foreach (BaseKeyframeRefObject *keyframe, keyframeRefs) {
+            m_trackRefs.insert(keyframe->parentTrack());
         }
     }
-    BaseKeyframeCommand(BaseKeyframeRefObject *keyframe, QUndoCommand *parent)
+    BaseKeyframeCommand(BaseKeyframeRefObject *keyframeRef, QUndoCommand *parent)
         : QUndoCommand(parent)
     {
-        m_keyframes.append(keyframe);
+        m_keyframeRefs.append(keyframeRef);
     }
     ~BaseKeyframeCommand() {
     }
 
 protected:
     void addKeyframe() {
-        bool doUpdate = m_tracks.isEmpty();
-        foreach (BaseKeyframeRefObject *keyframe, m_keyframes) {
-            BaseMotionTrack *track = keyframe->parentTrack();
-            track->addKeyframe(keyframe, doUpdate);
+        bool doUpdate = m_trackRefs.isEmpty();
+        foreach (BaseKeyframeRefObject *keyframeRef, m_keyframeRefs) {
+            BaseMotionTrack *track = keyframeRef->parentTrack();
+            track->addKeyframe(keyframeRef, doUpdate);
         }
     }
     void removeKeyframe() {
-        bool doUpdate = m_tracks.isEmpty();
-        foreach (BaseKeyframeRefObject *keyframe, m_keyframes) {
-            BaseMotionTrack *track = keyframe->parentTrack();
-            track->removeKeyframe(keyframe, doUpdate);
+        bool doUpdate = m_trackRefs.isEmpty();
+        foreach (BaseKeyframeRefObject *keyframeRef, m_keyframeRefs) {
+            BaseMotionTrack *track = keyframeRef->parentTrack();
+            track->removeKeyframe(keyframeRef, doUpdate);
         }
     }
     void refreshTrack() {
-        if (!m_tracks.isEmpty()) {
-            foreach (BaseMotionTrack *track, m_tracks) {
+        if (!m_trackRefs.isEmpty()) {
+            foreach (BaseMotionTrack *track, m_trackRefs) {
                 track->refresh();
             }
         }
     }
 
-    QList<BaseKeyframeRefObject *> m_keyframes;
-    QSet<BaseMotionTrack *> m_tracks;
+    QList<BaseKeyframeRefObject *> m_keyframeRefs;
+    QSet<BaseMotionTrack *> m_trackRefs;
 };
 
 class AddKeyframeCommand : public BaseKeyframeCommand {
 public:
-    AddKeyframeCommand(const QList<BaseKeyframeRefObject *> &keyframes, QUndoCommand *parent)
-        : BaseKeyframeCommand(keyframes, parent)
+    AddKeyframeCommand(const QList<BaseKeyframeRefObject *> &keyframeRefs, QUndoCommand *parent)
+        : BaseKeyframeCommand(keyframeRefs, parent)
     {
         setText(QApplication::tr("Register Keyframe(s)"));
     }
@@ -138,8 +138,8 @@ public:
 
 class RemoveKeyframeCommand : public BaseKeyframeCommand {
 public:
-    RemoveKeyframeCommand(const QList<BaseKeyframeRefObject *> &keyframes, QUndoCommand *parent)
-        : BaseKeyframeCommand(keyframes, parent)
+    RemoveKeyframeCommand(const QList<BaseKeyframeRefObject *> &keyframeRefs, QUndoCommand *parent)
+        : BaseKeyframeCommand(keyframeRefs, parent)
     {
         setText(QApplication::tr("Remove Keyframe(s)"));
     }
@@ -287,7 +287,7 @@ private:
     }
     void setLocalTransform(const BoneKeyframeRefObject *boneKeyframeRef) {
         if (BoneRefObject *boneRef = m_motionProxyRef->parentModel()->findBoneByName(boneKeyframeRef->name())) {
-            IBoneKeyframe *keyframeRef = boneKeyframeRef->data();
+            const IBoneKeyframe *keyframeRef = boneKeyframeRef->data();
             boneRef->setRawLocalTranslation(keyframeRef->localTranslation());
             boneRef->setRawLocalOrientation(keyframeRef->localOrientation());
         }
@@ -338,9 +338,9 @@ public:
     }
 
 private:
-    void setCameraParameters(const CameraKeyframeRefObject *lightKeyframe) {
+    void setCameraParameters(const CameraKeyframeRefObject *cameraKeyframe) {
         if (m_cameraRef) {
-            ICameraKeyframe *keyframeRef = lightKeyframe->data();
+            const ICameraKeyframe *keyframeRef = cameraKeyframe->data();
             m_cameraRef->setAngle(Util::fromVector3(keyframeRef->angle()));
             m_cameraRef->setDistance(keyframeRef->distance());
             m_cameraRef->setFov(keyframeRef->fov());
@@ -392,7 +392,7 @@ public:
 private:
     void setLightParameters(const LightKeyframeRefObject *lightKeyframe) {
         if (m_lightRef) {
-            ILightKeyframe *keyframeRef = lightKeyframe->data();
+            const ILightKeyframe *keyframeRef = lightKeyframe->data();
             m_lightRef->setColor(Util::fromColorRGB(keyframeRef->color()));
             m_lightRef->setDirection(Util::fromVector3(keyframeRef->direction()));
         }
@@ -481,7 +481,7 @@ private:
     }
     void setWeight(const MorphKeyframeRefObject *morphKeyframeRef) {
         if (MorphRefObject *morphRef = m_motionProxyRef->parentModel()->findMorphByName(morphKeyframeRef->name())) {
-            IMorphKeyframe *keyframeRef = morphKeyframeRef->data();
+            const IMorphKeyframe *keyframeRef = morphKeyframeRef->data();
             morphRef->setWeight(keyframeRef->weight());
         }
     }
@@ -1051,32 +1051,32 @@ void MotionProxy::applyParentModel()
 
 void MotionProxy::addKeyframe(QObject *opaque, const quint64 &timeIndex, QUndoCommand *parent)
 {
-    BaseKeyframeRefObject *keyframe = 0;
+    BaseKeyframeRefObject *keyframeRef = 0;
     if (const BoneRefObject *bone = qobject_cast<const BoneRefObject *>(opaque)) {
-        keyframe = addBoneKeyframe(bone);
-        if (keyframe) {
+        keyframeRef = addBoneKeyframe(bone);
+        if (keyframeRef) {
             int length = findBoneMotionTrack(bone->name())->length();
             VPVL2_VLOG(2, "insert type=BONE timeIndex=" << timeIndex << " name=" << bone->name().toStdString() << " length=" << length);
         }
     }
     else if (const CameraRefObject *camera = qobject_cast<const CameraRefObject *>(opaque)) {
-        keyframe = addCameraKeyframe(camera);
+        keyframeRef = addCameraKeyframe(camera);
         VPVL2_VLOG(2, "insert type=CAMERA timeIndex=" << timeIndex << " length=" << camera->track()->length());
     }
     else if (const LightRefObject *light = qobject_cast<const LightRefObject *>(opaque)) {
-        keyframe = addLightKeyframe(light);
+        keyframeRef = addLightKeyframe(light);
         VPVL2_VLOG(2, "insert type=LIGHT timeIndex=" << timeIndex << " length=" << light->track()->length());
     }
     else if (const MorphRefObject *morph = qobject_cast<const MorphRefObject *>(opaque)) {
-        keyframe = addMorphKeyframe(morph);
-        if (keyframe) {
+        keyframeRef = addMorphKeyframe(morph);
+        if (keyframeRef) {
             int length = findMorphMotionTrack(morph->name())->length();
             VPVL2_VLOG(2, "insert type=MORPH timeIndex=" << timeIndex << " name=" << morph->name().toStdString() << " length=" << length);
         }
     }
-    if (keyframe) {
-        QScopedPointer<QUndoCommand> command(new AddKeyframeCommand(keyframe, parent));
-        keyframe->setTimeIndex(timeIndex);
+    if (keyframeRef) {
+        QScopedPointer<QUndoCommand> command(new AddKeyframeCommand(keyframeRef, parent));
+        keyframeRef->setTimeIndex(timeIndex);
         pushUndoCommand(command, parent);
     }
 }
@@ -1130,8 +1130,8 @@ void MotionProxy::updateKeyframeInterpolation(QObject *opaque, const QVector4D &
 
 void MotionProxy::removeKeyframe(QObject *opaque, QUndoCommand *parent)
 {
-    if (BaseKeyframeRefObject *keyframe = qobject_cast<BaseKeyframeRefObject *>(opaque)) {
-        QScopedPointer<QUndoCommand> command(new RemoveKeyframeCommand(keyframe, parent));
+    if (BaseKeyframeRefObject *keyframeRef = qobject_cast<BaseKeyframeRefObject *>(opaque)) {
+        QScopedPointer<QUndoCommand> command(new RemoveKeyframeCommand(keyframeRef, parent));
         pushUndoCommand(command, parent);
     }
 }
