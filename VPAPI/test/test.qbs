@@ -86,6 +86,7 @@ CppApplication {
     }
     Properties {
         condition: qbs.targetOS.contains("osx")
+        cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL" ]
         cpp.minimumOsxVersion: "10.6"
         cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z" ])
     }
