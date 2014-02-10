@@ -73,6 +73,7 @@ class MaterialRefObject : public QObject
     Q_PROPERTY(bool shadowMapEnabled READ isShadowMapEnabled WRITE setShadowMapEnabled NOTIFY shadowMapEnabledChanged FINAL)
     Q_PROPERTY(bool edgeEnabled READ isEdgeEnabled WRITE setEdgeEnabled NOTIFY edgeEnabledChanged FINAL)
     Q_PROPERTY(bool vertexColorEnabled READ isVertexColorEnabled WRITE setVertexColorEnabled NOTIFY vertexColorEnabledChanged FINAL)
+    Q_PROPERTY(bool visible READ isVisible WRITE setVisible NOTIFY visibleChanged FINAL)
     Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
@@ -132,6 +133,8 @@ public:
     void setEdgeEnabled(bool value);
     bool isVertexColorEnabled() const;
     void setVertexColorEnabled(bool value);
+    bool isVisible() const;
+    void setVisible(bool value);
     bool isDirty() const;
     void setDirty(bool value);
 
@@ -156,6 +159,7 @@ signals:
     void shadowMapEnabledChanged();
     void edgeEnabledChanged();
     void vertexColorEnabledChanged();
+    void visibleChanged();
     void dirtyChanged();
 
 private:

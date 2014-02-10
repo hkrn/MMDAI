@@ -146,7 +146,8 @@ struct Material::PrivateContext {
           sphereTextureIndex(0),
           toonTextureIndex(0),
           flags(0),
-          useSharedToonTexture(false)
+          useSharedToonTexture(false),
+          visible(true)
     {
         mainTextureBlend.base.setValue(1, 1, 1, 1);
         mainTextureBlend.calculate();
@@ -173,6 +174,7 @@ struct Material::PrivateContext {
         toonTextureIndex = 0;
         flags = 0;
         useSharedToonTexture = false;
+        visible = false;
     }
     int bitFlags(int value, bool enable) {
         return enable ? (flags | value) : (flags & ~value);
@@ -203,6 +205,7 @@ struct Material::PrivateContext {
     int toonTextureIndex;
     uint8 flags;
     bool useSharedToonTexture;
+    bool visible;
 };
 
 Material::Material(Model *modelRef)
@@ -697,6 +700,11 @@ bool Material::isLineDrawEnabled() const
     return internal::hasFlagBits(m_context->flags, kEnableLineDraw);
 }
 
+bool Material::isVisible() const
+{
+    return m_context->visible;
+}
+
 void Material::setName(const IString *value, IEncoding::LanguageType type)
 {
     switch (type) {
@@ -884,6 +892,14 @@ void Material::setEdgeEnabled(bool value)
 void Material::setVertexColorEnabled(bool value)
 {
     setFlags(m_context->bitFlags(kEnableVertexColor, value));
+}
+
+void Material::setVisible(bool value)
+{
+    if (m_context->visible != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, visibleWillChange(value, this));
+        m_context->visible = value;
+    }
 }
 
 } /* namespace pmx */

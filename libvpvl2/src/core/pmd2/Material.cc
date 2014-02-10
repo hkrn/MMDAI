@@ -86,7 +86,8 @@ struct Material::PrivateContext {
           shininess(0),
           index(-1),
           toonTextureIndex(0),
-          enableEdge(false)
+          enableEdge(false),
+          visible(true)
     {
     }
     ~PrivateContext() {
@@ -101,6 +102,7 @@ struct Material::PrivateContext {
         index = -1;
         toonTextureIndex = 0;
         enableEdge = false;
+        visible = false;
     }
     Model *parentModelRef;
     IEncoding *encodingRef;
@@ -118,6 +120,7 @@ struct Material::PrivateContext {
     int index;
     int toonTextureIndex;
     bool enableEdge;
+    bool visible;
 };
 
 Material::Material(Model *parentModelRef, IEncoding *encodingRef)
@@ -437,6 +440,11 @@ bool Material::isVertexColorEnabled() const
     return false;
 }
 
+bool Material::isVisible() const
+{
+    return m_context->visible;
+}
+
 void Material::setMainTexture(const IString *value)
 {
     if (!value || (value && !value->equals(m_context->mainTexture))) {
@@ -520,6 +528,14 @@ void Material::setShininess(float32 value)
 void Material::setIndex(int value)
 {
     m_context->index = value;
+}
+
+void Material::setVisible(bool value)
+{
+    if (m_context->visible != value) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, visibleWillChange(value, this));
+        m_context->visible = value;
+    }
 }
 
 } /* namespace pmd2 */

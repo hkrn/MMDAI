@@ -103,6 +103,7 @@ public:
         virtual void shininessWillChange(float32 value, IMaterial *material) = 0;
         virtual void edgeSizeWillChange(const IVertex::EdgeSizePrecision &value, IMaterial *material) = 0;
         virtual void flagsWillChange(int value, IMaterial *material) = 0;
+        virtual void visibleWillChange(bool value, IMaterial *material) = 0;
     };
 
     virtual ~IMaterial() {}
@@ -146,6 +147,7 @@ public:
     virtual bool isShadowMapEnabled() const = 0;
     virtual bool isEdgeEnabled() const = 0;
     virtual bool isVertexColorEnabled() const = 0;
+    virtual bool isVisible() const = 0;
 
     virtual void setName(const IString *value, IEncoding::LanguageType type) = 0;
     virtual void setUserDataArea(const IString *value) = 0;
@@ -171,6 +173,7 @@ public:
     virtual void setEdgeEnabled(bool value) = 0;
     virtual void setVertexColorEnabled(bool value) = 0;
     virtual void setFlags(int value) = 0;
+    virtual void setVisible(bool value) = 0;
 };
 
 } /* namespace vpvl2 */

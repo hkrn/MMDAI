@@ -440,6 +440,22 @@ void MaterialRefObject::setVertexColorEnabled(bool value)
     }
 }
 
+bool MaterialRefObject::isVisible() const
+{
+    Q_ASSERT(m_materialRef);
+    return m_materialRef->isVisible();
+}
+
+void MaterialRefObject::setVisible(bool value)
+{
+    Q_ASSERT(m_materialRef);
+    if (isVisible() != value) {
+        m_materialRef->setVisible(value);
+        setDirty(true);
+        emit visibleChanged();
+    }
+}
+
 bool MaterialRefObject::isDirty() const
 {
     return m_dirty;

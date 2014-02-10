@@ -181,6 +181,7 @@ public:
     bool isShadowMapEnabled() const { return false; }
     bool isEdgeEnabled() const { return false; }
     bool isVertexColorEnabled() const { return false; }
+    bool isVisible() const { return false; }
 
     void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     void setUserDataArea(const IString * /* value */) {}
@@ -207,6 +208,7 @@ public:
     void setEdgeEnabled(bool /* value */) {}
     void setVertexColorEnabled(bool /* value */) {}
     void setFlags(int /* value */) {}
+    void setVisible(bool /* value */) {}
 
 private:
     NullMaterial() {}

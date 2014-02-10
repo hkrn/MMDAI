@@ -535,26 +535,28 @@ void PMXRenderEngine::renderModel()
     getDrawPrimitivesCommand(command);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
-        const MaterialContext &materialContext = m_materialContexts[i];
-        const char *const target = hasShadowMap && material->isShadowMapEnabled() ? "object_ss" : "object";
-        const bool hasMainTexture = materialContext.mainTextureRef != 0, hasSphereMap = materialContext.sphereTextureRef != 0 && material->sphereTextureRenderMode() != IMaterial::kNone;
-        if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true)) {
-            if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
-                disable(kGL_CULL_FACE);
-                m_cullFaceState = false;
-            }
-            else if (!m_cullFaceState && !material->isCullingDisabled()) {
-                enable(kGL_CULL_FACE);
-                m_cullFaceState = true;
-            }
-            updateDrawPrimitivesCommand(material, command);
-            if (!btFuzzyZero(material->diffuse().w())) {
-                technique->setOverridePass(m_overridePass);
-                updateMaterialParameters(material, materialContext);
-                annotateMaterial("renderModel", material);
-                pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef);
-                m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
-                popAnnotationGroup(m_applicationContextRef);
+        if (material->isVisible()) {
+            const MaterialContext &materialContext = m_materialContexts[i];
+            const char *const target = hasShadowMap && material->isShadowMapEnabled() ? "object_ss" : "object";
+            const bool hasMainTexture = materialContext.mainTextureRef != 0, hasSphereMap = materialContext.sphereTextureRef != 0 && material->sphereTextureRenderMode() != IMaterial::kNone;
+            if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true)) {
+                if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
+                    disable(kGL_CULL_FACE);
+                    m_cullFaceState = false;
+                }
+                else if (!m_cullFaceState && !material->isCullingDisabled()) {
+                    enable(kGL_CULL_FACE);
+                    m_cullFaceState = true;
+                }
+                updateDrawPrimitivesCommand(material, command);
+                if (!btFuzzyZero(material->diffuse().w())) {
+                    technique->setOverridePass(m_overridePass);
+                    updateMaterialParameters(material, materialContext);
+                    annotateMaterial("renderModel", material);
+                    pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef);
+                    m_currentEffectEngineRef->executeTechniquePasses(technique, command, 0);
+                    popAnnotationGroup(m_applicationContextRef);
+                }
             }
         }
         command.offset += command.count;
@@ -587,7 +589,7 @@ void PMXRenderEngine::renderEdge()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->isEdgeEnabled()) {
+        if (material->isVisible() && material->isEdgeEnabled()) {
             if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true)) {
                 technique->setOverridePass(m_overridePass);
                 updateDrawPrimitivesCommand(material, command);
@@ -624,7 +626,7 @@ void PMXRenderEngine::renderShadow()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->isCastingShadowEnabled()) {
+        if (material->isVisible() && material->isCastingShadowEnabled()) {
             if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true)) {
                 technique->setOverridePass(m_overridePass);
                 updateDrawPrimitivesCommand(material, command);
@@ -661,7 +663,7 @@ void PMXRenderEngine::renderZPlot()
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const int nindices = material->indexRange().count;
-        if (material->isCastingShadowMapEnabled()) {
+        if (material->isVisible() && material->isCastingShadowMapEnabled()) {
             if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true)) {
                 technique->setOverridePass(m_overridePass);
                 updateDrawPrimitivesCommand(material, command);

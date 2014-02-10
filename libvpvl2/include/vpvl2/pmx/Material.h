@@ -120,6 +120,7 @@ public:
     bool isVertexColorEnabled() const;
     bool isPointDrawEnabled() const;
     bool isLineDrawEnabled() const;
+    bool isVisible() const;
 
     void setName(const IString *value, IEncoding::LanguageType type);
     void setUserDataArea(const IString *value);
@@ -146,6 +147,7 @@ public:
     void setShadowMapEnabled(bool value);
     void setEdgeEnabled(bool value);
     void setVertexColorEnabled(bool value);
+    void setVisible(bool value);
 
 private:
     struct PrivateContext;

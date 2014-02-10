@@ -88,6 +88,7 @@ public:
     bool isShadowMapEnabled() const;
     bool isEdgeEnabled() const;
     bool isVertexColorEnabled() const;
+    bool isVisible() const;
 
     void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     void setUserDataArea(const IString * /* value */) {}
@@ -114,6 +115,7 @@ public:
     void setShadowMapEnabled(bool /* value */) {}
     void setEdgeEnabled(bool /* value */) {}
     void setVertexColorEnabled(bool /* value */) {}
+    void setVisible(bool value);
 
     static bool preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info);
     static bool loadMaterials(const PointerArray<Material> &materials,

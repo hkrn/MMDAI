@@ -302,7 +302,8 @@ public:
           m_sphereTexture(0),
           m_sphereTextureRenderMode(kNone),
           m_nindices(nindices),
-          m_index(index)
+          m_index(index),
+          m_visible(true)
     {
         aiColor4D color;
         aiGetMaterialColor(m_materialRef, AI_MATKEY_COLOR_AMBIENT, &color);
@@ -328,6 +329,7 @@ public:
         m_shininess = 0;
         m_nindices = 0;
         m_index = 0;
+        m_visible = false;
     }
 
     void addEventListenerRef(PropertyEventListener * /* value */) {}
@@ -363,6 +365,7 @@ public:
     bool isShadowMapEnabled() const { return isCastingShadowMapEnabled(); }
     bool isEdgeEnabled() const { return false; }
     bool isVertexColorEnabled() const { return false; }
+    bool isVisible() const { return m_visible; }
 
     void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     void setUserDataArea(const IString * /* value */) {}
@@ -389,6 +392,7 @@ public:
     void setShadowMapEnabled(bool /* value */) {}
     void setEdgeEnabled(bool /* value */) {}
     void setVertexColorEnabled(bool /* value */) {}
+    void setVisible(bool value) { m_visible = value; }
 
 private:
     void setMaterialTextures() {
@@ -443,6 +447,7 @@ private:
     float m_shininess;
     int m_nindices;
     int m_index;
+    bool m_visible;
 };
 const Color Material::kWhiteColor = Color(1, 1, 1, 1);
 
