@@ -179,7 +179,6 @@ Product {
     Properties {
         condition: qbs.targetOS.contains("osx")
         configDefinitions: commonConfigDefinitions.concat(["VPVL2_OS_OSX", "VPVL2_LINK_ATB", "VPVL2_ENABLE_OPENCL", "VPVL2_LINK_INTEL_TBB"])
-        type: qbs.buildVariant === "debug" ? "frameworkbundle" : "staticlibrary"
         cpp.dynamicLibraries: commonLibraries.concat([ "tbb", "z" ])
         cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL" ]
         cpp.minimumOsxVersion: "10.6"
