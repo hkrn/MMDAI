@@ -63,6 +63,16 @@ ScrollView {
             RowLayout {
                 Label { text: qsTr("Polygon Type") }
                 ComboBox { model: [ "Triangle", "Line", "Point" ] }
+                CheckBox {
+                    id: materialVisibleCheckBox
+                    text: "Visible"
+                    checked: targetObject.visible
+                }
+                Binding {
+                    target: targetObject
+                    property: "visible"
+                    value: materialVisibleCheckBox.checked
+                }
             }
             GroupBox {
                 title: qsTr("Color")
