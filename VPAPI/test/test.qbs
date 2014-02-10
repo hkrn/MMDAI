@@ -84,7 +84,7 @@ CppApplication {
         condition: qbs.toolchain.contains("msvc")
         consoleApplication: false
         cpp.cxxFlags: [ "/wd4068", "/wd4355", "/wd4819" ]
-        cpp.dynamicLibraries: commonLibraries.concat([ "zlibstatic" + debugLibrarySuffix ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "libGLESv2" + debugLibrarySuffix, "libEGL" + debugLibrarySuffix, "zlibstatic" + debugLibrarySuffix ])
     }
     Properties {
         condition: qbs.targetOS.contains("osx")
