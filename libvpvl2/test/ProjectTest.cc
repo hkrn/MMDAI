@@ -74,7 +74,9 @@ public:
     }
     bool loadModel(const XMLProject::UUID & /* uuid */, const StringMap & /* settings */, IModel::Type type, IModel *&model, IRenderEngine *&engine, int &priority) {
         model = m_factory.newModel(type);
-        engine = new MockIRenderEngine();
+        MockIRenderEngine *enginePtr = new MockIRenderEngine();
+        engine = enginePtr;
+        EXPECT_CALL(*enginePtr, release()).WillOnce(Return());
         priority = 0;
         return true;
     }
@@ -619,7 +621,9 @@ TEST_P(ProjectModelTest, SaveSceneState)
     XMLProject project(&delegate, &factory, true);
     IModel::Type modelType = GetParam();
     std::unique_ptr<IModel> modelPtr(factory.newModel(modelType)), model2Ptr(factory.newModel(modelType));
-    std::unique_ptr<IRenderEngine> enginePtr(new MockIRenderEngine()), engine2Ptr(new MockIRenderEngine());
+    std::unique_ptr<MockIRenderEngine> enginePtr(new MockIRenderEngine()), engine2Ptr(new MockIRenderEngine());
+    EXPECT_CALL(*enginePtr, release()).WillOnce(Return());
+    EXPECT_CALL(*engine2Ptr, release()).WillOnce(Return());
     modelPtr->setEdgeColor(Color(0.1, 0.2, 0.3, 1.0));
     modelPtr->setEdgeWidth(0.4);
     modelPtr->setOpacity(0.5);

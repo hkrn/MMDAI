@@ -579,7 +579,8 @@ TEST_P(SceneModelTest, DeleteModelUnlessReferred)
         EXPECT_CALL(*modelPtr, parentSceneRef()).WillRepeatedly(Return(&scene));
         EXPECT_CALL(*modelPtr, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         EXPECT_CALL(*modelPtr, joinWorld(0)).Times(1);
-        std::unique_ptr<IRenderEngine> enginePtr(new MockIRenderEngine());
+        std::unique_ptr<MockIRenderEngine> enginePtr(new MockIRenderEngine());
+        EXPECT_CALL(*enginePtr, release()).WillOnce(Return());
         scene.addModel(modelPtr.get(), enginePtr.release(), 0);
     }
 }
@@ -677,7 +678,8 @@ TEST_P(SceneModelMotionTest, CreateWithoutOwnMemory)
     Factory factory(&encoding);
     std::unique_ptr<IModel> model(factory.newModel(modelType));
     std::unique_ptr<IMotion> motion(factory.newMotion(motionType, model.get()));
-    std::unique_ptr<IRenderEngine> engine(new MockIRenderEngine());
+    std::unique_ptr<MockIRenderEngine> engine(new MockIRenderEngine());
+    EXPECT_CALL(*engine, release()).WillOnce(Return());
     {
         Scene scene(false);
         scene.addModel(model.get(), engine.get(), 0);

@@ -64,6 +64,8 @@ class MockIMaterial : public IMaterial {
       bool());
   MOCK_CONST_METHOD0(isVertexColorEnabled,
       bool());
+  MOCK_CONST_METHOD0(isVisible,
+      bool());
   MOCK_METHOD2(setName,
       void(const IString *value, IEncoding::LanguageType type));
   MOCK_METHOD1(setUserDataArea,
@@ -112,6 +114,8 @@ class MockIMaterial : public IMaterial {
       void(bool value));
   MOCK_METHOD1(setFlags,
       void(int value));
+  MOCK_METHOD1(setVisible,
+      void(bool value));
 };
 
 }  // namespace vpvl2

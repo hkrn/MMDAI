@@ -59,7 +59,8 @@ class PMXLanguageTest : public TestWithParam<IEncoding::LanguageType> {};
 
 TEST(PMXPropertyEventListener, HandleBonePropertyEvents)
 {
-    Bone bone(0);
+    pmx::Model model(0);
+    Bone bone(&model);
     MockBonePropertyEventListener listener;
     TestHandleEvents<IBone::PropertyEventListener>(listener, bone);
     Vector3 v(1, 2, 3);
@@ -179,6 +180,7 @@ TEST(PMXPropertyEventListener, HandleMaterialPropertyEvents)
     EXPECT_CALL(listener, sphereTextureWillChange(_, &material)).WillOnce(Return());
     EXPECT_CALL(listener, toonTextureWillChange(_, &material)).WillOnce(Return());
     EXPECT_CALL(listener, userDataAreaWillChange(_, &material)).WillOnce(Return());
+    EXPECT_CALL(listener, visibleWillChange(false, &material)).WillOnce(Return());
     String mainTexture("MainTexture"), japaneseName("Japanese Name"), englishName("English Name"),
             sphereTexture("SphereTexture"), toonTexture("ToonTexture"), userDataArea("UserDataArea");
     material.addEventListenerRef(&listener);
@@ -216,6 +218,8 @@ TEST(PMXPropertyEventListener, HandleMaterialPropertyEvents)
     material.setToonTexture(&toonTexture);
     material.setUserDataArea(&userDataArea);
     material.setUserDataArea(&userDataArea);
+    material.setVisible(false);
+    material.setVisible(false);
 }
 
 TEST(PMXPropertyEventListener, HandleModelPropertyEvents)
@@ -292,7 +296,8 @@ TEST(PMXPropertyEventListener, HandleModelPropertyEvents)
 
 TEST(PMXPropertyEventListener, HandleMorphPropertyEvents)
 {
-    Morph morph(0);
+    pmx::Model model(0);
+    Morph morph(&model);
     MockMorphPropertyEventListener listener;
     TestHandleEvents<IMorph::PropertyEventListener>(listener, morph);
     IMorph::WeightPrecision weight(0.42);
@@ -430,7 +435,8 @@ TEST_P(PMXFragmentTest, ReadWriteBone)
 {
     vsize indexSize = GetParam();
     Encoding encoding(0);
-    Bone bone(0), bone2(0), parent(0), parentInherent(0), effector(0);
+    pmx::Model model(&encoding);
+    Bone expected(&model), actual(&model), parent(&model), parentInherent(&model), effector(&model);
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.encoding = &encoding;
@@ -440,48 +446,48 @@ TEST_P(PMXFragmentTest, ReadWriteBone)
     parent.setIndex(0);
     parentInherent.setIndex(1);
     effector.setIndex(2);
-    bone.setName(&name, IEncoding::kJapanese);
-    bone.setName(&englishName, IEncoding::kEnglish);
-    bone.setOrigin(Vector3(0.11, 0.12, 0.13));
-    bone.setIndex(1);
-    bone.setDestinationOrigin(Vector3(0.21, 0.22, 0.23));
-    bone.setFixedAxis(Vector3(0.31, 0.32, 0.33));
-    bone.setAxisX(Vector3(0.41, 0.42, 0.43));
-    bone.setAxisZ(Vector3(0.51, 0.52, 0.53));
-    bone.setExternalIndex(3);
-    bone.setParentBoneRef(&parent);
-    bone.setParentInherentBoneRef(&parentInherent);
-    bone.setInherentCoefficient(0.61);
-    bone.setEffectorBoneRef(&effector, 3, 0.71);
-    bone.setRotateable(true);
-    bone.setMovable(true);
-    bone.setVisible(true);
-    bone.setInteractive(true);
-    bone.setHasInverseKinematics(true);
-    bone.setInherentOrientationEnable(true);
-    bone.setInherentTranslationEnable(true);
-    bone.setFixedAxisEnable(true);
-    bone.setLocalAxesEnable(true);
-    bone.setTransformAfterPhysicsEnable(true);
-    bone.setTransformedByExternalParentEnable(true);
+    expected.setName(&name, IEncoding::kJapanese);
+    expected.setName(&englishName, IEncoding::kEnglish);
+    expected.setOrigin(Vector3(0.11, 0.12, 0.13));
+    expected.setIndex(1);
+    expected.setDestinationOrigin(Vector3(0.21, 0.22, 0.23));
+    expected.setFixedAxis(Vector3(0.31, 0.32, 0.33));
+    expected.setAxisX(Vector3(0.41, 0.42, 0.43));
+    expected.setAxisZ(Vector3(0.51, 0.52, 0.53));
+    expected.setExternalIndex(3);
+    expected.setParentBoneRef(&parent);
+    expected.setParentInherentBoneRef(&parentInherent);
+    expected.setInherentCoefficient(0.61);
+    expected.setEffectorBoneRef(&effector, 3, 0.71);
+    expected.setRotateable(true);
+    expected.setMovable(true);
+    expected.setVisible(true);
+    expected.setInteractive(true);
+    expected.setHasInverseKinematics(true);
+    expected.setInherentOrientationEnable(true);
+    expected.setInherentTranslationEnable(true);
+    expected.setFixedAxisEnable(true);
+    expected.setLocalAxesEnable(true);
+    expected.setTransformAfterPhysicsEnable(true);
+    expected.setTransformedByExternalParentEnable(true);
     // write constructed bone and read it
-    vsize size = bone.estimateSize(info), read;
+    vsize size = expected.estimateSize(info), read;
     std::unique_ptr<uint8[]> bytes(new uint8[size]);
     uint8 *ptr = bytes.get();
-    bone.write(ptr, info);
-    bone2.read(bytes.get(), info, read);
+    expected.write(ptr, info);
+    actual.read(bytes.get(), info, read);
     // compare read bone
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(CompareBone(bone, bone2));
+    ASSERT_TRUE(CompareBone(expected, actual));
     Array<Bone *> bones;
     bones.append(&parent);
     bones.append(&parentInherent);
     bones.append(&effector);
-    bones.append(&bone2);
+    bones.append(&actual);
     Bone::loadBones(bones);
-    ASSERT_EQ(&parent, bone2.parentBoneRef());
-    ASSERT_EQ(&parentInherent, bone2.parentInherentBoneRef());
-    ASSERT_EQ(&effector, bone2.effectorBoneRef());
+    ASSERT_EQ(&parent, actual.parentBoneRef());
+    ASSERT_EQ(&parentInherent, actual.parentInherentBoneRef());
+    ASSERT_EQ(&effector, actual.effectorBoneRef());
 }
 
 TEST_P(PMXFragmentTest, ReadWriteJoint)
@@ -524,7 +530,8 @@ TEST_P(PMXFragmentTest, ReadWriteMaterial)
 {
     vsize indexSize = GetParam();
     Encoding encoding(0);
-    Material expected(0), actual(0);
+    pmx::Model model(&encoding);
+    Material expected(&model), actual(&model);
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
     info.encoding = &encoding;
@@ -599,9 +606,10 @@ TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
 {
     vsize indexSize = GetParam();
     Encoding encoding(0);
-    Morph morph(0), morph2(0);
+    pmx::Model model(&encoding);
+    Morph expected(&model), actual(&model);
     MockIBone mockBone;
-    EXPECT_CALL(mockBone, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
+    EXPECT_CALL(mockBone, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(&model));
     std::unique_ptr<Morph::Bone> bone1(new Morph::Bone()), bone2(new Morph::Bone());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -613,31 +621,31 @@ TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
     bone1->index = 0;
     bone1->position.setValue(0.11, 0.12, 0.13);
     bone1->rotation.setValue(0.21, 0.22, 0.23, 0.24);
-    morph.addBoneMorph(bone1.get());
+    expected.addBoneMorph(bone1.get());
     // bone morph2
     bone2->bone = &mockBone;
     bone2->index = 1;
     bone2->position.setValue(0.31, 0.32, 0.33);
     bone2->rotation.setValue(0.41, 0.42, 0.43, 0.44);
-    morph.addBoneMorph(bone2.get());
+    expected.addBoneMorph(bone2.get());
     Array<IMorph::Bone *> boneMorphs;
-    morph.getBoneMorphs(boneMorphs);
+    expected.getBoneMorphs(boneMorphs);
     ASSERT_EQ(2, boneMorphs.count());
-    morph.setName(&name, IEncoding::kJapanese);
-    morph.setName(&englishName, IEncoding::kEnglish);
-    morph.setCategory(IMorph::kEyeblow);
-    morph.setType(pmx::Morph::kBoneMorph);
-    vsize size = morph.estimateSize(info), read;
+    expected.setName(&name, IEncoding::kJapanese);
+    expected.setName(&englishName, IEncoding::kEnglish);
+    expected.setCategory(IMorph::kEyeblow);
+    expected.setType(pmx::Morph::kBoneMorph);
+    vsize size = expected.estimateSize(info), read;
     std::unique_ptr<uint8[]> bytes(new uint8[size]);
     uint8 *ptr = bytes.get();
-    morph.write(ptr, info);
-    morph2.read(bytes.get(), info, read);
+    expected.write(ptr, info);
+    actual.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
-    ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
-    ASSERT_EQ(morph.category(), morph2.category());
-    ASSERT_EQ(morph.type(), morph2.type());
-    const Array<Morph::Bone *> &bones = morph2.bones();
+    ASSERT_TRUE(actual.name(IEncoding::kJapanese)->equals(expected.name(IEncoding::kJapanese)));
+    ASSERT_TRUE(actual.name(IEncoding::kEnglish)->equals(expected.name(IEncoding::kEnglish)));
+    ASSERT_EQ(expected.category(), actual.category());
+    ASSERT_EQ(expected.type(), actual.type());
+    const Array<Morph::Bone *> &bones = actual.bones();
     ASSERT_EQ(bones.count(), 2);
     ASSERT_TRUE(CompareVector(bone1->position, bones[0]->position));
     ASSERT_TRUE(CompareVector(bone1->rotation, bones[0]->rotation));
@@ -645,9 +653,9 @@ TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
     ASSERT_TRUE(CompareVector(bone2->position, bones[1]->position));
     ASSERT_TRUE(CompareVector(bone2->rotation, bones[1]->rotation));
     ASSERT_EQ(bone2->index, bones[1]->index);
-    morph.removeBoneMorph(bone2.get());
-    morph.removeBoneMorph(bone1.get());
-    morph.getBoneMorphs(boneMorphs);
+    expected.removeBoneMorph(bone2.get());
+    expected.removeBoneMorph(bone1.get());
+    expected.getBoneMorphs(boneMorphs);
     ASSERT_EQ(0, boneMorphs.count());
 }
 
@@ -655,9 +663,10 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
 {
     vsize indexSize = GetParam();
     Encoding encoding(0);
-    Morph morph(0), morph2(0);
+    pmx::Model model(&encoding);
+    Morph expected(&model), actual(&model);
     MockIMorph mockMorph;
-    EXPECT_CALL(mockMorph, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
+    EXPECT_CALL(mockMorph, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(&model));
     std::unique_ptr<Morph::Group> group1(new Morph::Group()), group2(new Morph::Group());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -668,38 +677,38 @@ TEST_P(PMXFragmentTest, ReadWriteGroupMorph)
     group1->morph = &mockMorph;
     group1->index = 0;
     group1->fixedWeight = 0.1;
-    morph.addGroupMorph(group1.get());
+    expected.addGroupMorph(group1.get());
     // group morph2
     group2->morph = &mockMorph;
     group2->index = 1;
     group2->fixedWeight = 0.2;
-    morph.addGroupMorph(group2.get());
-    morph.setName(&name, IEncoding::kJapanese);
-    morph.setName(&englishName, IEncoding::kEnglish);
-    morph.setCategory(IMorph::kEye);
-    morph.setType(pmx::Morph::kGroupMorph);
+    expected.addGroupMorph(group2.get());
+    expected.setName(&name, IEncoding::kJapanese);
+    expected.setName(&englishName, IEncoding::kEnglish);
+    expected.setCategory(IMorph::kEye);
+    expected.setType(pmx::Morph::kGroupMorph);
     Array<IMorph::Group *> groupMorphs;
-    morph.getGroupMorphs(groupMorphs);
+    expected.getGroupMorphs(groupMorphs);
     ASSERT_EQ(2, groupMorphs.count());
-    vsize size = morph.estimateSize(info), read;
+    vsize size = expected.estimateSize(info), read;
     std::unique_ptr<uint8[]> bytes(new uint8[size]);
     uint8 *ptr = bytes.get();
-    morph.write(ptr, info);
-    morph2.read(bytes.get(), info, read);
+    expected.write(ptr, info);
+    actual.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
-    ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
-    ASSERT_EQ(morph.category(), morph2.category());
-    ASSERT_EQ(morph.type(), morph2.type());
-    const Array<Morph::Group *> &groups = morph2.groups();
+    ASSERT_TRUE(actual.name(IEncoding::kJapanese)->equals(expected.name(IEncoding::kJapanese)));
+    ASSERT_TRUE(actual.name(IEncoding::kEnglish)->equals(expected.name(IEncoding::kEnglish)));
+    ASSERT_EQ(expected.category(), actual.category());
+    ASSERT_EQ(expected.type(), actual.type());
+    const Array<Morph::Group *> &groups = actual.groups();
     ASSERT_EQ(groups.count(), 2);
     ASSERT_FLOAT_EQ(group1->fixedWeight, groups[0]->fixedWeight);
     ASSERT_EQ(group1->index, groups[0]->index);
     ASSERT_FLOAT_EQ(group2->fixedWeight, groups[1]->fixedWeight);
     ASSERT_EQ(group2->index, groups[1]->index);
-    morph.removeGroupMorph(group1.get());
-    morph.removeGroupMorph(group2.get());
-    morph.getGroupMorphs(groupMorphs);
+    expected.removeGroupMorph(group1.get());
+    expected.removeGroupMorph(group2.get());
+    expected.getGroupMorphs(groupMorphs);
     ASSERT_EQ(0, groupMorphs.count());
 }
 
@@ -707,9 +716,10 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
 {
     vsize indexSize = GetParam();
     Encoding encoding(0);
-    Morph morph(0), morph2(0);
+    pmx::Model model(&encoding);
+    Morph expected(&model), actual(&model);
     MockIMaterial mockMaterial;
-    EXPECT_CALL(mockMaterial, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
+    EXPECT_CALL(mockMaterial, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(&model));
     std::unique_ptr<Morph::Material> material1(new Morph::Material()), material2(new Morph::Material());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -731,7 +741,7 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     material1->shininess = 0.2;
     material1->operation = 1;
     // material morph2
-    morph.addMaterialMorph(material1.get());
+    expected.addMaterialMorph(material1.get());
     material2->index = 1;
     material2->materials = new Array<IMaterial *>();
     material2->materials->append(&mockMaterial);
@@ -745,25 +755,25 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     material2->edgeSize = 0.2;
     material2->shininess = 0.1;
     material2->operation = 2;
-    morph.addMaterialMorph(material2.get());
-    morph.setName(&name, IEncoding::kJapanese);
-    morph.setName(&englishName, IEncoding::kEnglish);
-    morph.setCategory(IMorph::kLip);
-    morph.setType(pmx::Morph::kMaterialMorph);
+    expected.addMaterialMorph(material2.get());
+    expected.setName(&name, IEncoding::kJapanese);
+    expected.setName(&englishName, IEncoding::kEnglish);
+    expected.setCategory(IMorph::kLip);
+    expected.setType(pmx::Morph::kMaterialMorph);
     Array<IMorph::Material *> materialMorphs;
-    morph.getMaterialMorphs(materialMorphs);
+    expected.getMaterialMorphs(materialMorphs);
     ASSERT_EQ(2, materialMorphs.count());
-    vsize size = morph.estimateSize(info), read;
+    vsize size = expected.estimateSize(info), read;
     std::unique_ptr<uint8[]> bytes(new uint8[size]);
     uint8 *ptr = bytes.get();
-    morph.write(ptr, info);
-    morph2.read(bytes.get(), info, read);
+    expected.write(ptr, info);
+    actual.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
-    ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
-    ASSERT_EQ(morph.category(), morph2.category());
-    ASSERT_EQ(morph.type(), morph2.type());
-    const Array<Morph::Material *> &materials = morph2.materials();
+    ASSERT_TRUE(actual.name(IEncoding::kJapanese)->equals(expected.name(IEncoding::kJapanese)));
+    ASSERT_TRUE(actual.name(IEncoding::kEnglish)->equals(expected.name(IEncoding::kEnglish)));
+    ASSERT_EQ(expected.category(), actual.category());
+    ASSERT_EQ(expected.type(), actual.type());
+    const Array<Morph::Material *> &materials = actual.materials();
     ASSERT_EQ(materials.count(), 2);
     ASSERT_TRUE(CompareVector(material1->ambient, materials[0]->ambient));
     ASSERT_TRUE(CompareVector(material1->diffuse, materials[0]->diffuse));
@@ -787,9 +797,9 @@ TEST_P(PMXFragmentTest, ReadWriteMaterialMorph)
     ASSERT_FLOAT_EQ(material2->shininess, materials[1]->shininess);
     ASSERT_EQ(material2->operation, materials[1]->operation);
     ASSERT_EQ(material2->index, materials[1]->index);
-    morph.removeMaterialMorph(material1.get());
-    morph.removeMaterialMorph(material2.get());
-    morph.getMaterialMorphs(materialMorphs);
+    expected.removeMaterialMorph(material1.get());
+    expected.removeMaterialMorph(material2.get());
+    expected.getMaterialMorphs(materialMorphs);
     ASSERT_EQ(0, materialMorphs.count());
 }
 
@@ -834,9 +844,10 @@ TEST_P(PMXFragmentTest, ReadWriteVertexMorph)
 {
     vsize indexSize = GetParam();
     Encoding encoding(0);
-    Morph morph(0), morph2(0);
+    pmx::Model model(&encoding);
+    Morph expected(&model), actual(&model);
     MockIVertex mockVertex;
-    EXPECT_CALL(mockVertex, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
+    EXPECT_CALL(mockVertex, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(&model));
     std::unique_ptr<Morph::Vertex> vertex1(new Morph::Vertex()), vertex2(new Morph::Vertex());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -847,38 +858,38 @@ TEST_P(PMXFragmentTest, ReadWriteVertexMorph)
     vertex1->vertex = &mockVertex;
     vertex1->index = 0;
     vertex1->position.setValue(0.1, 0.2, 0.3);
-    morph.addVertexMorph(vertex1.get());
+    expected.addVertexMorph(vertex1.get());
     // vertex morph2
     vertex2->vertex = &mockVertex;
     vertex2->index = 1;
     vertex2->position.setValue(0.4, 0.5, 0.6);
-    morph.addVertexMorph(vertex2.get());
-    morph.setName(&name, IEncoding::kJapanese);
-    morph.setName(&englishName, IEncoding::kEnglish);
-    morph.setCategory(IMorph::kOther);
-    morph.setType(pmx::Morph::kVertexMorph);
+    expected.addVertexMorph(vertex2.get());
+    expected.setName(&name, IEncoding::kJapanese);
+    expected.setName(&englishName, IEncoding::kEnglish);
+    expected.setCategory(IMorph::kOther);
+    expected.setType(pmx::Morph::kVertexMorph);
     Array<IMorph::Vertex *> vertexMorphs;
-    morph.getVertexMorphs(vertexMorphs);
+    expected.getVertexMorphs(vertexMorphs);
     ASSERT_EQ(2, vertexMorphs.count());
-    vsize size = morph.estimateSize(info), read;
+    vsize size = expected.estimateSize(info), read;
     std::unique_ptr<uint8[]> bytes(new uint8[size]);
     uint8 *ptr = bytes.get();
-    morph.write(ptr, info);
-    morph2.read(bytes.get(), info, read);
+    expected.write(ptr, info);
+    actual.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
-    ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
-    ASSERT_EQ(morph.category(), morph2.category());
-    ASSERT_EQ(morph.type(), morph2.type());
-    const Array<Morph::Vertex *> &vertices = morph2.vertices();
+    ASSERT_TRUE(actual.name(IEncoding::kJapanese)->equals(expected.name(IEncoding::kJapanese)));
+    ASSERT_TRUE(actual.name(IEncoding::kEnglish)->equals(expected.name(IEncoding::kEnglish)));
+    ASSERT_EQ(expected.category(), actual.category());
+    ASSERT_EQ(expected.type(), actual.type());
+    const Array<Morph::Vertex *> &vertices = actual.vertices();
     ASSERT_EQ(vertices.count(), 2);
     ASSERT_TRUE(CompareVector(vertex1->position, vertices[0]->position));
     ASSERT_EQ(vertex1->index, vertices[0]->index);
     ASSERT_TRUE(CompareVector(vertex2->position, vertices[1]->position));
     ASSERT_EQ(vertex2->index, vertices[1]->index);
-    morph.removeVertexMorph(vertex1.get());
-    morph.removeVertexMorph(vertex2.get());
-    morph.getVertexMorphs(vertexMorphs);
+    expected.removeVertexMorph(vertex1.get());
+    expected.removeVertexMorph(vertex2.get());
+    expected.getVertexMorphs(vertexMorphs);
     ASSERT_EQ(0, vertexMorphs.count());
 }
 
@@ -981,9 +992,10 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     vsize indexSize = get<0>(GetParam());
     pmx::Morph::Type type = get<1>(GetParam());
     Encoding encoding(0);
-    Morph morph(0), morph2(0);
+    pmx::Model model(&encoding);
+    Morph expected(&model), actual(&model);
     MockIVertex mockVertex;
-    EXPECT_CALL(mockVertex, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(static_cast<IModel *>(0)));
+    EXPECT_CALL(mockVertex, parentModelRef()).Times(AnyNumber()).WillRepeatedly(Return(&model));
     std::unique_ptr<Morph::UV> uv1(new Morph::UV()), uv2(new Morph::UV());
     Model::DataInfo info;
     String name("Japanese"), englishName("English");
@@ -994,30 +1006,30 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     uv1->vertex = &mockVertex;
     uv1->index = 0;
     uv1->position.setValue(0.1, 0.2, 0.3, 0.4);
-    morph.addUVMorph(uv1.get());
+    expected.addUVMorph(uv1.get());
     // UV morph2
     uv2->vertex = &mockVertex;
     uv2->index = 1;
     uv2->position.setValue(0.5, 0.6, 0.7, 0.8);
-    morph.addUVMorph(uv2.get());
-    morph.setName(&name, IEncoding::kJapanese);
-    morph.setName(&englishName, IEncoding::kEnglish);
-    morph.setCategory(IMorph::kOther);
-    morph.setType(type);
+    expected.addUVMorph(uv2.get());
+    expected.setName(&name, IEncoding::kJapanese);
+    expected.setName(&englishName, IEncoding::kEnglish);
+    expected.setCategory(IMorph::kOther);
+    expected.setType(type);
     Array<IMorph::UV *> uvMorphs;
-    morph.getUVMorphs(uvMorphs);
+    expected.getUVMorphs(uvMorphs);
     ASSERT_EQ(2, uvMorphs.count());
-    vsize size = morph.estimateSize(info), read;
+    vsize size = expected.estimateSize(info), read;
     std::unique_ptr<uint8[]> bytes(new uint8[size]);
     uint8 *ptr = bytes.get();
-    morph.write(ptr, info);
-    morph2.read(bytes.get(), info, read);
+    expected.write(ptr, info);
+    actual.read(bytes.get(), info, read);
     ASSERT_EQ(size, read);
-    ASSERT_TRUE(morph2.name(IEncoding::kJapanese)->equals(morph.name(IEncoding::kJapanese)));
-    ASSERT_TRUE(morph2.name(IEncoding::kEnglish)->equals(morph.name(IEncoding::kEnglish)));
-    ASSERT_EQ(morph.category(), morph2.category());
-    ASSERT_EQ(morph.type(), morph2.type());
-    const Array<Morph::UV *> &uvs = morph2.uvs();
+    ASSERT_TRUE(actual.name(IEncoding::kJapanese)->equals(expected.name(IEncoding::kJapanese)));
+    ASSERT_TRUE(actual.name(IEncoding::kEnglish)->equals(expected.name(IEncoding::kEnglish)));
+    ASSERT_EQ(expected.category(), actual.category());
+    ASSERT_EQ(expected.type(), actual.type());
+    const Array<Morph::UV *> &uvs = actual.uvs();
     ASSERT_EQ(uvs.count(), 2);
     ASSERT_TRUE(CompareVector(uv1->position, uvs[0]->position));
     ASSERT_EQ(type - pmx::Morph::kTexCoordMorph, uvs[0]->offset);
@@ -1025,9 +1037,9 @@ TEST_P(PMXFragmentWithUVTest, ReadWriteUVMorph)
     ASSERT_TRUE(CompareVector(uv2->position, uvs[1]->position));
     ASSERT_EQ(type - pmx::Morph::kTexCoordMorph, uvs[1]->offset);
     ASSERT_EQ(uv2->index, uvs[1]->index);
-    morph.removeUVMorph(uv1.get());
-    morph.removeUVMorph(uv2.get());
-    morph.getUVMorphs(uvMorphs);
+    expected.removeUVMorph(uv1.get());
+    expected.removeUVMorph(uv2.get());
+    expected.getUVMorphs(uvMorphs);
     ASSERT_EQ(0, uvMorphs.count());
 }
 

@@ -50,6 +50,7 @@ public:
     MOCK_METHOD2(sphereTextureIndexWillChange, void(int value, IMaterial *material));
     MOCK_METHOD2(toonTextureIndexWillChange, void(int value, IMaterial *material));
     MOCK_METHOD2(flagsWillChange, void(int value, IMaterial *material));
+    MOCK_METHOD2(visibleWillChange, void(bool value, IMaterial *material));
 };
 
 class MockModelPropertyEventListener : public IModel::PropertyEventListener {

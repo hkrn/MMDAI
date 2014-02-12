@@ -1909,13 +1909,15 @@ void Model::setIndices(const Array<int> &value)
 void Model::addBone(IBone *value)
 {
     internal::ModelHelper::addObject(this, value, m_context->bones);
-    if (const IString *name = value->name(IEncoding::kJapanese)) {
-        m_context->name2boneRefs.insert(name->toHashString(), value);
+    if (value) {
+        if (const IString *name = value->name(IEncoding::kJapanese)) {
+            m_context->name2boneRefs.insert(name->toHashString(), value);
+        }
+        if (const IString *name = value->name(IEncoding::kEnglish)) {
+            m_context->name2boneRefs.insert(name->toHashString(), value);
+        }
+        Bone::sortBones(m_context->bones, m_context->bonesBeforePhysics, m_context->bonesAfterPhysics);
     }
-    if (const IString *name = value->name(IEncoding::kEnglish)) {
-        m_context->name2boneRefs.insert(name->toHashString(), value);
-    }
-    Bone::sortBones(m_context->bones, m_context->bonesBeforePhysics, m_context->bonesAfterPhysics);
 }
 
 void Model::addJoint(IJoint *value)
@@ -1936,11 +1938,13 @@ void Model::addMaterial(IMaterial *value)
 void Model::addMorph(IMorph *value)
 {
     internal::ModelHelper::addObject(this, value, m_context->morphs);
-    if (const IString *name = value->name(IEncoding::kJapanese)) {
-        m_context->name2morphRefs.insert(name->toHashString(), value);
-    }
-    if (const IString *name = value->name(IEncoding::kEnglish)) {
-        m_context->name2morphRefs.insert(name->toHashString(), value);
+    if (value) {
+        if (const IString *name = value->name(IEncoding::kJapanese)) {
+            m_context->name2morphRefs.insert(name->toHashString(), value);
+        }
+        if (const IString *name = value->name(IEncoding::kEnglish)) {
+            m_context->name2morphRefs.insert(name->toHashString(), value);
+        }
     }
 }
 

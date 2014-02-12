@@ -148,7 +148,8 @@ TEST(PMDVertexTest, NullRef)
 
 TEST(PMDPropertyEventListener, HandleBonePropertyEvents)
 {
-    Bone bone(0, 0);
+    pmd2::Model model(0);
+    Bone bone(&model, 0);
     MockBonePropertyEventListener listener;
     TestHandleEvents<IBone::PropertyEventListener>(listener, bone);
     Vector3 v(1, 2, 3);
@@ -245,6 +246,7 @@ TEST(PMDPropertyEventListener, HandleMaterialPropertyEvents)
     EXPECT_CALL(listener, sphereTextureRenderModeWillChange(renderMode, &material)).WillOnce(Return());
     EXPECT_CALL(listener, sphereTextureWillChange(_, &material)).WillOnce(Return());
     EXPECT_CALL(listener, toonTextureWillChange(_, &material)).WillOnce(Return());
+    EXPECT_CALL(listener, visibleWillChange(false, &material)).WillOnce(Return());
     String mainTexture("MainTexture"), japaneseName("Japanese Name"), englishName("English Name"),
             sphereTexture("SphereTexture"), toonTexture("ToonTexture"), userDataArea("UserDataArea");
     material.addEventListenerRef(&listener);
@@ -282,6 +284,8 @@ TEST(PMDPropertyEventListener, HandleMaterialPropertyEvents)
     material.setToonTexture(&toonTexture);
     material.setUserDataArea(&userDataArea);
     material.setUserDataArea(&userDataArea);
+    material.setVisible(false);
+    material.setVisible(false);
 }
 
 TEST(PMDPropertyEventListener, HandleModelPropertyEvents)
@@ -358,7 +362,8 @@ TEST(PMDPropertyEventListener, HandleModelPropertyEvents)
 
 TEST(PMDPropertyEventListener, HandleMorphPropertyEvents)
 {
-    Morph morph(0, 0);
+    pmd2::Model model(0);
+    Morph morph(&model, 0);
     MockMorphPropertyEventListener listener;
     TestHandleEvents<IMorph::PropertyEventListener>(listener, morph);
     IMorph::WeightPrecision weight(0.42);
