@@ -659,6 +659,7 @@ void Motion::setNullFrameEnable(bool /* value */)
 void Motion::addKeyframe(IKeyframe *value)
 {
     if (!value) {
+        VPVL2_LOG(WARNING, "null keyframe cannot be added");
         return;
     }
     if (BaseSection *const *sectionPtr = m_context->type2sectionRefs.find(value->type())) {
@@ -670,6 +671,7 @@ void Motion::addKeyframe(IKeyframe *value)
 void Motion::replaceKeyframe(IKeyframe *value, bool alsoDelete)
 {
     if (!value) {
+        VPVL2_LOG(WARNING, "null keyframe cannot be replaced");
         return;
     }
     IKeyframe *keyframeToDelete = 0;
@@ -859,6 +861,7 @@ void Motion::removeKeyframe(IKeyframe *value)
 {
     /* prevent deleting a null keyframe and timeIndex() of the keyframe is zero */
     if (!value || value->timeIndex() == 0) {
+        VPVL2_LOG(WARNING, "null keyframe or keyframe timeIndex is 0 cannot be removed");
         return;
     }
     if (BaseSection *const *sectionPtr = m_context->type2sectionRefs.find(value->type())) {
@@ -871,6 +874,7 @@ void Motion::deleteKeyframe(IKeyframe *&value)
 {
     /* prevent deleting a null keyframe and timeIndex() of the keyframe is zero */
     if (!value || value->timeIndex() == 0) {
+        VPVL2_LOG(WARNING, "null keyframe or keyframe timeIndex is 0 cannot be deleted");
         return;
     }
     if (BaseSection *const *sectionPtr = m_context->type2sectionRefs.find(value->type())) {

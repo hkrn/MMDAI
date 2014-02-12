@@ -537,6 +537,7 @@ void Motion::addKeyframe(IKeyframe *value)
 void Motion::replaceKeyframe(IKeyframe *value, bool alsoDelete)
 {
     if (!value) {
+        VPVL2_LOG(WARNING, "null keyframe cannot be replaced");
         return;
     }
     IKeyframe *keyframeToDelete = 0;
@@ -590,6 +591,7 @@ void Motion::replaceKeyframe(IKeyframe *value, bool alsoDelete)
         break;
     }
     default:
+        VPVL2_LOG(WARNING, "Invalid keyframe type: " << value->type());
         break;
     }
     if (alsoDelete) {
@@ -654,11 +656,13 @@ IEffectKeyframe *Motion::findEffectKeyframeRef(const IKeyframe::TimeIndex & /* t
                                                const IString * /* name */,
                                                const IKeyframe::LayerIndex & /* layerIndex */) const
 {
+    VPVL2_LOG(WARNING, "Effect keyframe is not supported in VMD motion.");
     return 0;
 }
 
 IEffectKeyframe *Motion::findEffectKeyframeRefAt(int /* index */) const
 {
+    VPVL2_LOG(WARNING, "Effect keyframe is not supported in VMD motion");
     return 0;
 }
 
@@ -711,6 +715,7 @@ void Motion::removeKeyframe(IKeyframe *value)
 {
     /* prevent deleting a null keyframe and timeIndex() of the keyframe is zero */
     if (!value || value->timeIndex() == 0) {
+        VPVL2_LOG(WARNING, "null keyframe or keyframe timeIndex is 0 cannot be removed");
         return;
     }
     IKeyframe::Type type = value->type();
@@ -725,6 +730,7 @@ void Motion::deleteKeyframe(IKeyframe *&value)
 {
     /* prevent deleting a null keyframe and timeIndex() of the keyframe is zero */
     if (!value || value->timeIndex() == 0) {
+        VPVL2_LOG(WARNING, "null keyframe or keyframe timeIndex is 0 cannot be deleted");
         return;
     }
     IKeyframe::Type type = value->type();
@@ -755,6 +761,7 @@ void Motion::update(IKeyframe::Type type)
         m_context->projectMotion.update();
         break;
     default:
+        VPVL2_LOG(WARNING, "Invalid keyframe type: " << type);
         break;
     }
 }
