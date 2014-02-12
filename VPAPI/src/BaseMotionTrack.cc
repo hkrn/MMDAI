@@ -93,7 +93,12 @@ bool BaseMotionTrack::containsKeyframe(const IKeyframe *keyframe) const
 
 void BaseMotionTrack::add(BaseKeyframeRefObject *value, bool doSort)
 {
-    internalAdd(value);
+    Q_ASSERT(value);
+    IKeyframe *keyframe = value->baseKeyframeData();
+    m_keyframes.append(value);
+    m_keyframe2RefObjects.insert(keyframe, value);
+    m_timeIndex2RefObjects.insert(value->timeIndex(), value);
+    value->setDeleteable(false);
     if (doSort) {
         sort();
     }
@@ -101,7 +106,14 @@ void BaseMotionTrack::add(BaseKeyframeRefObject *value, bool doSort)
 
 void BaseMotionTrack::remove(BaseKeyframeRefObject *value)
 {
-    internalRemove(value);
+    Q_ASSERT(value);
+    BaseKeyframeRefObjectList::Iterator it = qBinaryFind(m_keyframes.begin(), m_keyframes.end(), value);
+    Q_ASSERT(it != m_keyframes.end());
+    m_keyframes.erase(it);
+    IKeyframe *keyframe = value->baseKeyframeData();
+    m_keyframe2RefObjects.remove(keyframe);
+    m_timeIndex2RefObjects.remove(value->timeIndex());
+    value->setDeleteable(true);
 }
 
 void BaseMotionTrack::replaceTimeIndex(const quint64 &newTimeIndex, const quint64 &oldTimeIndex)
@@ -150,26 +162,4 @@ QString BaseMotionTrack::name() const
 int BaseMotionTrack::length() const
 {
     return m_keyframes.size();
-}
-
-void BaseMotionTrack::internalAdd(BaseKeyframeRefObject *value)
-{
-    Q_ASSERT(value);
-    IKeyframe *keyframe = value->baseKeyframeData();
-    m_keyframes.append(value);
-    m_keyframe2RefObjects.insert(keyframe, value);
-    m_timeIndex2RefObjects.insert(value->timeIndex(), value);
-    value->setDeleteable(false);
-}
-
-void BaseMotionTrack::internalRemove(BaseKeyframeRefObject *value)
-{
-    Q_ASSERT(value);
-    BaseKeyframeRefObjectList::Iterator it = qBinaryFind(m_keyframes.begin(), m_keyframes.end(), value);
-    Q_ASSERT(it != m_keyframes.end());
-    m_keyframes.erase(it);
-    IKeyframe *keyframe = value->baseKeyframeData();
-    m_keyframe2RefObjects.remove(keyframe);
-    m_timeIndex2RefObjects.remove(value->timeIndex());
-    value->setDeleteable(true);
 }

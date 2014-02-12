@@ -64,6 +64,15 @@
 
 using namespace vpvl2;
 
+namespace {
+
+const QString kBoneName = QStringLiteral("testBone");
+const QString kMorphName = QStringLiteral("testMorph");
+const quint64 kTimeIndex = 42;
+const qreal kWeight = 0.42;
+
+}
+
 void TestVPAPI::initTestCase()
 {
     qRegisterMetaType<ModelProxy *>("ModelProxy");
@@ -250,10 +259,10 @@ void TestVPAPI::project_seek()
     project.initializeOnce();
     QSignalSpy cameraDidReset(project.camera(), SIGNAL(cameraDidReset()));
     QSignalSpy lightDidReset(project.light(), SIGNAL(lightDidReset()));
-    project.setCurrentTimeIndex(42);
-    project.setCurrentTimeIndex(42);
-    QCOMPARE(project.currentTimeIndex(), qreal(42));
-    QCOMPARE(project.projectInstanceRef()->currentTimeIndex(), IKeyframe::TimeIndex(42));
+    project.setCurrentTimeIndex(kTimeIndex);
+    project.setCurrentTimeIndex(kTimeIndex);
+    QCOMPARE(project.currentTimeIndex(), qreal(kTimeIndex));
+    QCOMPARE(project.projectInstanceRef()->currentTimeIndex(), IKeyframe::TimeIndex(kTimeIndex));
     QCOMPARE(currrentTimeIndexChanged.size(), 1);
     QCOMPARE(cameraDidReset.size(), 1);
     QCOMPARE(lightDidReset.size(), 1);
@@ -290,7 +299,7 @@ void TestVPAPI::project_reset()
     QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     project.addModel(modelProxy);
-    project.setCurrentTimeIndex(42);
+    project.setCurrentTimeIndex(kTimeIndex);
     project.reset();
     QCOMPARE(project.currentTimeIndex(), qreal(0));
     QCOMPARE(project.currentModel(), static_cast<ModelProxy *>(0));
@@ -660,8 +669,8 @@ void TestVPAPI::motion_addAndRemoveCameraKeyframe()
     QSignalSpy currentTimeIndexChanged(&project, SIGNAL(currentTimeIndexChanged()));
     project.initializeOnce();
     project.setCurrentMotion(project.camera()->motion());
-    addKeyframe(project, project.camera()->track(), project.camera(), 2, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
-    removeKeyframe(project, project.camera()->track(), 2, 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+    testAddKeyframe(project, project.camera()->track(), project.camera(), 2, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+    testRemoveKeyframe(project, project.camera()->track(), project.camera(), 3, 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
 }
 
 void TestVPAPI::motion_addAndUpdateCameraKeyframe()
@@ -674,12 +683,12 @@ void TestVPAPI::motion_addAndUpdateCameraKeyframe()
     CameraRefObject *camera = project.camera();
     project.setCurrentMotion(camera->motion());
     camera->setAngle(QVector3D(1, 2, 3));
-    camera->setDistance(42);
+    camera->setDistance(kTimeIndex);
     camera->setFov(84);
     camera->setLookAt(QVector3D(4, 5, 6));
     camera->motion()->updateKeyframe(camera, 0);
     QCOMPARE(camera->angle(), QVector3D(1, 2, 3));
-    QCOMPARE(camera->distance(), qreal(42));
+    QCOMPARE(camera->distance(), qreal(kTimeIndex));
     QCOMPARE(camera->fov(), qreal(84));
     QCOMPARE(camera->lookAt(), QVector3D(4, 5, 6));
     QCOMPARE(camera->track()->keyframes().size(), 2);
@@ -698,7 +707,7 @@ void TestVPAPI::motion_addAndUpdateCameraKeyframe()
     QCOMPARE(redoDidPerform.size(), 1);
     QCOMPARE(camera->track()->keyframes().size(), 2);
     QCOMPARE(camera->angle(), QVector3D(1, 2, 3));
-    QCOMPARE(camera->distance(), qreal(42));
+    QCOMPARE(camera->distance(), qreal(kTimeIndex));
     QCOMPARE(camera->fov(), qreal(84));
     QCOMPARE(camera->lookAt(), QVector3D(4, 5, 6));
     QCOMPARE(camera->motion()->data()->countKeyframes(camera->track()->type()), 2);
@@ -712,8 +721,8 @@ void TestVPAPI::motion_addAndRemoveLightKeyframe()
     QSignalSpy currentTimeIndexChanged(&project, SIGNAL(currentTimeIndexChanged()));
     project.initializeOnce();
     project.setCurrentMotion(project.light()->motion());
-    addKeyframe(project, project.light()->track(), project.light(), 2, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
-    removeKeyframe(project, project.light()->track(), 2, 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+    testAddKeyframe(project, project.light()->track(), project.light(), 2, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+    testRemoveKeyframe(project, project.light()->track(), project.light(), 3, 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
 }
 
 void TestVPAPI::motion_addAndUpdateLightKeyframe()
@@ -767,12 +776,12 @@ void TestVPAPI::motion_addAndRemoveBoneKeyframe()
     QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     BoneRefObject *bone = modelProxy->createBone();
-    bone->setName(QStringLiteral("test"));
+    bone->setName(kBoneName);
     project.addModel(modelProxy);
     project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
     BoneMotionTrack *track = modelProxy->childMotion()->findBoneMotionTrack(bone);
-    addKeyframe(project, track, bone, 1, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
-    removeKeyframe(project, track, 1, 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+    testAddKeyframe(project, track, bone, 1, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+    testRemoveKeyframe(project, track, bone, 2, 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
 }
 
 void TestVPAPI::motion_addAndUpdateBoneKeyframe_data()
@@ -793,7 +802,7 @@ void TestVPAPI::motion_addAndUpdateBoneKeyframe()
     QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     BoneRefObject *bone = modelProxy->createBone();
-    bone->setName(QStringLiteral("test"));
+    bone->setName(kBoneName);
     modelProxy->initialize(true);
     project.addModel(modelProxy);
     project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
@@ -841,12 +850,12 @@ void TestVPAPI::motion_addAndRemoveMorphKeyframe()
     QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     MorphRefObject *morph = modelProxy->createMorph();
-    morph->setName(QStringLiteral("test"));
+    morph->setName(kMorphName);
     project.addModel(modelProxy);
     project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
     MorphMotionTrack *track = modelProxy->childMotion()->findMorphMotionTrack(morph);
-    addKeyframe(project, track, morph, 1, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
-    removeKeyframe(project, track, 1, 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+    testAddKeyframe(project, track, morph, 1, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+    testRemoveKeyframe(project, track, morph, 2, 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
 }
 
 void TestVPAPI::motion_addAndUpdateMorphKeyframe_data()
@@ -867,15 +876,15 @@ void TestVPAPI::motion_addAndUpdateMorphKeyframe()
     QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
     MorphRefObject *morph = modelProxy->createMorph();
-    morph->setName(QStringLiteral("test"));
+    morph->setName(kMorphName);
     modelProxy->initialize(true);
     project.addModel(modelProxy);
     project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
     MotionProxy *motionProxy = modelProxy->childMotion();
     MorphMotionTrack *track = motionProxy->findMorphMotionTrack(morph);
-    morph->setWeight(0.42);
+    morph->setWeight(kWeight);
     motionProxy->updateKeyframe(morph, 0);
-    QVERIFY(qFuzzyCompare(morph->weight(), IMorph::WeightPrecision(0.42)));
+    QVERIFY(qFuzzyCompare(morph->weight(), IMorph::WeightPrecision(kWeight)));
     QCOMPARE(track->keyframes().size(), 1);
     QCOMPARE(motionProxy->data()->countKeyframes(track->type()), 1);
     project.undo();
@@ -887,55 +896,202 @@ void TestVPAPI::motion_addAndUpdateMorphKeyframe()
     project.redo();
     QVERIFY(!project.canRedo());
     QCOMPARE(redoDidPerform.size(), 1);
-    QVERIFY(qFuzzyCompare(morph->weight(), IMorph::WeightPrecision(0.42)));
+    QVERIFY(qFuzzyCompare(morph->weight(), IMorph::WeightPrecision(kWeight)));
     QCOMPARE(track->keyframes().size(), 1);
     QCOMPARE(motionProxy->data()->countKeyframes(track->type()), 1);
 }
 
-void TestVPAPI::addKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged)
+void TestVPAPI::motion_copyAndPasteAndCutCameraKeyframe_data()
 {
-    track->parentMotion()->addKeyframe(object, 42);
-    BaseKeyframeRefObject *keyframeRef = track->findKeyframeByTimeIndex(42);
-    QVERIFY(keyframeRef);
-    QCOMPARE(keyframeRef->timeIndex(), quint64(42));
+    QTest::addColumn<bool>("inversed");
+    QTest::newRow("inversed=false") << false;
+    QTest::newRow("inversed=true") << true;
+}
+
+void TestVPAPI::motion_copyAndPasteAndCutCameraKeyframe()
+{
+    QFETCH(bool, inversed);
+    ProjectProxy project;
+    QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
+    QSignalSpy redoDidPerform(&project, SIGNAL(redoDidPerform()));
+    QSignalSpy currentTimeIndexChanged(&project, SIGNAL(currentTimeIndexChanged()));
+    project.initializeOnce();
+    QObject *object = project.camera();
+    MotionProxy *parentMotion = project.camera()->motion();
+    project.setCurrentMotion(parentMotion);
+    BaseMotionTrack *track = project.camera()->track();
+    testCopyAndPasteAndTest(project, track, object, inversed, 2, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+}
+
+void TestVPAPI::motion_copyAndPasteAndCutLightKeyframe_data()
+{
+    QTest::addColumn<bool>("inversed");
+    QTest::newRow("inversed=false") << false;
+    QTest::newRow("inversed=true") << true;
+}
+
+void TestVPAPI::motion_copyAndPasteAndCutLightKeyframe()
+{
+    QFETCH(bool, inversed);
+    ProjectProxy project;
+    QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
+    QSignalSpy redoDidPerform(&project, SIGNAL(redoDidPerform()));
+    QSignalSpy currentTimeIndexChanged(&project, SIGNAL(currentTimeIndexChanged()));
+    project.initializeOnce();
+    QObject *object = project.light();
+    MotionProxy *parentMotion = project.light()->motion();
+    project.setCurrentMotion(parentMotion);
+    BaseMotionTrack *track = project.light()->track();
+    testCopyAndPasteAndTest(project, track, object, inversed, 2, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+}
+
+void TestVPAPI::motion_copyAndPasteAndCutBoneKeyframe_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::addColumn<bool>("inversed");
+    QTest::newRow("PMD") << IModel::kPMDModel << false;
+    QTest::newRow("PMX") << IModel::kPMXModel << false;
+    QTest::newRow("PMD+inversed") << IModel::kPMDModel << true;
+    QTest::newRow("PMX+inversed") << IModel::kPMXModel << true;
+}
+
+void TestVPAPI::motion_copyAndPasteAndCutBoneKeyframe()
+{
+    QFETCH(IModel::Type, modelType);
+    QFETCH(bool, inversed);
+    ProjectProxy project;
+    project.initializeOnce();
+    QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
+    QSignalSpy redoDidPerform(&project, SIGNAL(redoDidPerform()));
+    QSignalSpy currentTimeIndexChanged(&project, SIGNAL(currentTimeIndexChanged()));
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
+    ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    BoneRefObject *bone = modelProxy->createBone();
+    bone->setName(kBoneName);
+    project.addModel(modelProxy);
+    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
+    BoneMotionTrack *track = modelProxy->childMotion()->findBoneMotionTrack(bone);
+    testCopyAndPasteAndTest(project, track, bone, inversed, 1, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+}
+
+void TestVPAPI::motion_copyAndPasteAndCutMorphKeyframe_data()
+{
+    QTest::addColumn<IModel::Type>("modelType");
+    QTest::addColumn<bool>("inversed");
+    QTest::newRow("PMD") << IModel::kPMDModel << false;
+    QTest::newRow("PMX") << IModel::kPMXModel << false;
+    QTest::newRow("PMD+inversed") << IModel::kPMDModel << true;
+    QTest::newRow("PMX+inversed") << IModel::kPMXModel << true;
+}
+
+void TestVPAPI::motion_copyAndPasteAndCutMorphKeyframe()
+{
+    QFETCH(IModel::Type, modelType);
+    QFETCH(bool, inversed);
+    ProjectProxy project;
+    project.initializeOnce();
+    QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
+    QSignalSpy redoDidPerform(&project, SIGNAL(redoDidPerform()));
+    QSignalSpy currentTimeIndexChanged(&project, SIGNAL(currentTimeIndexChanged()));
+    project.initializeOnce();
+    QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
+    ModelProxy *modelProxy = project.createModelProxy(model.take(), QUuid::createUuid(), QUrl());
+    MorphRefObject *morph = modelProxy->createMorph();
+    morph->setName(kMorphName);
+    project.addModel(modelProxy);
+    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
+    MorphMotionTrack *track = modelProxy->childMotion()->findMorphMotionTrack(morph);
+    testCopyAndPasteAndTest(project, track, morph, inversed, 1, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+}
+
+void TestVPAPI::motion_mergeCameraKeyframe()
+{
+    ProjectProxy project;
+    QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
+    QSignalSpy redoDidPerform(&project, SIGNAL(redoDidPerform()));
+    QSignalSpy currentTimeIndexChanged(&project, SIGNAL(currentTimeIndexChanged()));
+    project.initializeOnce();
+    project.setCurrentMotion(project.camera()->motion());
+}
+
+void TestVPAPI::testAddKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged)
+{
+    track->parentMotion()->addKeyframe(object, kTimeIndex);
+    testNewKeyframe(project, track, object, baseSize, baseChanged, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+}
+
+void TestVPAPI::testRemoveKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged)
+{
+    MotionProxy *parentMotion = track->parentMotion();
+    BaseKeyframeRefObject *keyframe = parentMotion->resolveKeyframeAt(kTimeIndex, object);
+    parentMotion->removeKeyframe(keyframe);
+    testOldKeyframe(project, track, object, baseSize, baseChanged, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+}
+
+void TestVPAPI::testCopyAndPasteAndTest(ProjectProxy &project, BaseMotionTrack *track, QObject *object, bool inversed, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged)
+{
+    MotionProxy *parentMotion = track->parentMotion();
+    BaseKeyframeRefObject *keyframe = parentMotion->resolveKeyframeAt(0, object);
+    QList<BaseKeyframeRefObject *> keyframes; keyframes << keyframe;
+    parentMotion->selectKeyframes(keyframes);
+    parentMotion->copyKeyframes();
+    parentMotion->pasteKeyframes(kTimeIndex, inversed);
+    testNewKeyframe(project, track, object, baseSize, baseChanged, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+    BaseKeyframeRefObject *keyframe2 = parentMotion->resolveKeyframeAt(kTimeIndex, object);
+    keyframes.clear(); keyframes << keyframe2;
+    parentMotion->selectKeyframes(keyframes);
+    parentMotion->copyKeyframes();
+    parentMotion->cutKeyframes();
+    testOldKeyframe(project, track, object, baseSize + 1, baseChanged + 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
+}
+
+void TestVPAPI::testNewKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged)
+{
+    MotionProxy *parentMotion = track->parentMotion();
+    BaseKeyframeRefObject *newKeyframeRef = parentMotion->resolveKeyframeAt(kTimeIndex, object);
+    quint64 timeIndex = newKeyframeRef->timeIndex();
+    QVERIFY(newKeyframeRef);
+    QCOMPARE(timeIndex, quint64(kTimeIndex));
     QCOMPARE(track->keyframes().size(), baseSize + 1);
-    QCOMPARE(track->parentMotion()->data()->countKeyframes(track->type()), baseSize + 1);
-    QCOMPARE(track->findKeyframeByTimeIndex(42), keyframeRef);
+    QCOMPARE(parentMotion->data()->countKeyframes(track->type()), baseSize + 1);
     project.undo();
     QVERIFY(!project.canUndo());
     QCOMPARE(undoDidPerform.size(), 1);
     QCOMPARE(currentTimeIndexChanged.size(), baseChanged + 1);
     QCOMPARE(track->keyframes().size(), baseSize);
     QCOMPARE(track->parentMotion()->data()->countKeyframes(track->type()), baseSize);
-    QVERIFY(!track->findKeyframeByTimeIndex(42));
+    QVERIFY(!parentMotion->resolveKeyframeAt(kTimeIndex, object));
     project.redo();
     QVERIFY(!project.canRedo());
     QCOMPARE(redoDidPerform.size(), 1);
     QCOMPARE(currentTimeIndexChanged.size(), baseChanged + 2);
     QCOMPARE(track->keyframes().size(), baseSize + 1);
-    QCOMPARE(track->parentMotion()->data()->countKeyframes(track->type()), baseSize + 1);
-    QCOMPARE(track->findKeyframeByTimeIndex(42), keyframeRef);
+    QCOMPARE(parentMotion->data()->countKeyframes(track->type()), baseSize + 1);
+    BaseKeyframeRefObject *redoKeyframe = parentMotion->resolveKeyframeAt(kTimeIndex, object);
+    QVERIFY(redoKeyframe);
+    QCOMPARE(redoKeyframe->timeIndex(), timeIndex);
 }
 
-void TestVPAPI::removeKeyframe(ProjectProxy &project, BaseMotionTrack *track, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged)
+void TestVPAPI::testOldKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged)
 {
-    BaseKeyframeRefObject *keyframe = track->findKeyframeByTimeIndex(42);
-    track->parentMotion()->removeKeyframe(keyframe);
-    QCOMPARE(track->keyframes().size(), baseSize);
-    QCOMPARE(track->parentMotion()->data()->countKeyframes(track->type()), baseSize);
-    QVERIFY(!track->findKeyframeByTimeIndex(42));
+    MotionProxy *parentMotion = track->parentMotion();
+    QCOMPARE(track->keyframes().size(), baseSize - 1);
+    QCOMPARE(parentMotion->data()->countKeyframes(track->type()), baseSize - 1);
+    QVERIFY(!parentMotion->resolveKeyframeAt(kTimeIndex, object));
     project.undo();
+    BaseKeyframeRefObject *keyframe = parentMotion->resolveKeyframeAt(kTimeIndex, object);
     QCOMPARE(undoDidPerform.size(), 2);
     QCOMPARE(currentTimeIndexChanged.size(), baseChanged + 1);
-    QCOMPARE(track->keyframes().size(), baseSize + 1);
-    QCOMPARE(track->parentMotion()->data()->countKeyframes(track->type()), baseSize + 1);
-    QCOMPARE(track->findKeyframeByTimeIndex(42), keyframe);
+    QCOMPARE(track->keyframes().size(), baseSize);
+    QCOMPARE(parentMotion->data()->countKeyframes(track->type()), baseSize);
+    QCOMPARE(parentMotion->resolveKeyframeAt(kTimeIndex, object), keyframe);
     project.redo();
     QCOMPARE(redoDidPerform.size(), 2);
     QCOMPARE(currentTimeIndexChanged.size(), baseChanged + 2);
-    QCOMPARE(track->keyframes().size(), baseSize);
-    QCOMPARE(track->parentMotion()->data()->countKeyframes(track->type()), baseSize);
-    QVERIFY(!track->findKeyframeByTimeIndex(42));
+    QCOMPARE(track->keyframes().size(), baseSize - 1);
+    QCOMPARE(parentMotion->data()->countKeyframes(track->type()), baseSize - 1);
+    QVERIFY(!parentMotion->resolveKeyframeAt(kTimeIndex, object));
 }
 
 QTEST_MAIN(TestVPAPI)

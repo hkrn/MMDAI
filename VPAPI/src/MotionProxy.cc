@@ -668,10 +668,10 @@ public:
 
 class CutKeyframesCommand : public BaseKeyframeCommand {
 public:
-    CutKeyframesCommand(QList<BaseKeyframeRefObject *> *keyframesRef, QUndoCommand *parent)
-        : BaseKeyframeCommand(*keyframesRef, parent),
-          m_copiedKeyframesRef(keyframesRef),
-          m_cutKeyframes(*keyframesRef)
+    CutKeyframesCommand(QList<BaseKeyframeRefObject *> *keyframesRefs, QUndoCommand *parent)
+        : BaseKeyframeCommand(*keyframesRefs, parent),
+          m_copiedKeyframesRef(keyframesRefs),
+          m_cutKeyframeRefs(*keyframesRefs)
     {
         setText(QApplication::tr("Cut Keyframe(s)"));
     }
@@ -680,7 +680,7 @@ public:
 
     virtual void undo() {
         addKeyframe();
-        *m_copiedKeyframesRef = m_cutKeyframes;
+        *m_copiedKeyframesRef = m_cutKeyframeRefs;
         refreshTrack();
     }
     virtual void redo() {
@@ -691,7 +691,7 @@ public:
 
 private:
     QList<BaseKeyframeRefObject *> *m_copiedKeyframesRef;
-    QList<BaseKeyframeRefObject *> m_cutKeyframes;
+    QList<BaseKeyframeRefObject *> m_cutKeyframeRefs;
 };
 
 template<typename TTrack, typename TKeyframeRefObject, typename TKeyframe>
@@ -860,6 +860,8 @@ MotionProxy::MotionProxy(ProjectProxy *projectRef,
                          QUndoStack *undoStackRef)
     : QObject(projectRef),
       m_projectRef(projectRef),
+      m_cameraMotionTrackRef(0),
+      m_lightMotionTrackRef(0),
       m_motion(motion),
       m_undoStackRef(undoStackRef),
       m_uuid(uuid),
@@ -970,6 +972,11 @@ void MotionProxy::setLightMotionTrack(LightMotionTrack *track, const Factory *fa
     track->refresh();
     bindTrackSignals(track);
     m_lightMotionTrackRef = track;
+}
+
+void MotionProxy::selectKeyframes(const QList<BaseKeyframeRefObject *> &value)
+{
+    m_currentKeyframeRefs = value;
 }
 
 bool MotionProxy::save(const QUrl &fileUrl)
@@ -1139,7 +1146,7 @@ void MotionProxy::removeKeyframe(QObject *opaque, QUndoCommand *parent)
 void MotionProxy::removeAllSelectedKeyframes(QUndoCommand *parent)
 {
     QList<BaseKeyframeRefObject *> keyframes;
-    foreach (BaseKeyframeRefObject *keyframe, m_selectedKeyframeRefs) {
+    foreach (BaseKeyframeRefObject *keyframe, m_currentKeyframeRefs) {
         if (keyframe->timeIndex() > 0) {
             keyframes.append(keyframe);
         }
@@ -1190,7 +1197,7 @@ void MotionProxy::removeAllKeyframesIn(const QList<quint64> &timeIndices, QUndoC
 
 void MotionProxy::copyKeyframes()
 {
-    m_copiedKeyframeRefs = m_selectedKeyframeRefs;
+    m_copiedKeyframeRefs = m_currentKeyframeRefs;
     emit canPasteChanged();
 }
 
@@ -1198,10 +1205,10 @@ void MotionProxy::pasteKeyframes(const quint64 &timeIndex, bool inversed, QUndoC
 {
     QScopedPointer<QUndoCommand> command;
     if (inversed) {
-        command.reset(new InversedPasteKeyframesCommand(this, m_copiedKeyframeRefs, timeIndex, &m_selectedKeyframeRefs, parent));
+        command.reset(new InversedPasteKeyframesCommand(this, m_copiedKeyframeRefs, timeIndex, &m_currentKeyframeRefs, parent));
     }
     else {
-        command.reset(new PasteKeyframesCommand(this, m_copiedKeyframeRefs, timeIndex, &m_selectedKeyframeRefs, parent));
+        command.reset(new PasteKeyframesCommand(this, m_copiedKeyframeRefs, timeIndex, &m_currentKeyframeRefs, parent));
     }
     pushUndoCommand(command, parent);
     VPVL2_VLOG(2, "paste timeIndex=" << timeIndex << " inversed=" << inversed);
@@ -1253,9 +1260,9 @@ qreal MotionProxy::duration() const
     return differenceDuration(0);
 }
 
-QQmlListProperty<BaseKeyframeRefObject> MotionProxy::selectedKeyframes()
+QQmlListProperty<BaseKeyframeRefObject> MotionProxy::currentKeyframes()
 {
-    return QQmlListProperty<BaseKeyframeRefObject>(this, m_selectedKeyframeRefs);
+    return QQmlListProperty<BaseKeyframeRefObject>(this, m_currentKeyframeRefs);
 }
 
 bool MotionProxy::canPaste() const
@@ -1342,6 +1349,14 @@ void MotionProxy::refresh()
         it2.value()->sort();
     }
     m_motion->update(IKeyframe::kMorphKeyframe);
+    if (m_cameraMotionTrackRef) {
+        m_cameraMotionTrackRef->refresh();
+        m_motion->update(IKeyframe::kCameraKeyframe);
+    }
+    if (m_lightMotionTrackRef) {
+        m_lightMotionTrackRef->refresh();
+        m_motion->update(IKeyframe::kLightKeyframe);
+    }
     emit durationTimeIndexChanged();
 }
 

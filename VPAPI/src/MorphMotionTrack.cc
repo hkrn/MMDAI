@@ -96,9 +96,7 @@ void MorphMotionTrack::addKeyframe(MorphKeyframeRefObject *keyframe, bool doUpda
 void MorphMotionTrack::addKeyframe(QObject *value, bool doUpdate)
 {
     Q_ASSERT(qobject_cast<MorphKeyframeRefObject *>(value));
-    if (MorphKeyframeRefObject *v = qobject_cast<MorphKeyframeRefObject *>(value)) {
-        addKeyframe(v, doUpdate);
-    }
+    addKeyframe(qobject_cast<MorphKeyframeRefObject *>(value), doUpdate);
 }
 
 void MorphMotionTrack::removeKeyframe(MorphKeyframeRefObject *keyframe, bool doUpdate)
@@ -117,9 +115,7 @@ void MorphMotionTrack::removeKeyframe(MorphKeyframeRefObject *keyframe, bool doU
 void MorphMotionTrack::removeKeyframe(QObject *value, bool doUpdate)
 {
     Q_ASSERT(qobject_cast<MorphKeyframeRefObject *>(value));
-    if (MorphKeyframeRefObject *v = qobject_cast<MorphKeyframeRefObject *>(value)) {
-        removeKeyframe(v, doUpdate);
-    }
+    removeKeyframe(qobject_cast<MorphKeyframeRefObject *>(value), doUpdate);
 }
 
 BaseKeyframeRefObject *MorphMotionTrack::copy(BaseKeyframeRefObject *value, const quint64 &timeIndex, bool doUpdate)

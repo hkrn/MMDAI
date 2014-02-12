@@ -83,7 +83,7 @@ class MotionProxy : public QObject
     Q_PROPERTY(QUrl fileUrl READ fileUrl CONSTANT FINAL)
     Q_PROPERTY(qreal durationTimeIndex READ durationTimeIndex NOTIFY durationTimeIndexChanged FINAL)
     Q_PROPERTY(qreal duration READ duration NOTIFY durationTimeIndexChanged FINAL)
-    Q_PROPERTY(QQmlListProperty<BaseKeyframeRefObject> selectedKeyframes READ selectedKeyframes CONSTANT FINAL)
+    Q_PROPERTY(QQmlListProperty<BaseKeyframeRefObject> currentKeyframes READ currentKeyframes NOTIFY currentKeyframesChanged FINAL)
     Q_PROPERTY(bool canPaste READ canPaste NOTIFY canPasteChanged FINAL)
     Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
@@ -101,6 +101,7 @@ public:
     void assignModel(ModelProxy *modelProxy, const vpvl2::Factory *factoryRef);
     void setCameraMotionTrack(CameraMotionTrack *track, const vpvl2::Factory *factoryRef);
     void setLightMotionTrack(LightMotionTrack *track, const vpvl2::Factory *factoryRef);
+    void selectKeyframes(const QList<BaseKeyframeRefObject *> &value);
 
     Q_INVOKABLE bool save(const QUrl &fileUrl);
     Q_INVOKABLE qreal differenceTimeIndex(qreal value) const;
@@ -119,7 +120,7 @@ public:
     QUrl fileUrl() const;
     qreal durationTimeIndex() const;
     qreal duration() const;
-    QQmlListProperty<BaseKeyframeRefObject> selectedKeyframes();
+    QQmlListProperty<BaseKeyframeRefObject> currentKeyframes();
     bool canPaste() const;
     bool isDirty() const;
     void setDirty(bool value);
@@ -133,6 +134,7 @@ signals:
     void keyframeDidReplace(BaseKeyframeRefObject *dst, BaseKeyframeRefObject *src);
     void timeIndexDidChange(BaseKeyframeRefObject *keyframe, quint64 newTimeIndex, quint64 oldTimeIndex);
     void canPasteChanged();
+    void currentKeyframesChanged();
     void dirtyChanged();
     void motionWillLoad(int numEstimatedKeyframes);
     void motionBeLoading(int numLoadedKeyframes, int numEstimatedKeyframes);
@@ -179,7 +181,7 @@ private:
     QScopedPointer<vpvl2::IMotion> m_motion;
     BoneMotionTrackBundle m_boneMotionTrackBundle;
     MorphMotionTrackBundle m_morphMotionTrackBundle;
-    QList<BaseKeyframeRefObject *> m_selectedKeyframeRefs;
+    QList<BaseKeyframeRefObject *> m_currentKeyframeRefs;
     QList<BaseKeyframeRefObject *> m_copiedKeyframeRefs;
     QUndoStack *m_undoStackRef;
     QUuid m_uuid;

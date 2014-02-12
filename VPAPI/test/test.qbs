@@ -90,7 +90,7 @@ CppApplication {
         condition: qbs.targetOS.contains("osx")
         cpp.frameworks: [ "AppKit", "OpenGL", "OpenCL" ]
         cpp.minimumOsxVersion: "10.6"
-        cpp.dynamicLibraries: commonLibraries.concat([ "tbb" ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "tbb", "z" ])
     }
     Properties {
         condition: qbs.targetOS.contains("linux")

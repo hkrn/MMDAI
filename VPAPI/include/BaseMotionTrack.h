@@ -92,9 +92,6 @@ signals:
     void visibleChanged();
 
 protected:
-    void internalAdd(BaseKeyframeRefObject *value);
-    void internalRemove(BaseKeyframeRefObject *value);
-
     typedef QList<BaseKeyframeRefObject *> BaseKeyframeRefObjectList;
     MotionProxy *m_parentMotionRef;
     BaseKeyframeRefObjectList m_keyframes;

@@ -112,14 +112,13 @@ void LightMotionTrack::addKeyframe(LightKeyframeRefObject *keyframe, bool doUpda
 void LightMotionTrack::addKeyframe(QObject *value, bool doUpdate)
 {
     Q_ASSERT(qobject_cast<LightKeyframeRefObject *>(value));
-    if (LightKeyframeRefObject *v = qobject_cast<LightKeyframeRefObject *>(value)) {
-        addKeyframe(v, doUpdate);
-    }
+    addKeyframe(qobject_cast<LightKeyframeRefObject *>(value), doUpdate);
 }
 
 void LightMotionTrack::removeKeyframe(LightKeyframeRefObject *keyframe, bool doUpdate)
 {
     Q_ASSERT(keyframe);
+    Q_ASSERT(keyframe->timeIndex() > 0);
     IMotion *motionRef = m_parentMotionRef->data();
     motionRef->removeKeyframe(keyframe->data());
     if (doUpdate) {
@@ -132,14 +131,15 @@ void LightMotionTrack::removeKeyframe(LightKeyframeRefObject *keyframe, bool doU
 void LightMotionTrack::removeKeyframe(QObject *value, bool doUpdate)
 {
     Q_ASSERT(qobject_cast<LightKeyframeRefObject *>(value));
-    if (LightKeyframeRefObject *v = qobject_cast<LightKeyframeRefObject *>(value)) {
-        removeKeyframe(v, doUpdate);
-    }
+    removeKeyframe(qobject_cast<LightKeyframeRefObject *>(value), doUpdate);
 }
 
 void LightMotionTrack::replace(LightKeyframeRefObject *dst, LightKeyframeRefObject *src, bool doUpdate)
 {
-    Q_ASSERT(src && dst && dst != src && src->parentTrack() == dst->parentTrack());
+    Q_ASSERT(src);
+    Q_ASSERT(dst);
+    Q_ASSERT(dst != src);
+    Q_ASSERT(src->parentTrack() == dst->parentTrack());
     IMotion *motionRef = m_parentMotionRef->data();
     motionRef->replaceKeyframe(dst->data(), false);
     if (doUpdate) {

@@ -95,14 +95,13 @@ void BoneMotionTrack::addKeyframe(BoneKeyframeRefObject *keyframe, bool doUpdate
 void BoneMotionTrack::addKeyframe(QObject *value, bool doUpdate)
 {
     Q_ASSERT(qobject_cast<BoneKeyframeRefObject *>(value));
-    if (BoneKeyframeRefObject *v = qobject_cast<BoneKeyframeRefObject *>(value)) {
-        addKeyframe(v, doUpdate);
-    }
+    addKeyframe(qobject_cast<BoneKeyframeRefObject *>(value), doUpdate);
 }
 
 void BoneMotionTrack::removeKeyframe(BoneKeyframeRefObject *keyframe, bool doUpdate)
 {
     Q_ASSERT(keyframe);
+    Q_ASSERT(keyframe->timeIndex() > 0);
     IMotion *motionRef = m_parentMotionRef->data();
     motionRef->removeKeyframe(keyframe->data());
     if (doUpdate) {
@@ -115,9 +114,7 @@ void BoneMotionTrack::removeKeyframe(BoneKeyframeRefObject *keyframe, bool doUpd
 void BoneMotionTrack::removeKeyframe(QObject *value, bool doUpdate)
 {
     Q_ASSERT(qobject_cast<BoneKeyframeRefObject *>(value));
-    if (BoneKeyframeRefObject *v = qobject_cast<BoneKeyframeRefObject *>(value)) {
-        removeKeyframe(v, doUpdate);
-    }
+    removeKeyframe(qobject_cast<BoneKeyframeRefObject *>(value), doUpdate);
 }
 
 BaseKeyframeRefObject *BoneMotionTrack::copy(BaseKeyframeRefObject *value, const quint64 &timeIndex, bool doUpdate)

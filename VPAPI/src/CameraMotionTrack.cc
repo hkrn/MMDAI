@@ -113,15 +113,14 @@ void CameraMotionTrack::addKeyframe(CameraKeyframeRefObject *keyframe, bool doUp
 void CameraMotionTrack::addKeyframe(QObject *value, bool doUpdate)
 {
     Q_ASSERT(qobject_cast<CameraKeyframeRefObject *>(value));
-    if (CameraKeyframeRefObject *v = qobject_cast<CameraKeyframeRefObject *>(value)) {
-        addKeyframe(v, doUpdate);
-    }
+    addKeyframe(qobject_cast<CameraKeyframeRefObject *>(value), doUpdate);
 }
 
 void CameraMotionTrack::removeKeyframe(CameraKeyframeRefObject *keyframe, bool doUpdate)
 {
     Q_ASSERT(m_parentMotionRef);
     Q_ASSERT(keyframe);
+    Q_ASSERT(keyframe->timeIndex() > 0);
     IMotion *motionRef = m_parentMotionRef->data();
     motionRef->removeKeyframe(keyframe->data());
     if (doUpdate) {
@@ -134,14 +133,15 @@ void CameraMotionTrack::removeKeyframe(CameraKeyframeRefObject *keyframe, bool d
 void CameraMotionTrack::removeKeyframe(QObject *value, bool doUpdate)
 {
     Q_ASSERT(qobject_cast<CameraKeyframeRefObject *>(value));
-    if (CameraKeyframeRefObject *v = qobject_cast<CameraKeyframeRefObject *>(value)) {
-        removeKeyframe(v, doUpdate);
-    }
+    removeKeyframe(qobject_cast<CameraKeyframeRefObject *>(value), doUpdate);
 }
 
 void CameraMotionTrack::replace(CameraKeyframeRefObject *dst, CameraKeyframeRefObject *src, bool doUpdate)
 {
-    Q_ASSERT(src && dst && dst != src && src->parentTrack() == dst->parentTrack());
+    Q_ASSERT(src);
+    Q_ASSERT(dst);
+    Q_ASSERT(dst != src);
+    Q_ASSERT(src->parentTrack() == dst->parentTrack());
     IMotion *motionRef = m_parentMotionRef->data();
     motionRef->replaceKeyframe(dst->data(), false);
     if (doUpdate) {

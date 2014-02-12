@@ -99,10 +99,22 @@ private slots:
     void motion_addAndRemoveMorphKeyframe();
     void motion_addAndUpdateMorphKeyframe_data();
     void motion_addAndUpdateMorphKeyframe();
+    void motion_copyAndPasteAndCutCameraKeyframe_data();
+    void motion_copyAndPasteAndCutCameraKeyframe();
+    void motion_copyAndPasteAndCutLightKeyframe_data();
+    void motion_copyAndPasteAndCutLightKeyframe();
+    void motion_copyAndPasteAndCutBoneKeyframe_data();
+    void motion_copyAndPasteAndCutBoneKeyframe();
+    void motion_copyAndPasteAndCutMorphKeyframe_data();
+    void motion_copyAndPasteAndCutMorphKeyframe();
+    void motion_mergeCameraKeyframe();
 
 private:
-    void addKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);
-    void removeKeyframe(ProjectProxy &project, BaseMotionTrack *track, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);
+    void testAddKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);
+    void testRemoveKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);
+    void testCopyAndPasteAndTest(ProjectProxy &project, BaseMotionTrack *track, QObject *object, bool inversed, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);
+    void testNewKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);
+    void testOldKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);
 };
 
 Q_DECLARE_METATYPE(vpvl2::IModel::Type)
