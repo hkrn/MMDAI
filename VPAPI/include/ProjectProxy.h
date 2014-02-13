@@ -102,6 +102,7 @@ class ProjectProxy : public QObject, protected vpvl2::IProgressReporter
     Q_PROPERTY(WorldProxy *world READ world CONSTANT FINAL)
     Q_PROPERTY(AccelerationType accelerationType READ accelerationType WRITE setAccelerationType NOTIFY accelerationTypeChanged FINAL)
     Q_PROPERTY(LanguageType language READ language WRITE setLanguage NOTIFY languageChanged FINAL)
+    Q_PROPERTY(MotionProxy::FormatType motionFormat READ motionFormat WRITE setMotionFormat NOTIFY motionFormatChanged FINAL)
     Q_PROPERTY(bool gridVisible READ isGridVisible WRITE setGridVisible NOTIFY gridVisibleChanged FINAL)
     Q_PROPERTY(bool loop READ isLoop WRITE setLoop NOTIFY loopChanged FINAL)
     Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
@@ -200,6 +201,8 @@ public:
     void setLanguage(LanguageType value);
     AccelerationType accelerationType() const;
     void setAccelerationType(AccelerationType value);
+    MotionProxy::FormatType motionFormat() const;
+    void setMotionFormat(MotionProxy::FormatType value);
     bool isGridVisible() const;
     void setGridVisible(bool value);
     bool isDirty() const;
@@ -292,6 +295,7 @@ signals:
     void lightChanged();
     void accelerationTypeChanged();
     void languageChanged();
+    void motionFormatChanged();
     void gridVisibleChanged();
     void loopChanged();
     void dirtyChanged();
@@ -305,8 +309,8 @@ private:
     static void resetIKEffectorBones(BoneRefObject *bone);
     void reportProgress(float value);
     void createProjectInstance();
-    void assignCamera();
-    void assignLight();
+    void assignCamera(MotionProxy::FormatType format);
+    void assignLight(MotionProxy::FormatType format);
     void internalSeek(const qreal &timeIndex, bool forceUpdate, bool forceUpdateCamera);
     void updateOriginValues();
     void setErrorString(const QString &value);
@@ -339,6 +343,7 @@ private:
     qreal m_currentTimeIndex;
     AccelerationType m_accelerationType;
     LanguageType m_language;
+    MotionProxy::FormatType m_motionFormat;
     bool m_initialized;
     bool m_initializeAll;
 };

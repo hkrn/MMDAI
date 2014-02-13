@@ -259,6 +259,7 @@ ProjectProxy::ProjectProxy(QObject *parent)
       m_currentTimeIndex(0),
       m_accelerationType(ParallelAcceleration),
       m_language(DefaultLauguage),
+      m_motionFormat(MotionProxy::VMDFormat),
       m_initialized(false),
       m_initializeAll(false)
 {
@@ -318,8 +319,8 @@ ProjectProxy::~ProjectProxy()
 void ProjectProxy::initializeOnce(bool all)
 {
     if (!m_initialized) {
-        assignCamera();
-        assignLight();
+        assignCamera(m_motionFormat);
+        assignLight(m_motionFormat);
         setDirty(false);
         m_initializeAll = all;
         m_initialized = true;
@@ -766,6 +767,19 @@ void ProjectProxy::setAccelerationType(AccelerationType value)
     }
 }
 
+MotionProxy::FormatType ProjectProxy::motionFormat() const
+{
+    return m_motionFormat;
+}
+
+void ProjectProxy::setMotionFormat(MotionProxy::FormatType value)
+{
+    if (motionFormat() != value) {
+        m_motionFormat = value;
+        emit motionFormatChanged();
+    }
+}
+
 bool ProjectProxy::isGridVisible() const
 {
     return globalSetting("grid.visible", true).toBool();
@@ -1164,8 +1178,8 @@ void ProjectProxy::internalCreateAsync()
 {
     disconnect(this, &ProjectProxy::enqueuedModelsDidDelete, this, &ProjectProxy::internalCreateAsync);
     createProjectInstance();
-    assignCamera();
-    assignLight();
+    assignCamera(m_motionFormat);
+    assignLight(m_motionFormat);
     setDirty(false);
     emit projectDidCreate();
 }
@@ -1178,8 +1192,8 @@ void ProjectProxy::internalLoadAsync()
     Array<IMotion *> motionRefs;
     m_project->getMotionRefs(motionRefs);
     const int nmotions = motionRefs.count();
-    assignCamera();
-    assignLight();
+    assignCamera(m_motionFormat);
+    assignLight(m_motionFormat);
     /* Override model motions to the project holds */
     for (int i = 0; i < nmotions; i++) {
         IMotion *motionRef = motionRefs[i];
@@ -1303,10 +1317,10 @@ void ProjectProxy::resetIKEffectorBones(BoneRefObject *bone)
     }
 }
 
-void ProjectProxy::assignCamera()
+void ProjectProxy::assignCamera(MotionProxy::FormatType format)
 {
     const QUuid &uuid = QUuid::createUuid();
-    QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDFormat, 0));
+    QScopedPointer<IMotion> motion(m_factory->newMotion(static_cast<IMotion::FormatType>(format), 0));
     VPVL2_VLOG(1, "The camera motion will be allocated as " << uuid.toString().toStdString());
     m_cameraRefObject->release();
     MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl());
@@ -1322,10 +1336,10 @@ void ProjectProxy::assignCamera()
     track->addKeyframe(track->convertCameraKeyframe(keyframe.take()), true);
 }
 
-void ProjectProxy::assignLight()
+void ProjectProxy::assignLight(MotionProxy::FormatType format)
 {
     const QUuid &uuid = QUuid::createUuid();
-    QScopedPointer<IMotion> motion(m_factory->newMotion(IMotion::kVMDFormat, 0));
+    QScopedPointer<IMotion> motion(m_factory->newMotion(static_cast<IMotion::FormatType>(format), 0));
     VPVL2_VLOG(1, "The light motion will be allocated as " << uuid.toString().toStdString());
     m_lightRefObject->release();
     MotionProxy *motionProxy = createMotionProxy(motion.data(), uuid, QUrl());
