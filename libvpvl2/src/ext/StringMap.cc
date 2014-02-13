@@ -98,7 +98,6 @@ void StringMap::copyTo(StringMap &value) const
     value.clear();
     for (const_iterator it = begin(); it != end(); ++it) {
         value.insert(std::make_pair(it->first, it->second));
-        VPVL2_VLOG(1, it->first << ":" << it->second);
     }
 }
 

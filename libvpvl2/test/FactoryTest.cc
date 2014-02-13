@@ -52,9 +52,9 @@ TEST(FactoryTest, CreateEmptyMotions)
     Encoding encoding(0);
     Factory factory(&encoding);
     MockIModel model;
-    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
+    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDFormat, &model));
     ASSERT_TRUE(dynamic_cast<vmd::Motion *>(vmd.get()));
-    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
+    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDFormat, &model));
     ASSERT_TRUE(dynamic_cast<mvd::Motion *>(mvd.get()));
 }
 
@@ -64,10 +64,10 @@ TEST(FactoryTest, CreateEmptyBoneKeyframes)
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createBoneKeyframe(0));
-    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
+    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDFormat, &model));
     std::unique_ptr<IBoneKeyframe> vbk(factory.createBoneKeyframe(vmd.get()));
     ASSERT_TRUE(dynamic_cast<vmd::BoneKeyframe *>(vbk.get()));
-    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
+    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDFormat, &model));
     std::unique_ptr<IBoneKeyframe> mbk(factory.createBoneKeyframe(mvd.get()));
     ASSERT_TRUE(dynamic_cast<mvd::BoneKeyframe *>(mbk.get()));
 }
@@ -78,10 +78,10 @@ TEST(FactoryTest, CreateEmptyCameraKeyframes)
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createCameraKeyframe(0));
-    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
+    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDFormat, &model));
     std::unique_ptr<ICameraKeyframe> vck(factory.createCameraKeyframe(vmd.get()));
     ASSERT_TRUE(dynamic_cast<vmd::CameraKeyframe *>(vck.get()));
-    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
+    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDFormat, &model));
     std::unique_ptr<ICameraKeyframe> mck(factory.createCameraKeyframe(mvd.get()));
     ASSERT_TRUE(dynamic_cast<mvd::CameraKeyframe *>(mck.get()));
 }
@@ -92,10 +92,10 @@ TEST(FactoryTest, CreateEmptyLightKeyframes)
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createLightKeyframe(0));
-    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
+    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDFormat, &model));
     std::unique_ptr<ILightKeyframe> vlk(factory.createLightKeyframe(vmd.get()));
     ASSERT_TRUE(dynamic_cast<vmd::LightKeyframe *>(vlk.get()));
-    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
+    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDFormat, &model));
     std::unique_ptr<ILightKeyframe> mlk(factory.createLightKeyframe(mvd.get()));
     ASSERT_TRUE(dynamic_cast<mvd::LightKeyframe *>(mlk.get()));
 }
@@ -106,10 +106,10 @@ TEST(FactoryTest, CreateEmptyMorphKeyframes)
     Factory factory(&encoding);
     MockIModel model;
     ASSERT_FALSE(factory.createMorphKeyframe(0));
-    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDMotion, &model));
+    std::unique_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDFormat, &model));
     std::unique_ptr<IMorphKeyframe> vmk(factory.createMorphKeyframe(vmd.get()));
     ASSERT_TRUE(dynamic_cast<vmd::MorphKeyframe *>(vmk.get()));
-    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDMotion, &model));
+    std::unique_ptr<IMotion> mvd(factory.newMotion(IMotion::kMVDFormat, &model));
     std::unique_ptr<IMorphKeyframe> mmk(factory.createMorphKeyframe(mvd.get()));
     ASSERT_TRUE(dynamic_cast<mvd::MorphKeyframe *>(mmk.get()));
 }
@@ -133,7 +133,7 @@ TEST_P(FactoryModelTest, StopInfiniteParentModelLoop)
 }
 
 
-class MotionConversionTest : public TestWithParam< tuple<QString, IMotion::Type > > {};
+class MotionConversionTest : public TestWithParam< tuple<QString, IMotion::FormatType > > {};
 
 ACTION_P(FindBone, bones)
 {
@@ -168,7 +168,7 @@ TEST_P(MotionConversionTest, ConvertModelMotion)
         bool ok;
         std::unique_ptr<IMotion> source(factory.createMotion(data, size, &model, ok));
         ASSERT_TRUE(ok);
-        IMotion::Type type = get<1>(GetParam());
+        IMotion::FormatType type = get<1>(GetParam());
         std::unique_ptr<IMotion> dest(factory.convertMotion(source.get(), type));
         ASSERT_EQ(dest->type(), type);
         const int nbkeyframes = source->countKeyframes(IKeyframe::kBoneKeyframe);
@@ -196,7 +196,7 @@ TEST_P(MotionConversionTest, ConvertCameraMotion)
         bool ok;
         std::unique_ptr<IMotion> source(factory.createMotion(data, size, 0, ok));
         ASSERT_TRUE(ok);
-        IMotion::Type type = get<1>(GetParam());
+        IMotion::FormatType type = get<1>(GetParam());
         std::unique_ptr<IMotion> dest(factory.convertMotion(source.get(), type));
         ASSERT_EQ(dest->type(), type);
         const int nckeyframes = source->countKeyframes(IKeyframe::kCameraKeyframe);
@@ -209,4 +209,4 @@ TEST_P(MotionConversionTest, ConvertCameraMotion)
 
 INSTANTIATE_TEST_CASE_P(FactoryInstance, FactoryModelTest, Values(IModel::kAssetModel, IModel::kPMDModel, IModel::kPMXModel));
 INSTANTIATE_TEST_CASE_P(FactoryInstance, MotionConversionTest,
-                        Combine(Values("vmd", "mvd"), Values(IMotion::kVMDMotion, IMotion::kMVDMotion)));
+                        Combine(Values("vmd", "mvd"), Values(IMotion::kVMDFormat, IMotion::kMVDFormat)));

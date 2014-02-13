@@ -89,7 +89,7 @@ class MockIMotion : public IMotion {
   MOCK_CONST_METHOD0(name,
       const IString*());
   MOCK_CONST_METHOD0(type,
-      Type());
+      FormatType());
 };
 
 }  // namespace vpvl2

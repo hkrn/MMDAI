@@ -1561,50 +1561,26 @@ struct XMLProject::PrivateContext {
     }
 
     void addAsset() {
-        if (!uuid.empty()) {
-            if (uuid != XMLProject::kNullUUID) {
-                /* delete the previous asset before assigning to prevent memory leak */
-                ModelMap::iterator it = assetRefs.find(uuid);
-                if (it != assetRefs.end()) {
-                    assetRefs.erase(it);
-                    sceneRef->removeModel(it->second);
-                    internal::deleteObject(it->second);
-                }
-                IModel *assetPtr = 0;
-                IRenderEngine *enginePtr = 0;
-                int priority = 0;
-                if (delegateRef->loadModel(uuid, localAssetSettings[uuid], IModel::kAssetModel, assetPtr, enginePtr, priority)) {
-                    assetRefs.insert(std::make_pair(uuid, assetPtr));
-                    sceneRef->addModel(assetPtr, enginePtr, priority);
-                }
-            }
-            else {
-                localAssetSettings.erase(uuid);
+        if (!uuid.empty() && uuid != XMLProject::kNullUUID && assetRefs.find(uuid) == assetRefs.end()) {
+            IModel *assetPtr = 0;
+            IRenderEngine *enginePtr = 0;
+            int priority = 0;
+            if (delegateRef->loadModel(uuid, localAssetSettings[uuid], IModel::kAssetModel, assetPtr, enginePtr, priority)) {
+                assetRefs.insert(std::make_pair(uuid, assetPtr));
+                sceneRef->addModel(assetPtr, enginePtr, priority);
             }
         }
         popState(kAssets);
         uuid.clear();
     }
     void addModel() {
-        if (!uuid.empty()) {
-            if (uuid != XMLProject::kNullUUID) {
-                /* delete the previous model before assigning to prevent memory leak */
-                ModelMap::iterator it = modelRefs.find(uuid);
-                if (it != modelRefs.end()) {
-                    modelRefs.erase(it);
-                    sceneRef->removeModel(it->second);
-                    internal::deleteObject(it->second);
-                }
-                IModel *modelPtr = 0;
-                IRenderEngine *enginePtr = 0;
-                int priority = 0;
-                if (delegateRef->loadModel(uuid, localModelSettings[uuid], IModel::kPMDModel, modelPtr, enginePtr, priority)) {
-                    modelRefs.insert(std::make_pair(uuid, modelPtr));
-                    sceneRef->addModel(modelPtr, enginePtr, priority);
-                }
-            }
-            else {
-                localModelSettings.erase(uuid);
+        if (!uuid.empty() && uuid != XMLProject::kNullUUID && modelRefs.find(uuid) == modelRefs.end()) {
+            IModel *modelPtr = 0;
+            IRenderEngine *enginePtr = 0;
+            int priority = 0;
+            if (delegateRef->loadModel(uuid, localModelSettings[uuid], IModel::kPMDModel, modelPtr, enginePtr, priority)) {
+                modelRefs.insert(std::make_pair(uuid, modelPtr));
+                sceneRef->addModel(modelPtr, enginePtr, priority);
             }
         }
         popState(kModels);

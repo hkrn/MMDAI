@@ -72,7 +72,7 @@ public:
         const QString &s = m_codec->toUnicode(value.c_str());
         return new String(UnicodeString::fromUTF8(s.toStdString()));
     }
-    bool loadModel(const XMLProject::UUID & /* uuid */, const StringMap & /* settings */, IModel::Type type, IModel *&model, IRenderEngine *&engine, int &priority) {
+    bool loadModel(const XMLProject::UUID &uuid, const StringMap & /* settings */, IModel::Type type, IModel *&model, IRenderEngine *&engine, int &priority) {
         model = m_factory.newModel(type);
         MockIRenderEngine *enginePtr = new MockIRenderEngine();
         engine = enginePtr;
@@ -174,7 +174,7 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
         ASSERT_TRUE(qFuzzyCompare(angle1.z(), -btDegrees(3)));
         ASSERT_FLOAT_EQ(15.0f, keyframe->fov());
         ASSERT_FLOAT_EQ(150.0f, keyframe->distance());
-        if (motion->type() == IMotion::kMVDMotion) {
+        if (motion->type() == IMotion::kMVDFormat) {
             for (int i = 0; i < ICameraKeyframe::kCameraMaxInterpolationType; i++) {
                 int offset = (i < 3 ? 0 : i - 2) * 4;
                 keyframe->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
@@ -200,7 +200,7 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
         ASSERT_TRUE(qFuzzyCompare(angle2.z(), -btDegrees(2)));
         ASSERT_FLOAT_EQ(30.0f, keyframe->fov());
         ASSERT_FLOAT_EQ(300.0f, keyframe->distance());
-        if (motion->type() == IMotion::kMVDMotion) {
+        if (motion->type() == IMotion::kMVDFormat) {
             for (int max = ICameraKeyframe::kCameraMaxInterpolationType - 1, i = max; i >= 0; i--) {
                 int offset = qMin((max - i) * 4, 12);
                 keyframe->getInterpolationParameter(static_cast<ICameraKeyframe::InterpolationType>(i), q);
@@ -236,7 +236,7 @@ static void TestLightMotion(const IMotion *motion)
 
 static void TestEffectMotion(const IMotion *motion)
 {
-    if (motion->type() == IMotion::kMVDMotion) {
+    if (motion->type() == IMotion::kMVDFormat) {
         ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kEffectKeyframe));
         {
             const IEffectKeyframe *keyframe = motion->findEffectKeyframeRefAt(0);
@@ -264,7 +264,7 @@ static void TestEffectMotion(const IMotion *motion)
 
 static void TestModelMotion(const IMotion *motion)
 {
-    if (motion->type() == IMotion::kMVDMotion) {
+    if (motion->type() == IMotion::kMVDFormat) {
         ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kModelKeyframe));
         {
             const IModelKeyframe *keyframe = motion->findModelKeyframeRefAt(0);
@@ -294,7 +294,7 @@ static void TestModelMotion(const IMotion *motion)
 
 static void TestProjectMotion(const IMotion *motion)
 {
-    if (motion->type() == IMotion::kMVDMotion) {
+    if (motion->type() == IMotion::kMVDFormat) {
         ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kProjectKeyframe));
         {
             const IProjectKeyframe *keyframe = motion->findProjectKeyframeRefAt(0);
@@ -339,7 +339,7 @@ TEST(ProjectTest, Load)
     TestLocalSettings(project);
     /* VMD motion for model */
     IMotion *motion = project.findMotion(kMotion1UUID);
-    ASSERT_EQ(IMotion::kVMDMotion, motion->type());
+    ASSERT_EQ(IMotion::kVMDFormat, motion->type());
     ASSERT_EQ(project.findModel(kModel1UUID), motion->parentModelRef());
     TestBoneMotion(motion, false);
     TestMorphMotion(motion);
@@ -350,7 +350,7 @@ TEST(ProjectTest, Load)
     TestProjectMotion(motion);
     /* MVD motion */
     IMotion *motion2 = project.findMotion(kMotion2UUID);
-    ASSERT_EQ(IMotion::kMVDMotion, motion2->type());
+    ASSERT_EQ(IMotion::kMVDFormat, motion2->type());
     ASSERT_EQ(project.findModel(kModel2UUID), motion2->parentModelRef());
     TestBoneMotion(motion2, true);
     TestMorphMotion(motion2);
@@ -361,7 +361,7 @@ TEST(ProjectTest, Load)
     TestProjectMotion(motion2);
     /* VMD motion for asset */
     IMotion *motion3 = project.findMotion(kMotion3UUID);
-    ASSERT_EQ(IMotion::kVMDMotion, motion3->type());
+    ASSERT_EQ(IMotion::kVMDFormat, motion3->type());
     ASSERT_EQ(project.findModel(kAsset2UUID), motion3->parentModelRef());
     TestBoneMotion(motion3, false);
     TestMorphMotion(motion3);
@@ -392,7 +392,7 @@ TEST(ProjectTest, Save)
     /* VMD motion for model */
     IMotion *motion = project2.findMotion(kMotion1UUID);
     ASSERT_EQ(project2.findModel(kModel1UUID), motion->parentModelRef());
-    ASSERT_EQ(IMotion::kVMDMotion, motion->type());
+    ASSERT_EQ(IMotion::kVMDFormat, motion->type());
     TestBoneMotion(motion, false);
     TestMorphMotion(motion);
     TestCameraMotion(motion, false);
@@ -402,7 +402,7 @@ TEST(ProjectTest, Save)
     TestProjectMotion(motion);
     /* MVD motion */
     IMotion *motion2 = project2.findMotion(kMotion2UUID);
-    ASSERT_EQ(IMotion::kMVDMotion, motion2->type());
+    ASSERT_EQ(IMotion::kMVDFormat, motion2->type());
     ASSERT_EQ(project2.findModel(kModel2UUID), motion2->parentModelRef());
     TestBoneMotion(motion2, true);
     TestMorphMotion(motion2);
@@ -413,7 +413,7 @@ TEST(ProjectTest, Save)
     TestProjectMotion(motion2);
     /* VMD motion for asset */
     IMotion *motion3 = project.findMotion(kMotion3UUID);
-    ASSERT_EQ(IMotion::kVMDMotion, motion3->type());
+    ASSERT_EQ(IMotion::kVMDFormat, motion3->type());
     ASSERT_EQ(project.findModel(kAsset2UUID), motion3->parentModelRef());
     TestBoneMotion(motion3, false);
     TestMorphMotion(motion3);
@@ -504,7 +504,7 @@ TEST(ProjectTest, HandleMotions)
     Encoding encoding(0);
     Factory factory(&encoding);
     XMLProject project(&delegate, &factory, true);
-    std::unique_ptr<IMotion> motionPtr(factory.newMotion(IMotion::kVMDMotion, 0));
+    std::unique_ptr<IMotion> motionPtr(factory.newMotion(IMotion::kVMDFormat, 0));
     IMotion *motion = motionPtr.get();
     /* before adding a motion to the project */
     ASSERT_FALSE(project.containsMotion(motion));
@@ -559,7 +559,7 @@ TEST(ProjectTest, HandleNullUUID)
     model = modelPtr.release();
     project.deleteModel(model);
     ASSERT_FALSE(model);
-    std::unique_ptr<IMotion> motionPtr(factory.newMotion(IMotion::kVMDMotion, 0));
+    std::unique_ptr<IMotion> motionPtr(factory.newMotion(IMotion::kVMDFormat, 0));
     IMotion *motion = motionPtr.get();
     /* null motion can be added */
     project.addMotion(motion, XMLProject::kNullUUID);
@@ -569,7 +569,7 @@ TEST(ProjectTest, HandleNullUUID)
     ASSERT_EQ(vsize(0), project.motionUUIDs().size());
     modelPtr.reset(factory.newModel(IModel::kPMDModel));
     model = modelPtr.get();
-    motionPtr.reset(factory.newMotion(IMotion::kVMDMotion, 0));
+    motionPtr.reset(factory.newMotion(IMotion::kVMDFormat, 0));
     motion = motionPtr.get();
     /* duplicated null motion should be integrated into one */
     project.addModel(model, 0, XMLProject::kNullUUID, 0);
