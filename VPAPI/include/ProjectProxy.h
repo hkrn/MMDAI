@@ -49,6 +49,7 @@
 #include <QUrl>
 #include <QUuid>
 
+#include "MotionProxy.h"
 #include <vpvl2/extensions/XMLProject.h>
 #include <vpvl2/extensions/qt/Encoding.h>
 
@@ -56,7 +57,6 @@ namespace vpvl2 {
 class Factory;
 class IEncoding;
 class IModel;
-class IMotion;
 namespace extensions {
 class World;
 }
@@ -68,7 +68,6 @@ class CameraRefObject;
 class LightRefObject;
 class ModelProxy;
 class MorphRefObject;
-class MotionProxy;
 class WorldProxy;
 
 class QUndoGroup;
@@ -229,7 +228,7 @@ public slots:
     Q_INVOKABLE void loadEffect(const QUrl &fileUrl);
     Q_INVOKABLE void addModel(ModelProxy *value);
     Q_INVOKABLE void deleteModel(ModelProxy *value);
-    Q_INVOKABLE void initializeMotion(ModelProxy *modelProxy, MotionType type);
+    Q_INVOKABLE void initializeMotion(ModelProxy *modelProxy, MotionType type, MotionProxy::FormatType format = MotionProxy::VMDFormat);
     Q_INVOKABLE void loadMotion(const QUrl &fileUrl, ModelProxy *parentModel, MotionType type);
     Q_INVOKABLE void loadPose(const QUrl &fileUrl, ModelProxy *parentModel);
     Q_INVOKABLE void rewind();

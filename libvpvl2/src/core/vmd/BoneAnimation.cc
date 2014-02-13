@@ -167,10 +167,12 @@ BoneKeyframe *BoneAnimation::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
 void BoneAnimation::createPrivateContexts(IModel *model)
 {
     if (!model) {
+        VPVL2_LOG(WARNING, "null model is passed");
         return;
     }
     const int nkeyframes = m_keyframes.count();
     m_name2contexts.releaseAll();
+    m_durationTimeIndex = 0;
     // Build internal node to find by name, not frame index
     for (int i = 0; i < nkeyframes; i++) {
         BoneKeyframe *keyframe = reinterpret_cast<BoneKeyframe *>(m_keyframes.at(i));

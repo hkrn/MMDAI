@@ -166,7 +166,7 @@ public:
     MorphAnimation *mutableMorphAnimation();
     LightAnimation *mutableLightAnimation();
     bool isActive() const;
-    Type type() const;
+    FormatType type() const;
 
 private:
     struct PrivateContext;

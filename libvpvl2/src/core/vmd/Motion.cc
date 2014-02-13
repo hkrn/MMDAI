@@ -887,9 +887,9 @@ bool Motion::isActive() const
     return m_context->active;
 }
 
-IMotion::Type Motion::type() const
+IMotion::FormatType Motion::type() const
 {
-    return kVMDMotion;
+    return kVMDFormat;
 }
 
 } /* namespace vmd */

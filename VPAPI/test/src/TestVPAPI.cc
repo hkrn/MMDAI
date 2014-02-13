@@ -166,17 +166,17 @@ void TestVPAPI::project_createModelProxy()
 void TestVPAPI::project_createMotionProxy_data()
 {
     QTest::addColumn<IModel::Type>("modelType");
-    QTest::addColumn<IMotion::Type>("motionType");
-    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDMotion;
-    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDMotion;
-    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDMotion;
-    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDMotion;
+    QTest::addColumn<IMotion::FormatType>("motionType");
+    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDFormat;
+    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDFormat;
+    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDFormat;
+    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDFormat;
 }
 
 void TestVPAPI::project_createMotionProxy()
 {
     QFETCH(IModel::Type, modelType);
-    QFETCH(IMotion::Type, motionType);
+    QFETCH(IMotion::FormatType, motionType);
     ProjectProxy project;
     QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     QScopedPointer<IMotion> motion(project.factoryInstanceRef()->newMotion(motionType, model.data()));
@@ -231,13 +231,17 @@ void TestVPAPI::project_addModelProxy()
 void TestVPAPI::project_initializeMotion_data()
 {
     QTest::addColumn<IModel::Type>("modelType");
-    QTest::newRow("PMD") << IModel::kPMDModel;
-    QTest::newRow("PMX") << IModel::kPMXModel;
+    QTest::addColumn<IMotion::FormatType>("motionType");
+    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDFormat;
+    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDFormat;
+    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDFormat;
+    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDFormat;
 }
 
 void TestVPAPI::project_initializeMotion()
 {
     QFETCH(IModel::Type, modelType);
+    QFETCH(IMotion::FormatType, motionType);
     ProjectProxy project;
     QSignalSpy motionDidInitialize(&project, SIGNAL(motionDidInitialize()));
     QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
@@ -246,8 +250,9 @@ void TestVPAPI::project_initializeMotion()
     QSignalSpy childMotionChanged(modelProxy, SIGNAL(childMotionChanged()));
     project.addModel(modelProxy);
     QUuid oldUUID = modelProxy->childMotion()->uuid();
-    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
+    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion, static_cast<MotionProxy::FormatType>(motionType));
     QVERIFY(modelProxy->childMotion()->uuid() != oldUUID);
+    QCOMPARE(modelProxy->childMotion()->data()->type(), motionType);
     QCOMPARE(childMotionChanged.size(), 3);
     QCOMPARE(motionDidInitialize.size(), 1);
 }
@@ -348,17 +353,17 @@ void TestVPAPI::project_deleteModel()
 void TestVPAPI::project_deleteMotion_data()
 {
     QTest::addColumn<IModel::Type>("modelType");
-    QTest::addColumn<IMotion::Type>("motionType");
-    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDMotion;
-    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDMotion;
-    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDMotion;
-    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDMotion;
+    QTest::addColumn<IMotion::FormatType>("motionType");
+    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDFormat;
+    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDFormat;
+    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDFormat;
+    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDFormat;
 }
 
 void TestVPAPI::project_deleteMotion()
 {
     QFETCH(IModel::Type, modelType);
-    QFETCH(IMotion::Type, motionType);
+    QFETCH(IMotion::FormatType, motionType);
     ProjectProxy project;
     QScopedPointer<IModel> model(project.factoryInstanceRef()->newModel(modelType));
     QScopedPointer<IMotion> motion(project.factoryInstanceRef()->newMotion(motionType, model.data()));
@@ -760,13 +765,17 @@ void TestVPAPI::motion_addAndUpdateLightKeyframe()
 void TestVPAPI::motion_addAndRemoveBoneKeyframe_data()
 {
     QTest::addColumn<IModel::Type>("modelType");
-    QTest::newRow("PMD") << IModel::kPMDModel;
-    QTest::newRow("PMX") << IModel::kPMXModel;
+    QTest::addColumn<IMotion::FormatType>("motionType");
+    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDFormat;
+    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDFormat;
+    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDFormat;
+    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDFormat;
 }
 
 void TestVPAPI::motion_addAndRemoveBoneKeyframe()
 {
     QFETCH(IModel::Type, modelType);
+    QFETCH(IMotion::FormatType, motionType);
     ProjectProxy project;
     project.initializeOnce();
     QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
@@ -778,7 +787,7 @@ void TestVPAPI::motion_addAndRemoveBoneKeyframe()
     BoneRefObject *bone = modelProxy->createBone();
     bone->setName(kBoneName);
     project.addModel(modelProxy);
-    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
+    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion, static_cast<MotionProxy::FormatType>(motionType));
     BoneMotionTrack *track = modelProxy->childMotion()->findBoneMotionTrack(bone);
     testAddKeyframe(project, track, bone, 1, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
     testRemoveKeyframe(project, track, bone, 2, 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
@@ -787,13 +796,17 @@ void TestVPAPI::motion_addAndRemoveBoneKeyframe()
 void TestVPAPI::motion_addAndUpdateBoneKeyframe_data()
 {
     QTest::addColumn<IModel::Type>("modelType");
-    QTest::newRow("PMD") << IModel::kPMDModel;
-    QTest::newRow("PMX") << IModel::kPMXModel;
+    QTest::addColumn<IMotion::FormatType>("motionType");
+    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDFormat;
+    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDFormat;
+    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDFormat;
+    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDFormat;
 }
 
 void TestVPAPI::motion_addAndUpdateBoneKeyframe()
 {
     QFETCH(IModel::Type, modelType);
+    QFETCH(IMotion::FormatType, motionType);
     ProjectProxy project;
     project.initializeOnce();
     QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
@@ -805,7 +818,7 @@ void TestVPAPI::motion_addAndUpdateBoneKeyframe()
     bone->setName(kBoneName);
     modelProxy->initialize(true);
     project.addModel(modelProxy);
-    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
+    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion, static_cast<MotionProxy::FormatType>(motionType));
     MotionProxy *motionProxy = modelProxy->childMotion();
     BoneMotionTrack *track = motionProxy->findBoneMotionTrack(bone);
     bone->setLocalTranslation(QVector3D(1, 2, 3));
@@ -834,13 +847,17 @@ void TestVPAPI::motion_addAndUpdateBoneKeyframe()
 void TestVPAPI::motion_addAndRemoveMorphKeyframe_data()
 {
     QTest::addColumn<IModel::Type>("modelType");
-    QTest::newRow("PMD") << IModel::kPMDModel;
-    QTest::newRow("PMX") << IModel::kPMXModel;
+    QTest::addColumn<IMotion::FormatType>("motionType");
+    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDFormat;
+    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDFormat;
+    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDFormat;
+    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDFormat;
 }
 
 void TestVPAPI::motion_addAndRemoveMorphKeyframe()
 {
     QFETCH(IModel::Type, modelType);
+    QFETCH(IMotion::FormatType, motionType);
     ProjectProxy project;
     project.initializeOnce();
     QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
@@ -852,7 +869,7 @@ void TestVPAPI::motion_addAndRemoveMorphKeyframe()
     MorphRefObject *morph = modelProxy->createMorph();
     morph->setName(kMorphName);
     project.addModel(modelProxy);
-    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
+    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion, static_cast<MotionProxy::FormatType>(motionType));
     MorphMotionTrack *track = modelProxy->childMotion()->findMorphMotionTrack(morph);
     testAddKeyframe(project, track, morph, 1, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
     testRemoveKeyframe(project, track, morph, 2, 2, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
@@ -861,13 +878,17 @@ void TestVPAPI::motion_addAndRemoveMorphKeyframe()
 void TestVPAPI::motion_addAndUpdateMorphKeyframe_data()
 {
     QTest::addColumn<IModel::Type>("modelType");
-    QTest::newRow("PMD") << IModel::kPMDModel;
-    QTest::newRow("PMX") << IModel::kPMXModel;
+    QTest::addColumn<IMotion::FormatType>("motionType");
+    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDFormat;
+    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDFormat;
+    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDFormat;
+    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDFormat;
 }
 
 void TestVPAPI::motion_addAndUpdateMorphKeyframe()
 {
     QFETCH(IModel::Type, modelType);
+    QFETCH(IMotion::FormatType, motionType);
     ProjectProxy project;
     project.initializeOnce();
     QSignalSpy undoDidPerform(&project, SIGNAL(undoDidPerform()));
@@ -879,7 +900,7 @@ void TestVPAPI::motion_addAndUpdateMorphKeyframe()
     morph->setName(kMorphName);
     modelProxy->initialize(true);
     project.addModel(modelProxy);
-    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
+    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion, static_cast<MotionProxy::FormatType>(motionType));
     MotionProxy *motionProxy = modelProxy->childMotion();
     MorphMotionTrack *track = motionProxy->findMorphMotionTrack(morph);
     morph->setWeight(kWeight);
@@ -948,16 +969,22 @@ void TestVPAPI::motion_copyAndPasteAndCutLightKeyframe()
 void TestVPAPI::motion_copyAndPasteAndCutBoneKeyframe_data()
 {
     QTest::addColumn<IModel::Type>("modelType");
+    QTest::addColumn<IMotion::FormatType>("motionType");
     QTest::addColumn<bool>("inversed");
-    QTest::newRow("PMD") << IModel::kPMDModel << false;
-    QTest::newRow("PMX") << IModel::kPMXModel << false;
-    QTest::newRow("PMD+inversed") << IModel::kPMDModel << true;
-    QTest::newRow("PMX+inversed") << IModel::kPMXModel << true;
+    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDFormat << false;
+    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDFormat << false;
+    QTest::newRow("PMD+VMD+inversed") << IModel::kPMDModel << IMotion::kVMDFormat << true;
+    QTest::newRow("PMX+VMD+inversed") << IModel::kPMXModel << IMotion::kVMDFormat << true;
+    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDFormat << false;
+    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDFormat << false;
+    QTest::newRow("PMD+MVD+inversed") << IModel::kPMDModel << IMotion::kMVDFormat << true;
+    QTest::newRow("PMX+MVD+inversed") << IModel::kPMXModel << IMotion::kMVDFormat << true;
 }
 
 void TestVPAPI::motion_copyAndPasteAndCutBoneKeyframe()
 {
     QFETCH(IModel::Type, modelType);
+    QFETCH(IMotion::FormatType, motionType);
     QFETCH(bool, inversed);
     ProjectProxy project;
     project.initializeOnce();
@@ -970,7 +997,7 @@ void TestVPAPI::motion_copyAndPasteAndCutBoneKeyframe()
     BoneRefObject *bone = modelProxy->createBone();
     bone->setName(kBoneName);
     project.addModel(modelProxy);
-    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
+    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion, static_cast<MotionProxy::FormatType>(motionType));
     BoneMotionTrack *track = modelProxy->childMotion()->findBoneMotionTrack(bone);
     testCopyAndPasteAndTest(project, track, bone, inversed, 1, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
 }
@@ -978,16 +1005,22 @@ void TestVPAPI::motion_copyAndPasteAndCutBoneKeyframe()
 void TestVPAPI::motion_copyAndPasteAndCutMorphKeyframe_data()
 {
     QTest::addColumn<IModel::Type>("modelType");
+    QTest::addColumn<IMotion::FormatType>("motionType");
     QTest::addColumn<bool>("inversed");
-    QTest::newRow("PMD") << IModel::kPMDModel << false;
-    QTest::newRow("PMX") << IModel::kPMXModel << false;
-    QTest::newRow("PMD+inversed") << IModel::kPMDModel << true;
-    QTest::newRow("PMX+inversed") << IModel::kPMXModel << true;
+    QTest::newRow("PMD+VMD") << IModel::kPMDModel << IMotion::kVMDFormat << false;
+    QTest::newRow("PMX+VMD") << IModel::kPMXModel << IMotion::kVMDFormat << false;
+    QTest::newRow("PMD+VMD+inversed") << IModel::kPMDModel << IMotion::kVMDFormat << true;
+    QTest::newRow("PMX+VMD+inversed") << IModel::kPMXModel << IMotion::kVMDFormat << true;
+    QTest::newRow("PMD+MVD") << IModel::kPMDModel << IMotion::kMVDFormat << false;
+    QTest::newRow("PMX+MVD") << IModel::kPMXModel << IMotion::kMVDFormat << false;
+    QTest::newRow("PMD+MVD+inversed") << IModel::kPMDModel << IMotion::kMVDFormat << true;
+    QTest::newRow("PMX+MVD+inversed") << IModel::kPMXModel << IMotion::kMVDFormat << true;
 }
 
 void TestVPAPI::motion_copyAndPasteAndCutMorphKeyframe()
 {
     QFETCH(IModel::Type, modelType);
+    QFETCH(IMotion::FormatType, motionType);
     QFETCH(bool, inversed);
     ProjectProxy project;
     project.initializeOnce();
@@ -1000,7 +1033,7 @@ void TestVPAPI::motion_copyAndPasteAndCutMorphKeyframe()
     MorphRefObject *morph = modelProxy->createMorph();
     morph->setName(kMorphName);
     project.addModel(modelProxy);
-    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion);
+    project.initializeMotion(modelProxy, ProjectProxy::ModelMotion, static_cast<MotionProxy::FormatType>(motionType));
     MorphMotionTrack *track = modelProxy->childMotion()->findMorphMotionTrack(morph);
     testCopyAndPasteAndTest(project, track, morph, inversed, 1, 0, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
 }
@@ -1018,6 +1051,7 @@ void TestVPAPI::motion_mergeCameraKeyframe()
 void TestVPAPI::testAddKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *object, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged)
 {
     track->parentMotion()->addKeyframe(object, kTimeIndex);
+    QCOMPARE(quint64(track->parentMotion()->durationTimeIndex()), kTimeIndex);
     testNewKeyframe(project, track, object, baseSize, baseChanged, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
 }
 
@@ -1026,6 +1060,7 @@ void TestVPAPI::testRemoveKeyframe(ProjectProxy &project, BaseMotionTrack *track
     MotionProxy *parentMotion = track->parentMotion();
     BaseKeyframeRefObject *keyframe = parentMotion->resolveKeyframeAt(kTimeIndex, object);
     parentMotion->removeKeyframe(keyframe);
+    QCOMPARE(quint64(track->parentMotion()->durationTimeIndex()), quint64(0));
     testOldKeyframe(project, track, object, baseSize, baseChanged, undoDidPerform, redoDidPerform, currentTimeIndexChanged);
 }
 

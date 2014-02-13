@@ -63,11 +63,11 @@ class Scene;
 class VPVL2_API IMotion
 {
 public:
-    enum Type {
-        kUnknownMotion,
-        kVMDMotion,
-        kMVDMotion,
-        kMaxMotionType
+    enum FormatType {
+        kUnknownFormat,
+        kVMDFormat,
+        kMVDFormat,
+        kMaxFormatType
     };
     enum Error {
         kNoError,
@@ -499,7 +499,7 @@ public:
      *
      * @return Type
      */
-    virtual Type type() const = 0;
+    virtual FormatType type() const = 0;
 };
 
 } /* namespace vpvl2 */

@@ -66,7 +66,7 @@ class VPVL2_API Factory VPVL2_DECL_FINAL
 {
 public:
     static IModel::Type findModelType(const uint8 *data, vsize size);
-    static IMotion::Type findMotionType(const uint8 *data, vsize size);
+    static IMotion::FormatType findMotionType(const uint8 *data, vsize size);
     static IBone *sharedNullBoneRef();
     static IMaterial *sharedNullMaterialRef();
 
@@ -103,7 +103,7 @@ public:
      * @param model
      * @return IMotion
      */
-    IMotion *newMotion(vpvl2::IMotion::Type type, IModel *modelRef) const;
+    IMotion *newMotion(vpvl2::IMotion::FormatType type, IModel *modelRef) const;
 
     /**
      * オンメモリ上にあるデータとその長さを元に読み込み済みの Motion インスタンスを作成します.
@@ -206,7 +206,7 @@ public:
      * @param destType
      * @return
      */
-    IMotion *convertMotion(IMotion *source, IMotion::Type destType) const;
+    IMotion *convertMotion(IMotion *source, IMotion::FormatType destType) const;
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(Factory)

@@ -226,7 +226,7 @@ struct XMLProject::PrivateContext {
           factoryRef(factory),
           currentString(0),
           currentMotion(0),
-          currentMotionType(IMotion::kVMDMotion),
+          currentMotionType(IMotion::kVMDFormat),
           state(kInitial),
           depth(0),
           dirty(false)
@@ -381,8 +381,8 @@ struct XMLProject::PrivateContext {
         for (MotionMap::const_iterator it = motionRefs.begin(); it != motionRefs.end(); it++) {
             const std::string &motionUUID = it->first;
             if (IMotion *motionPtr = it->second) {
-                IMotion::Type motionType = motionPtr->type();
-                if (motionType == IMotion::kVMDMotion) {
+                IMotion::FormatType motionType = motionPtr->type();
+                if (motionType == IMotion::kVMDFormat) {
                     const vmd::Motion *motion = static_cast<const vmd::Motion *>(motionPtr);
                     printer.OpenElement("vpvm:motion");
                     printer.PushAttribute("type", "vmd");
@@ -405,7 +405,7 @@ struct XMLProject::PrivateContext {
                     }
                     printer.CloseElement(); /* vpvm:motion */
                 }
-                else if (motionType == IMotion::kMVDMotion) {
+                else if (motionType == IMotion::kMVDFormat) {
                     const mvd::Motion *motion = static_cast<const mvd::Motion *>(motionPtr);
                     printer.OpenElement("vpvm:motion");
                     printer.PushAttribute("type", "mvd");
@@ -1082,7 +1082,7 @@ struct XMLProject::PrivateContext {
         pushState(kAsset);
     }
     void readMotion(const XMLAttribute *firstAttribute) {
-        currentMotionType = IMotion::kVMDMotion;
+        currentMotionType = IMotion::kVMDFormat;
         for (const XMLAttribute *attr = firstAttribute; attr; attr = attr->Next()) {
             if (equalsToAttribute(attr, "uuid")) {
                 uuid.assign(attr->Value());
@@ -1091,7 +1091,7 @@ struct XMLProject::PrivateContext {
                 parentModel.assign(attr->Value());
             }
             else if (equalsToAttribute(attr, "type") && equalsConstant(attr->Value(), "mvd")) {
-                currentMotionType = IMotion::kMVDMotion;
+                currentMotionType = IMotion::kMVDFormat;
             }
         }
         internal::deleteObject(currentMotion);
@@ -1114,7 +1114,7 @@ struct XMLProject::PrivateContext {
         readGlobalSettingKey(firstAttribute);
     }
     void readMotionType(const XMLAttribute *firstAttribute) {
-        bool isMVD = currentMotionType == IMotion::kMVDMotion;
+        bool isMVD = currentMotionType == IMotion::kMVDFormat;
         for (const XMLAttribute *attr = firstAttribute; attr; attr = attr->Next()) {
             if (!equalsToAttribute(attr, "type")) {
                 continue;
@@ -1840,7 +1840,7 @@ struct XMLProject::PrivateContext {
     XMLProject::UUID uuid;
     const IString *currentString;
     IMotion *currentMotion;
-    IMotion::Type currentMotionType;
+    IMotion::FormatType currentMotionType;
     State state;
     int depth;
     bool dirty;

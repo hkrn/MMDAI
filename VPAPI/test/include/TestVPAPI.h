@@ -118,5 +118,5 @@ private:
 };
 
 Q_DECLARE_METATYPE(vpvl2::IModel::Type)
-Q_DECLARE_METATYPE(vpvl2::IMotion::Type)
+Q_DECLARE_METATYPE(vpvl2::IMotion::FormatType)
 Q_DECLARE_METATYPE(ProjectProxy::LanguageType)

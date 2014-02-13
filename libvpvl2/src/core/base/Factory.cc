@@ -441,18 +441,18 @@ IModel::Type Factory::findModelType(const uint8 *data, vsize size)
     }
 }
 
-IMotion::Type Factory::findMotionType(const uint8 *data, vsize size)
+IMotion::FormatType Factory::findMotionType(const uint8 *data, vsize size)
 {
     if (size >= sizeof(vmd::Motion::kSignature) &&
             internal::memcmp(data, vmd::Motion::kSignature, sizeof(vmd::Motion::kSignature) - 1) == 0) {
-        return IMotion::kVMDMotion;
+        return IMotion::kVMDFormat;
     }
     else if (size >= sizeof(mvd::Motion::kSignature) &&
              internal::memcmp(data, mvd::Motion::kSignature, sizeof(mvd::Motion::kSignature) - 1) == 0) {
-        return IMotion::kMVDMotion;
+        return IMotion::kMVDFormat;
     }
     else {
-        return IMotion::kUnknownMotion;
+        return IMotion::kUnknownFormat;
     }
 }
 
@@ -509,12 +509,12 @@ IModel *Factory::createModel(const uint8 *data, vsize size, bool &ok) const
     return model;
 }
 
-IMotion *Factory::newMotion(IMotion::Type type, IModel *modelRef) const
+IMotion *Factory::newMotion(IMotion::FormatType type, IModel *modelRef) const
 {
     switch (type) {
-    case IMotion::kVMDMotion:
+    case IMotion::kVMDFormat:
         return new vmd::Motion(modelRef, m_context->encodingRef);
-    case IMotion::kMVDMotion:
+    case IMotion::kMVDFormat:
         return new mvd::Motion(modelRef, m_context->encodingRef);
     default:
         return 0;
@@ -532,9 +532,9 @@ IBoneKeyframe *Factory::createBoneKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVDMotion:
+        case IMotion::kMVDFormat:
             return new mvd::BoneKeyframe(static_cast<const mvd::Motion *>(motion));
-        case IMotion::kVMDMotion:
+        case IMotion::kVMDFormat:
             return new vmd::BoneKeyframe(m_context->encodingRef);
         default:
             break;
@@ -547,9 +547,9 @@ ICameraKeyframe *Factory::createCameraKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVDMotion:
+        case IMotion::kMVDFormat:
             return new mvd::CameraKeyframe(static_cast<const mvd::Motion *>(motion));
-        case IMotion::kVMDMotion:
+        case IMotion::kVMDFormat:
             return new vmd::CameraKeyframe();
         default:
             break;
@@ -562,7 +562,7 @@ IEffectKeyframe *Factory::createEffectKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVDMotion:
+        case IMotion::kMVDFormat:
             return new mvd::EffectKeyframe(static_cast<const mvd::Motion *>(motion));
         default:
             break;
@@ -575,9 +575,9 @@ ILightKeyframe *Factory::createLightKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVDMotion:
+        case IMotion::kMVDFormat:
             return new mvd::LightKeyframe(static_cast<const mvd::Motion *>(motion));
-        case IMotion::kVMDMotion:
+        case IMotion::kVMDFormat:
             return new vmd::LightKeyframe();
         default:
             break;
@@ -590,7 +590,7 @@ IModelKeyframe *Factory::createModelKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVDMotion:
+        case IMotion::kMVDFormat:
             return static_cast<const mvd::Motion *>(motion)->createModelKeyframe();
         default:
             break;
@@ -603,9 +603,9 @@ IMorphKeyframe *Factory::createMorphKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVDMotion:
+        case IMotion::kMVDFormat:
             return new mvd::MorphKeyframe(static_cast<const mvd::Motion *>(motion));
-        case IMotion::kVMDMotion:
+        case IMotion::kVMDFormat:
             return new vmd::MorphKeyframe(m_context->encodingRef);
         default:
             break;
@@ -618,7 +618,7 @@ IProjectKeyframe *Factory::createProjectKeyframe(const IMotion *motion) const
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVDMotion:
+        case IMotion::kMVDFormat:
             return new mvd::ProjectKeyframe(static_cast<const mvd::Motion *>(motion));
         default:
             break;
@@ -627,17 +627,17 @@ IProjectKeyframe *Factory::createProjectKeyframe(const IMotion *motion) const
     return 0;
 }
 
-IMotion *Factory::convertMotion(IMotion *source, IMotion::Type destType) const
+IMotion *Factory::convertMotion(IMotion *source, IMotion::FormatType destType) const
 {
     if (source) {
-        IMotion::Type sourceType = source->type();
+        IMotion::FormatType sourceType = source->type();
         if (sourceType == destType) {
             return source->clone();
         }
-        else if (sourceType == IMotion::kVMDMotion && destType == IMotion::kMVDMotion) {
+        else if (sourceType == IMotion::kVMDFormat && destType == IMotion::kMVDFormat) {
             return m_context->createMVDFromVMD(static_cast<vmd::Motion *>(source));
         }
-        else if (sourceType == IMotion::kMVDMotion && destType == IMotion::kVMDMotion) {
+        else if (sourceType == IMotion::kMVDFormat && destType == IMotion::kVMDFormat) {
             return m_context->createVMDFromMVD(static_cast<mvd::Motion *>(source));
         }
     }

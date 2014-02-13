@@ -152,10 +152,10 @@ static void VPVL2SceneSetParentSceneRef(IMotion *motion, Scene *scene) VPVL2_DEC
 {
     if (motion) {
         switch (motion->type()) {
-        case IMotion::kMVDMotion:
+        case IMotion::kMVDFormat:
             static_cast<mvd::Motion *>(motion)->setParentSceneRef(scene);
             break;
-        case IMotion::kVMDMotion:
+        case IMotion::kVMDFormat:
             static_cast<vmd::Motion *>(motion)->setParentSceneRef(scene);
             break;
         default:

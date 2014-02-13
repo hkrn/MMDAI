@@ -962,9 +962,9 @@ bool Motion::isActive() const
     return m_context->active;
 }
 
-IMotion::Type Motion::type() const
+IMotion::FormatType Motion::type() const
 {
-    return kMVDMotion;
+    return kMVDFormat;
 }
 
 } /* namespace mvd */

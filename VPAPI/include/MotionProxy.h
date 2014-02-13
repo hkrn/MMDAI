@@ -46,6 +46,7 @@
 #include <QUuid>
 
 #include <vpvl2/IKeyframe.h>
+#include <vpvl2/IMotion.h>
 
 class BaseMotionTrack;
 class BaseKeyframeRefObject;
@@ -71,12 +72,12 @@ class Factory;
 class IBoneKeyframe;
 class IKeyframe;
 class IMorphKeyframe;
-class IMotion;
 }
 
 class MotionProxy : public QObject
 {
     Q_OBJECT
+    Q_ENUMS(FormatType)
     Q_PROPERTY(ProjectProxy *parentProject READ parentProject CONSTANT FINAL)
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
@@ -88,6 +89,11 @@ class MotionProxy : public QObject
     Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
+    enum FormatType {
+        VMDFormat = vpvl2::IMotion::kVMDFormat,
+        MVDFormat = vpvl2::IMotion::kMVDFormat,
+    };
+
     typedef QHash<QString, BoneMotionTrack *> BoneMotionTrackBundle;
     typedef QHash<QString, MorphMotionTrack *> MorphMotionTrackBundle;
 
