@@ -1154,7 +1154,7 @@ ApplicationWindow {
                                 __lastDraggingKeyframeIndex = 0
                             }
                             /* Timeline -> Motion */
-                            onKeyframesDidSelect: scene.currentMotion.selectedKeyframes = keyframes
+                            onKeyframesDidSelect: scene.currentMotion.currentKeyframes = keyframes
                             onKeyframeWillAdd: {
                                 /* called by Timeline#markKeyframeAdded */
                                 var motion = scene.currentMotion
