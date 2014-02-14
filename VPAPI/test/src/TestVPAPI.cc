@@ -1009,7 +1009,7 @@ void TestVPAPI::motion_addAndUpdateMorphKeyframe()
     morph->setWeight(kWeight);
     motionProxy->updateKeyframe(morph, 0);
     {
-        QVERIFY(qFuzzyCompare(morph->weight(), IMorph::WeightPrecision(kWeight)));
+        QVERIFY(qFuzzyCompare(IMorph::WeightPrecision(morph->weight()), IMorph::WeightPrecision(kWeight)));
         QCOMPARE(track->keyframes().size(), 1);
         QCOMPARE(motionProxy->data()->countKeyframes(track->type()), 1);
     }
@@ -1025,7 +1025,7 @@ void TestVPAPI::motion_addAndUpdateMorphKeyframe()
     {
         QVERIFY(!project.canRedo());
         QCOMPARE(redoDidPerform.size(), 1);
-        QVERIFY(qFuzzyCompare(morph->weight(), IMorph::WeightPrecision(kWeight)));
+        QVERIFY(qFuzzyCompare(IMorph::WeightPrecision(morph->weight()), IMorph::WeightPrecision(kWeight)));
         QCOMPARE(track->keyframes().size(), 1);
         QCOMPARE(motionProxy->data()->countKeyframes(track->type()), 1);
     }
@@ -1386,7 +1386,7 @@ void TestVPAPI::motion_mergeMorphKeyframe()
         QCOMPARE(motionProxy->data()->countKeyframes(track->type()), 2);
         QVERIFY(!motionProxy->resolveKeyframeAt(kTimeIndex + 1, morph));
         MorphKeyframeRefObject *keyframe = qobject_cast<MorphKeyframeRefObject *>(motionProxy->resolveKeyframeAt(kTimeIndex, morph));
-        QVERIFY(qFuzzyCompare(keyframe->weight(), kWeight + 0.1));
+        QVERIFY(qFuzzyCompare(IMorph::WeightPrecision(keyframe->weight()), IMorph::WeightPrecision(kWeight + 0.1)));
     }
     project.undo();
     {
@@ -1396,7 +1396,7 @@ void TestVPAPI::motion_mergeMorphKeyframe()
         QCOMPARE(motionProxy->data()->countKeyframes(track->type()), 3);
         QVERIFY(motionProxy->resolveKeyframeAt(kTimeIndex + 1, morph));
         MorphKeyframeRefObject *keyframe = qobject_cast<MorphKeyframeRefObject *>(motionProxy->resolveKeyframeAt(kTimeIndex, morph));
-        QVERIFY(qFuzzyCompare(keyframe->weight(), kWeight));
+        QVERIFY(qFuzzyCompare(IMorph::WeightPrecision(keyframe->weight()), IMorph::WeightPrecision(kWeight)));
     }
     project.redo();
     {
@@ -1406,7 +1406,7 @@ void TestVPAPI::motion_mergeMorphKeyframe()
         QCOMPARE(motionProxy->data()->countKeyframes(track->type()), 2);
         QVERIFY(!motionProxy->resolveKeyframeAt(kTimeIndex + 1, morph));
         MorphKeyframeRefObject *keyframe = qobject_cast<MorphKeyframeRefObject *>(motionProxy->resolveKeyframeAt(kTimeIndex, morph));
-        QVERIFY(qFuzzyCompare(keyframe->weight(), kWeight + 0.1));
+        QVERIFY(qFuzzyCompare(IMorph::WeightPrecision(keyframe->weight()), IMorph::WeightPrecision(kWeight + 0.1)));
     }
 }
 
