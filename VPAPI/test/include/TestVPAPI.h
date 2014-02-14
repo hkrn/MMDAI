@@ -60,7 +60,9 @@ private slots:
     void project_addModelProxy();
     void project_initializeMotion_data();
     void project_initializeMotion();
+    void project_seek_data();
     void project_seek();
+    void project_rewind_data();
     void project_rewind();
     void project_reset_data();
     void project_reset();
@@ -88,9 +90,13 @@ private slots:
     void model_rotateTransform();
     void model_release_data();
     void model_release();
+    void motion_addAndRemoveCameraKeyframe_data();
     void motion_addAndRemoveCameraKeyframe();
+    void motion_addAndUpdateCameraKeyframe_data();
     void motion_addAndUpdateCameraKeyframe();
+    void motion_addAndRemoveLightKeyframe_data();
     void motion_addAndRemoveLightKeyframe();
+    void motion_addAndUpdateLightKeyframe_data();
     void motion_addAndUpdateLightKeyframe();
     void motion_addAndRemoveBoneKeyframe_data();
     void motion_addAndRemoveBoneKeyframe();
@@ -109,6 +115,11 @@ private slots:
     void motion_copyAndPasteAndCutMorphKeyframe_data();
     void motion_copyAndPasteAndCutMorphKeyframe();
     void motion_mergeCameraKeyframe();
+    void motion_mergeLightKeyframe();
+    void motion_mergeBoneKeyframe_data();
+    void motion_mergeBoneKeyframe();
+    void motion_mergeMorphKeyframe_data();
+    void motion_mergeMorphKeyframe();
 
 private:
     void testAddKeyframe(ProjectProxy &project, BaseMotionTrack *track, QObject *opaque, int baseSize, int baseChanged, const QSignalSpy &undoDidPerform, const QSignalSpy &redoDidPerform, const QSignalSpy &currentTimeIndexChanged);

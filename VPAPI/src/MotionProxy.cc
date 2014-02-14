@@ -1369,6 +1369,8 @@ BoneKeyframeRefObject *MotionProxy::addBoneKeyframe(const BoneRefObject *value) 
         keyframePtr->setDefaultInterpolationParameter();
         keyframePtr->setName(value->data()->name(IEncoding::kDefaultLanguage));
         keyframe = track->convertBoneKeyframe(keyframePtr.take());
+        keyframe->setLocalTranslation(value->localTranslation());
+        keyframe->setLocalOrientation(value->localOrientation());
     }
     return keyframe;
 }
@@ -1408,6 +1410,7 @@ MorphKeyframeRefObject *MotionProxy::addMorphKeyframe(const MorphRefObject *valu
         QScopedPointer<IMorphKeyframe> keyframePtr(factoryRef->createMorphKeyframe(m_motion.data()));
         keyframePtr->setName(value->data()->name(IEncoding::kDefaultLanguage));
         keyframe = track->convertMorphKeyframe(keyframePtr.take());
+        keyframe->setWeight(value->weight());
     }
     return keyframe;
 }
