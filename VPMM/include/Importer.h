@@ -36,11 +36,15 @@
 */
 
 #include <QQuickItem>
+#include <vpvl2/Common.h>
 
 class ProjectProxy;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class IModel;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class Importer : public QQuickItem

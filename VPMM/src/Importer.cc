@@ -77,7 +77,7 @@ private:
         if (const aiScene *scene = importer.ReadFile(path.constData(), aiProcessPreset_TargetRealtime_Quality)) {
             QHash<int, int> material2Indices;
             Array<int> indices;
-            int numIndices;
+            int numIndices = 0;
             const int nmeshes = scene->mNumMeshes;
             for (int i = 0; i < nmeshes; i++) {
                 const aiMesh *mesh = scene->mMeshes[i];
