@@ -63,6 +63,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace internal
 {
 
@@ -102,7 +104,8 @@ static inline vsize estimateSize(const IString *string, const IEncoding *encodin
     return value;
 }
 
-static inline void setString(const IString *newValue, IString *&value)
+static inline void
+setString(const IString *newValue, IString *&value)
 {
     if (newValue && newValue != value) {
         delete value;
@@ -498,6 +501,7 @@ static inline void dump(const Quaternion &v)
 }
 
 } /* namespace internal */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

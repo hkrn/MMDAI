@@ -44,6 +44,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IMotion;
 
@@ -61,6 +63,9 @@ public:
     virtual void setPosition(const Vector3 &value) = 0;
     virtual void setDistance(const Scalar &value) = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

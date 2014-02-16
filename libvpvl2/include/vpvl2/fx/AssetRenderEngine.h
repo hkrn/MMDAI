@@ -52,6 +52,8 @@ struct aiScene;
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 namespace asset
 {
@@ -79,7 +81,7 @@ namespace fx
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class VPVL2_API AssetRenderEngine VPVL2_DECL_FINAL : public vpvl2::IRenderEngine
+class VPVL2_API AssetRenderEngine VPVL2_DECL_FINAL : public IRenderEngine
 {
 public:
     AssetRenderEngine(IApplicationContext *applicationContextRef, Scene *scene, asset::Model *parentModelRef);
@@ -143,15 +145,15 @@ private:
               uva4(kZeroV4)
         {
         }
-        vpvl2::Vector3 position;
-        vpvl2::Vector3 normal;
-        vpvl2::Vector3 texcoord;
-        vpvl2::Vector3 tangent;
-        vpvl2::Vector3 bitangent;
-        vpvl2::Vector4 uva1;
-        vpvl2::Vector4 uva2;
-        vpvl2::Vector4 uva3;
-        vpvl2::Vector4 uva4;
+        Vector3 position;
+        Vector3 normal;
+        Vector3 texcoord;
+        Vector3 tangent;
+        Vector3 bitangent;
+        Vector4 uva1;
+        Vector4 uva2;
+        Vector4 uva3;
+        Vector4 uva4;
     };
     typedef Array<Vertex> Vertices;
     typedef Array<int> Indices;
@@ -190,8 +192,8 @@ private:
 };
 
 } /* namespace fx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif /* VPVL2_LINK_ASSIMP */
 #endif
-

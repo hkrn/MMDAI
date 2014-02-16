@@ -43,6 +43,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IMotion;
 
@@ -232,6 +234,9 @@ public:
      */
     virtual void resetDefault() = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

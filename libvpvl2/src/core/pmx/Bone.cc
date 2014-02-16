@@ -43,7 +43,7 @@
 namespace
 {
 
-using namespace vpvl2;
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 #pragma pack(push, 1)
 
@@ -59,8 +59,8 @@ struct IKUnit {
 
 #pragma pack(pop)
 
-using namespace vpvl2;
-using namespace vpvl2::pmx;
+using namespace vpvl2::VPVL2_VERSION_NS;
+using namespace vpvl2::VPVL2_VERSION_NS::pmx;
 
 struct IKConstraint {
     Bone *jointBoneRef;
@@ -84,6 +84,8 @@ struct BoneOrderPredication {
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace pmx
 {
@@ -1309,4 +1311,5 @@ void Bone::setInverseKinematicsEnable(bool value)
 }
 
 } /* namespace pmx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

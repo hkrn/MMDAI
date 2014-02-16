@@ -47,7 +47,10 @@ class CameraMotionTrack;
 class CameraRefObject;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class ICameraKeyframe;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class CameraKeyframeRefObject : public BaseKeyframeRefObject
@@ -59,7 +62,7 @@ class CameraKeyframeRefObject : public BaseKeyframeRefObject
     Q_PROPERTY(qreal fov READ fov WRITE setFov NOTIFY fovChanged FINAL)
 
 public:
-    CameraKeyframeRefObject(CameraMotionTrack *trackRef, vpvl2::ICameraKeyframe *data);
+    CameraKeyframeRefObject(CameraMotionTrack *trackRef, ICameraKeyframe *data);
     ~CameraKeyframeRefObject();
 
     Q_INVOKABLE QVector4D interpolationParameter(int type) const;
@@ -92,7 +95,7 @@ signals:
 
 private:
     CameraMotionTrack *m_parentTrackRef;
-    vpvl2::ICameraKeyframe *m_keyframe;
+    ICameraKeyframe *m_keyframe;
 };
 
 #endif // CAMERAKEYFRAMEREFOBJECT_H

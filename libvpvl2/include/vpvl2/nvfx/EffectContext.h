@@ -43,6 +43,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IEffect;
 class IApplicationContext;
@@ -54,7 +56,7 @@ namespace nvfx
 class VPVL2_API EffectContext VPVL2_DECL_FINAL
 {
 public:
-    static bool initializeGLEW(const vpvl2::IApplicationContext::FunctionResolver *resolver);
+    static bool initializeGLEW(const IApplicationContext::FunctionResolver *resolver);
     static void enableMessageCallback();
     static void disableMessageCallback();
 
@@ -63,11 +65,12 @@ public:
 
     void getEffectArguments(const IApplicationContext *applicationContextRef, Array<const char *> &arguments);
     IEffect *compileFromFile(const IString *pathRef, IApplicationContext *applicationContextRef);
-    IEffect *compileFromSource(const vpvl2::IString *source, vpvl2::IApplicationContext *applicationContextRef);
+    IEffect *compileFromSource(const IString *source, IApplicationContext *applicationContextRef);
     void *internalContext() const;
 };
 
 } /* namespace nvfx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

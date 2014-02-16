@@ -46,7 +46,10 @@ class CameraKeyframeRefObject;
 class CameraRefObject;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class ICameraKeyframe;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class CameraMotionTrack : public BaseMotionTrack

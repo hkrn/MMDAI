@@ -75,9 +75,9 @@
 #include "WorldProxy.h"
 #include "VideoSurface.h"
 
-using namespace vpvl2;
-using namespace vpvl2::extensions;
-using namespace vpvl2::extensions::qt;
+using namespace vpvl2::VPVL2_VERSION_NS;
+using namespace vpvl2::VPVL2_VERSION_NS::extensions;
+using namespace vpvl2::VPVL2_VERSION_NS::extensions::qt;
 
 namespace {
 

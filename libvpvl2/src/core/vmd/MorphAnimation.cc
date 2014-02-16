@@ -45,6 +45,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace vmd
 {
 
@@ -202,4 +204,5 @@ void MorphAnimation::calculateFrames(const IKeyframe::TimeIndex &timeIndexAt, Pr
 }
 
 } /* namespace vmd */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

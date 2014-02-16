@@ -45,6 +45,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IBoneKeyframe;
 class ICameraKeyframe;
@@ -103,7 +105,7 @@ public:
      * @param model
      * @return IMotion
      */
-    IMotion *newMotion(vpvl2::IMotion::FormatType type, IModel *modelRef) const;
+    IMotion *newMotion(IMotion::FormatType type, IModel *modelRef) const;
 
     /**
      * オンメモリ上にあるデータとその長さを元に読み込み済みの Motion インスタンスを作成します.
@@ -213,6 +215,9 @@ private:
     struct PrivateContext;
     PrivateContext *m_context;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

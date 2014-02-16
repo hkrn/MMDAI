@@ -65,10 +65,13 @@ class RigidBodyRefObject;
 class VertexRefObject;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class IBone;
 class ILabel;
 class IModel;
 class IMorph;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class ModelProxy : public QObject

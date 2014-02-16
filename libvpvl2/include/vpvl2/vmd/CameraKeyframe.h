@@ -46,6 +46,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace vmd
 {
 
@@ -107,6 +109,7 @@ private:
 };
 
 } /* namespace vmd */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

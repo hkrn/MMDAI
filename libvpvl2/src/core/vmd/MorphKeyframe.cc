@@ -44,6 +44,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace vmd
 {
 
@@ -120,4 +122,5 @@ void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)
 }
 
 } /* namespace vmd */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

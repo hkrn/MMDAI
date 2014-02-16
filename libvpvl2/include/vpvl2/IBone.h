@@ -43,6 +43,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IModel;
 class IString;
@@ -342,6 +344,9 @@ public:
     virtual void setTransformAfterPhysicsEnable(bool value) = 0;
     virtual void setTransformedByExternalParentEnable(bool value) = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

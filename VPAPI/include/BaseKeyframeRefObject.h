@@ -45,9 +45,7 @@
 class BaseMotionTrack;
 class MotionProxy;
 
-namespace vpvl2 {
-class IKeyframe;
-}
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 class BaseKeyframeRefObject : public QObject
 {

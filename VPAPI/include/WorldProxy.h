@@ -45,9 +45,12 @@
 class btRigidBody;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 namespace extensions {
 class World;
 }
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class btIDebugDraw;

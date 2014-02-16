@@ -50,9 +50,12 @@ class ProjectProxy;
 class QQuickWindow;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 namespace extensions {
 class StringMap;
 }
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class ApplicationContext : public QObject, public vpvl2::extensions::BaseApplicationContext

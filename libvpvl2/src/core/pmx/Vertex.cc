@@ -44,8 +44,8 @@
 namespace
 {
 
-using namespace vpvl2;
-using namespace vpvl2::pmx;
+using namespace vpvl2::VPVL2_VERSION_NS;
+using namespace vpvl2::VPVL2_VERSION_NS::pmx;
 
 #pragma pack(push, 1)
 
@@ -79,6 +79,8 @@ struct SdefUnit {
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace pmx
 {
@@ -797,4 +799,5 @@ void Vertex::setIndex(int value)
 }
 
 } /* namespace pmx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

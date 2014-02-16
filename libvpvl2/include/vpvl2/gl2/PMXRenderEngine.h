@@ -45,7 +45,10 @@
 #include "vpvl2/IRenderEngine.h"
 #include "vpvl2/gl/Global.h"
 
-namespace vpvl2 {
+namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
+{
 
 class Scene;
 
@@ -139,6 +142,7 @@ private:
 };
 
 } /* namespace gl2 */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

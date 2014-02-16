@@ -43,6 +43,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 /**
  * ボーンのキーフレームをあらわすインターフェースです。
@@ -144,6 +146,9 @@ public:
      */
     virtual void setLocalOrientation(const Quaternion &value) = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

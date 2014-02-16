@@ -51,6 +51,8 @@ class ITechnique;
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IApplicationContext;
 
@@ -148,6 +150,7 @@ private:
 };
 
 } /* namespace nvfx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

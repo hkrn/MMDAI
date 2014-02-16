@@ -44,8 +44,8 @@
 namespace
 {
 
-using namespace vpvl2;
-using namespace vpvl2::pmd2;
+using namespace vpvl2::VPVL2_VERSION_NS;
+using namespace vpvl2::VPVL2_VERSION_NS::pmd2;
 
 #pragma pack(push, 1)
 
@@ -63,6 +63,8 @@ struct BoneUnit {
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace pmd2
 {
@@ -590,4 +592,5 @@ void Bone::setIndex(int value)
 }
 
 } /* namespace pmd2 */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

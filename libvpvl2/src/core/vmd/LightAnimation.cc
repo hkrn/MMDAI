@@ -45,6 +45,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace vmd
 {
 
@@ -120,4 +122,5 @@ LightKeyframe *LightAnimation::findKeyframeAt(int i) const
 }
 
 } /* namespace vmd */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

@@ -58,15 +58,17 @@
 #include <sstream>
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 namespace extensions {
 namespace icu4c {
 VPVL2_MAKE_SMARTPTR(Encoding);
 }
 }
 }
+}
 
-using namespace vpvl2;
-using namespace vpvl2::extensions;
+using namespace vpvl2::v0_33_0;
+using namespace vpvl2::v0_33_0::extensions;
 
 namespace ui {
 
@@ -151,7 +153,7 @@ static bool loadModel(const UnicodeString &path,
     bool ok = false;
     if (path.endsWith(".zip")) {
         archive.reset(new Archive(encodingRef));
-        vpvl2::extensions::Archive::EntryNames entries;
+        extensions::Archive::EntryNames entries;
         icu4c::String s(path);
         if (archive->open(&s, entries)) {
             for (Archive::EntryNames::const_iterator it = entries.begin(); it != entries.end(); it++) {

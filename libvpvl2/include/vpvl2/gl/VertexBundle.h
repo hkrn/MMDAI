@@ -43,6 +43,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace gl
 {
 
@@ -334,6 +336,9 @@ private:
 };
 
 } /* namespace gl */
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
+
 } /* namespace vpvl2 */
 
 #endif

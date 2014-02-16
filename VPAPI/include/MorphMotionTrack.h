@@ -46,7 +46,10 @@ class MorphKeyframeRefObject;
 class MotionProxy;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class IMorphKeyframe;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class MorphMotionTrack : public BaseMotionTrack

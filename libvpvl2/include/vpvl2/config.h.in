@@ -178,6 +178,7 @@
 
 #define VPVL2_VERSION_STRING "@VPVL2_VERSION@"
 #define VPVL2_COMMIT_REVISION "@VPVL2_COMMIT_REVISION@"
+#define VPVL2_VERSION_NS v@VPVL2_VERSION_MAJOR@_@VPVL2_VERSION_COMPAT@_@VPVL2_VERSION_MINOR@
 
 /* _MSC_VER < 1300 (= Visual Studio 6) doesn't support */
 #if (defined(_MSC_VER) && _MSC_VER < 1600)
@@ -234,13 +235,16 @@ inline QDebug operator<< (QDebug &o, const std::string &string) {
     return o;
 }
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 #undef ERROR
 static const int INFO = 0;
 static const int WARNING = 1;
 static const int ERROR = 2;
 VPVL2_API QLoggingCategory &findLoggingBasicCategory(int level);
 VPVL2_API QLoggingCategory &findLoggingVerboseCategory(int level);
-}
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
+} /* namespace vpvl2 */
 #define VPVL2_LOG(level, expr) qCDebug(vpvl2::findLoggingBasicCategory(level)).nospace() << expr
 #define VPVL2_VLOG(level, expr) qCDebug(vpvl2::findLoggingVerboseCategory(level)).nospace() << expr
 #define VPVL2_CHECK(assertion) Q_ASSERT(assertion)

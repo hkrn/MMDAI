@@ -42,6 +42,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace mvd
 {
 
@@ -124,4 +126,5 @@ IKeyframe::Type AssetKeyframe::type() const
 }
 
 } /* namespace mvd */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

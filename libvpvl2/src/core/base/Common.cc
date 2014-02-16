@@ -47,7 +47,7 @@
 
 namespace {
 
-using namespace vpvl2;
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 #if defined(VPVL2_LINK_GLOG) && !defined(VPVL2_OS_WINDOWS) && !defined(VPVL2_ENABLE_QT)
 
@@ -96,6 +96,8 @@ static inline void ShutdownGoogleLogging() {}
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 
 bool isLibraryVersionCorrect(int version) VPVL2_DECL_NOEXCEPT
@@ -194,4 +196,5 @@ QLoggingCategory &findLoggingVerboseCategory(int level) {
 }
 #endif
 
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

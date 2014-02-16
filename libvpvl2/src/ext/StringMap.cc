@@ -40,6 +40,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace extensions
 {
 
@@ -102,4 +104,5 @@ void StringMap::copyTo(StringMap &value) const
 }
 
 } /* namespace extensions */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

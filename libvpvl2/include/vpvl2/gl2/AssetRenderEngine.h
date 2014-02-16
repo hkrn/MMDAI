@@ -55,6 +55,8 @@ struct aiScene;
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 namespace asset
 {
@@ -84,7 +86,7 @@ class BaseShaderProgram;
  * Bone class represents a bone of a Polygon Model Data object.
  */
 
-class VPVL2_API AssetRenderEngine : public vpvl2::IRenderEngine
+class VPVL2_API AssetRenderEngine : public IRenderEngine
 {
 public:
     class Program;
@@ -128,9 +130,9 @@ private:
 
     struct Vertex {
         Vertex() {}
-        vpvl2::Vector4 position;
-        vpvl2::Vector3 normal;
-        vpvl2::Vector3 texcoord;
+        Vector4 position;
+        Vector3 normal;
+        Vector3 texcoord;
     };
     typedef Array<Vertex> Vertices;
     typedef Array<int> Indices;
@@ -161,6 +163,7 @@ private:
 };
 
 } /* namespace gl2 */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif /* VPVL2_LINK_ASSIMP */

@@ -41,10 +41,10 @@
 
 #ifdef VPVL2_ENABLE_QT
 #include <vpvl2/extensions/qt/String.h>
-using namespace vpvl2::extensions::qt;
+using namespace vpvl2::VPVL2_VERSION_NS::extensions::qt;
 #else
 #include <vpvl2/extensions/icu4c/String.h>
-using namespace vpvl2::extensions::icu4c;
+using namespace vpvl2::VPVL2_VERSION_NS::extensions::icu4c;
 #endif
 
 #include <algorithm>
@@ -54,6 +54,8 @@ using namespace vpvl2::extensions::icu4c;
 #include "unzip.h"
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace extensions
 {
@@ -289,4 +291,5 @@ const std::string *Archive::dataRef(const std::string &name) const
 }
 
 } /* namespace extensions */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

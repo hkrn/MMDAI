@@ -50,6 +50,7 @@
 class ProjectProxy;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class IModel;
 class Scene;
 namespace gl {
@@ -57,6 +58,8 @@ class ShaderProgram;
 class VertexBundle;
 class VertexBundleLayout;
 }
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class Grid : public QObject {

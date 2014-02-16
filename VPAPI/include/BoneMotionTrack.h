@@ -46,7 +46,10 @@ class BoneKeyframeRefObject;
 class MotionProxy;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class IBoneKeyframe;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class BoneMotionTrack : public BaseMotionTrack

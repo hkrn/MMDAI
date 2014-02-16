@@ -62,7 +62,7 @@
 
 namespace {
 
-using namespace vpvl2;
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 class NullBone : public IBone {
 public:
@@ -219,6 +219,8 @@ const Color NullMaterial::kWhiteColor = Color(1, 1, 1, 1);
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 
 struct Factory::PrivateContext
@@ -644,4 +646,5 @@ IMotion *Factory::convertMotion(IMotion *source, IMotion::FormatType destType) c
     return 0;
 }
 
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

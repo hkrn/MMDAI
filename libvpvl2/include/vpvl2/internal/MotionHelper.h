@@ -46,6 +46,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace internal
 {
 
@@ -147,6 +149,7 @@ private:
 };
 
 } /* namespace internal */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

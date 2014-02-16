@@ -43,6 +43,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 /**
  * 照明のキーフレームをあらわすインターフェースです。
@@ -96,6 +98,9 @@ public:
      */
     virtual void setDirection(const Vector3 &value) = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

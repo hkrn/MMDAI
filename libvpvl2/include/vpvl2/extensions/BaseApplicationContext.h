@@ -93,7 +93,11 @@ task_scheduler_init() {}
 } /* namespace tbb */
 #endif
 
-namespace vpvl2 {
+namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
+{
+
 class Factory;
 class IModel;
 class IMotion;
@@ -350,8 +354,8 @@ protected:
     EffectRef2ParameterUIRefMap m_effectRef2ParameterUIs;
     RenderTargetMap m_renderTargets;
     SharedTextureParameterMap m_sharedParameters;
-    Array<vpvl2::IEffect::Technique *> m_offscreenTechniques;
-    Array<vpvl2::IEffect *> m_dirtyEffects;
+    Array<IEffect::Technique *> m_offscreenTechniques;
+    Array<IEffect *> m_dirtyEffects;
 #ifdef VPVl2_ENABLE_NVIDIA_CG
     typedef PointerArray<OffscreenTexture> OffscreenTextureList;
     OffscreenTextureList m_offscreenTextures;
@@ -368,6 +372,9 @@ private:
 };
 
 } /* namespace extensions */
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
+
 } /* namespace vpvl2 */
 
 #endif /* VPVL2_EXTENSIONS_BASEAPPLICATIONCONTEXT_H_ */

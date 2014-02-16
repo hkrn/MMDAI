@@ -44,6 +44,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IBoneKeyframe;
 class ICameraKeyframe;
@@ -501,6 +503,9 @@ public:
      */
     virtual FormatType type() const = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

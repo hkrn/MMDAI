@@ -43,6 +43,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace mvd
 {
 
@@ -202,4 +204,5 @@ IProjectKeyframe *ProjectSection::findKeyframeAt(int index) const
 }
 
 } /* namespace mvd */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

@@ -47,6 +47,8 @@ class btDiscreteDynamicsWorld;
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IBone;
 class IJoint;
@@ -1059,6 +1061,9 @@ public:
 
     virtual void setProgressReporterRef(IProgressReporter *value) = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

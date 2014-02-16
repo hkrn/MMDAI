@@ -43,8 +43,8 @@
 namespace
 {
 
-using namespace vpvl2;
-using namespace vpvl2::pmd2;
+using namespace vpvl2::VPVL2_VERSION_NS;
+using namespace vpvl2::VPVL2_VERSION_NS::pmd2;
 
 #pragma pack(push, 1)
 
@@ -67,6 +67,8 @@ struct JointUnit {
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace pmd2
 {
@@ -201,4 +203,5 @@ void Joint::write(uint8 *&data, const Model::DataInfo & /* info */) const
 }
 
 } /* namespace pmd2 */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

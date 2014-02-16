@@ -47,6 +47,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 using namespace gl;
 
 namespace fx
@@ -1209,4 +1211,5 @@ void PMXRenderEngine::annotate(const char * const format, ...)
 }
 
 } /* namespace fx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

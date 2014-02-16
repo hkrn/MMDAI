@@ -43,6 +43,9 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
+
 class IBone;
 class IMaterial;
 class IModel;
@@ -131,6 +134,9 @@ public:
     virtual void setBoneRef(int index, IBone *value) = 0;
     virtual void setMaterialRef(IMaterial *value) = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

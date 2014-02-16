@@ -42,6 +42,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace mvd
 {
 
@@ -211,4 +213,5 @@ void ProjectKeyframe::setShadowDepth(float value)
 }
 
 } /* namespace mvd */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

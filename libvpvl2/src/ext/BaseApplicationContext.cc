@@ -135,39 +135,39 @@ struct DefaultLogger {
 #include <unicode/regex.h>
 #endif
 
-using namespace vpvl2;
-using namespace vpvl2::extensions;
+using namespace vpvl2::VPVL2_VERSION_NS;
+using namespace vpvl2::VPVL2_VERSION_NS::extensions;
 
 #ifdef VPVL2_ENABLE_QT
 #include <vpvl2/extensions/qt/Encoding.h>
-using namespace vpvl2::extensions::qt;
+using namespace vpvl2::VPVL2_VERSION_NS::extensions::qt;
 #elif defined(VPVL2_ENABLE_EXTENSIONS_STRING)
 #include <vpvl2/extensions/icu4c/Encoding.h>
-using namespace vpvl2::extensions::icu4c;
+using namespace vpvl2::VPVL2_VERSION_NS::extensions::icu4c;
 #endif
 
 namespace {
 
-static const vpvl2::gl::GLenum kGL_DONT_CARE = 0x1100;
-static const vpvl2::gl::GLenum kGL_MAX_SAMPLES = 0x8D57;
-static const vpvl2::gl::GLenum kGL_DEBUG_OUTPUT_SYNCHRONOUS = 0x8242;
-static const vpvl2::gl::GLenum kGL_DEBUG_SOURCE_API_ARB = 0x8246;
-static const vpvl2::gl::GLenum kGL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB = 0x8247;
-static const vpvl2::gl::GLenum kGL_DEBUG_SOURCE_SHADER_COMPILER_ARB = 0x8248;
-static const vpvl2::gl::GLenum kGL_DEBUG_SOURCE_THIRD_PARTY_ARB = 0x8249;
-static const vpvl2::gl::GLenum kGL_DEBUG_SOURCE_APPLICATION_ARB = 0x824A;
-static const vpvl2::gl::GLenum kGL_DEBUG_SOURCE_OTHER_ARB = 0x824B;
-static const vpvl2::gl::GLenum kGL_DEBUG_TYPE_ERROR_ARB = 0x824C;
-static const vpvl2::gl::GLenum kGL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB = 0x824D;
-static const vpvl2::gl::GLenum kGL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB = 0x824E;
-static const vpvl2::gl::GLenum kGL_DEBUG_TYPE_PORTABILITY_ARB = 0x824F;
-static const vpvl2::gl::GLenum kGL_DEBUG_TYPE_PERFORMANCE_ARB = 0x8250;
-static const vpvl2::gl::GLenum kGL_DEBUG_TYPE_OTHER_ARB = 0x8251;
-static const vpvl2::gl::GLenum kGL_DEBUG_SEVERITY_HIGH_ARB = 0x9146;
-static const vpvl2::gl::GLenum kGL_DEBUG_SEVERITY_MEDIUM_ARB = 0x9147;
-static const vpvl2::gl::GLenum kGL_DEBUG_SEVERITY_LOW_ARB = 0x9148;
+static const gl::GLenum kGL_DONT_CARE = 0x1100;
+static const gl::GLenum kGL_MAX_SAMPLES = 0x8D57;
+static const gl::GLenum kGL_DEBUG_OUTPUT_SYNCHRONOUS = 0x8242;
+static const gl::GLenum kGL_DEBUG_SOURCE_API_ARB = 0x8246;
+static const gl::GLenum kGL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB = 0x8247;
+static const gl::GLenum kGL_DEBUG_SOURCE_SHADER_COMPILER_ARB = 0x8248;
+static const gl::GLenum kGL_DEBUG_SOURCE_THIRD_PARTY_ARB = 0x8249;
+static const gl::GLenum kGL_DEBUG_SOURCE_APPLICATION_ARB = 0x824A;
+static const gl::GLenum kGL_DEBUG_SOURCE_OTHER_ARB = 0x824B;
+static const gl::GLenum kGL_DEBUG_TYPE_ERROR_ARB = 0x824C;
+static const gl::GLenum kGL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB = 0x824D;
+static const gl::GLenum kGL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB = 0x824E;
+static const gl::GLenum kGL_DEBUG_TYPE_PORTABILITY_ARB = 0x824F;
+static const gl::GLenum kGL_DEBUG_TYPE_PERFORMANCE_ARB = 0x8250;
+static const gl::GLenum kGL_DEBUG_TYPE_OTHER_ARB = 0x8251;
+static const gl::GLenum kGL_DEBUG_SEVERITY_HIGH_ARB = 0x9146;
+static const gl::GLenum kGL_DEBUG_SEVERITY_MEDIUM_ARB = 0x9147;
+static const gl::GLenum kGL_DEBUG_SEVERITY_LOW_ARB = 0x9148;
 
-static const vpvl2::gl::GLenum kGL_DEPTH_CLAMP = 0x864F;
+static const gl::GLenum kGL_DEPTH_CLAMP = 0x864F;
 
 class EffectParameterUIBuilder {
 public:
@@ -294,7 +294,7 @@ struct AssimpLogger : Assimp::Logger {
     }
 };
 
-static inline const char *DebugMessageSourceToString(vpvl2::gl::GLenum value)
+static inline const char *DebugMessageSourceToString(gl::GLenum value)
 {
     switch (value) {
     case kGL_DEBUG_SOURCE_API_ARB:
@@ -314,7 +314,7 @@ static inline const char *DebugMessageSourceToString(vpvl2::gl::GLenum value)
     }
 }
 
-static inline const char *DebugMessageTypeToString(vpvl2::gl::GLenum value)
+static inline const char *DebugMessageTypeToString(gl::GLenum value)
 {
     switch (value) {
     case kGL_DEBUG_TYPE_ERROR_ARB:
@@ -341,11 +341,13 @@ static inline IString *toIStringFromUtf8(const std::string &bytes)
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace extensions
 {
 using namespace gl;
 
-BaseApplicationContext::ModelContext::ModelContext(BaseApplicationContext *applicationContextRef, vpvl2::extensions::Archive *archiveRef, const IString *directory)
+BaseApplicationContext::ModelContext::ModelContext(BaseApplicationContext *applicationContextRef, extensions::Archive *archiveRef, const IString *directory)
     : pixelStorei(reinterpret_cast<PFNGLPIXELSTOREIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glPixelStorei"))),
       m_directoryRef(directory),
       m_archiveRef(archiveRef),
@@ -1753,4 +1755,5 @@ void BaseApplicationContext::debugMessageCallback(GLenum source, GLenum type, GL
 }
 
 } /* namespace extensions */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

@@ -55,10 +55,10 @@
 namespace
 {
 
-using namespace vpvl2;
-using namespace vpvl2::fx;
-using namespace vpvl2::gl;
-using namespace vpvl2::extensions::fx;
+using namespace vpvl2::VPVL2_VERSION_NS;
+using namespace vpvl2::VPVL2_VERSION_NS::fx;
+using namespace vpvl2::VPVL2_VERSION_NS::gl;
+using namespace vpvl2::VPVL2_VERSION_NS::extensions::fx;
 
 static const Scalar kWidth = 1, kHeight = 1;
 static const Vector4 kVertices[] = {
@@ -88,6 +88,8 @@ static const char kSingleTechniquePrefix[] = "Technique=";
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace fx
 {
@@ -2609,4 +2611,5 @@ void EffectEngine::ScriptState::setFromState(const ScriptState &other)
 }
 
 } /* namespace fx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

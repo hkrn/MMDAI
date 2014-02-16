@@ -63,6 +63,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace extensions
 {
 using namespace icu4c;
@@ -326,6 +328,9 @@ private:
 
 } /* namespace sfml */
 } /* namespace extensions */
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
+
 } /* namespace vpvl2 */
 
 #endif /* VPVL2_EXTENSIONS_SFML_APPLICATIONCONTEXT_H_ */

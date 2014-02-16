@@ -53,7 +53,7 @@
 namespace
 {
 
-using namespace vpvl2;
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 #pragma pack(push, 1)
 
@@ -78,6 +78,8 @@ static void AddAllKeyframes(const S *section, IMotion *motion)
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace mvd
 {
@@ -968,4 +970,5 @@ IMotion::FormatType Motion::type() const
 }
 
 } /* namespace mvd */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

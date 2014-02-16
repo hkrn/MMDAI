@@ -50,7 +50,10 @@
 class ModelProxy;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class IBone;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class SkeletonDrawer : public QObject

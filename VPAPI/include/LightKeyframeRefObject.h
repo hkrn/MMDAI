@@ -46,7 +46,10 @@ class LightMotionTrack;
 class LightRefObject;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class ILightKeyframe;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class LightKeyframeRefObject : public BaseKeyframeRefObject

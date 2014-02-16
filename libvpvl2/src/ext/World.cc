@@ -62,6 +62,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace extensions
 {
 
@@ -118,7 +120,7 @@ const int World::PrivateContext::kMaxSubSteps = std::numeric_limits<int>::max();
 World::World()
     : m_context(new PrivateContext())
 {
-    setGravity(vpvl2::Vector3(0.0f, -9.8f, 0.0f));
+    setGravity(Vector3(0.0f, -9.8f, 0.0f));
 }
 
 World::~World()
@@ -156,13 +158,13 @@ void World::deleteAll()
     }
 }
 
-void World::stepSimulation(const vpvl2::Scalar &deltaTimeIndex, const vpvl2::Scalar &motionFPS)
+void World::stepSimulation(const Scalar &deltaTimeIndex, const Scalar &motionFPS)
 {
     const Scalar &v = (deltaTimeIndex / motionFPS) * (m_context->baseFPS / motionFPS) * m_context->timeScale;
     m_context->world->stepSimulation(v, PrivateContext::kMaxSubSteps, 1.0f / m_context->baseFPS);
 }
 
-const vpvl2::Vector3 World::gravity() const
+const Vector3 World::gravity() const
 {
     return m_context->world->getGravity();
 }
@@ -172,7 +174,7 @@ btDiscreteDynamicsWorld *World::dynamicWorldRef() const
     return m_context->world;
 }
 
-void World::setGravity(const vpvl2::Vector3 &value)
+void World::setGravity(const Vector3 &value)
 {
     m_context->world->setGravity(value);
 }
@@ -226,4 +228,5 @@ void World::setFloorEnabled(bool value)
 
 
 } /* namespace extensions */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

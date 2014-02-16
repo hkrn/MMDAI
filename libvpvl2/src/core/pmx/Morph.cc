@@ -47,7 +47,7 @@
 namespace
 {
 
-using namespace vpvl2;
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 #pragma pack(push, 1)
 
@@ -102,6 +102,8 @@ struct ImpulseMorph {
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace pmx
 {
@@ -1275,4 +1277,5 @@ void Morph::getImpulseMorphs(Array<Impulse *> &morphs) const
 }
 
 } /* namespace pmx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

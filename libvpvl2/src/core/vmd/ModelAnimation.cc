@@ -43,6 +43,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace vmd
 {
 
@@ -111,4 +113,5 @@ ModelKeyframe *ModelAnimation::findKeyframe(const IKeyframe::TimeIndex &timeInde
 }
 
 } /* namespace vmd */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

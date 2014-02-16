@@ -46,9 +46,9 @@
 #include "vpvl2/gl2/PMXRenderEngine.h"
 #include "vpvl2/cl/PMXAccelerator.h"
 
-using namespace vpvl2;
-using namespace vpvl2::gl;
-using namespace vpvl2::gl2;
+using namespace vpvl2::VPVL2_VERSION_NS;
+using namespace vpvl2::VPVL2_VERSION_NS::gl;
+using namespace vpvl2::VPVL2_VERSION_NS::gl2;
 
 namespace {
 
@@ -380,6 +380,8 @@ private:
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace gl2
 {
@@ -1148,4 +1150,5 @@ void PMXRenderEngine::bindStaticVertexAttributePointers()
 }
 
 } /* namespace gl2 */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

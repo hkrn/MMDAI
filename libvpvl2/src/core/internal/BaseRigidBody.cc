@@ -49,6 +49,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace internal
 {
 
@@ -601,4 +603,5 @@ BaseRigidBody::DefaultMotionState *BaseRigidBody::createDefaultMotionState() con
 }
 
 } /* namespace internal */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

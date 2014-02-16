@@ -47,7 +47,10 @@ class BoneMotionTrack;
 class BoneRefObject;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class IBoneKeyframe;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class BoneKeyframeRefObject : public BaseKeyframeRefObject

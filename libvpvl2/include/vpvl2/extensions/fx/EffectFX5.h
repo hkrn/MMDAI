@@ -43,6 +43,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IEncoding;
 class IString;
@@ -100,6 +102,9 @@ private:
 
 } /* namespace fx */
 } /* namespace extensions */
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
+
 } /* namespace vpvl2 */
 
 #endif

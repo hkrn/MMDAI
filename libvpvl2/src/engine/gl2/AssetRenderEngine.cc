@@ -58,6 +58,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace gl2
 {
 
@@ -730,6 +732,7 @@ void AssetRenderEngine::bindStaticVertexAttributePointers()
 }
 
 } /* namespace gl2 */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

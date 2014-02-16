@@ -52,7 +52,7 @@
 namespace {
 
 #if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
-using namespace vpvl2;
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 class RootBone : public IBone {
 public:
@@ -600,6 +600,8 @@ private:
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace asset
 {
 
@@ -1116,4 +1118,5 @@ void Model::getBoundingBoxRecurse(const aiScene *scene, const aiNode *node, Vect
 #endif
 
 } /* namespace asset */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

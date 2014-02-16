@@ -44,7 +44,7 @@
 namespace
 {
 
-using namespace vpvl2;
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 #pragma pack(push, 1)
 
@@ -58,6 +58,8 @@ struct BoneLabel
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace pmd2
 {
@@ -471,4 +473,5 @@ void Label::removeMorphRef(IMorph *value)
 }
 
 } /* namespace pmd2 */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

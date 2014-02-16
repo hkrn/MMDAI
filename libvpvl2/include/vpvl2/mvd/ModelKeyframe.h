@@ -45,6 +45,9 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
+
 class IBone;
 class IEncoding;
 
@@ -66,7 +69,7 @@ public:
     IModelKeyframe *clone() const;
     const Motion *parentMotionRef() const;
     void updateInverseKinematicsState() const;
-    void setInverseKinematicsState(const Hash<HashInt, vpvl2::IBone *> &bones);
+    void setInverseKinematicsState(const Hash<HashInt, IBone *> &bones);
 
     VPVL2_KEYFRAME_DEFINE_METHODS()
     bool isVisible() const;
@@ -113,6 +116,7 @@ private:
 };
 
 } /* namespace mvd */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

@@ -121,7 +121,7 @@ typedef int GLenum;
 namespace
 {
 
-using namespace vpvl2;
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 VPVL2_DECL_TLS static bool g_initialized = false;
 
@@ -335,6 +335,8 @@ private:
 } /* namespace anonymous */
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 
 struct Scene::PrivateContext VPVL2_DECL_FINAL
@@ -1199,4 +1201,5 @@ void Scene::setWorldRef(btDiscreteDynamicsWorld *worldRef) VPVL2_DECL_NOEXCEPT
     m_context->setWorldRef(worldRef);
 }
 
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

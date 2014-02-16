@@ -52,6 +52,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 namespace cl {
 class PMXAccelerator;
@@ -66,7 +68,7 @@ class Scene;
 namespace fx
 {
 
-class VPVL2_API PMXRenderEngine VPVL2_DECL_FINAL : public vpvl2::IRenderEngine
+class VPVL2_API PMXRenderEngine VPVL2_DECL_FINAL : public IRenderEngine
 {
 public:
     PMXRenderEngine(IApplicationContext *applicationContextRef,
@@ -216,6 +218,7 @@ private:
 };
 
 } /* namespace fx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

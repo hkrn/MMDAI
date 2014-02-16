@@ -49,6 +49,15 @@ using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
 using namespace vpvl2::extensions::glfw;
 
+namespace lispsm {
+extern void updateLightMatrix(glm::mat4 &lightView,
+                              glm::mat4 &lightProjection,
+                              const glm::mat4 &invEyeProjView,
+                              const glm::vec3 &eyePos,
+                              const glm::vec3 &lightDir,
+                              const glm::vec3 &viewDir);
+}
+
 namespace {
 
 struct MemoryMappedFile {
@@ -327,6 +336,20 @@ public:
         ::ui::drawScreen(*m_scene.get());
         m_applicationContext->renderEffectParameterUIWidgets();
         double current = glfwGetTime();
+
+        glm::mat4 lightView, lightProjection, cameraWorld, cameraView, cameraProjection;
+        m_applicationContext->getCameraMatrices(cameraWorld, cameraView, cameraProjection);
+        const ICamera *camera = m_scene->cameraRef();
+        const ILight *light = m_scene->lightRef();
+        cameraProjection = glm::perspectiveFov(45.0f, float(m_width), float(m_height), camera->znear(), 50.0f);
+
+        const glm::mat4 inversedCameraMatrix(glm::inverse(cameraProjection * cameraView));
+        const glm::vec3 position(glm::make_vec3(static_cast<const Scalar *>(camera->position())));
+        const glm::vec3 lightDir(glm::make_vec3(static_cast<const Scalar *>(light->direction().normalized())));
+        const glm::vec3 viewDir(glm::make_vec3(static_cast<const Scalar *>((camera->lookAt() - camera->position()).normalized())));
+        lispsm::updateLightMatrix(lightView, lightProjection, inversedCameraMatrix, position, lightDir, viewDir);
+        m_applicationContext->setLightMatrices(glm::mat4(1), lightView, lightProjection);
+
         if (m_autoplay) {
             const IKeyframe::TimeIndex &newTimeIndex = IKeyframe::TimeIndex(uint64(((current - base) * 1000) / Scene::defaultFPS()));
             m_scene->seekTimeIndex(newTimeIndex, Scene::kUpdateAll);

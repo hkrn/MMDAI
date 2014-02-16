@@ -68,10 +68,13 @@ class QUndoCommand;
 class QUndoStack;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class Factory;
 class IBoneKeyframe;
 class IKeyframe;
 class IMorphKeyframe;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class MotionProxy : public QObject

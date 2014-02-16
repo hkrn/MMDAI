@@ -44,6 +44,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 /**
  * モデルのキーフレームをあらわすインターフェースです。
@@ -78,6 +80,9 @@ public:
     virtual void setEdgeColor(const Color &value) = 0;
     virtual void setInverseKinematicsEnable(IBone *bone, bool value) = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

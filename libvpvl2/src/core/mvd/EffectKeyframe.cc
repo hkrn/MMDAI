@@ -42,6 +42,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace mvd
 {
 
@@ -223,4 +225,5 @@ void EffectKeyframe::setParentBoneRef(IBone *value)
 }
 
 } /* namespace mvd */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

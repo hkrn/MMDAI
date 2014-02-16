@@ -43,7 +43,7 @@
 namespace
 {
 
-using namespace vpvl2;
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 #pragma pack(push, 1)
 
@@ -62,6 +62,8 @@ struct MaterialUnit {
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace pmx
 {
@@ -903,4 +905,5 @@ void Material::setVisible(bool value)
 }
 
 } /* namespace pmx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

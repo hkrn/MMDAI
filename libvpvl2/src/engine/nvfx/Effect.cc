@@ -51,6 +51,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace nvfx
 {
 
@@ -1151,4 +1153,5 @@ void Effect::pushAnnotationGroupWithName(const char *message)
 }
 
 } /* namespace nvfx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

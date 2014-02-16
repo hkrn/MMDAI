@@ -53,6 +53,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace cl
 {
 
@@ -346,4 +348,5 @@ void PMXAccelerator::release(VertexBufferBridgeArray &buffers) const
 }
 
 } /* namespace cl */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

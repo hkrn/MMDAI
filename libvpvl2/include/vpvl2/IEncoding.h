@@ -44,6 +44,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 /**
  * 文字コード変換を担当し、IString のインスタンスを生成するためのインターフェースです。
@@ -151,6 +153,9 @@ public:
      */
     virtual const IString *stringConstant(ConstantType value) const = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

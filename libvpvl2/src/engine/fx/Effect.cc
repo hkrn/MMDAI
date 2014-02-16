@@ -53,6 +53,8 @@ using namespace tinyxml2;
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace fx
 {
 
@@ -808,4 +810,5 @@ void Effect::activateVertexAttribute(VertexAttributeType /* vtype */)
 }
 
 } /* namespace fx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

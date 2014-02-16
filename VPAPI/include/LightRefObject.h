@@ -41,13 +41,17 @@
 #include <QColor>
 #include <QObject>
 #include <QVector3D>
+#include <vpvl2/Common.h>
 
 class LightMotionTrack;
 class MotionProxy;
 class ProjectProxy;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class ILight;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class LightRefObject : public QObject

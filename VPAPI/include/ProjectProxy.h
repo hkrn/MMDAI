@@ -50,16 +50,19 @@
 #include <QUuid>
 
 #include "MotionProxy.h"
+#include <vpvl2/IEncoding.h>
 #include <vpvl2/extensions/XMLProject.h>
 #include <vpvl2/extensions/qt/Encoding.h>
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class Factory;
-class IEncoding;
 class IModel;
 namespace extensions {
 class World;
 }
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class BaseKeyframeRefObject;

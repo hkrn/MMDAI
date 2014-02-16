@@ -50,7 +50,10 @@
 #include <glm/mat4x4.hpp>
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class IString;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class Util {

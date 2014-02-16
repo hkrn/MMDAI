@@ -50,8 +50,8 @@ public:
     ~UIAuxHelper();
 
     Q_INVOKABLE QUrl openSaveDialog(const QString &title,
-                                       const QString &suffix,
-                                       const QStringList &nameFilters);
+                                    const QString &suffix,
+                                    const QStringList &nameFilters);
     Q_INVOKABLE QString slurpLicenseText(const QString &name);
     Q_INVOKABLE void openAboutQt();
 };

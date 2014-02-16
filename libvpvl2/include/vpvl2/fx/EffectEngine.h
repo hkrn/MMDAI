@@ -49,6 +49,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IModel;
 class IApplicationContext;
@@ -447,7 +449,7 @@ private:
 class TextureValueSemantic : public BaseParameter
 {
 public:
-    TextureValueSemantic(const vpvl2::IApplicationContext *resolver);
+    TextureValueSemantic(const IApplicationContext *resolver);
     ~TextureValueSemantic();
 
     void addParameter(IEffect::Parameter *parameterRef);
@@ -757,6 +759,7 @@ private:
 };
 
 } /* namespace fx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

@@ -52,6 +52,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 typedef ::int8_t       int8;
 typedef ::uint8_t     uint8;
@@ -299,6 +301,9 @@ VPVL2_API const char *libraryCommitRevisionString() VPVL2_DECL_NOEXCEPT;
 VPVL2_API void installLogger(const char *argv0, const char *logdir, int vlog);
 
 VPVL2_API void uninstallLogger();
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

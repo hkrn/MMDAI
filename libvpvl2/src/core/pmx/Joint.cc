@@ -43,7 +43,7 @@
 namespace
 {
 
-using namespace vpvl2;
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 #pragma pack(push, 1)
 
@@ -64,6 +64,8 @@ struct JointUnit
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace pmx
 {
@@ -256,4 +258,5 @@ vsize Joint::estimateSize(const Model::DataInfo &info) const
 }
 
 } /* namespace pmx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

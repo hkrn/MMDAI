@@ -44,6 +44,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace mvd
 {
 
@@ -185,7 +187,7 @@ public:
                       const IKeyframe::LayerIndex &layerIndex,
                       IKeyframe::Type type,
                       Array<IKeyframe *> &keyframes);
-    IKeyframe::LayerIndex countLayers(const vpvl2::IString *name,
+    IKeyframe::LayerIndex countLayers(const IString *name,
                                       IKeyframe::Type type) const;
     IBoneKeyframe *findBoneKeyframeRef(const IKeyframe::TimeIndex &timeIndex,
                                     const IString *name,
@@ -239,6 +241,7 @@ private:
 };
 
 } /* namespace mvd */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

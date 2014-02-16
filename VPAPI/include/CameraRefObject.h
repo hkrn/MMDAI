@@ -42,13 +42,18 @@
 #include <QVector3D>
 #include <QUuid>
 
+#include <vpvl2/Common.h>
+
 class CameraMotionTrack;
 class ModelProxy;
 class MotionProxy;
 class ProjectProxy;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class ICamera;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class CameraRefObject : public QObject

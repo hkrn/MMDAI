@@ -44,7 +44,7 @@
 namespace
 {
 
-using namespace vpvl2;
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 #pragma pack(push, 1)
 
@@ -69,6 +69,8 @@ struct RigidBodyUnit
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace pmx
 {
@@ -235,4 +237,5 @@ void RigidBody::mergeMorph(const Morph::Impulse * /* morph */, const IMorph::Wei
 }
 
 } /* namespace pmx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

@@ -44,7 +44,10 @@ class MorphMotionTrack;
 class MorphRefObject;
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class IMorphKeyframe;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class MorphKeyframeRefObject : public BaseKeyframeRefObject

@@ -44,6 +44,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace internal
 {
 
@@ -153,6 +155,7 @@ struct InterpolationTable VPVL2_DECL_FINAL {
 };
 
 } /* namespace internal */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #define VPVL2_KEYFRAME_INITIALIZE_FIELDS() \

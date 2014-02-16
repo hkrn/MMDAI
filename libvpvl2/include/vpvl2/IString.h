@@ -43,6 +43,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 /**
  * 文字列をあらわすインターフェースです。
@@ -153,6 +155,9 @@ public:
      */
     virtual const uint8 *toByteArray() const = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

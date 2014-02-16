@@ -44,6 +44,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IEncoding;
 class IString;
@@ -79,7 +81,7 @@ public:
     void markDirty();
 
     static bool preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info);
-    static bool loadMorphs(const Array<Morph *> &morphs, const Array<vpvl2::pmd2::Vertex *> &vertices);
+    static bool loadMorphs(const Array<Morph *> &morphs, const Array<pmd2::Vertex *> &vertices);
     static void writeMorphs(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8 *&data);
     static void writeEnglishNames(const Array<Morph *> &morphs, const Model::DataInfo &info, uint8 *&data);
     static vsize estimateTotalSize(const Array<Morph *> &morphs, const Model::DataInfo &info);
@@ -123,6 +125,7 @@ private:
 };
 
 } /* namespace pmd2 */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

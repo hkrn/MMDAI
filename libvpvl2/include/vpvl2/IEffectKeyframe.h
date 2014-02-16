@@ -43,6 +43,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IBone;
 class IModel;
@@ -79,6 +81,9 @@ public:
     virtual void setParentModelRef(IModel *value) = 0;
     virtual void setParentBoneRef(IBone *value) = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

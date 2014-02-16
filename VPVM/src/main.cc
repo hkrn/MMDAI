@@ -73,7 +73,7 @@
 #include "Vector3RefObject.h"
 #include "WorldProxy.h"
 
-using namespace vpvl2::extensions;
+using namespace vpvl2::VPVL2_VERSION_NS::extensions;
 
 namespace {
 

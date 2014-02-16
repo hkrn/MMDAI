@@ -78,6 +78,8 @@ using namespace tinyxml2;
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace extensions
 {
 
@@ -2147,4 +2149,5 @@ void XMLProject::setModelSetting(const IModel *model, const std::string &key, co
 }
 
 } /* namespace extensions */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl */

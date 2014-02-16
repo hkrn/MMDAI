@@ -63,8 +63,11 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace extensions
 {
+
 class AudioSource VPVL2_DECL_FINAL {
 public:
     static bool initialize() {
@@ -150,6 +153,9 @@ private:
 };
 
 } /* namespace extensions */
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
+
 } /* namespace vpvl2 */
 
 #endif

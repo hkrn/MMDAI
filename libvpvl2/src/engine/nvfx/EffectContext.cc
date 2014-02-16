@@ -51,9 +51,9 @@
 #endif
 #include <FxParser.h>
 
-using namespace vpvl2;
-
 namespace {
+
+using namespace vpvl2::VPVL2_VERSION_NS;
 
 VPVL2_DECL_TLS static bool g_initialized = false;
 
@@ -95,6 +95,8 @@ struct FunctionResolverProxy : nvFX::FunctionResolver {
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace nvfx
 {
@@ -165,4 +167,5 @@ void *EffectContext::internalContext() const
 }
 
 } /* namespace nvfx */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

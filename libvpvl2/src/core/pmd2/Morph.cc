@@ -43,8 +43,8 @@
 namespace
 {
 
-using namespace vpvl2;
-using namespace vpvl2::pmd2;
+using namespace vpvl2::VPVL2_VERSION_NS;
+using namespace vpvl2::VPVL2_VERSION_NS::pmd2;
 
 #pragma pack(push, 1)
 
@@ -64,6 +64,8 @@ struct MorphUnit {
 }
 
 namespace vpvl2
+{
+namespace VPVL2_VERSION_NS
 {
 namespace pmd2
 {
@@ -96,7 +98,7 @@ struct Morph::PrivateContext {
     Category category;
     WeightPrecision weight;
     PointerArray<IMorph::Vertex> vertices;
-    Array<vpvl2::pmd2::Vertex *> vertexRefs;
+    Array<pmd2::Vertex *> vertexRefs;
     int index;
 };
 
@@ -147,7 +149,7 @@ bool Morph::preparse(uint8 *&ptr, vsize &rest, Model::DataInfo &info)
     return true;
 }
 
-bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<vpvl2::pmd2::Vertex *> &vertices)
+bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<pmd2::Vertex *> &vertices)
 {
     const int nmorphs = morphs.count(), nvertices = vertices.count();
     Morph *baseMorph = 0;
@@ -503,4 +505,5 @@ void Morph::getImpulseMorphs(Array<Impulse *> &morphs) const
 }
 
 } /* namespace pmd2 */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

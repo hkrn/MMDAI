@@ -40,6 +40,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace extensions
 {
 namespace icu4c
@@ -178,4 +180,5 @@ vsize String::size() const
 
 } /* namespace icu4c */
 } /* namespace extensions */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

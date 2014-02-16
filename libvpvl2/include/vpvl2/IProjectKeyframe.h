@@ -43,6 +43,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 /**
  * プロジェクトのキーフレームをあらわすインターフェースです。
@@ -71,6 +73,9 @@ public:
     virtual void setShadowDistance(float32 value) = 0;
     virtual void setShadowDepth(float32 value) = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

@@ -53,6 +53,8 @@ BT_DECLARE_HANDLE(btGeneric6DofSpringConstraint);
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 namespace internal
 {
 
@@ -138,6 +140,7 @@ protected:
 };
 
 } /* namespace internal */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif

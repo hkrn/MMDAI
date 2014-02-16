@@ -44,6 +44,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IBone;
 class IMaterial;
@@ -409,6 +411,9 @@ public:
     virtual void getFlipMorphs(Array<Flip *> &morphs) const = 0;
     virtual void getImpulseMorphs(Array<Impulse *> &morphs) const = 0;
 };
+
+} /* namespace VPVL2_VERSION_NS */
+using namespace VPVL2_VERSION_NS;
 
 } /* namespace vpvl2 */
 

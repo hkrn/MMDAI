@@ -44,6 +44,8 @@
 
 namespace vpvl2
 {
+namespace VPVL2_VERSION_NS
+{
 
 class IApplicationContext;
 class Scene;
@@ -75,6 +77,7 @@ private:
 };
 
 } /* namespace cl */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
 
 #endif
