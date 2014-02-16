@@ -69,13 +69,15 @@ OSStatus GeneratePreviewForURL(void * /* thisInterface */,
         if (QLPreviewRequestIsCancelled(preview)) {
             return status;
         }
-        installLogger("ql4pmx.qlgenerator", 0, 1);
+        CFBundleRef bundle = QLPreviewRequestGetGeneratorBundle(preview);
+        NSString *dir = BundleContext::bundleResourcePath(bundle);
+        installLogger("ql4pmx.qlgenerator", [dir UTF8String], 1);
+        [dir release];
         NSDictionary *options = nil;
         NSString *stringPath = (NSString *) CFURLCopyFileSystemPath(url, kCFURLPOSIXPathStyle);
         CGContextRef bitmapContext = 0;
         CGImageRef image = 0;
         try {
-            CFBundleRef bundle = QLPreviewRequestGetGeneratorBundle(preview);
             NSDictionary *info = (NSDictionary *) CFBundleGetInfoDictionary(bundle);
             int width = [[info objectForKey:@"QLPreviewWidth"] intValue];
             int height = [[info objectForKey:@"QLPreviewHeight"] intValue];

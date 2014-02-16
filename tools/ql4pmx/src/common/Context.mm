@@ -114,6 +114,7 @@ struct Resolver : IApplicationContext::FunctionResolver {
 }
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 namespace extensions {
 namespace osx {
 namespace ql4pmx {
@@ -464,4 +465,5 @@ void BundleContext::release()
 } /* namespace ql4pmx */
 } /* namespace osx */
 } /* namespace extensions */
+} /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */
