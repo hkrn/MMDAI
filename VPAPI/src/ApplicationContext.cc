@@ -429,8 +429,24 @@ void ApplicationContext::resetOrderIndex(int startOrderIndex)
     m_orderIndex = startOrderIndex;
 }
 
+void ApplicationContext::renameTexturePath(const QString &newTexturePath, const QString &oldTexturePath, const ModelProxy *modelProxy)
+{
+    if (m_filePath2TextureRefs.contains(oldTexturePath)) {
+        ITexture *textureRef = m_filePath2TextureRefs.value(oldTexturePath);
+        ModelContext::TextureRefCacheMap caches = m_textureCacheRefs.value(modelProxy->data());
+        caches.erase(oldTexturePath.toStdString());
+        m_fileSystemWatcher.removePath(oldTexturePath);
+        m_filePath2TextureRefs.remove(oldTexturePath);
+        m_fileSystemWatcher.addPath(newTexturePath);
+        m_filePath2TextureRefs.insert(newTexturePath, textureRef);
+        caches.insert(std::make_pair(newTexturePath.toStdString(), textureRef));
+        m_textureCacheRefs.insert(modelProxy->data(), caches);
+    }
+}
+
 void ApplicationContext::reloadTexture(const QString &filePath)
 {
+    qDebug() << filePath;
     if (m_filePath2TextureRefs.contains(filePath)) {
         QImage image(filePath);
         if (!image.isNull()) {

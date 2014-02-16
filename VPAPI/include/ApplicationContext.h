@@ -95,6 +95,7 @@ public:
     void enqueueUploadingEffect(ModelProxy *model);
     void enqueueDeletingModelProxy(ModelProxy *model);
     void resetOrderIndex(int startOrderIndex);
+    void renameTexturePath(const QString &newTexturePath, const QString &oldTexturePath, const ModelProxy *modelProxy);
     void reloadTexture(const QString &filePath);
     void reloadEffect(const QString &filePath);
     void reloadFile(const QString &filePath);

@@ -271,7 +271,9 @@ public:
     void removeBoneHash(const Bone *bone);
     void addMorphHash(Morph *morph);
     void removeMorphHash(const Morph *morph);
-    int addTexture(const IString *value);
+    int findTextureIndex(const IString *value, int defaultIfNotFound) const;
+    IString *addTexture(const IString *value);
+    void removeTexture(const IString *value);
 
 private:
     struct PrivateContext;

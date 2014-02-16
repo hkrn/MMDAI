@@ -1441,6 +1441,7 @@ void ModelProxy::initializeAllMaterials()
         for (int i = 0; i < nmaterials; i++) {
             IMaterial *materialRef = materialRefs[i];
             MaterialRefObject *material = new MaterialRefObject(this, materialRef, QUuid::createUuid());
+            connect(material, &MaterialRefObject::texturePathDidChange, this, &ModelProxy::texturePathDidChange);
             m_allMaterials.append(material);
             m_material2Refs.insert(materialRef, material);
             m_name2MaterialRefs.insert(material->name(), material);

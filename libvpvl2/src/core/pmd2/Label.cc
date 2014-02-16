@@ -427,11 +427,19 @@ void Label::setName(const IString *value, IEncoding::LanguageType type)
             // VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_context->namePtr);
         }
+        else if (!value && value != m_context->namePtr) {
+            // VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::deleteObject(m_context->namePtr);
+        }
         break;
     case IEncoding::kEnglish:
         if (value && !value->equals(m_context->englishNamePtr)) {
             // VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_context->englishNamePtr);
+        }
+        else if (!value && value != m_context->englishNamePtr) {
+            // VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::deleteObject(m_context->englishNamePtr);
         }
         break;
     default:

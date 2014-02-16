@@ -439,15 +439,15 @@ void Material::write(uint8 *&data, const Model::DataInfo &info) const
     mu.flags = m_context->flags;
     internal::writeBytes(&mu, sizeof(mu), data);
     vsize textureIndexSize = info.textureIndexSize;
-    internal::writeSignedIndex(m_context->mainTextureIndex, textureIndexSize, data);
-    internal::writeSignedIndex(m_context->sphereTextureIndex, textureIndexSize, data);
+    internal::writeSignedIndex(m_context->modelRef->findTextureIndex(m_context->mainTextureRef, -1), textureIndexSize, data);
+    internal::writeSignedIndex(m_context->modelRef->findTextureIndex(m_context->sphereTextureRef, -1), textureIndexSize, data);
     internal::writeBytes(&m_context->sphereTextureRenderMode, sizeof(uint8), data);
     internal::writeBytes(&m_context->useSharedToonTexture, sizeof(uint8), data);
     if (m_context->useSharedToonTexture) {
         internal::writeBytes(&m_context->toonTextureIndex, sizeof(uint8), data);
     }
     else {
-        internal::writeSignedIndex(m_context->toonTextureIndex, textureIndexSize, data);
+        internal::writeSignedIndex(m_context->modelRef->findTextureIndex(m_context->toonTextureRef, -1), textureIndexSize, data);
     }
     internal::writeString(m_context->userDataArea, info.encoding, info.codec, data);
     internal::writeBytes(&m_context->indexRange.count, sizeof(int), data);
@@ -595,7 +595,9 @@ Color Material::ambient() const
 }
 
 Color Material::diffuse() const
-{ return m_context->diffuse.result; }
+{
+    return m_context->diffuse.result;
+}
 
 Color Material::specular() const
 {
@@ -644,17 +646,17 @@ int Material::index() const
 
 int Material::mainTextureIndex() const
 {
-    return m_context->mainTextureIndex;
+    return m_context->modelRef->findTextureIndex(m_context->mainTextureRef, m_context->mainTextureIndex);
 }
 
 int Material::sphereTextureIndex() const
 {
-    return m_context->sphereTextureIndex;
+    return m_context->modelRef->findTextureIndex(m_context->sphereTextureRef, m_context->sphereTextureIndex);
 }
 
 int Material::toonTextureIndex() const
 {
-    return m_context->toonTextureIndex;
+    return m_context->modelRef->findTextureIndex(m_context->toonTextureRef, m_context->toonTextureIndex);
 }
 
 bool Material::isSharedToonTextureUsed() const
@@ -716,11 +718,19 @@ void Material::setName(const IString *value, IEncoding::LanguageType type)
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_context->name);
         }
+        else if (!value && value != m_context->name) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::deleteObject(m_context->name);
+        }
         break;
     case IEncoding::kEnglish:
         if (value && !value->equals(m_context->englishName)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_context->englishName);
+        }
+        else if (!value && value != m_context->englishName) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::deleteObject(m_context->englishName);
         }
         break;
     default:
@@ -734,32 +744,52 @@ void Material::setUserDataArea(const IString *value)
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, userDataAreaWillChange(value, this));
         internal::setString(value, m_context->userDataArea);
     }
+    else if (!value && value != m_context->name) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, userDataAreaWillChange(value, this));
+        internal::deleteObject(m_context->userDataArea);
+        m_context->userDataArea = 0;
+    }
 }
 
 void Material::setMainTexture(const IString *value)
 {
+    m_context->modelRef->removeTexture(m_context->mainTextureRef);
     if (value && !value->equals(m_context->mainTextureRef)) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, mainTextureWillChange(value, this));
-        internal::setString(value, m_context->mainTextureRef);
-        m_context->mainTextureIndex = m_context->modelRef->addTexture(value);
+        m_context->mainTextureRef = m_context->modelRef->addTexture(value);
+    }
+    else if (!value && value != m_context->mainTextureRef) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, mainTextureWillChange(value, this));
+        m_context->mainTextureRef = 0;
+        m_context->mainTextureIndex = -1;
     }
 }
 
 void Material::setSphereTexture(const IString *value)
 {
+    m_context->modelRef->removeTexture(m_context->sphereTextureRef);
     if (value && !value->equals(m_context->sphereTextureRef)) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sphereTextureWillChange(value, this));
-        internal::setString(value, m_context->sphereTextureRef);
-        m_context->sphereTextureIndex = m_context->modelRef->addTexture(value);
+        m_context->sphereTextureRef = m_context->modelRef->addTexture(value);
+    }
+    else if (!value && value != m_context->sphereTextureRef) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sphereTextureWillChange(value, this));
+        m_context->sphereTextureRef = 0;
+        m_context->sphereTextureIndex = -1;
     }
 }
 
 void Material::setToonTexture(const IString *value)
 {
+    m_context->modelRef->removeTexture(m_context->toonTextureRef);
     if (value && !value->equals(m_context->toonTextureRef)) {
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, toonTextureWillChange(value, this));
-        internal::setString(value, m_context->toonTextureRef);
-        m_context->toonTextureIndex = m_context->modelRef->addTexture(value);
+        m_context->toonTextureRef = m_context->modelRef->addTexture(value);
+    }
+    else if (!value && value != m_context->toonTextureRef) {
+        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, toonTextureWillChange(value, this));
+        m_context->toonTextureRef = 0;
+        m_context->toonTextureIndex = -1;
     }
 }
 

@@ -277,6 +277,7 @@ signals:
     void boneDidSelect(BoneRefObject *bone);
     void morphDidSelect(MorphRefObject *morph);
     void modelDidRefresh();
+    void texturePathDidChange(const QString &newPath, const QString &oldPath);
 
 public slots:
     Q_INVOKABLE void selectOpaqueObject(QObject *value);

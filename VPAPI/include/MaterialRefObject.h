@@ -161,8 +161,12 @@ signals:
     void vertexColorEnabledChanged();
     void visibleChanged();
     void dirtyChanged();
+    void texturePathDidChange(const QString &newPath, const QString &oldPath);
 
 private:
+    QString makeRelativePath(const QString &value) const;
+    QUrl makeAbsoluteUrl(const QString &value) const;
+
     ModelProxy *m_parentModelRef;
     vpvl2::IMaterial *m_materialRef;
     const QUuid m_uuid;

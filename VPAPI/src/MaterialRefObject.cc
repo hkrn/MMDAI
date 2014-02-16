@@ -144,11 +144,14 @@ QString MaterialRefObject::mainTexturePath() const
 void MaterialRefObject::setMainTexturePath(const QString &value)
 {
     Q_ASSERT(m_materialRef);
-    if (mainTexturePath() != value) {
-        QScopedPointer<IString> s(String::create(value.toStdString()));
+    const QString &newTexturePath = makeRelativePath(value);
+    QString oldTexturePath = mainTexturePath();
+    if (oldTexturePath != newTexturePath) {
+        QScopedPointer<IString> s(String::create(newTexturePath.toStdString()));
         m_materialRef->setMainTexture(s.data());
         setDirty(true);
         emit mainTexturePathChanged();
+        emit texturePathDidChange(newTexturePath, oldTexturePath);
     }
 }
 
@@ -161,11 +164,14 @@ QString MaterialRefObject::sphereTexturePath() const
 void MaterialRefObject::setSphereTexturePath(const QString &value)
 {
     Q_ASSERT(m_materialRef);
-    if (mainTexturePath() != value) {
-        QScopedPointer<IString> s(String::create(value.toStdString()));
+    const QString &newTexturePath = makeRelativePath(value);
+    QString oldTexturePath = sphereTexturePath();
+    if (oldTexturePath != newTexturePath) {
+        QScopedPointer<IString> s(String::create(newTexturePath.toStdString()));
         m_materialRef->setSphereTexture(s.data());
         setDirty(true);
         emit sphereTexturePathChanged();
+        emit texturePathDidChange(newTexturePath, oldTexturePath);
     }
 }
 
@@ -178,11 +184,14 @@ QString MaterialRefObject::toonTexturePath() const
 void MaterialRefObject::setToonTexturePath(const QString &value)
 {
     Q_ASSERT(m_materialRef);
-    if (toonTexturePath() != value) {
-        QScopedPointer<IString> s(String::create(value.toStdString()));
+    const QString &newTexturePath = makeRelativePath(value);
+    QString oldTexturePath = toonTexturePath();
+    if (oldTexturePath != newTexturePath) {
+        QScopedPointer<IString> s(String::create(newTexturePath.toStdString()));
         m_materialRef->setToonTexture(s.data());
         setDirty(true);
         emit toonTexturePathChanged();
+        emit texturePathDidChange(newTexturePath, oldTexturePath);
     }
 }
 
@@ -470,4 +479,16 @@ void MaterialRefObject::setDirty(bool value)
             m_parentModelRef->markDirty();
         }
     }
+}
+
+QString MaterialRefObject::makeRelativePath(const QString &value) const
+{
+    QUrl url(value);
+    QFileInfo finfo(url.isValid() ? url.toLocalFile() : value);
+    return finfo.isAbsolute() ? QDir(m_parentModelRef->fileUrl().toLocalFile()).relativeFilePath(finfo.absoluteFilePath()) : finfo.filePath();
+}
+
+QUrl MaterialRefObject::makeAbsoluteUrl(const QString &value) const
+{
+    return m_parentModelRef->fileUrl().resolved(QUrl::fromLocalFile(value));
 }

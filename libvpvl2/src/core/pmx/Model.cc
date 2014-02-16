@@ -726,7 +726,8 @@ struct Model::PrivateContext {
         for (int i = 0; i < ntextures; i++) {
             internal::getText(ptr, rest, texturePtr, size);
             IString *value = encodingRef->toString(texturePtr, size, info.codec);
-            name2textureRefs.insert(value->toHashString(), value);
+            const HashString &key = value->toHashString();
+            name2textureRefs.insert(key, value);
             textures.append(value);
         }
     }
@@ -852,7 +853,6 @@ struct Model::PrivateContext {
     Array<int> indices;
     PointerArray<IString> textures;
     Hash<HashString, IString *> name2textureRefs;
-    Hash<HashString, int> textureIndices;
     PointerArray<Material> materials;
     PointerArray<Bone> bones;
     Array<Bone *> bonesBeforePhysics;
@@ -1596,11 +1596,19 @@ void Model::setName(const IString *value, IEncoding::LanguageType type)
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_context->namePtr);
         }
+        else if (!value && value != m_context->namePtr) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::deleteObject(m_context->namePtr);
+        }
         break;
     case IEncoding::kEnglish:
         if (value && !value->equals(m_context->englishNamePtr)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_context->englishNamePtr);
+        }
+        else if (!value && value != m_context->englishNamePtr) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
+            internal::deleteObject(m_context->englishNamePtr);
         }
         break;
     default:
@@ -2058,24 +2066,46 @@ void Model::removeMorphHash(const Morph *morph)
     }
 }
 
-int Model::addTexture(const IString *value)
+int Model::findTextureIndex(const IString *value, int defaultIfNotFound) const
 {
-    int textureIndex = -1;
     if (value) {
-        /* allocate first to btHash#find works as expected */
-        IString *name = value->clone();
-        const HashString &key = name->toHashString();
-        if (const int *textureIndexRef = m_context->textureIndices.find(key)) {
-            textureIndex = *textureIndexRef;
-            internal::deleteObject(name);
-        }
-        else {
-            textureIndex = m_context->textures.count();
-            m_context->textureIndices.insert(key, textureIndex);
-            m_context->name2textureRefs.insert(key, m_context->textures.append(name));
+        const int ntextures = m_context->textures.count();
+        for (int i = 0; i < ntextures; i++) {
+            const IString *texturePath = m_context->textures[i];
+            if (value->equals(texturePath)) {
+                return i;
+            }
         }
     }
-    return textureIndex;
+    return defaultIfNotFound;
+}
+
+IString *Model::addTexture(const IString *value)
+{
+    IString *texturePath = 0;
+    if (value) {
+        int index = findTextureIndex(value, -1);
+        if (index >= 0) {
+            IString *v = m_context->textures[index];
+            texturePath = m_context->textures[index] = value->clone();
+            internal::deleteObject(v);
+        }
+        else {
+            texturePath = m_context->textures.append(value->clone());
+            m_context->name2textureRefs.insert(texturePath->toHashString(), texturePath);
+        }
+    }
+    return texturePath;
+}
+
+void Model::removeTexture(const IString *value)
+{
+    int index = findTextureIndex(value, -1);
+    if (index >= 0) {
+        IString *texturePath = m_context->textures[index];
+        m_context->textures.removeAt(index);
+        internal::deleteObject(texturePath);
+    }
 }
 
 } /* namespace pmx */

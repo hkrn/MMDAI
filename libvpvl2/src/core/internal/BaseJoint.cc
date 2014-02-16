@@ -288,11 +288,19 @@ void BaseJoint::setName(const IString *value, IEncoding::LanguageType type)
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_name);
         }
+        else if (!value && value != m_name) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, nameWillChange(value, type, this));
+            internal::deleteObject(m_name);
+        }
         break;
     case IEncoding::kEnglish:
         if (value && !value->equals(m_englishName)) {
             VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, nameWillChange(value, type, this));
             internal::setString(value, m_englishName);
+        }
+        else if (!value && value != m_englishName) {
+            VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, nameWillChange(value, type, this));
+            internal::deleteObject(m_englishName);
         }
         break;
     default:
