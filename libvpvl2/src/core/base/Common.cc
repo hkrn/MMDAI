@@ -131,9 +131,9 @@ void installLogger(const char *argv0, const char *logdir, int vlog)
 #else
     VPVL2_CHECK(argv0);
     google::InitGoogleLogging(argv0);
-    InstallFailureHandler(logdir);
     FLAGS_v = vlog;
     if (logdir) {
+        InstallFailureHandler(logdir);
         FLAGS_stop_logging_if_full_disk = true;
         FLAGS_log_dir = logdir;
 #ifndef NDEBUG
