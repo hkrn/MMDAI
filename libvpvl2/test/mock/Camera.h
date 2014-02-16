@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockICamera : public ICamera {
  public:
@@ -46,4 +47,5 @@ class MockICamera : public ICamera {
       void());
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2

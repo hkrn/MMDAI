@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockIMaterial : public IMaterial {
  public:
@@ -118,4 +119,5 @@ class MockIMaterial : public IMaterial {
       void(bool value));
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2

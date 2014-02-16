@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockIJoint : public IJoint {
  public:
@@ -68,4 +69,5 @@ class MockIJoint : public IJoint {
       void(Type value));
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2

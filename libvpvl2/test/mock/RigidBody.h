@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockIRigidBody : public IRigidBody {
  public:
@@ -86,4 +87,5 @@ class MockIRigidBody : public IRigidBody {
       void(int value));
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2

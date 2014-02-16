@@ -11,6 +11,7 @@
 #define ASSERT_OR_RETURN(expr) do { AssertionResult r = (expr); if (!r) { return r; } } while (0)
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class IBone;
 class IBoneKeyframe;
@@ -31,6 +32,7 @@ class RigidBody;
 class Vertex;
 }
 
+}
 }
 
 static const float kIdentity4x4[] = {

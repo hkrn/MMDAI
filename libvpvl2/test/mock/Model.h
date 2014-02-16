@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockIModel : public IModel {
  public:
@@ -190,4 +191,5 @@ class MockIModel : public IModel {
       void(IProgressReporter *value));
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2

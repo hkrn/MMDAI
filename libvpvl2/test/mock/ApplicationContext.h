@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockIApplicationContext : public IApplicationContext {
  public:
@@ -42,4 +43,5 @@ class MockIApplicationContext : public IApplicationContext {
       FunctionResolver*());
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2

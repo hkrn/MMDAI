@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockIMotion : public IMotion {
  public:
@@ -92,4 +93,5 @@ class MockIMotion : public IMotion {
       FormatType());
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2

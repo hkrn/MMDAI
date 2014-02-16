@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockIVertex : public IVertex {
  public:
@@ -74,4 +75,5 @@ class MockIVertex : public IVertex {
       void(IMaterial *value));
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2

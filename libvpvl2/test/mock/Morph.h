@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockIMorph : public IMorph {
  public:
@@ -76,4 +77,5 @@ class MockIMorph : public IMorph {
       void(Array<Impulse *> &morphs));
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2

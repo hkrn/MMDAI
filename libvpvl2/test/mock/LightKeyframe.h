@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockILightKeyframe : public ILightKeyframe {
  public:
@@ -14,4 +15,5 @@ class MockILightKeyframe : public ILightKeyframe {
       void(const Vector3 &value));
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2

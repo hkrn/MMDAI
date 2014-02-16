@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockIBone : public IBone {
  public:
@@ -122,4 +123,5 @@ class MockIBone : public IBone {
       void(bool value));
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2

@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockICameraKeyframe : public ICameraKeyframe {
  public:
@@ -32,4 +33,5 @@ class MockICameraKeyframe : public ICameraKeyframe {
       void(bool value));
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2

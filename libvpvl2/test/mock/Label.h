@@ -1,4 +1,5 @@
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 
 class MockILabel : public ILabel {
  public:
@@ -30,4 +31,5 @@ class MockILabel : public ILabel {
       int());
 };
 
+}  // namespace VPVL2_VERSION_NS
 }  // namespace vpvl2
