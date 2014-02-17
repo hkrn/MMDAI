@@ -1,5 +1,6 @@
 #include "Common.h"
 #include "vpvl2/vpvl2.h"
+#include "vpvl2/internal/util.h"
 #include "vpvl2/pmx/Bone.h"
 #include "vpvl2/pmx/Joint.h"
 #include "vpvl2/pmx/Material.h"
@@ -301,20 +302,6 @@ AssertionResult CompareMaterialInterface(const IMaterial &expected, const IMater
     if (expected.edgeSize() != actual.edgeSize()) {
         return AssertionFailure() << "Material#edgeSize is not same: expected=" << expected.edgeSize()
                                   << " actual=" << actual.edgeSize();
-    }
-    if (expected.mainTextureIndex() != actual.mainTextureIndex()) {
-        return AssertionFailure() << "Material#textureIndex is not same: expected=" << expected.mainTextureIndex()
-                                  << " actual=" << actual.mainTextureIndex();
-    }
-    if (expected.sphereTextureIndex() != actual.sphereTextureIndex()) {
-        return AssertionFailure() << "Material#sphereTextureIndex is not same: expected="
-                                  << expected.sphereTextureIndex()
-                                  << " actual=" << actual.sphereTextureIndex();
-    }
-    if (expected.toonTextureIndex() != actual.toonTextureIndex()) {
-        return AssertionFailure() << "Material#toonTextureIndex is not same: expected="
-                                  << expected.toonTextureIndex()
-                                  << " actual=" << actual.toonTextureIndex();
     }
     if (expected.indexRange().count != actual.indexRange().count) {
         return AssertionFailure() << "count of Material#indexRange is not same: expected="

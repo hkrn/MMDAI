@@ -1501,52 +1501,12 @@ IVertex::EdgeSizePrecision Model::edgeScaleFactor(const Vector3 &cameraPosition)
 
 void Model::setName(const IString *value, IEncoding::LanguageType type)
 {
-    switch (type) {
-    case IEncoding::kDefaultLanguage:
-    case IEncoding::kJapanese:
-        if (value && !value->equals(m_context->namePtr)) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-            internal::setString(value, m_context->namePtr);
-        }
-        else if (!value && value != m_context->namePtr) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-            internal::deleteObject(m_context->namePtr);
-        }
-        break;
-    case IEncoding::kEnglish:
-        if (value && !value->equals(m_context->englishNamePtr)) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-            internal::setString(value, m_context->englishNamePtr);
-        }
-        else if (!value && value != m_context->englishNamePtr) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-            internal::deleteObject(m_context->englishNamePtr);
-        }
-        break;
-    default:
-        break;
-    }
+    internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type, this, m_context->eventRefs);
 }
 
 void Model::setComment(const IString *value, IEncoding::LanguageType type)
 {
-    switch (type) {
-    case IEncoding::kDefaultLanguage:
-    case IEncoding::kJapanese:
-        if (value && !value->equals(m_context->commentPtr)) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, commentWillChange(value, type, this));
-            internal::setString(value, m_context->commentPtr);
-        }
-        break;
-    case IEncoding::kEnglish:
-        if (value && !value->equals(m_context->englishCommentPtr)) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, commentWillChange(value, type, this));
-            internal::setString(value, m_context->englishCommentPtr);
-        }
-        break;
-    default:
-        break;
-    }
+    internal::ModelHelper::setComment(value, m_context->commentPtr, m_context->englishCommentPtr, type, this, m_context->eventRefs);
 }
 
 void Model::setEncodingType(IString::Codec /* value */)

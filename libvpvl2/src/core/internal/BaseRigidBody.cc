@@ -37,7 +37,7 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/BaseRigidBody.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
 #include <BulletCollision/CollisionShapes/btCapsuleShape.h>
@@ -442,31 +442,7 @@ int BaseRigidBody::index() const VPVL2_DECL_NOEXCEPT
 
 void BaseRigidBody::setName(const IString *value, IEncoding::LanguageType type)
 {
-    switch (type) {
-    case IEncoding::kDefaultLanguage:
-    case IEncoding::kJapanese:
-        if (value && !value->equals(m_name)) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, nameWillChange(value, type, this));
-            internal::setString(value, m_name);
-        }
-        else if (!value && value != m_name) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, nameWillChange(value, type, this));
-            internal::deleteObject(m_name);
-        }
-        break;
-    case IEncoding::kEnglish:
-        if (value && !value->equals(m_englishName)) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, nameWillChange(value, type, this));
-            internal::setString(value, m_englishName);
-        }
-        else if (!value && value != m_englishName) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, nameWillChange(value, type, this));
-            internal::deleteObject(m_englishName);
-        }
-        break;
-    default:
-        break;
-    }
+    internal::ModelHelper::setName(value, m_name, m_englishName, type, this, m_eventRefs);
 }
 
 void BaseRigidBody::setParentModelRef(IModel *value)

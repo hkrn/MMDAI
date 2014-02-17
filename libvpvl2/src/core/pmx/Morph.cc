@@ -36,7 +36,7 @@
 */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 
 #include "vpvl2/pmx/Bone.h"
 #include "vpvl2/pmx/Material.h"
@@ -1043,31 +1043,7 @@ const IString *Morph::name(IEncoding::LanguageType type) const
 void Morph::setName(const IString *value, IEncoding::LanguageType type)
 {
     m_context->parentModelRef->removeMorph(this);
-    switch (type) {
-    case IEncoding::kDefaultLanguage:
-    case IEncoding::kJapanese:
-        if (value && !value->equals(m_context->namePtr)) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-            internal::setString(value, m_context->namePtr);
-        }
-        else if (!value && value != m_context->namePtr) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-            internal::deleteObject(m_context->namePtr);
-        }
-        break;
-    case IEncoding::kEnglish:
-        if (value && !value->equals(m_context->englishNamePtr)) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-            internal::setString(value, m_context->englishNamePtr);
-        }
-        else if (!value && value != m_context->englishNamePtr) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-            internal::deleteObject(m_context->englishNamePtr);
-        }
-        break;
-    default:
-        break;
-    }
+    internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type, this, m_context->eventRefs);
     m_context->parentModelRef->addMorphHash(this);
 }
 

@@ -61,6 +61,14 @@
     } \
   } while (0)
 
+#define VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(events, expr, TEventListener) do { \
+    const int nevents = events.count(); \
+    for (int i = 0; i < nevents; i++) { \
+      TEventListener *event = events[i]; \
+      event->expr; \
+    } \
+  } while (0)
+
 namespace vpvl2
 {
 namespace VPVL2_VERSION_NS

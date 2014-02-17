@@ -175,6 +175,62 @@ public:
             objects.remove(object);
         }
     }
+    template<typename TCaller, typename TEventListener>
+    static void setName(const IString *value, IString *&namePtr, IString *&englishNamePtr, IEncoding::LanguageType language, TCaller *caller, const Array<TEventListener *> &eventRefs) {
+        switch (language) {
+        case IEncoding::kDefaultLanguage:
+        case IEncoding::kJapanese:
+            if (value && !value->equals(namePtr)) {
+                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, nameWillChange(value, language, caller), TEventListener);
+                internal::setString(value, namePtr);
+            }
+            else if (!value && value != namePtr) {
+                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, nameWillChange(value, language, caller), TEventListener);
+                internal::deleteObject(namePtr);
+            }
+            break;
+        case IEncoding::kEnglish:
+            if (value && !value->equals(englishNamePtr)) {
+                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, nameWillChange(value, language, caller), TEventListener);
+                internal::setString(value, englishNamePtr);
+            }
+            else if (!value && value != englishNamePtr) {
+                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, nameWillChange(value, language, caller), TEventListener);
+                internal::deleteObject(englishNamePtr);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    template<typename TCaller, typename TEventListener>
+    static void setComment(const IString *value, IString *&commentPtr, IString *&englishCommentPtr, IEncoding::LanguageType language, TCaller *caller, const Array<TEventListener *> &eventRefs) {
+        switch (language) {
+        case IEncoding::kDefaultLanguage:
+        case IEncoding::kJapanese:
+            if (value && !value->equals(commentPtr)) {
+                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, commentWillChange(value, language, caller), TEventListener);
+                internal::setString(value, commentPtr);
+            }
+            else if (!value && value != commentPtr) {
+                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, commentWillChange(value, language, caller), TEventListener);
+                internal::deleteObject(commentPtr);
+            }
+            break;
+        case IEncoding::kEnglish:
+            if (value && !value->equals(englishCommentPtr)) {
+                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, commentWillChange(value, language, caller), TEventListener);
+                internal::setString(value, englishCommentPtr);
+            }
+            else if (!value && value != englishCommentPtr) {
+                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, commentWillChange(value, language, caller), TEventListener);
+                internal::deleteObject(englishCommentPtr);
+            }
+            break;
+        default:
+            break;
+        }
+    }
 
 private:
     VPVL2_MAKE_STATIC_CLASS(ModelHelper)

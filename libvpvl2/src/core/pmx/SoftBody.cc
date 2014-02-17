@@ -36,7 +36,7 @@
 */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/ModelHelper.h"
 
 #include "vpvl2/pmx/SoftBody.h"
 
@@ -341,31 +341,7 @@ int SoftBody::index() const
 
 void SoftBody::setName(const IString *value, IEncoding::LanguageType type)
 {
-    switch (type) {
-    case IEncoding::kDefaultLanguage:
-    case IEncoding::kJapanese:
-        if (value && !value->equals(m_context->name)) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-            internal::setString(value, m_context->name);
-        }
-        else if (!value && value != m_context->name) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-            internal::deleteObject(m_context->name);
-        }
-        break;
-    case IEncoding::kEnglish:
-        if (value && !value->equals(m_context->englishName)) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-            internal::setString(value, m_context->englishName);
-        }
-        else if (!value && value != m_context->englishName) {
-            VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, nameWillChange(value, type, this));
-            internal::deleteObject(m_context->englishName);
-        }
-        break;
-    default:
-        break;
-    }
+    internal::ModelHelper::setName(value, m_context->name, m_context->englishName, type, this, m_context->eventRefs);
 }
 
 void SoftBody::setIndex(int value)
