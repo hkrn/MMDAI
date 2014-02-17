@@ -273,7 +273,7 @@ bool ApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, cons
 {
     QImage image;
     image.loadFromData(data, size);
-    if (!uploadTextureQt(image.convertToFormat(QImage::Format_ARGB32), key, flags, context, texturePtr)) {
+    if (!uploadTextureQt(image, key, flags, context, texturePtr)) {
         return context->uploadTexture(data, size, key, flags, texturePtr);
     }
     return true;
@@ -283,7 +283,7 @@ bool ApplicationContext::uploadTextureOpaque(const std::string &path, int flags,
 {
     QImage image;
     image.load(QString::fromStdString(path));
-    if (!uploadTextureQt(image.convertToFormat(QImage::Format_ARGB32), path, flags, context, texturePtr)) {
+    if (!uploadTextureQt(image, path, flags, context, texturePtr)) {
         return context->uploadTexture(path, flags, texturePtr);
     }
     return true;
@@ -307,7 +307,7 @@ bool ApplicationContext::uploadTextureQt(const QImage &image, const std::string 
     /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
     if (!image.isNull()) {
         const Vector3 size(image.width(), image.height(), 1);
-        texturePtr = modelContext->createTexture(image.rgbSwapped().constBits(), defaultTextureFormat(), size, (flags & kGenerateTextureMipmap) != 0);
+        texturePtr = modelContext->createTexture(image.convertToFormat(QImage::Format_ARGB32).rgbSwapped().constBits(), defaultTextureFormat(), size, (flags & kGenerateTextureMipmap) != 0);
         VPVL2_VLOG(2, "Created a texture: texture=" << texturePtr);
         return modelContext->storeTexture(key, flags, texturePtr);
     }
@@ -460,7 +460,7 @@ void ApplicationContext::reloadTexture(const QString &filePath)
             const Vector3 &size = textureRef->size();
             if (int(size.x()) == image.width() && int(size.y()) == image.height()) {
                 textureRef->bind();
-                textureRef->write(image.convertToFormat(QImage::Format_ARGB32).constBits());
+                textureRef->write(image.convertToFormat(QImage::Format_ARGB32).rgbSwapped().constBits());
                 textureRef->unbind();
                 VPVL2_VLOG(2, "Reload texture succeeded: path=" << filePath.toStdString() << " data=" << textureRef->data());
             }
