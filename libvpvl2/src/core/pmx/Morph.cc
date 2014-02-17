@@ -1042,7 +1042,7 @@ const IString *Morph::name(IEncoding::LanguageType type) const
 
 void Morph::setName(const IString *value, IEncoding::LanguageType type)
 {
-    m_context->parentModelRef->removeMorph(this);
+    m_context->parentModelRef->removeMorphHash(this);
     internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type, this, m_context->eventRefs);
     m_context->parentModelRef->addMorphHash(this);
 }
