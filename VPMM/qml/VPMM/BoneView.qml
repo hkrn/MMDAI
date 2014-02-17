@@ -296,7 +296,6 @@ ScrollView {
             GroupBox {
                 id: boneLocalAxesGroupBox
                 title: qsTr("Local Axes")
-                enabled: checked
                 checkable: true
                 checked: targetObject.localAxesEnabled
                 Layout.fillWidth: true
@@ -333,7 +332,6 @@ ScrollView {
             GroupBox {
                 id: boneFixedAxisGroupBox
                 title: qsTr("Fixed Axes")
-                enabled: checked
                 checkable: true
                 checked: targetObject.fixedAxisEnabled
                 Layout.fillWidth: true
@@ -408,7 +406,6 @@ ScrollView {
             GroupBox {
                 id: boneIKGroupBox
                 title: qsTr("IK (Inverse Kinematics)")
-                enabled: checked
                 checkable: true
                 checked: targetObject.inverseKinematicsEnabled
                 Layout.fillWidth: true

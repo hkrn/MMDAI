@@ -599,7 +599,7 @@ ApplicationWindow {
                             { "text": qsTr("Label"), "path": "LabelView.qml", "reference": labelsModel },
                             { "text": qsTr("RigidBody"), "path": "RigidBodyView.qml", "reference": rigidBodiesModel },
                             { "text": qsTr("Joint"), "path": "JointView.qml", "reference": jointsModel },
-                            { "text": qsTr("SoftBody"), "path": "SoftBodyView.qml", "reference": softBodiesModel }
+                            /* { "text": qsTr("SoftBody"), "path": "SoftBodyView.qml", "reference": softBodiesModel } */
                         ]
                         onCurrentIndexChanged: objectListView.model = model[currentIndex].reference
                     }
@@ -650,11 +650,13 @@ ApplicationWindow {
                             onDoubleClicked: {
                                 var targetObject = model.get(row).item,
                                         path = objectType.model[objectType.currentIndex].path
-                                var arguments = {
-                                    "item": Qt.resolvedUrl(path),
-                                    "properties": { "targetObject": targetObject }
+                                if (targetObject) {
+                                    var arguments = {
+                                        "item": Qt.resolvedUrl(path),
+                                        "properties": { "targetObject": targetObject }
+                                    }
+                                    stackView.push(arguments)
                                 }
-                                stackView.push(arguments)
                             }
                         }
                     }
