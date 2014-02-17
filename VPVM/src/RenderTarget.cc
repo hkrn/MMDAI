@@ -75,9 +75,9 @@
 #include "WorldProxy.h"
 #include "VideoSurface.h"
 
-using namespace vpvl2::VPVL2_VERSION_NS;
-using namespace vpvl2::VPVL2_VERSION_NS::extensions;
-using namespace vpvl2::VPVL2_VERSION_NS::extensions::qt;
+using namespace vpvl2;
+using namespace vpvl2::extensions;
+using namespace vpvl2::extensions::qt;
 
 namespace {
 
@@ -1001,6 +1001,7 @@ void RenderTarget::consumeFileChangeQueue()
 {
     Q_ASSERT(m_applicationContext);
     Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     QMutexLocker locker(&m_fileChangeQueueMutex); Q_UNUSED(locker);
     disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::consumeFileChangeQueue);
     while (!m_fileChangeQueue.isEmpty()) {
