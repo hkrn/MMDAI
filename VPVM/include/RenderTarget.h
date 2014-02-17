@@ -56,10 +56,13 @@
 #include "ModelProxy.h"
 
 namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
 class IEncoding;
 class IRenderContext;
 class Factory;
 class Scene;
+}
+using namespace VPVL2_VERSION_NS;
 }
 
 class ApplicationContext;

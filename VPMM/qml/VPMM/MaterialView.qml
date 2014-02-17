@@ -394,25 +394,58 @@ ScrollView {
                 ColumnLayout {
                     GridLayout {
                         columns: 3
+                        FileDialog {
+                            id: mainTextureFileDialog
+                            title: "Change Main Texture"
+                            selectExisting: true
+                            nameFilters: [ "Image Files (*.jpg *.png *.bmp *.tga)" ]
+                            folder: targetObject.parentModel.fileUrl
+                            onAccepted: targetObject.mainTexturePath = fileUrl
+                        }
                         Label { text: qsTr("Main") }
                         TextField {
                             Layout.fillWidth: true
                             text: targetObject.mainTexturePath
                         }
-                        Button { text: qsTr("Change")  }
+                        Button {
+                            text: qsTr("Change")
+                            onClicked: mainTextureFileDialog.open()
+                        }
+                        FileDialog {
+                            id: toonTextureFileDialog
+                            title: "Change Toon Texture"
+                            selectExisting: true
+                            nameFilters: [ "Image Files (*.jpg *.png *.bmp *.tga)" ]
+                            folder: targetObject.parentModel.fileUrl
+                            onAccepted: targetObject.toonTexturePath = fileUrl
+                        }
                         Label { text: qsTr("Toon") }
                         TextField {
                             Layout.fillWidth: true
                             enabled: !enableSharedToonCheckbox.checked
                             text: targetObject.toonTexturePath
                         }
-                        Button { text: qsTr("Change") }
+                        Button {
+                            text: qsTr("Change")
+                            onClicked: toonTextureFileDialog.open()
+                        }
+                        FileDialog {
+                            id: sphereTextureFileDialog
+                            title: "Change Sphere Texture"
+                            selectExisting: true
+                            nameFilters: [ "Image Files (*.jpg *.png *.bmp *.tga)", "Sphere Texture Files (*.sph *.spa)" ]
+                            folder: targetObject.parentModel.fileUrl
+                            onAccepted: targetObject.sphereTexturePath = fileUrl
+                        }
                         Label { text: qsTr("Sphere") }
                         TextField {
                             Layout.fillWidth: true
                             text: targetObject.sphereTexturePath
                         }
-                        Button { text: qsTr("Change") }
+                        Button {
+                            text: qsTr("Change")
+                            onClicked: sphereTextureFileDialog.open()
+                        }
                     }
                     GridLayout {
                         columns: 2

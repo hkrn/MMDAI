@@ -273,7 +273,7 @@ bool ApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, cons
 {
     QImage image;
     image.loadFromData(data, size);
-    if (!uploadTextureQt(image.convertToFormat(QImage::Format_ARGB32), key, flags, context, texturePtr)) {
+    if (!uploadTextureQt(image, key, flags, context, texturePtr)) {
         return context->uploadTexture(data, size, key, flags, texturePtr);
     }
     return true;
@@ -283,7 +283,7 @@ bool ApplicationContext::uploadTextureOpaque(const std::string &path, int flags,
 {
     QImage image;
     image.load(QString::fromStdString(path));
-    if (!uploadTextureQt(image.convertToFormat(QImage::Format_ARGB32), path, flags, context, texturePtr)) {
+    if (!uploadTextureQt(image, path, flags, context, texturePtr)) {
         return context->uploadTexture(path, flags, texturePtr);
     }
     return true;
@@ -307,7 +307,7 @@ bool ApplicationContext::uploadTextureQt(const QImage &image, const std::string 
     /* use Qt's pluggable image loader (jpg/png is loaded with libjpeg/libpng) */
     if (!image.isNull()) {
         const Vector3 size(image.width(), image.height(), 1);
-        texturePtr = modelContext->createTexture(image.rgbSwapped().constBits(), defaultTextureFormat(), size, (flags & kGenerateTextureMipmap) != 0);
+        texturePtr = modelContext->createTexture(image.convertToFormat(QImage::Format_ARGB32).rgbSwapped().constBits(), defaultTextureFormat(), size, (flags & kGenerateTextureMipmap) != 0);
         VPVL2_VLOG(2, "Created a texture: texture=" << texturePtr);
         return modelContext->storeTexture(key, flags, texturePtr);
     }
@@ -429,31 +429,38 @@ void ApplicationContext::resetOrderIndex(int startOrderIndex)
     m_orderIndex = startOrderIndex;
 }
 
-void ApplicationContext::renameTexturePath(const QString &newTexturePath, const QString &oldTexturePath, const ModelProxy *modelProxy)
+void ApplicationContext::renameTexturePath(const QUrl &newTextureUrl, const QUrl &oldTextureUrl, const ModelProxy *modelProxy)
 {
+    const QString &newTexturePath = newTextureUrl.toLocalFile(), &oldTexturePath = oldTextureUrl.toLocalFile();
     if (m_filePath2TextureRefs.contains(oldTexturePath)) {
-        ITexture *textureRef = m_filePath2TextureRefs.value(oldTexturePath);
-        ModelContext::TextureRefCacheMap caches = m_textureCacheRefs.value(modelProxy->data());
-        caches.erase(oldTexturePath.toStdString());
-        m_fileSystemWatcher.removePath(oldTexturePath);
-        m_filePath2TextureRefs.remove(oldTexturePath);
-        m_fileSystemWatcher.addPath(newTexturePath);
-        m_filePath2TextureRefs.insert(newTexturePath, textureRef);
-        caches.insert(std::make_pair(newTexturePath.toStdString(), textureRef));
-        m_textureCacheRefs.insert(modelProxy->data(), caches);
+        QImage image;
+        if (image.load(newTexturePath)) {
+            ITexture *textureRef = m_filePath2TextureRefs.value(oldTexturePath);
+            ModelContext::TextureRefCacheMap caches = m_textureCacheRefs.value(modelProxy->data());
+            caches.erase(oldTexturePath.toStdString());
+            m_fileSystemWatcher.removePath(oldTexturePath);
+            m_filePath2TextureRefs.remove(oldTexturePath);
+            m_fileSystemWatcher.addPath(newTexturePath);
+            m_filePath2TextureRefs.insert(newTexturePath, textureRef);
+            caches.insert(std::make_pair(newTexturePath.toStdString(), textureRef));
+            m_textureCacheRefs.insert(modelProxy->data(), caches);
+        }
+        else {
+            VPVL2_LOG(WARNING, "Cannot load image: path=" << newTexturePath.toStdString());
+        }
     }
 }
 
 void ApplicationContext::reloadTexture(const QString &filePath)
 {
-    qDebug() << filePath;
     if (m_filePath2TextureRefs.contains(filePath)) {
         QImage image(filePath);
         if (!image.isNull()) {
             ITexture *textureRef = m_filePath2TextureRefs.value(filePath);
-            if (textureRef->size() == Vector3(image.width(), image.height(), 1)) {
+            const Vector3 &size = textureRef->size();
+            if (int(size.x()) == image.width() && int(size.y()) == image.height()) {
                 textureRef->bind();
-                textureRef->write(image.convertToFormat(QImage::Format_ARGB32).constBits());
+                textureRef->write(image.convertToFormat(QImage::Format_ARGB32).rgbSwapped().constBits());
                 textureRef->unbind();
                 VPVL2_VLOG(2, "Reload texture succeeded: path=" << filePath.toStdString() << " data=" << textureRef->data());
             }

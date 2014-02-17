@@ -50,7 +50,8 @@ using namespace VPVL2_VERSION_NS;
 class Importer : public QQuickItem
 {
     Q_OBJECT
-    Q_PROPERTY(ProjectProxy *project MEMBER m_projectRef)
+    Q_PROPERTY(ProjectProxy *project MEMBER m_projectRef FINAL)
+    Q_PROPERTY(QStringList nameFilters READ nameFilters CONSTANT FINAL)
 
 public:
     Importer();
@@ -58,9 +59,12 @@ public:
 
     Q_INVOKABLE void importModel(const QUrl &url);
 
+    QStringList nameFilters() const;
+
 private slots:
     void internalLoadModel(vpvl2::IModel *model, const QUrl &fileUrl, const QString errorString);
 
 private:
     ProjectProxy *m_projectRef;
+    QStringList m_nameFilters;
 };

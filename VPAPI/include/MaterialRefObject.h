@@ -161,7 +161,7 @@ signals:
     void vertexColorEnabledChanged();
     void visibleChanged();
     void dirtyChanged();
-    void texturePathDidChange(const QString &newPath, const QString &oldPath);
+    void texturePathDidChange(const QUrl &newPath, const QUrl &oldPath);
 
 private:
     QString makeRelativePath(const QString &value) const;
