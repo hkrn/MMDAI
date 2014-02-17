@@ -37,10 +37,12 @@
 
 import QtQuick 2.2
 import QtQuick.Controls 1.1
+import QtQuick.Controls.Styles 1.1
 import QtQuick.Dialogs 1.1
 import QtQuick.Window 2.1
 import QtQuick.Layouts 1.1
 import com.github.mmdai.VPMM 1.0 as VPMM
+import "FontAwesome.js" as FontAwesome
 
 ApplicationWindow {
     readonly property bool isOSX: Qt.platform.os === "osx"
@@ -131,6 +133,7 @@ ApplicationWindow {
     }
     FileDialog {
         id: importModelDialog
+        nameFilters: scene.importer.nameFilters
         selectExisting: true
         onAccepted: scene.importer.importModel(fileUrl)
     }
@@ -602,8 +605,19 @@ ApplicationWindow {
                     }
                     Button {
                         visible: stackView.depth > 1
-                        text: "Back To List"
                         onClicked: stackView.pop(null)
+                        style: ButtonStyle {
+                            label: RowLayout {
+                                Text {
+                                    text: FontAwesome.Icon.ArrowLeft
+                                    font {
+                                        family: fontAwesome.name
+                                        pointSize: 16
+                                    }
+                                }
+                                Text { text: qsTr("Back") }
+                            }
+                        }
                     }
                 }
                 StackView {

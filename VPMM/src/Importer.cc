@@ -216,6 +216,12 @@ private:
 
 Importer::Importer()
 {
+    Assimp::Importer importer;
+    std::string extensions;
+    importer.GetExtensionList(extensions);
+    foreach (const QString &extension, QString::fromStdString(extensions).split(";")) {
+        m_nameFilters.append(QStringLiteral("%1 (%1)").arg(extension));
+    }
 }
 
 Importer::~Importer()
@@ -227,6 +233,11 @@ void Importer::importModel(const QUrl &url)
     Worker *worker = new Worker(m_projectRef->factoryInstanceRef(), url, this);
     connect(worker, &Worker::modelDidLoad, this, &Importer::internalLoadModel);
     QThreadPool::globalInstance()->start(worker);
+}
+
+QStringList Importer::nameFilters() const
+{
+    return m_nameFilters;
 }
 
 void Importer::internalLoadModel(IModel *model, const QUrl &fileUrl, const QString errorString)

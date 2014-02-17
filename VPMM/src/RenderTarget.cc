@@ -908,10 +908,19 @@ void RenderTarget::handleFileChange(const QString &filePath)
     m_fileChangeQueue.enqueue(filePath);
 }
 
+void RenderTarget::handleTextureChange(const QUrl &newTexturePath, const QUrl &oldTexturePath)
+{
+    Q_ASSERT(m_applicationContext);
+    Q_ASSERT(qobject_cast<ModelProxy *>(sender()));
+    m_applicationContext->renameTexturePath(newTexturePath, oldTexturePath, qobject_cast<ModelProxy *>(sender()));
+    handleFileChange(newTexturePath.toLocalFile());
+}
+
 void RenderTarget::consumeFileChangeQueue()
 {
     Q_ASSERT(m_applicationContext);
     Q_ASSERT(window());
+    Q_ASSERT(window()->thread() == thread());
     QMutexLocker locker(&m_fileChangeQueueMutex); Q_UNUSED(locker);
     disconnect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::consumeFileChangeQueue);
     while (!m_fileChangeQueue.isEmpty()) {
@@ -1183,6 +1192,7 @@ void RenderTarget::performUploadingEnqueuedModels()
         connect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::translationChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::orientationChanged, this, &RenderTarget::updateGizmo);
+        connect(modelProxy, &ModelProxy::texturePathDidChange, this, &RenderTarget::handleTextureChange);
         emit uploadingModelDidSucceed(modelProxy, pair.second);
     }
     foreach (const ApplicationContext::ModelProxyPair &pair, failedModelProxies) {

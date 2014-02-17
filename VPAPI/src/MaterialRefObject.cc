@@ -151,7 +151,7 @@ void MaterialRefObject::setMainTexturePath(const QString &value)
         m_materialRef->setMainTexture(s.data());
         setDirty(true);
         emit mainTexturePathChanged();
-        emit texturePathDidChange(newTexturePath, oldTexturePath);
+        emit texturePathDidChange(makeAbsoluteUrl(value), makeAbsoluteUrl(oldTexturePath));
     }
 }
 
@@ -171,7 +171,7 @@ void MaterialRefObject::setSphereTexturePath(const QString &value)
         m_materialRef->setSphereTexture(s.data());
         setDirty(true);
         emit sphereTexturePathChanged();
-        emit texturePathDidChange(newTexturePath, oldTexturePath);
+        emit texturePathDidChange(makeAbsoluteUrl(newTexturePath), makeAbsoluteUrl(oldTexturePath));
     }
 }
 
@@ -191,7 +191,7 @@ void MaterialRefObject::setToonTexturePath(const QString &value)
         m_materialRef->setToonTexture(s.data());
         setDirty(true);
         emit toonTexturePathChanged();
-        emit texturePathDidChange(newTexturePath, oldTexturePath);
+        emit texturePathDidChange(makeAbsoluteUrl(newTexturePath), makeAbsoluteUrl(oldTexturePath));
     }
 }
 
@@ -490,5 +490,7 @@ QString MaterialRefObject::makeRelativePath(const QString &value) const
 
 QUrl MaterialRefObject::makeAbsoluteUrl(const QString &value) const
 {
-    return m_parentModelRef->fileUrl().resolved(QUrl::fromLocalFile(value));
+    QUrl url(value);
+    QFileInfo finfo(value);
+    return finfo.isAbsolute() ? url : m_parentModelRef->fileUrl().resolved(url);
 }

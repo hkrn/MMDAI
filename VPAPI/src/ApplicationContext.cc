@@ -429,29 +429,36 @@ void ApplicationContext::resetOrderIndex(int startOrderIndex)
     m_orderIndex = startOrderIndex;
 }
 
-void ApplicationContext::renameTexturePath(const QString &newTexturePath, const QString &oldTexturePath, const ModelProxy *modelProxy)
+void ApplicationContext::renameTexturePath(const QUrl &newTextureUrl, const QUrl &oldTextureUrl, const ModelProxy *modelProxy)
 {
+    const QString &newTexturePath = newTextureUrl.toLocalFile(), &oldTexturePath = oldTextureUrl.toLocalFile();
     if (m_filePath2TextureRefs.contains(oldTexturePath)) {
-        ITexture *textureRef = m_filePath2TextureRefs.value(oldTexturePath);
-        ModelContext::TextureRefCacheMap caches = m_textureCacheRefs.value(modelProxy->data());
-        caches.erase(oldTexturePath.toStdString());
-        m_fileSystemWatcher.removePath(oldTexturePath);
-        m_filePath2TextureRefs.remove(oldTexturePath);
-        m_fileSystemWatcher.addPath(newTexturePath);
-        m_filePath2TextureRefs.insert(newTexturePath, textureRef);
-        caches.insert(std::make_pair(newTexturePath.toStdString(), textureRef));
-        m_textureCacheRefs.insert(modelProxy->data(), caches);
+        QImage image;
+        if (image.load(newTexturePath)) {
+            ITexture *textureRef = m_filePath2TextureRefs.value(oldTexturePath);
+            ModelContext::TextureRefCacheMap caches = m_textureCacheRefs.value(modelProxy->data());
+            caches.erase(oldTexturePath.toStdString());
+            m_fileSystemWatcher.removePath(oldTexturePath);
+            m_filePath2TextureRefs.remove(oldTexturePath);
+            m_fileSystemWatcher.addPath(newTexturePath);
+            m_filePath2TextureRefs.insert(newTexturePath, textureRef);
+            caches.insert(std::make_pair(newTexturePath.toStdString(), textureRef));
+            m_textureCacheRefs.insert(modelProxy->data(), caches);
+        }
+        else {
+            VPVL2_LOG(WARNING, "Cannot load image: path=" << newTexturePath.toStdString());
+        }
     }
 }
 
 void ApplicationContext::reloadTexture(const QString &filePath)
 {
-    qDebug() << filePath;
     if (m_filePath2TextureRefs.contains(filePath)) {
         QImage image(filePath);
         if (!image.isNull()) {
             ITexture *textureRef = m_filePath2TextureRefs.value(filePath);
-            if (textureRef->size() == Vector3(image.width(), image.height(), 1)) {
+            const Vector3 &size = textureRef->size();
+            if (int(size.x()) == image.width() && int(size.y()) == image.height()) {
                 textureRef->bind();
                 textureRef->write(image.convertToFormat(QImage::Format_ARGB32).constBits());
                 textureRef->unbind();

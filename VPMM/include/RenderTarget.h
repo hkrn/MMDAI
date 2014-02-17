@@ -243,6 +243,7 @@ private slots:
     void updateGizmoAndRender();
     void handleAudioDecoderError(QAudioDecoder::Error error);
     void handleFileChange(const QString &filePath);
+    void handleTextureChange(const QUrl &newTexturePath, const QUrl &oldTexturePath);
     void consumeFileChangeQueue();
     void toggleGridVisible();
 
