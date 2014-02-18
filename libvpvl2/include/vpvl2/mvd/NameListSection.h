@@ -72,7 +72,7 @@ public:
     IEncoding *encodingRef() const;
 
 private:
-    Array<const IString *> m_strings;
+    PointerArray<const IString> m_strings;
     Hash<HashInt, const IString *> m_key2StringRefs;
     Hash<HashString, int> m_string2Keys;
     IEncoding *m_encoding;

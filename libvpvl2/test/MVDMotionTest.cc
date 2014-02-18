@@ -303,7 +303,7 @@ TEST(MVDMotionTest, SaveModelKeyframe)
     mvd::ModelSection section(&motion, &model, 0);
     std::unique_ptr<uint8[]> ptr(new uint8_t[section.estimateSize()]);
     section.write(ptr.get());
-    section.read(ptr.get());
+    section.read(ptr.get() + sizeof(mvd::Motion::SectionTag));
     mvd::ModelKeyframe frame(&section), newFrame(&section);
     // initialize the morph keyframe to be copied
     frame.setTimeIndex(42);

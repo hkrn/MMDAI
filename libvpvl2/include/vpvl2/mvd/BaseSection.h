@@ -105,9 +105,7 @@ public:
     virtual void addKeyframe(IKeyframe *keyframe) = 0;
     virtual void removeKeyframe(IKeyframe *keyframe) = 0;
     virtual void deleteKeyframe(IKeyframe *&keyframe) = 0;
-    virtual void getKeyframes(const IKeyframe::TimeIndex &timeIndex,
-                              const IKeyframe::LayerIndex &layerIndex,
-                              Array<IKeyframe *> &keyframes) const = 0;
+    virtual void getKeyframes(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::LayerIndex &layerIndex, Array<IKeyframe *> &keyframes) const = 0;
     virtual void getAllKeyframes(Array<IKeyframe *> &value) const = 0;
     virtual void setAllKeyframes(const Array<IKeyframe *> &value) = 0;
 
@@ -125,7 +123,7 @@ public:
     IKeyframe::TimeIndex previousTimeIndex() const { return m_previousTimeIndex; }
 
 protected:
-    virtual void setDuration(IKeyframe *keyframe) {
+    virtual void setDuration(const IKeyframe *keyframe) {
         btSetMax(m_durationTimeIndex, keyframe->timeIndex());
     }
     void saveCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex) {

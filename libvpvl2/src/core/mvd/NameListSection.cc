@@ -185,12 +185,11 @@ void NameListSection::getNames(Array<const IString *> &names) const
 
 void NameListSection::addName(const IString *name)
 {
-    const HashString &s = name->toHashString();
-    if (!m_string2Keys.find(s)) {
+    if (!m_string2Keys.find(name->toHashString())) {
         int key = m_strings.count();
-        m_strings.append(name->clone());
-        m_key2StringRefs.insert(key, name);
-        m_string2Keys.insert(s, key);
+        const IString *value = m_strings.append(name->clone());
+        m_key2StringRefs.insert(key, value);
+        m_string2Keys.insert(value->toHashString(), key);
     }
 }
 

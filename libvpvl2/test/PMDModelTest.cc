@@ -514,6 +514,7 @@ TEST(PMDModelTest, AddAndRemoveBone)
     ASSERT_EQ(-1, bone->index());
     MockIBone mockedBone;
     EXPECT_CALL(mockedBone, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedBone, name(_)).WillRepeatedly(Return(static_cast<const IString *>(0)));  /* should not be crashed */
     EXPECT_CALL(mockedBone, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
     model.addBone(&mockedBone);
     ASSERT_EQ(0, model.bones().count());
@@ -583,6 +584,7 @@ TEST(PMDModelTest, AddAndRemoveMorph)
     ASSERT_EQ(-1, morph->index());
     MockIMorph mockedMorph;
     EXPECT_CALL(mockedMorph, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedMorph, name(_)).WillRepeatedly(Return(static_cast<const IString *>(0)));  /* should not be crashed */
     EXPECT_CALL(mockedMorph, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
     model.addMorph(&mockedMorph);
     ASSERT_EQ(0, model.morphs().count());

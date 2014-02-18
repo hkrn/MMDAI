@@ -1593,9 +1593,9 @@ struct XMLProject::PrivateContext {
             if (uuid != XMLProject::kNullUUID && currentMotion) {
                 MotionMap::iterator it = motionRefs.find(uuid);
                 if (it != motionRefs.end()) {
-                    motionRefs.erase(it);
                     sceneRef->removeMotion(it->second);
                     internal::deleteObject(it->second);
+                    motionRefs.erase(it);
                 }
                 if (!parentModel.empty()) {
                     ModelMap::const_iterator it2 = modelRefs.find(parentModel);

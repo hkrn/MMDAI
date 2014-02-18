@@ -1679,6 +1679,7 @@ TEST(PMXModelTest, AddAndRemoveBone)
     ASSERT_EQ(-1, bone->index());
     MockIBone mockedBone;
     EXPECT_CALL(mockedBone, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedBone, name(_)).Times(2).WillRepeatedly(Return(static_cast<const IString *>(0)));
     EXPECT_CALL(mockedBone, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
     model.addBone(&mockedBone);
     ASSERT_EQ(0, model.bones().count());
@@ -1771,6 +1772,7 @@ TEST(PMXModelTest, AddAndRemoveMorph)
     ASSERT_EQ(-1, morph->index());
     MockIMorph mockedMorph;
     EXPECT_CALL(mockedMorph, index()).WillOnce(Return(-1));
+    EXPECT_CALL(mockedMorph, name(_)).Times(2).WillRepeatedly(Return(static_cast<const IString *>(0))); /* should not be crashed */
     EXPECT_CALL(mockedMorph, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
     model.addMorph(&mockedMorph);
     ASSERT_EQ(0, model.morphs().count());
@@ -1794,7 +1796,7 @@ TEST(PMXModelTest, AddAndRemoveRigidBody)
     ASSERT_EQ(-1, body->index());
     MockIRigidBody mockedRigidBody;
     EXPECT_CALL(mockedRigidBody, index()).WillOnce(Return(-1));
-    EXPECT_CALL(mockedRigidBody, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
+    EXPECT_CALL(mockedRigidBody, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0))); /* should not be crashed */
     model.addRigidBody(&mockedRigidBody);
     ASSERT_EQ(0, model.rigidBodies().count());
 }

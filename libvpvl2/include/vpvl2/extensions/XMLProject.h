@@ -77,8 +77,8 @@ public:
     class IDelegate {
     public:
         virtual ~IDelegate() {}
-        virtual const std::string toStdFromString(const IString *value) const = 0;
-        virtual const IString *toStringFromStd(const std::string &value) const = 0;
+        virtual std::string toStdFromString(const IString *value) const = 0;
+        virtual IString *toStringFromStd(const std::string &value) const = 0;
         virtual bool loadModel(const UUID &uuid, const StringMap &settings, IModel::Type type, IModel *&model, IRenderEngine *&engine, int &priority) = 0;
     };
 

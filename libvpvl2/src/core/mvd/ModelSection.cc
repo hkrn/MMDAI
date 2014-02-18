@@ -199,15 +199,15 @@ void ModelSection::read(const uint8 *data)
     internal::getData(ptr, header);
     const vsize sizeOfKeyframe = header.sizeOfKeyframe + m_context->adjustAlignment;
     const int nkeyframes = header.countOfKeyframes;
-    const int nBonesOfIK = header.countOfIKBones;
-    m_context->boneNameIndices.reserve(nBonesOfIK);
+    const int numIKBones = header.countOfIKBones;
+    m_context->boneNameIndices.reserve(numIKBones);
     ptr += sizeof(header);
-    for (int i = 0; i < nBonesOfIK; i++) {
+    for (int i = 0; i < numIKBones; i++) {
         int32 key = *reinterpret_cast<const int32 *>(ptr);
         m_context->boneNameIndices.append(key);
         ptr += sizeof(int);
     }
-    ptr += header.sizeOfIKBones - sizeof(int32) * (nBonesOfIK + 1);
+    ptr += header.sizeOfIKBones - sizeof(int32) * (numIKBones + 1);
     m_context->keyframes.reserve(nkeyframes);
     for (int i = 0; i < nkeyframes; i++) {
         ModelKeyframe *keyframe = m_context->keyframes.append(new ModelKeyframe(this));

@@ -273,7 +273,7 @@ public:
     void removeMorphHash(const Morph *morph);
     int findTextureIndex(const IString *value, int defaultIfNotFound) const;
     IString *addTexture(const IString *value);
-    void removeTexture(const IString *value);
+    void removeTexture(IString *&value);
 
 private:
     struct PrivateContext;

@@ -729,12 +729,13 @@ void Material::setUserDataArea(const IString *value)
 
 void Material::setMainTexture(const IString *value)
 {
-    m_context->modelRef->removeTexture(m_context->mainTextureRef);
     if (value && !value->equals(m_context->mainTextureRef)) {
+        m_context->modelRef->removeTexture(m_context->mainTextureRef);
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, mainTextureWillChange(value, this));
         m_context->mainTextureRef = m_context->modelRef->addTexture(value);
     }
     else if (!value && value != m_context->mainTextureRef) {
+        m_context->modelRef->removeTexture(m_context->mainTextureRef);
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, mainTextureWillChange(value, this));
         m_context->mainTextureRef = 0;
         m_context->mainTextureIndex = -1;
@@ -743,12 +744,13 @@ void Material::setMainTexture(const IString *value)
 
 void Material::setSphereTexture(const IString *value)
 {
-    m_context->modelRef->removeTexture(m_context->sphereTextureRef);
     if (value && !value->equals(m_context->sphereTextureRef)) {
+        m_context->modelRef->removeTexture(m_context->sphereTextureRef);
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sphereTextureWillChange(value, this));
         m_context->sphereTextureRef = m_context->modelRef->addTexture(value);
     }
     else if (!value && value != m_context->sphereTextureRef) {
+        m_context->modelRef->removeTexture(m_context->sphereTextureRef);
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sphereTextureWillChange(value, this));
         m_context->sphereTextureRef = 0;
         m_context->sphereTextureIndex = -1;
@@ -757,12 +759,13 @@ void Material::setSphereTexture(const IString *value)
 
 void Material::setToonTexture(const IString *value)
 {
-    m_context->modelRef->removeTexture(m_context->toonTextureRef);
     if (value && !value->equals(m_context->toonTextureRef)) {
+        m_context->modelRef->removeTexture(m_context->toonTextureRef);
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, toonTextureWillChange(value, this));
         m_context->toonTextureRef = m_context->modelRef->addTexture(value);
     }
     else if (!value && value != m_context->toonTextureRef) {
+        m_context->modelRef->removeTexture(m_context->toonTextureRef);
         VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, toonTextureWillChange(value, this));
         m_context->toonTextureRef = 0;
         m_context->toonTextureIndex = -1;

@@ -55,7 +55,7 @@ static char g_crashHandlePath[PATH_MAX];
 
 static void HandleFailure(const char *data, int size)
 {
-    int fd = ::open(g_crashHandlePath, O_WRONLY | O_APPEND | O_CREAT);
+    int fd = ::open(g_crashHandlePath, O_WRONLY | O_APPEND | O_CREAT, 0600);
     if (fd != -1) {
         ::write(fd, data, size);
         ::close(fd);

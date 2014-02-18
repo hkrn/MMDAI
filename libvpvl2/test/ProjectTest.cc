@@ -61,7 +61,7 @@ public:
     ~Delegate() {
     }
 
-    const std::string toStdFromString(const IString *value) const {
+    std::string toStdFromString(const IString *value) const {
         if (value) {
             const std::string &s = String::toStdString(static_cast<const String *>(value)->value());
             return s;

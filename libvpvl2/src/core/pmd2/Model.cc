@@ -1852,6 +1852,7 @@ void Model::removeBoneHash(const Bone *bone)
 
 void Model::addMorphHash(Morph *morph)
 {
+    VPVL2_DCHECK(morph);
     if (const IString *name = morph->name(IEncoding::kJapanese)) {
         m_context->name2morphRefs.insert(name->toHashString(), morph);
     }
@@ -1864,10 +1865,10 @@ void Model::removeMorphHash(const Morph *morph)
 {
     VPVL2_DCHECK(morph);
     if (const IString *name = morph->name(IEncoding::kJapanese)) {
-        m_context->name2boneRefs.remove(name->toHashString());
+        m_context->name2morphRefs.remove(name->toHashString());
     }
     if (const IString *name = morph->name(IEncoding::kEnglish)) {
-        m_context->name2boneRefs.remove(name->toHashString());
+        m_context->name2morphRefs.remove(name->toHashString());
     }
 }
 
