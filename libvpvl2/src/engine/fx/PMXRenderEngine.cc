@@ -323,6 +323,10 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
 
 PMXRenderEngine::~PMXRenderEngine()
 {
+    if (m_bundle) {
+        VPVL2_LOG(WARNING, "destroyed PMXRenderEngine without calling PMXRenderEngine#release explicitly: " << this);
+        release();
+    }
     m_sceneRef = 0;
     m_modelRef = 0;
     m_applicationContextRef = 0;

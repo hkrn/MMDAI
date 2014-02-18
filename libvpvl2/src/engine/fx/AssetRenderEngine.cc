@@ -149,6 +149,10 @@ AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContextRef,
 
 AssetRenderEngine::~AssetRenderEngine()
 {
+    if (m_modelRef) {
+        VPVL2_LOG(WARNING, "destroyed AssetRenderEngine without calling AssetRenderEngine#release explicitly: " << this);
+        release();
+    }
     m_applicationContextRef = 0;
     m_sceneRef = 0;
 }

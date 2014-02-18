@@ -244,6 +244,11 @@ AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContextRef,
 
 AssetRenderEngine::~AssetRenderEngine()
 {
+    if (m_context) {
+        VPVL2_LOG(WARNING, "destroyed AssetRenderEngine without calling AssetRenderEngine#release explicitly: " << this);
+        delete m_context;
+        m_context = 0;
+    }
     m_applicationContextRef = 0;
     m_sceneRef = 0;
 }
@@ -593,19 +598,19 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node)
     Program *program = m_context->assetPrograms[node];
     program->bind();
     m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IApplicationContext::kViewMatrix
-                                  | IApplicationContext::kProjectionMatrix
-                                  | IApplicationContext::kCameraMatrix);
+                                       IApplicationContext::kViewMatrix
+                                       | IApplicationContext::kProjectionMatrix
+                                       | IApplicationContext::kCameraMatrix);
     program->setViewProjectionMatrix(matrix4x4);
     m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IApplicationContext::kWorldMatrix
-                                  | IApplicationContext::kViewMatrix
-                                  | IApplicationContext::kProjectionMatrix
-                                  | IApplicationContext::kLightMatrix);
+                                       IApplicationContext::kWorldMatrix
+                                       | IApplicationContext::kViewMatrix
+                                       | IApplicationContext::kProjectionMatrix
+                                       | IApplicationContext::kLightMatrix);
     program->setLightViewProjectionMatrix(matrix4x4);
     m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IApplicationContext::kWorldMatrix
-                                  | IApplicationContext::kCameraMatrix);
+                                       IApplicationContext::kWorldMatrix
+                                       | IApplicationContext::kCameraMatrix);
     program->setModelMatrix(matrix4x4);
     const ILight *light = m_sceneRef->lightRef();
     program->setLightColor(light->color());
@@ -634,10 +639,10 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
     Program *program = m_context->assetPrograms[node];
     program->bind();
     m_applicationContextRef->getMatrix(matrix4x4, m_modelRef,
-                                  IApplicationContext::kWorldMatrix
-                                  | IApplicationContext::kViewMatrix
-                                  | IApplicationContext::kProjectionMatrix
-                                  | IApplicationContext::kCameraMatrix);
+                                       IApplicationContext::kWorldMatrix
+                                       | IApplicationContext::kViewMatrix
+                                       | IApplicationContext::kProjectionMatrix
+                                       | IApplicationContext::kCameraMatrix);
     program->setModelViewProjectionMatrix(matrix4x4);
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
