@@ -57,6 +57,7 @@ TEST(SceneTest, AddModel)
     ASSERT_EQ(0, engines.count());
     /* no rendering context class will be referered */
     std::unique_ptr<MockIRenderEngine> engine(new MockIRenderEngine());
+    EXPECT_CALL(*engine, release()).WillOnce(Return());
     /* adding a rendering engine but no model should not be added */
     scene.addModel(0, engine.get(), 0);
     scene.getModelRefs(models);
@@ -93,6 +94,7 @@ TEST(SceneTest, FindModel)
     /* adding an null motion should not be crashed */
     scene.findModel(0);
     std::unique_ptr<MockIRenderEngine> engine(new MockIRenderEngine());
+    EXPECT_CALL(*engine, release()).WillOnce(Return());
     std::unique_ptr<MockIModel> model(new MockIModel());
     /* ignore setting setParentSceneRef */
     EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
@@ -113,6 +115,7 @@ TEST(SceneTest, FindRenderEngine)
     String s(UnicodeString::fromUTF8("This is a test model."));
     EXPECT_CALL(*model, name(IEncoding::kDefaultLanguage)).WillRepeatedly(Return(&s));
     std::unique_ptr<MockIRenderEngine> engine(new MockIRenderEngine());
+    EXPECT_CALL(*engine, release()).WillOnce(Return());
     scene.addModel(model.get(), engine.get(), 0);
     ASSERT_EQ(engine.release(), scene.findRenderEngine(model.release()));
 }
@@ -132,7 +135,7 @@ TEST(SceneTest, RemoveModel)
     std::unique_ptr<MockIRenderEngine> engine(new MockIRenderEngine());
     /* removing an null model should do nothing */
     scene.removeModel(0);
-    scene.addModel(model.get(), engine.release(), 0);
+    scene.addModel(model.get(), engine.get(), 0);
     /* model should be deleted and set it null */
     scene.removeModel(model.get());
     scene.getModelRefs(models);
@@ -158,13 +161,14 @@ TEST(SceneTest, DeleteModel)
     /* deleting an null model should not be crashed */
     scene.deleteModel(fakePtr);
     ASSERT_EQ(0, fakePtr);
-    scene.addModel(model.get(), engine.release(), 0);
+    scene.addModel(model.get(), engine.get(), 0);
     IModel *modelPtr = model.get();
     /* model should be deleted and set it null */
     scene.deleteModel(modelPtr);
     scene.getModelRefs(models);
     scene.getRenderEngineRefs(engines);
     model.release();
+    engine.release();
     ASSERT_EQ(0, modelPtr);
     ASSERT_EQ(0, models.count());
     ASSERT_EQ(0, engines.count());
@@ -211,6 +215,7 @@ TEST(SceneTest, Update)
 {
     {
         std::unique_ptr<MockIRenderEngine> engine(new MockIRenderEngine());
+        EXPECT_CALL(*engine, release()).WillOnce(Return());
         std::unique_ptr<MockIModel> model(new MockIModel());
         EXPECT_CALL(*engine, update()).WillOnce(Return());
         /* ignore setting setParentSceneRef */
@@ -224,6 +229,7 @@ TEST(SceneTest, Update)
     }
     {
         std::unique_ptr<MockIRenderEngine> engine(new MockIRenderEngine());
+        EXPECT_CALL(*engine, release()).WillOnce(Return());
         std::unique_ptr<MockIModel> model(new MockIModel());
         EXPECT_CALL(*engine, update()).WillOnce(Return());
         /* ignore setting setParentSceneRef */
@@ -238,6 +244,7 @@ TEST(SceneTest, Update)
     }
     {
         std::unique_ptr<MockIRenderEngine> engine(new MockIRenderEngine());
+        EXPECT_CALL(*engine, release()).WillOnce(Return());
         std::unique_ptr<MockIModel> model(new MockIModel());
         EXPECT_CALL(*engine, update()).Times(0);
         /* ignore setting setParentSceneRef */
@@ -390,6 +397,7 @@ TEST(SceneTest, SetWorldRef)
     {
         // 1. call setWorldRef first and addModel without removing model
         std::unique_ptr<MockIRenderEngine> engine(new MockIRenderEngine());
+        EXPECT_CALL(*engine, release()).WillOnce(Return());
         std::unique_ptr<MockIModel> model(new MockIModel());
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         String s(UnicodeString::fromUTF8("This is a test model."));
@@ -404,6 +412,7 @@ TEST(SceneTest, SetWorldRef)
     {
         // 2. add model first and call setWorldRef without removing model
         std::unique_ptr<MockIRenderEngine> engine(new MockIRenderEngine());
+        EXPECT_CALL(*engine, release()).WillOnce(Return());
         std::unique_ptr<MockIModel> model(new MockIModel());
         EXPECT_CALL(*model, type()).WillRepeatedly(Return(IModel::kMaxModelType));
         String s(UnicodeString::fromUTF8("This is a test model."));
@@ -446,6 +455,7 @@ TEST(SceneTest, CreateRenderEngine)
         ASSERT_TRUE(dynamic_cast<gl2::AssetRenderEngine *>(engine.get()));
         engine.reset(scene.createRenderEngine(&applicationContext, &model, Scene::kEffectCapable));
         ASSERT_TRUE(dynamic_cast<fx::AssetRenderEngine *>(engine.get()));
+        engine->release();
     }
     {
 #ifdef VPVL2_LINK_VPVL
@@ -457,6 +467,7 @@ TEST(SceneTest, CreateRenderEngine)
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.get()));
         engine.reset(scene.createRenderEngine(&applicationContext, &model, Scene::kEffectCapable));
         ASSERT_TRUE(dynamic_cast<fx::PMXRenderEngine *>(engine.get()));
+        engine->release();
     }
     {
         pmx::Model model(&encoding);
@@ -464,6 +475,7 @@ TEST(SceneTest, CreateRenderEngine)
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.get()));
         engine.reset(scene.createRenderEngine(&applicationContext, &model, Scene::kEffectCapable));
         ASSERT_TRUE(dynamic_cast<fx::PMXRenderEngine *>(engine.get()));
+        engine->release();
     }
     /* should not be crashed */
     ASSERT_EQ(static_cast<IRenderEngine *>(0), scene.createRenderEngine(&applicationContext, 0, 0));
@@ -553,7 +565,7 @@ TEST_P(SceneModelTest, SetParentSceneRef)
     IModel::Type type = GetParam();
     std::unique_ptr<IModel> modelPtr(factory.newModel(type));
     std::unique_ptr<IRenderEngine> enginePtr(scene.createRenderEngine(&applicationContext, modelPtr.get(), 0));
-    scene.addModel(modelPtr.get(), enginePtr.release(), 0);
+    scene.addModel(modelPtr.get(), enginePtr.get(), 0);
     /* IModel#parentSceneRef should not be null if the motion is added from the scene */
     ASSERT_EQ(&scene, modelPtr->parentSceneRef());
     scene.removeModel(modelPtr.get());
@@ -597,18 +609,18 @@ TEST_P(SceneRenderEngineTest, DeleteRenderEngineUnlessReferred)
     IModel::Type type = get<0>(GetParam());
     int flags = get<1>(GetParam());
     std::unique_ptr<IModel> modelPtr(factory.newModel(type));
-    std::shared_ptr<IRenderEngine> enginePtr(scene.createRenderEngine(&applicationContext, modelPtr.get(), flags),
-                                            &Scene::deleteRenderEngineUnlessReferred);
+    std::shared_ptr<IRenderEngine> enginePtr(scene.createRenderEngine(&applicationContext, modelPtr.get(), flags), &Scene::deleteRenderEngineUnlessReferred);
     IRenderEngine *engine = enginePtr.get();
     scene.addModel(modelPtr.get(), engine, 0);
     enginePtr.reset();
     /* should not be crashed */
     ASSERT_EQ(modelPtr.get(), engine->parentModelRef());
-    enginePtr = std::shared_ptr<IRenderEngine>(engine);
+    enginePtr = std::shared_ptr<IRenderEngine>(engine, &Scene::deleteRenderEngineUnlessReferred);
     IModel *model = modelPtr.get();
     scene.deleteModel(model);
     /* IRenderEngine#parentModelRef should be null after calling Scene#deleteModel  */
     ASSERT_EQ(0, enginePtr->parentModelRef());
+    engine->release();
 }
 
 class SceneMotionTest : public TestWithParam<IMotion::FormatType> {};
