@@ -302,8 +302,8 @@ private:
     glm::mat4 m_viewMatrix;
     glm::mat4 m_projectionMatrix;
     glm::mat4 m_viewProjectionMatrix;
-    vpvl2::VPVL2_VERSION_NS::extensions::StringMap m_config;
-    vpvl2::VPVL2_VERSION_NS::extensions::FPSCounter m_counter;
+    vpvl2::extensions::StringMap m_config;
+    vpvl2::extensions::FPSCounter m_counter;
     EditModeType m_editMode;
     ProjectProxy *m_projectProxyRef;
     IGizmo *m_currentGizmoRef;

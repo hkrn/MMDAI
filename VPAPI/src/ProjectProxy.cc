@@ -87,10 +87,10 @@ struct ProjectDelegate : public XMLProject::IDelegate {
     ~ProjectDelegate() {
         m_projectRef = 0;
     }
-    const std::string toStdFromString(const IString *value) const {
+    std::string toStdFromString(const IString *value) const {
         return Util::toQString(value).toStdString();
     }
-    const IString *toStringFromStd(const std::string &value) const {
+    IString *toStringFromStd(const std::string &value) const {
         return String::create(value);
     }
     bool loadModel(const XMLProject::UUID &uuid, const StringMap &settings, IModel::Type /* type */, IModel *&model, IRenderEngine *&engine, int &priority) {
