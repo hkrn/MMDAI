@@ -660,7 +660,7 @@ void PMXRenderEngine::update()
     m_context->buffer.bind(VertexBundle::kVertexBuffer, vbo);
     if (void *address = m_context->buffer.map(VertexBundle::kVertexBuffer, 0, dynamicBuffer->size())) {
         const ICamera *camera = m_sceneRef->cameraRef();
-        dynamicBuffer->performTransform(address, camera->position(), m_context->aabbMin, m_context->aabbMax);
+        dynamicBuffer->performTransform(address, camera->position());
         if (m_context->isVertexShaderSkinning) {
             m_context->matrixBuffer->update(address);
         }

@@ -53,6 +53,9 @@ namespace VPVL2_VERSION_NS
 namespace internal
 {
 
+static const Vector3 kAabbMin = Vector3(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY);
+static const Vector3 kAabbMax = Vector3(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY);
+
 static inline bool GreaterOMP(const Vector3 &left, const Vector3 &right) VPVL2_DECL_NOEXCEPT
 {
     return left.x() < right.x() ||  left.y() < right.y() || left.z() < right.z();
@@ -72,8 +75,6 @@ public:
                                     void *address)
         : m_verticesRef(verticesRef),
           m_edgeScaleFactor(modelRef->edgeScaleFactor(cameraPosition)),
-          m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
-          m_aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY),
           m_bufferPtr(static_cast<TUnit *>(address))
     {
     }
@@ -82,82 +83,39 @@ public:
         m_bufferPtr = 0;
     }
 
-    Vector3 aabbMin() const VPVL2_DECL_NOEXCEPT { return m_aabbMin; }
-    Vector3 aabbMax() const VPVL2_DECL_NOEXCEPT { return m_aabbMax; }
-
+    inline void performTransform(int i, Vector3 &position) const {
+        const TVertex *vertex = m_verticesRef->at(i);
+        const IMaterial *material = vertex->materialRef();
+        const float materialEdgeSize = material->edgeSize() * m_edgeScaleFactor;
+        TUnit &v = m_bufferPtr[i];
+        v.performTransform(vertex, materialEdgeSize, position);
+    }
 #ifdef VPVL2_LINK_INTEL_TBB
-    ParallelSkinningVertexProcessor(const ParallelSkinningVertexProcessor &self, tbb::split /* split */)
-        : m_verticesRef(self.m_verticesRef),
-          m_edgeScaleFactor(self.m_edgeScaleFactor),
-          m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
-          m_aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY),
-          m_bufferPtr(self.m_bufferPtr)
-    {
-    }
-    void join(const ParallelSkinningVertexProcessor &self) VPVL2_DECL_NOEXCEPT {
-        m_aabbMin.setMin(self.m_aabbMin);
-        m_aabbMax.setMax(self.m_aabbMax);
-    }
     void operator()(const tbb::blocked_range<int> &range) const {
-        Vector3 aabbMin(m_aabbMin), aabbMax(m_aabbMax), position;
+        Vector3 position;
         for (int i = range.begin(); i != range.end(); ++i) {
-            const TVertex *vertex = m_verticesRef->at(i);
-            const IMaterial *material = vertex->materialRef();
-            const float materialEdgeSize = material->edgeSize() * m_edgeScaleFactor;
-            TUnit &v = m_bufferPtr[i];
-            v.performTransform(vertex, materialEdgeSize, position);
-            aabbMin.setMin(position);
-            aabbMax.setMax(position);
+            performTransform(i, position);
         }
-        m_aabbMin = aabbMin;
-        m_aabbMax = aabbMax;
     }
 #endif /* VPVL2_LINK_INTEL_TBB */
-
     void execute(bool enableParallel) {
         const int nvertices = m_verticesRef->count();
 #if defined(VPVL2_LINK_INTEL_TBB)
         if (enableParallel) {
-            tbb::parallel_reduce(tbb::blocked_range<int>(0, nvertices), *this);
+            static tbb::affinity_partitioner affinityPartitioner;
+            tbb::parallel_for(tbb::blocked_range<int>(0, nvertices), *this, affinityPartitioner);
         }
         else {
 #else
         {
             (void) enableParallel;
 #endif
-            Vector3 position, aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
-                    aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY);
+            Vector3 position;
 #ifdef VPVL2_ENABLE_OPENMP
 #pragma omp parallel for
 #endif
             for (int i = 0; i < nvertices; ++i) {
-                const TVertex *vertex = m_verticesRef->at(i);
-                const IMaterial *material = vertex->materialRef();
-                const IVertex::EdgeSizePrecision &materialEdgeSize = material->edgeSize() * m_edgeScaleFactor;
-                TUnit &v = m_bufferPtr[i];
-                v.performTransform(vertex, materialEdgeSize, position);
-#ifdef VPVL2_ENABLE_OPENMP
-#pragma omp flush(aabbMin)
-#endif
-                if (LessOMP(aabbMin, position)) {
-#ifdef VPVL2_ENABLE_OPENMP
-#pragma omp critical
-#endif
-                    {
-                        aabbMin.setMin(position);
-                    }
-                }
-#ifdef VPVL2_ENABLE_OPENMP
-#pragma omp flush(aabbMax)
-#endif
-                if (GreaterOMP(aabbMax, position)) {
-#ifdef VPVL2_ENABLE_OPENMP
-#pragma omp critical
-#endif
-                    {
-                        aabbMax.setMax(position);
-                    }
-                }
+                performTransform(i, position);
             }
         }
     }
@@ -165,8 +123,6 @@ public:
 private:
     const Array<TVertex *> *m_verticesRef;
     const IVertex::EdgeSizePrecision m_edgeScaleFactor;
-    mutable Vector3 m_aabbMin;
-    mutable Vector3 m_aabbMax;
     TUnit *m_bufferPtr;
 };
 
@@ -184,16 +140,18 @@ public:
         m_bufferPtr = 0;
     }
 
+    inline void performTransform(int index) const VPVL2_DECL_NOEXCEPT {
+        const TVertex *vertex = m_verticesRef->at(index);
+        TUnit &v = m_bufferPtr[index];
+        v.initialize(vertex);
+    }
 #ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
         for (int i = range.begin(); i != range.end(); ++i) {
-            const TVertex *vertex = m_verticesRef->at(i);
-            TUnit &v = m_bufferPtr[i];
-            v.initialize(vertex);
+            performTransform(i);
         }
     }
 #endif /* VPVL2_LINK_INTEL_TBB */
-
     void execute(bool enableParallel) {
         const int nvertices = m_verticesRef->count();
 #if defined(VPVL2_LINK_INTEL_TBB)
@@ -210,9 +168,7 @@ public:
 #pragma omp parallel for
 #endif
             for (int i = 0; i < nvertices; ++i) {
-                const TVertex *vertex = m_verticesRef->at(i);
-                TUnit &v = m_bufferPtr[i];
-                v.initialize(vertex);
+                performTransform(i);
             }
         }
     }
@@ -226,7 +182,7 @@ template<typename TModel, typename TVertex, typename TUnit>
 class ParallelVertexMorphProcessor VPVL2_DECL_FINAL {
 public:
     ParallelVertexMorphProcessor(const Array<TVertex *> *verticesRef,
-                                    void *address)
+                                 void *address)
         : m_verticesRef(verticesRef),
           m_bufferPtr(static_cast<TUnit *>(address))
     {
@@ -236,16 +192,18 @@ public:
         m_bufferPtr = 0;
     }
 
+    inline void performTransform(int index) const VPVL2_DECL_NOEXCEPT {
+        const TVertex *vertex = m_verticesRef->at(index);
+        TUnit &v = m_bufferPtr[index];
+        v.setPosition(vertex);
+    }
 #ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
         for (int i = range.begin(); i != range.end(); ++i) {
-            const TVertex *vertex = m_verticesRef->at(i);
-            TUnit &v = m_bufferPtr[i];
-            v.setPosition(vertex);
+            performTransform(i);
         }
     }
 #endif /* VPVL2_LINK_INTEL_TBB */
-
     void execute(bool enableParallel) {
         const int nvertices = m_verticesRef->count();
 #if defined(VPVL2_LINK_INTEL_TBB)
@@ -262,9 +220,7 @@ public:
 #pragma omp parallel for
 #endif
             for (int i = 0; i < nvertices; ++i) {
-                const TVertex *vertex = m_verticesRef->at(i);
-                TUnit &v = m_bufferPtr[i];
-                v.setPosition(vertex);
+                performTransform(i);
             }
         }
     }
@@ -285,11 +241,14 @@ public:
         m_verticesRef = 0;
     }
 
+    inline void performTransform(int index) const VPVL2_DECL_NOEXCEPT {
+        TVertex *vertex = m_verticesRef->at(index);
+        vertex->reset();
+    }
 #ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
         for (int i = range.begin(); i != range.end(); ++i) {
-            TVertex *vertex = m_verticesRef->at(i);
-            vertex->reset();
+            performTransform(i);
         }
     }
 #endif /* VPVL2_LINK_INTEL_TBB */
@@ -304,8 +263,7 @@ public:
 #pragma omp parallel for
 #endif
         for (int i = 0; i < nvertices; ++i) {
-            TVertex *vertex = m_verticesRef->at(i);
-            vertex->reset();
+            performTransform(i);
         }
 #endif
     }
@@ -325,11 +283,14 @@ public:
         m_boneRefs = 0;
     }
 
+    inline void performTransform(int index) const VPVL2_DECL_NOEXCEPT {
+        TBone *bone = m_boneRefs->at(index);
+        bone->updateLocalTransform();
+    }
 #ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
         for (int i = range.begin(); i != range.end(); ++i) {
-            TBone *bone = m_boneRefs->at(i);
-            bone->updateLocalTransform();
+            performTransform(i);
         }
     }
 #endif
@@ -344,8 +305,7 @@ public:
 #pragma omp parallel for
 #endif
         for (int i = 0; i < nbones; i++) {
-            TBone *bone = m_boneRefs->at(i);
-            bone->updateLocalTransform();
+            performTransform(i);
         }
 #endif /* VPVL2_LINK_INTEL_TBB */
     }
@@ -365,15 +325,17 @@ public:
         m_rigidBodyRefs = 0;
     }
 
+    inline void performTransform(int index) const VPVL2_DECL_NOEXCEPT {
+        TRigidBody *body = m_rigidBodyRefs->at(index);
+        body->syncLocalTransform();
+    }
 #ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
         for (int i = range.begin(); i != range.end(); ++i) {
-            TRigidBody *body = m_rigidBodyRefs->at(i);
-            body->syncLocalTransform();
+            performTransform(i);
         }
     }
 #endif
-
     void execute() const {
         const int numRigidBodies = m_rigidBodyRefs->count();
 #ifdef VPVL2_LINK_INTEL_TBB
@@ -383,14 +345,110 @@ public:
 #pragma omp parallel for
 #endif
         for (int i = 0; i < numRigidBodies; i++) {
-            TRigidBody *rigidBody = m_rigidBodyRefs->at(i);
-            rigidBody->syncLocalTransform();
+            performTransform(i);
         }
 #endif /* VPVL2_LINK_INTEL_TBB */
     }
 
 private:
     mutable Array<TRigidBody *> *m_rigidBodyRefs;
+};
+
+template<typename TMaterial, typename TUnit>
+class ParallelCalcAabbProcessor VPVL2_DECL_FINAL {
+public:
+    ParallelCalcAabbProcessor(const Array<TMaterial *> *materials, Array<Vector3> *value, const void *address)
+        : m_materials(materials),
+          m_bufferRef(static_cast<const TUnit *>(address)),
+          m_aabb(value)
+    {
+    }
+    ~ParallelCalcAabbProcessor() {
+        m_bufferRef = 0;
+    }
+
+    static inline void performTransform(int i, const TUnit *bufferRef, Vector3 &min, Vector3 &max) {
+        const TUnit &v = bufferRef[i];
+        const Vector3 &position = v.position;
+        min.setMin(position);
+        max.setMax(position);
+    }
+
+#ifdef VPVL2_LINK_INTEL_TBB
+    struct MaterialAabb {
+        const TUnit *bufferRef;
+        Vector3 min;
+        Vector3 max;
+        MaterialAabb()
+            : bufferRef(0),
+              min(kAabbMin),
+              max(kAabbMax)
+        {
+        }
+        MaterialAabb(const MaterialAabb &self, tbb::split /* split */)
+            : bufferRef(self.bufferRef),
+              min(self.min),
+              max(self.max)
+        {
+        }
+        void join(const MaterialAabb &self) VPVL2_DECL_NOEXCEPT {
+            min.setMin(self.min);
+            max.setMax(self.max);
+        }
+        void operator()(const tbb::blocked_range<int> &range) {
+            Vector3 aabbMin(kAabbMin), aabbMax(kAabbMax);
+            for (int i = range.begin(); i != range.end(); ++i) {
+                performTransform(i, bufferRef, aabbMin, aabbMax);
+            }
+            min = aabbMin;
+            max = aabbMax;
+        }
+    };
+#endif
+
+    void execute(bool enableParallel) {
+        const int nmaterials = m_materials->count();
+        Vector3 modelAabbMin(kAabbMin), modelAabbMax(kAabbMax);
+#if defined(VPVL2_LINK_INTEL_TBB)
+        if (enableParallel) {
+            MaterialAabb aabb;
+            for (int i = 0; i < nmaterials; i++) {
+                const IMaterial *material = m_materials->at(i);
+                const IMaterial::IndexRange &range = material->indexRange();
+                aabb.bufferRef = m_bufferRef;
+                tbb::parallel_reduce(tbb::blocked_range<int>(range.start, range.count), aabb);
+                m_aabb->append(aabb.min);
+                m_aabb->append(aabb.max);
+                modelAabbMin.setMin(aabb.min);
+                modelAabbMax.setMax(aabb.max);
+            }
+        }
+        else {
+#else
+        {
+            (void) enableParallel;
+#endif /* VPVL2_LINK_INTEL_TBB */
+            for (int i = 0; i < nmaterials; i++) {
+                const IMaterial *material = m_materials->at(i);
+                const IMaterial::IndexRange &range = material->indexRange();
+                Vector3 aabbMin(kAabbMin), aabbMax(kAabbMax);
+                for (int j = range.start, count = range.count; j < count; j++) {
+                    performTransform(i, m_bufferRef, aabbMin, aabbMax);
+                }
+                m_aabb->append(aabbMin);
+                m_aabb->append(aabbMax);
+                modelAabbMin.setMin(aabbMin);
+                modelAabbMax.setMax(aabbMax);
+            }
+        }
+        m_aabb->append(modelAabbMin);
+        m_aabb->append(modelAabbMax);
+    }
+
+private:
+    const Array<TMaterial *> *m_materials;
+    const TUnit *m_bufferRef;
+    Array<Vector3> *m_aabb;
 };
 
 } /* namespace internal */

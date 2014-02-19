@@ -251,13 +251,16 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         internal::ParallelVertexMorphProcessor<pmd2::Model, pmd2::Vertex, Unit> processor(&vertices, address);
         processor.execute(enableParallelUpdate);
     }
-    void performTransform(void *address, const Vector3 &cameraPosition, Vector3 &aabbMin, Vector3 &aabbMax) const {
+    void performTransform(void *address, const Vector3 &cameraPosition) const {
         const PointerArray<Vertex> &vertices = modelRef->vertices();
         Unit *bufferPtr = static_cast<Unit *>(address);
         internal::ParallelSkinningVertexProcessor<pmd2::Model, pmd2::Vertex, Unit> processor(modelRef, &vertices, cameraPosition, bufferPtr);
         processor.execute(enableParallelUpdate);
-        aabbMin = processor.aabbMin();
-        aabbMax = processor.aabbMax();
+    }
+    void getAabb(const void *address, Array<Vector3> &values) const {
+        const Array<Material *> &materials = modelRef->materials();
+        internal::ParallelCalcAabbProcessor<pmd2::Material, Unit> processor(&materials, &values, address);
+        processor.execute(enableParallelUpdate);
     }
     void setParallelUpdateEnable(bool value) {
         enableParallelUpdate = value;
