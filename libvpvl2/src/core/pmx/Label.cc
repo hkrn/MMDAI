@@ -45,7 +45,7 @@
 namespace
 {
 
-using namespace vpvl2::VPVL2_VERSION_NS;
+using namespace vpvl2::pmx;
 
 #pragma pack(push, 1)
 
@@ -54,8 +54,8 @@ using namespace vpvl2::VPVL2_VERSION_NS;
 struct Pair {
     int id;
     int type;
-    IBone *boneRef;
-    IMorph *morphRef;
+    Bone *boneRef;
+    Morph *morphRef;
 };
 
 }
@@ -79,8 +79,18 @@ struct Label::PrivateContext {
     ~PrivateContext() {
         internal::deleteObject(name);
         internal::deleteObject(englishName);
-        modelRef = 0;
+        const int npairs = pairs.count();
+        for (int i = 0; i < npairs; i++) {
+            const Pair *pair = pairs[i];
+            if (Bone *boneRef = pair->boneRef) {
+                boneRef->setInternalParentLabelRef(0);
+            }
+            else if (Morph *morphRef = pair->morphRef) {
+                morphRef->setInternalParentLabelRef(0);
+            }
+        }
         pairs.releaseAll();
+        modelRef = 0;
         index = -1;
         special = false;
     }
@@ -178,7 +188,9 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
                         return false;
                     }
                     else {
-                        pair->boneRef = bones[boneIndex];
+                        Bone *boneRef = bones[boneIndex];
+                        boneRef->setInternalParentLabelRef(label);
+                        pair->boneRef = boneRef;
                     }
                 }
                 break;
@@ -191,7 +203,9 @@ bool Label::loadLabels(const Array<Label *> &labels, const Array<Bone *> &bones,
                         return false;
                     }
                     else {
-                        pair->morphRef = morphs[morphIndex];
+                        Morph *morphRef = morphs[morphIndex];
+                        morphRef->setInternalParentLabelRef(label);
+                        pair->morphRef = morphRef;
                     }
                 }
                 break;
@@ -392,23 +406,49 @@ void Label::setSpecial(bool value)
 
 void Label::addBoneRef(IBone *value)
 {
-    if (value) {
-        Pair *pair = m_context->pairs.append(new Pair());
-        pair->boneRef = value;
-        pair->id = value->index();
-        pair->morphRef = 0;
-        pair->type = 0;
+    if (value && value->parentModelRef() == parentModelRef()) {
+        const int npairs = m_context->pairs.count();
+        bool found = false;
+        for (int i = 0; i < npairs; i++) {
+            const Pair *pair = m_context->pairs[i];
+            if (pair->type == 0 && pair->boneRef == value) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            Bone *boneRef = static_cast<Bone *>(value);
+            boneRef->setInternalParentLabelRef(this);
+            Pair *pair = m_context->pairs.append(new Pair());
+            pair->boneRef = boneRef;
+            pair->id = value->index();
+            pair->morphRef = 0;
+            pair->type = 0;
+        }
     }
 }
 
 void Label::addMorphRef(IMorph *value)
 {
-    if (value) {
-        Pair *pair = m_context->pairs.append(new Pair());
-        pair->boneRef = 0;
-        pair->id = value->index();
-        pair->morphRef = value;
-        pair->type = 1;
+    if (value && value->parentModelRef() == parentModelRef()) {
+        const int npairs = m_context->pairs.count();
+        bool found = false;
+        for (int i = 0; i < npairs; i++) {
+            const Pair *pair = m_context->pairs[i];
+            if (pair->type == 1 && pair->morphRef == value) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            Morph *morphRef = static_cast<Morph *>(value);
+            morphRef->setInternalParentLabelRef(this);
+            Pair *pair = m_context->pairs.append(new Pair());
+            pair->boneRef = 0;
+            pair->id = value->index();
+            pair->morphRef = morphRef;
+            pair->type = 1;
+        }
     }
 }
 
@@ -418,6 +458,7 @@ void Label::removeBoneRef(IBone *value)
     for (int i = 0; i < npairs; i++) {
         Pair *pair = m_context->pairs[i];
         if (pair->boneRef == value) {
+            pair->boneRef->setInternalParentLabelRef(0);
             m_context->pairs.remove(pair);
             internal::deleteObject(pair);
             break;
@@ -431,6 +472,7 @@ void Label::removeMorphRef(IMorph *value)
     for (int i = 0; i < npairs; i++) {
         Pair *pair = m_context->pairs[i];
         if (pair->morphRef == value) {
+            pair->morphRef->setInternalParentLabelRef(0);
             m_context->pairs.remove(pair);
             internal::deleteObject(pair);
             break;

@@ -39,6 +39,7 @@
 #include "vpvl2/internal/ModelHelper.h"
 
 #include "vpvl2/pmx/Bone.h"
+#include "vpvl2/pmx/Label.h"
 #include "vpvl2/pmx/Material.h"
 #include "vpvl2/pmx/Morph.h"
 #include "vpvl2/pmx/RigidBody.h"
@@ -111,6 +112,7 @@ namespace pmx
 struct Morph::PrivateContext {
     PrivateContext(Model *modelRef)
         : parentModelRef(modelRef),
+          parentLabelRef(0),
           namePtr(0),
           englishNamePtr(0),
           weight(0),
@@ -133,6 +135,7 @@ struct Morph::PrivateContext {
         internal::deleteObject(namePtr);
         internal::deleteObject(englishNamePtr);
         parentModelRef = 0;
+        parentLabelRef = 0;
         weight = 0;
         internalWeight = 0;
         category = kBase;
@@ -493,6 +496,7 @@ struct Morph::PrivateContext {
     PointerArray<Flip> flips;
     PointerArray<Impulse> impulses;
     Model *parentModelRef;
+    Label *parentLabelRef;
     IString *namePtr;
     IString *englishNamePtr;
     Array<PropertyEventListener *> eventRefs;
@@ -512,6 +516,9 @@ Morph::Morph(Model *modelRef)
 
 Morph::~Morph()
 {
+    if (Label *parentLabelRef = m_context->parentLabelRef) {
+        parentLabelRef->removeMorphRef(this);
+    }
     internal::deleteObject(m_context);
 }
 
@@ -1047,6 +1054,11 @@ void Morph::setName(const IString *value, IEncoding::LanguageType type)
     m_context->parentModelRef->addMorphHash(this);
 }
 
+Label *Morph::internalParentLabelRef() const
+{
+    return m_context->parentLabelRef;
+}
+
 IModel *Morph::parentModelRef() const
 {
     return m_context->parentModelRef;
@@ -1196,6 +1208,11 @@ void Morph::addImpulseMorph(Impulse *value)
 void Morph::removeImpulseMorph(Impulse *value)
 {
     m_context->impulses.remove(value);
+}
+
+void Morph::setInternalParentLabelRef(Label *value)
+{
+    m_context->parentLabelRef = value;
 }
 
 void Morph::setCategory(Category value)

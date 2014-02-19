@@ -68,6 +68,7 @@ public:
     void getEventListenerRefs(Array<PropertyEventListener *> &value);
 
     void resetTransform();
+    Label *internalParentLabelRef() const;
     IModel *parentModelRef() const;
     const IString *name(IEncoding::LanguageType type) const;
     void setName(const IString *value, IEncoding::LanguageType type);
@@ -76,6 +77,7 @@ public:
     Type type() const;
     bool hasParent() const;
     WeightPrecision weight() const;
+    void setInternalParentLabelRef(Label *value);
     void setWeight(const WeightPrecision &value);
     void setIndex(int value);
     void markDirty();

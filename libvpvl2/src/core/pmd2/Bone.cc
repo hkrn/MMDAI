@@ -40,6 +40,7 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/ModelHelper.h"
 #include "vpvl2/pmd2/Bone.h"
+#include "vpvl2/pmd2/Label.h"
 
 namespace
 {
@@ -72,6 +73,7 @@ namespace pmd2
 struct Bone::PrivateContext {
     PrivateContext(Model *parentModelRef, IEncoding *encodingRef)
         : parentModelRef(parentModelRef),
+          parentLabelRef(0),
           encodingRef(encodingRef),
           namePtr(0),
           englishNamePtr(0),
@@ -97,6 +99,7 @@ struct Bone::PrivateContext {
         internal::deleteObject(namePtr);
         internal::deleteObject(englishNamePtr);
         encodingRef = 0;
+        parentLabelRef = 0;
         parentBoneRef = 0;
         childBoneRef = 0;
         targetBoneRef = 0;
@@ -115,6 +118,7 @@ struct Bone::PrivateContext {
     }
 
     Model *parentModelRef;
+    Label *parentLabelRef;
     IEncoding *encodingRef;
     IString *namePtr;
     IString *englishNamePtr;
@@ -147,6 +151,9 @@ Bone::Bone(Model *parentModelRef, IEncoding *encodingRef)
 
 Bone::~Bone()
 {
+    if (Label *parentLabelRef = m_context->parentLabelRef) {
+        parentLabelRef->removeBoneRef(this);
+    }
     internal::deleteObject(m_context);
 }
 
@@ -327,6 +334,11 @@ void Bone::setName(const IString *value, IEncoding::LanguageType type)
 int Bone::index() const
 {
     return m_context->index;
+}
+
+Label *Bone::internalParentLabelRef() const
+{
+    return m_context->parentLabelRef;
 }
 
 IModel *Bone::parentModelRef() const
@@ -553,6 +565,11 @@ IBone *Bone::destinationOriginBoneRef() const
 IBone *Bone::parentInherentBoneRef() const
 {
     return 0;
+}
+
+void Bone::setInternalParentLabelRef(Label *value)
+{
+    m_context->parentLabelRef = value;
 }
 
 void Bone::setDestinationOriginBoneRef(IBone *value)

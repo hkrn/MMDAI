@@ -37,6 +37,7 @@
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/ModelHelper.h"
+#include "vpvl2/pmd2/Label.h"
 #include "vpvl2/pmd2/Morph.h"
 #include "vpvl2/pmd2/Vertex.h"
 
@@ -73,6 +74,7 @@ namespace pmd2
 struct Morph::PrivateContext {
     PrivateContext(Model *parentModelRef, IEncoding *encodingRef)
         : parentModelRef(parentModelRef),
+          parentLabelRef(0),
           encodingRef(encodingRef),
           namePtr(0),
           englishNamePtr(0),
@@ -85,12 +87,14 @@ struct Morph::PrivateContext {
         vertices.releaseAll();
         internal::deleteObject(namePtr);
         internal::deleteObject(englishNamePtr);
+        parentLabelRef = 0;
         category = kBase;
         weight = 0;
         index = -1;
     }
 
     Model *parentModelRef;
+    Label *parentLabelRef;
     IEncoding *encodingRef;
     IString *namePtr;
     IString *englishNamePtr;
@@ -112,6 +116,9 @@ Morph::Morph(Model *parentModelRef, IEncoding *encodingRef)
 
 Morph::~Morph()
 {
+    if (Label *parentLabelRef = m_context->parentLabelRef) {
+        parentLabelRef->removeMorphRef(this);
+    }
     internal::deleteObject(m_context);
 }
 
@@ -292,6 +299,11 @@ void Morph::update()
     }
 }
 
+Label *Morph::internalParentLabelRef() const
+{
+    return m_context->parentLabelRef;
+}
+
 IModel *Morph::parentModelRef() const
 {
     return m_context->parentModelRef;
@@ -360,6 +372,11 @@ bool Morph::hasParent() const
 IMorph::WeightPrecision Morph::weight() const
 {
     return m_context->weight;
+}
+
+void Morph::setInternalParentLabelRef(Label *value)
+{
+    m_context->parentLabelRef = value;
 }
 
 void Morph::setWeight(const WeightPrecision &value)

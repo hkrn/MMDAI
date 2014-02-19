@@ -39,6 +39,7 @@
 #include "vpvl2/internal/ModelHelper.h"
 
 #include "vpvl2/pmx/Bone.h"
+#include "vpvl2/pmx/Label.h"
 
 namespace
 {
@@ -93,6 +94,7 @@ namespace pmx
 struct Bone::PrivateContext {
     PrivateContext(Model *modelRef)
         : parentModelRef(modelRef),
+          parentLabelRef(0),
           parentBoneRef(0),
           effectorBoneRef(0),
           parentInherentBoneRef(0),
@@ -132,6 +134,7 @@ struct Bone::PrivateContext {
         constraints.releaseAll();
         internal::deleteObject(namePtr);
         internal::deleteObject(englishNamePtr);
+        parentLabelRef = 0;
         parentModelRef = 0;
         parentBoneRef = 0;
         effectorBoneRef = 0;
@@ -242,6 +245,7 @@ struct Bone::PrivateContext {
     }
 
     Model *parentModelRef;
+    Label *parentLabelRef;
     PointerArray<IKConstraint> constraints;
     Bone *parentBoneRef;
     Bone *effectorBoneRef;
@@ -286,6 +290,9 @@ Bone::Bone(Model *modelRef)
 
 Bone::~Bone()
 {
+    if (Label *parentLabelRef = m_context->parentLabelRef) {
+        parentLabelRef->removeBoneRef(this);
+    }
     internal::deleteObject(m_context);
 }
 
@@ -954,6 +961,11 @@ void Bone::setLocalOrientation(const Quaternion &value)
     }
 }
 
+Label *Bone::internalParentLabelRef() const
+{
+    return m_context->parentLabelRef;
+}
+
 IModel *Bone::parentModelRef() const
 {
     return m_context->parentModelRef;
@@ -1139,6 +1151,11 @@ bool Bone::isInverseKinematicsEnabled() const
 void Bone::setLocalTransform(const Transform &value)
 {
     m_context->localTransform = value;
+}
+
+void Bone::setInternalParentLabelRef(Label *value)
+{
+    m_context->parentLabelRef = value;
 }
 
 void Bone::setParentBoneRef(IBone *value)

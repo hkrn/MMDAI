@@ -115,6 +115,7 @@ public:
     void setLocalTransform(const Transform &value);
     void setSimulated(bool value);
 
+    Label *internalParentLabelRef() const;
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
     IBone *effectorBoneRef() const;
@@ -147,6 +148,7 @@ public:
     bool isTransformedByExternalParent() const;
     bool isInverseKinematicsEnabled() const;
 
+    void setInternalParentLabelRef(Label *value);
     void setParentBoneRef(IBone *value);
     void setParentInherentBoneRef(IBone *value);
     void setInherentCoefficient(float32 value);

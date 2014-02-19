@@ -78,12 +78,20 @@ struct Label::PrivateContext {
     ~PrivateContext() {
         internal::deleteObject(namePtr);
         internal::deleteObject(englishNamePtr);
+        const int nbones = boneRefs.count();
+        for (int i = 0; i < nbones; i++) {
+            boneRefs[i]->setInternalParentLabelRef(0);
+        }
+        const int nmorphs = morphRefs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            morphRefs[i]->setInternalParentLabelRef(0);
+        }
         encodingRef = 0;
         index = -1;
     }
 
-    Array<IBone *> boneRefs;
-    Array<IMorph *> morphRefs;
+    Array<Bone *> boneRefs;
+    Array<Morph *> morphRefs;
     Array<int> boneIndices;
     Array<int> morphIndices;
     Model *modelRef;
@@ -462,22 +470,55 @@ void Label::setSpecial(bool value)
 
 void Label::addBoneRef(IBone *value)
 {
-    m_context->boneRefs.append(value);
+    if (value && value->parentModelRef() == parentModelRef()) {
+        Bone *boneRef = static_cast<Bone *>(value);
+        bool found = false;
+        const int nbones = m_context->boneRefs.count();
+        for (int i = 0; i < nbones; i++) {
+            if (m_context->boneRefs[i] == boneRef) {
+                found = true;
+            }
+        }
+        if (!found) {
+            boneRef->setInternalParentLabelRef(this);
+            m_context->boneRefs.append(boneRef);
+        }
+    }
 }
 
 void Label::addMorphRef(IMorph *value)
 {
-    m_context->morphRefs.append(value);
+    if (value && value->parentModelRef() == parentModelRef()) {
+        Morph *morphRef = static_cast<Morph *>(value);
+        bool found = false;
+        const int nmorphs = m_context->morphRefs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            if (m_context->morphRefs[i] == morphRef) {
+                found = true;
+            }
+        }
+        if (!found) {
+            m_context->morphRefs.append(morphRef);
+        }
+    }
 }
 
 void Label::removeBoneRef(IBone *value)
 {
-    m_context->boneRefs.remove(value);
+    if (value && value->parentModelRef() == parentModelRef()) {
+        Bone *boneRef = static_cast<Bone *>(value);
+        boneRef->setInternalParentLabelRef(0);
+        m_context->boneRefs.remove(boneRef);
+    }
 }
 
 void Label::removeMorphRef(IMorph *value)
 {
-    m_context->morphRefs.remove(value);
+    if (value && value->parentModelRef() == parentModelRef()) {
+        Morph *morphRef = static_cast<Morph *>(value);
+        morphRef->setInternalParentLabelRef(0);
+        m_context->morphRefs.remove(morphRef);
+    }
 }
 
 } /* namespace pmd2 */

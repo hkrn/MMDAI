@@ -96,6 +96,7 @@ public:
 
     const IString *name(IEncoding::LanguageType type) const;
     void setName(const IString *value, IEncoding::LanguageType type);
+    Label *internalParentLabelRef() const;
     IModel *parentModelRef() const;
     Category category() const;
     Type type() const;
@@ -123,6 +124,7 @@ public:
     void removeFlipMorph(Flip *value);
     void addImpulseMorph(Impulse *value);
     void removeImpulseMorph(Impulse *value);
+    void setInternalParentLabelRef(Label *value);
     void setCategory(Category value);
     void setType(Type value);
     void setIndex(int value);

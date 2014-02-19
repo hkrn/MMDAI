@@ -544,10 +544,10 @@ struct Model::PrivateContext {
         textures.releaseAll();
         vertices.releaseAll();
         materials.releaseAll();
+        labels.releaseAll();
         bones.releaseAll();
         rawConstraints.releaseAll();
         morphs.releaseAll();
-        labels.releaseAll();
         rigidBodies.releaseAll();
         joints.releaseAll();
         constraints.releaseAll();

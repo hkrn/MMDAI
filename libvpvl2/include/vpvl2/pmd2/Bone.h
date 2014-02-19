@@ -83,6 +83,7 @@ public:
     const IString *name(IEncoding::LanguageType type) const;
     void setName(const IString *value, IEncoding::LanguageType type);
     int index() const;
+    Label *internalParentLabelRef() const;
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
     IBone *effectorBoneRef() const;
@@ -131,6 +132,7 @@ public:
     IBone *destinationOriginBoneRef() const;
     IBone *parentInherentBoneRef() const;
 
+    void setInternalParentLabelRef(Label *value);
     void setParentBoneRef(IBone * /* value */) {}
     void setParentInherentBoneRef(IBone * /* value */) {}
     void setEffectorBoneRef(IBone * /* effector */, int /* numIteration */, float /* angleLimit */) {}
