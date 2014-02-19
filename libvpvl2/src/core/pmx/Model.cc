@@ -983,10 +983,10 @@ void Model::save(uint8 *data, vsize &written) const
         const int index = m_context->indices[i];
         internal::writeSignedIndex(index, flags.vertexIndexSize, data);
     }
-    const int ntextures = m_context->name2textureRefs.count();
+    const int ntextures = m_context->textures.count();
     internal::writeBytes(&ntextures, sizeof(ntextures), data);
     for (int i = 0; i < ntextures; i++) {
-        const IString *texture = *m_context->name2textureRefs.value(i);
+        const IString *texture = m_context->textures[i];
         internal::writeString(texture, encodingRef, codec, data);
     }
     Material::writeMaterials(m_context->materials, info, data);
@@ -1017,10 +1017,10 @@ vsize Model::estimateSize() const
     const int nindices = m_context->indices.count();
     size += sizeof(nindices);
     size += info.vertexIndexSize * nindices;
-    const int ntextures = m_context->name2textureRefs.count();
+    const int ntextures = m_context->textures.count();
     size += sizeof(ntextures);
     for (int i = 0; i < ntextures; i++) {
-        IString *texture = *m_context->name2textureRefs.value(i);
+        const IString *texture = m_context->textures[i];
         size += internal::estimateSize(texture, encodingRef, codec);
     }
     size += Material::estimateTotalSize(m_context->materials, info);
@@ -2047,17 +2047,9 @@ int Model::findTextureIndex(const IString *value, int defaultIfNotFound) const
 IString *Model::addTexture(const IString *value)
 {
     IString *texturePath = 0;
-    if (value) {
-        int index = findTextureIndex(value, -1);
-        if (index >= 0) {
-            IString *v = m_context->textures[index];
-            texturePath = m_context->textures[index] = value->clone();
-            internal::deleteObject(v);
-        }
-        else {
-            texturePath = m_context->textures.append(value->clone());
-            m_context->name2textureRefs.insert(texturePath->toHashString(), texturePath);
-        }
+    if (value && findTextureIndex(value, -1) == -1) {
+        texturePath = m_context->textures.append(value->clone());
+        m_context->name2textureRefs.insert(texturePath->toHashString(), texturePath);
     }
     return texturePath;
 }
