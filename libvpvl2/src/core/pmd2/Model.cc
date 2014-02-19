@@ -1741,6 +1741,9 @@ void Model::addJoint(IJoint *value)
     if (value->type() == IJoint::kGeneric6DofSpringConstraint) {
         internal::ModelHelper::addObject(this, value, m_context->joints);
     }
+    else {
+        VPVL2_LOG(WARNING, "The joint (type=" << value->type() << ") cannot be added to the PMD model: " << value);
+    }
 }
 
 void Model::addLabel(ILabel *value)

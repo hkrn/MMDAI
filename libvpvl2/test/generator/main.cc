@@ -156,16 +156,6 @@ void CreateModel(IModel *model, const char *filename)
     }
     {
         IMorph *morph = model->createMorph();
-        AssignMorph(morph, IMorph::kGroupMorph);
-        IMorph::Group *gmorph = new IMorph::Group();
-        gmorph->morph = morph;
-        gmorph->fixedWeight = 0.42;
-        gmorph->index = 42;
-        morph->addGroupMorph(gmorph);
-        model->addMorph(morph);
-    }
-    {
-        IMorph *morph = model->createMorph();
         AssignMorph(morph, IMorph::kVertexMorph);
         IMorph::Vertex *vmorph = new IMorph::Vertex();
         vmorph->vertex = vertex;
@@ -174,96 +164,108 @@ void CreateModel(IModel *model, const char *filename)
         morph->addVertexMorph(vmorph);
         model->addMorph(morph);
     }
-    {
-        IMorph *morph = model->createMorph();
-        AssignMorph(morph, IMorph::kTexCoordMorph);
-        IMorph::Vertex *vmorph = new IMorph::Vertex();
-        vmorph->vertex = vertex;
-        vmorph->position.setValue(0.2, 0.25, 0.3);
-        vmorph->index = 42;
-        morph->addVertexMorph(vmorph);
-        model->addMorph(morph);
-    }
-    {
-        IMorph *morph = model->createMorph();
-        AssignMorph(morph, IMorph::kUVA1Morph);
-        IMorph::UV *vmorph = new IMorph::UV();
-        vmorph->vertex = vertex;
-        vmorph->position.setValue(2.0, 2.2, 2.4, 2.6);
-        vmorph->index = 42;
-        morph->addUVMorph(vmorph);
-        model->addMorph(morph);
-    }
-    {
-        IMorph *morph = model->createMorph();
-        AssignMorph(morph, IMorph::kUVA2Morph);
-        IMorph::UV *vmorph = new IMorph::UV();
-        vmorph->vertex = vertex;
-        vmorph->position.setValue(2.8, 3.0, 3.2, 3.4);
-        vmorph->index = 42;
-        morph->addUVMorph(vmorph);
-        model->addMorph(morph);
-    }
-    {
-        IMorph *morph = model->createMorph();
-        AssignMorph(morph, IMorph::kUVA3Morph);
-        IMorph::UV *vmorph = new IMorph::UV();
-        vmorph->vertex = vertex;
-        vmorph->position.setValue(3.6, 3.8, 4.0, 4.2);
-        vmorph->index = 42;
-        morph->addUVMorph(vmorph);
-        model->addMorph(morph);
-    }
-    {
-        IMorph *morph = model->createMorph();
-        AssignMorph(morph, IMorph::kUVA4Morph);
-        IMorph::UV *vmorph = new IMorph::UV();
-        vmorph->vertex = vertex;
-        vmorph->position.setValue(4.4, 4.6, 4.8, 5.0);
-        vmorph->index = 42;
-        morph->addUVMorph(vmorph);
-        model->addMorph(morph);
-    }
-    {
-        IMorph *morph = model->createMorph();
-        AssignMorph(morph, IMorph::kBoneMorph);
-        IMorph::Bone *bmorph = new IMorph::Bone();
-        bmorph->bone = bone;
-        bmorph->index = 42;
-        bmorph->position.setValue(0.1, 0.2, 0.3);
-        bmorph->rotation.setValue(0.4, 0.5, 0.6, 0.7);
-        morph->addBoneMorph(bmorph);
-        model->addMorph(morph);
-    }
-    {
-        IMorph *morph = model->createMorph();
-        AssignMorph(morph, IMorph::kMaterialMorph);
-        IMorph::Material *mmorph = new IMorph::Material();
-        mmorph->materials = new Array<IMaterial *>();
-        mmorph->materials->append(material);
-        mmorph->ambient.setValue(0.1, 0.2, 0.3);
-        mmorph->diffuse.setValue(0.4, 0.5, 0.6, 0.7);
-        mmorph->edgeColor.setValue(0.7, 0.8, 0.9, 1.0);
-        mmorph->edgeSize = 0.42;
-        mmorph->operation = 0;
-        mmorph->shininess = 0.84;
-        mmorph->specular.setValue(0.3, 0.2, 0.1);
-        mmorph->sphereTextureWeight.setValue(0.4, 0.3, 0.2, 0.1);
-        mmorph->textureWeight.setValue(0.5, 0.4, 0.3, 0.2);
-        mmorph->toonTextureWeight.setValue(0.6, 0.5, 0.4, 0.3);
-        mmorph->index = 42;
-        morph->addMaterialMorph(mmorph);
-        model->addMorph(morph);
-    }
-    {
-        IMorph *morph = model->createMorph();
-        AssignMorph(morph, IMorph::kFlipMorph);
-        IMorph::Flip *fmorph = new IMorph::Flip();
-        fmorph->morph = morph;
-        fmorph->fixedWeight = 0.42;
-        fmorph->index = 42;
-        morph->addFlipMorph(fmorph);
-        model->addMorph(morph);
+    if (model->type() == IModel::kPMXModel) {
+        {
+            IMorph *morph = model->createMorph();
+            AssignMorph(morph, IMorph::kGroupMorph);
+            IMorph::Group *gmorph = new IMorph::Group();
+            gmorph->morph = morph;
+            gmorph->fixedWeight = 0.42;
+            gmorph->index = 42;
+            morph->addGroupMorph(gmorph);
+            model->addMorph(morph);
+        }
+        {
+            IMorph *morph = model->createMorph();
+            AssignMorph(morph, IMorph::kTexCoordMorph);
+            IMorph::Vertex *vmorph = new IMorph::Vertex();
+            vmorph->vertex = vertex;
+            vmorph->position.setValue(0.2, 0.25, 0.3);
+            vmorph->index = 42;
+            morph->addVertexMorph(vmorph);
+            model->addMorph(morph);
+        }
+        {
+            IMorph *morph = model->createMorph();
+            AssignMorph(morph, IMorph::kUVA1Morph);
+            IMorph::UV *vmorph = new IMorph::UV();
+            vmorph->vertex = vertex;
+            vmorph->position.setValue(2.0, 2.2, 2.4, 2.6);
+            vmorph->index = 42;
+            morph->addUVMorph(vmorph);
+            model->addMorph(morph);
+        }
+        {
+            IMorph *morph = model->createMorph();
+            AssignMorph(morph, IMorph::kUVA2Morph);
+            IMorph::UV *vmorph = new IMorph::UV();
+            vmorph->vertex = vertex;
+            vmorph->position.setValue(2.8, 3.0, 3.2, 3.4);
+            vmorph->index = 42;
+            morph->addUVMorph(vmorph);
+            model->addMorph(morph);
+        }
+        {
+            IMorph *morph = model->createMorph();
+            AssignMorph(morph, IMorph::kUVA3Morph);
+            IMorph::UV *vmorph = new IMorph::UV();
+            vmorph->vertex = vertex;
+            vmorph->position.setValue(3.6, 3.8, 4.0, 4.2);
+            vmorph->index = 42;
+            morph->addUVMorph(vmorph);
+            model->addMorph(morph);
+        }
+        {
+            IMorph *morph = model->createMorph();
+            AssignMorph(morph, IMorph::kUVA4Morph);
+            IMorph::UV *vmorph = new IMorph::UV();
+            vmorph->vertex = vertex;
+            vmorph->position.setValue(4.4, 4.6, 4.8, 5.0);
+            vmorph->index = 42;
+            morph->addUVMorph(vmorph);
+            model->addMorph(morph);
+        }
+        {
+            IMorph *morph = model->createMorph();
+            AssignMorph(morph, IMorph::kBoneMorph);
+            IMorph::Bone *bmorph = new IMorph::Bone();
+            bmorph->bone = bone;
+            bmorph->index = 42;
+            bmorph->position.setValue(0.1, 0.2, 0.3);
+            bmorph->rotation.setValue(0.4, 0.5, 0.6, 0.7);
+            morph->addBoneMorph(bmorph);
+            model->addMorph(morph);
+        }
+        {
+            IMorph *morph = model->createMorph();
+            AssignMorph(morph, IMorph::kMaterialMorph);
+            IMorph::Material *mmorph = new IMorph::Material();
+            mmorph->materials = new Array<IMaterial *>();
+            mmorph->materials->append(material);
+            mmorph->ambient.setValue(0.1, 0.2, 0.3);
+            mmorph->diffuse.setValue(0.4, 0.5, 0.6, 0.7);
+            mmorph->edgeColor.setValue(0.7, 0.8, 0.9, 1.0);
+            mmorph->edgeSize = 0.42;
+            mmorph->operation = 0;
+            mmorph->shininess = 0.84;
+            mmorph->specular.setValue(0.3, 0.2, 0.1);
+            mmorph->sphereTextureWeight.setValue(0.4, 0.3, 0.2, 0.1);
+            mmorph->textureWeight.setValue(0.5, 0.4, 0.3, 0.2);
+            mmorph->toonTextureWeight.setValue(0.6, 0.5, 0.4, 0.3);
+            mmorph->index = 42;
+            morph->addMaterialMorph(mmorph);
+            model->addMorph(morph);
+        }
+        {
+            IMorph *morph = model->createMorph();
+            AssignMorph(morph, IMorph::kFlipMorph);
+            IMorph::Flip *fmorph = new IMorph::Flip();
+            fmorph->morph = morph;
+            fmorph->fixedWeight = 0.42;
+            fmorph->index = 42;
+            morph->addFlipMorph(fmorph);
+            model->addMorph(morph);
+        }
     }
     {
         ILabel *label = model->createLabel();
@@ -317,21 +319,23 @@ void CreateModel(IModel *model, const char *filename)
         IJoint *spring = model->createJoint();
         AssignJoint(spring, IJoint::kGeneric6DofSpringConstraint);
         model->addJoint(spring);
-        IJoint *sdof = model->createJoint();
-        AssignJoint(sdof, IJoint::kGeneric6DofConstraint);
-        model->addJoint(sdof);
-        IJoint *p2p = model->createJoint();
-        AssignJoint(p2p, IJoint::kPoint2PointConstraint);
-        model->addJoint(p2p);
-        IJoint *cone = model->createJoint();
-        AssignJoint(cone, IJoint::kConeTwistConstraint);
-        model->addJoint(cone);
-        IJoint *slider = model->createJoint();
-        AssignJoint(slider, IJoint::kSliderConstraint);
-        model->addJoint(slider);
-        IJoint *hinge = model->createJoint();
-        AssignJoint(hinge, IJoint::kHingeConstraint);
-        model->addJoint(hinge);
+        if (model->type() == IModel::kPMXModel) {
+            IJoint *sdof = model->createJoint();
+            AssignJoint(sdof, IJoint::kGeneric6DofConstraint);
+            model->addJoint(sdof);
+            IJoint *p2p = model->createJoint();
+            AssignJoint(p2p, IJoint::kPoint2PointConstraint);
+            model->addJoint(p2p);
+            IJoint *cone = model->createJoint();
+            AssignJoint(cone, IJoint::kConeTwistConstraint);
+            model->addJoint(cone);
+            IJoint *slider = model->createJoint();
+            AssignJoint(slider, IJoint::kSliderConstraint);
+            model->addJoint(slider);
+            IJoint *hinge = model->createJoint();
+            AssignJoint(hinge, IJoint::kHingeConstraint);
+            model->addJoint(hinge);
+        }
     }
     {
         String n1("Japanese Model Name"), n2("English Model Name");

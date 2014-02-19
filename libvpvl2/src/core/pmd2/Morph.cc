@@ -397,32 +397,36 @@ void Morph::markDirty()
     /* do nothing */
 }
 
-void Morph::addBoneMorph(Bone * /* value */)
+void Morph::addBoneMorph(Bone *value)
 {
+    VPVL2_LOG(WARNING, "The bone morph cannot be added to the PMD model: " << value);
 }
 
 void Morph::removeBoneMorph(Bone * /* value */)
 {
 }
 
-void Morph::addGroupMorph(Group * /* value */)
+void Morph::addGroupMorph(Group *value)
 {
+    VPVL2_LOG(WARNING, "The group morph cannot be added to the PMD model: " << value);
 }
 
 void Morph::removeGroupMorph(Group * /* value */)
 {
 }
 
-void Morph::addMaterialMorph(Material * /* value */)
+void Morph::addMaterialMorph(Material *value)
 {
+    VPVL2_LOG(WARNING, "The material morph cannot be added to the PMD model: " << value);
 }
 
 void Morph::removeMaterialMorph(Material * /* value */)
 {
 }
 
-void Morph::addUVMorph(UV * /* value */)
+void Morph::addUVMorph(UV *value)
 {
+    VPVL2_LOG(WARNING, "The UV morph cannot be added to the PMD model: " << value);
 }
 
 void Morph::removeUVMorph(UV * /* value */)
@@ -442,16 +446,18 @@ void Morph::removeVertexMorph(Vertex *value)
     m_context->vertices.remove(value);
 }
 
-void Morph::addFlipMorph(Flip * /* value */)
+void Morph::addFlipMorph(Flip *value)
 {
+    VPVL2_LOG(WARNING, "The flip morph cannot be added to the PMD model: " << value);
 }
 
 void Morph::removeFlipMorph(Flip * /* value */)
 {
 }
 
-void Morph::addImpulseMorph(Impulse * /* value */)
+void Morph::addImpulseMorph(Impulse *value)
 {
+    VPVL2_LOG(WARNING, "The impulse morph cannot be added to the PMD model: " << value);
 }
 
 void Morph::removeImpulseMorph(Impulse * /* value */)
