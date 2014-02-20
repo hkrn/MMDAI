@@ -21,15 +21,15 @@ class Sdl2 < Thor
 
 protected
   def get_uri
-    "http://www.libsdl.org/tmp/release/#{get_filename}"
+    "http://www.libsdl.org/release/#{get_filename}"
   end
 
   def get_basename
-    "SDL2-2.0.0"
+    "SDL2-2.0.1"
   end
 
   def get_filename
-    "SDL2-2.0.0.tar.gz"
+    "#{get_basename}.tar.gz"
   end
 
   def get_directory_name
