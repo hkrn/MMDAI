@@ -131,7 +131,7 @@ public:
      * @return uint8_t
      * @sa disposeByteArray
      */
-    virtual uint8 *toByteArray(const IString *value, IString::Codec codec) const = 0;
+    virtual uint8 *toByteArray(const IString *value, IString::Codec codec, int &size) const = 0;
 
     /**
      * value をメモリ上から解放します.

@@ -132,8 +132,8 @@ void ModelKeyframe::write(uint8 *data) const
     internal::writeBytes(&keyframe, sizeof(keyframe), data);
     for (int i = 0; i < nbones; i++) {
         IKState *const *sptr = m_states.value(i), *s = *sptr;
-        uint8 *ptr = m_encodingRef->toByteArray(s->name, IString::kShiftJIS), *sn = state.name;
-        internal::writeBytes(ptr, sizeof(state.name), sn);
+        uint8 *namePtr = state.name;
+        internal::writeStringAsByteArray(s->name, m_encodingRef, IString::kShiftJIS, sizeof(state.name), namePtr);
         state.enabled = s->enabled ? 1 : 0;
         internal::writeBytes(&state, sizeof(state), data);
     }

@@ -120,6 +120,8 @@ public:
     }
     static inline void getTextureRefs(const Hash<HashString, IString *> &textures, Array<const IString *> &value) {
         const int nobjects = textures.count();
+        value.clear();
+        value.reserve(nobjects);
         for (int i = 0; i < nobjects; i++) {
             const IString *const *v = textures.value(i);
             value.append(*v);
@@ -134,6 +136,8 @@ public:
     template<typename T, typename I>
     static inline void getObjectRefs(const Array<T *> &objects, Array<I *> &value) {
         const int nobjects = objects.count();
+        value.clear();
+        value.reserve(nobjects);
         for (int i = 0; i < nobjects; i++) {
             T *object = objects[i];
             value.append(object);

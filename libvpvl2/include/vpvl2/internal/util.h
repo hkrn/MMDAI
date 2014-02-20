@@ -447,7 +447,8 @@ static inline void writeString(const IString *value, const IEncoding *encodingRe
     int32 size = int32(encodingRef->estimateSize(value, codec));
     writeBytes(&size, sizeof(size), dst);
     if (size > 0) {
-        uint8 *bytes = encodingRef->toByteArray(value, codec);
+        int unused = -1;
+        uint8 *bytes = encodingRef->toByteArray(value, codec, unused);
         writeBytes(bytes, size, dst);
         encodingRef->disposeByteArray(bytes);
     }
@@ -458,11 +459,12 @@ static inline void writeStringAsByteArray(const IString *string, const IEncoding
     VPVL2_DCHECK_NOTNULL(encodingRef);
     VPVL2_DCHECK_NOTNULL(dst);
     VPVL2_DCHECK_GT(bufsiz, vsize(0));
-    if (uint8 *bytes = encodingRef->toByteArray(string, codec)) {
-        zerofill(dst, bufsiz);
-        writeBytes(bytes, bufsiz, dst);
-        encodingRef->disposeByteArray(bytes);
-    }
+    int size = bufsiz;
+    uint8 *bytes = encodingRef->toByteArray(string, codec, size);
+    VPVL2_VLOG(1, "size=" << size << " bufsiz=" << bufsiz);
+    zerofill(dst, bufsiz);
+    writeBytes(bytes, size, dst);
+    encodingRef->disposeByteArray(bytes);
 }
 
 __attribute__((format(printf, 3, 4)))

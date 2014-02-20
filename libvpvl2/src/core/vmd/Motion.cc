@@ -306,10 +306,7 @@ bool Motion::load(const uint8 *data, vsize size)
 void Motion::save(uint8 *data) const
 {
     internal::writeBytes(kSignature, kSignatureSize, data);
-    uint8 *name = m_context->encodingRef->toByteArray(m_context->name, IString::kShiftJIS);
-    internal::copyBytes(data, name, kNameSize);
-    m_context->encodingRef->disposeByteArray(name);
-    data += kNameSize;
+    internal::writeStringAsByteArray(m_context->name, m_context->encodingRef, IString::kShiftJIS, kNameSize, data);
     int32 nBoneKeyframes = m_context->boneMotion.countKeyframes();
     internal::writeBytes(&nBoneKeyframes, sizeof(nBoneKeyframes), data);
     for (int32 i = 0; i < nBoneKeyframes; i++) {

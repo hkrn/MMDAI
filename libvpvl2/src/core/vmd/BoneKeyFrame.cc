@@ -137,9 +137,8 @@ void BoneKeyframe::read(const uint8 *data)
 void BoneKeyframe::write(uint8 *data) const
 {
     BoneKeyframeChunk chunk;
-    uint8 *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
-    internal::copyBytes(chunk.name, name, sizeof(chunk.name));
-    m_encodingRef->disposeByteArray(name);
+    uint8 *namePtr = chunk.name;
+    internal::writeStringAsByteArray(m_namePtr, m_encodingRef, IString::kShiftJIS, sizeof(chunk.name), namePtr);
     chunk.timeIndex = static_cast<int>(m_timeIndex);
     chunk.position[0] = m_position.x();
     chunk.position[1] = m_position.y();

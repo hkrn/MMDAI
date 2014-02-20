@@ -1033,13 +1033,16 @@ void Model::save(uint8 *data, vsize &written) const
         Morph::writeEnglishNames(m_context->morphs, m_context->dataInfo, data);
         Label::writeEnglishNames(m_context->labels, m_context->dataInfo, data);
     }
-    uint8 customTextureName[internal::kPMDModelCustomToonTextureSize], *customTextureNamePtr = customTextureName;
     const int numToonTextures = m_context->customToonTextures.count();
     for (int i = 0; i < kMaxCustomToonTextures; i++) {
-        const IString *customToonTextureRef = i < numToonTextures ? m_context->customToonTextures[i] : 0;
-        internal::writeStringAsByteArray(customToonTextureRef, m_context->encodingRef, IString::kShiftJIS, sizeof(customTextureName), customTextureNamePtr);
-        internal::writeBytes(customTextureName, sizeof(customTextureName), data);
-        customTextureNamePtr = customTextureName;
+        if (i < numToonTextures){
+            const IString *customToonTextureRef = m_context->customToonTextures[i];
+            internal::writeStringAsByteArray(customToonTextureRef, m_context->encodingRef, IString::kShiftJIS, internal::kPMDModelCustomToonTextureSize, data);
+        }
+        else {
+            internal::zerofill(data, internal::kPMDModelCustomToonTextureSize);
+            data += internal::kPMDModelCustomToonTextureSize;
+        }
     }
     RigidBody::writeRigidBodies(m_context->rigidBodies, m_context->dataInfo, data);
     Joint::writeJoints(m_context->joints, m_context->dataInfo, data);

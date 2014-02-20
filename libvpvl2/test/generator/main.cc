@@ -101,8 +101,9 @@ void CreateModel(IModel *model, const char *filename)
         qdef->setWeight(0, 0.4);
         model->addVertex(qdef);
     }
+    IMaterial *material = 0;
     {
-        IMaterial *material = model->createMaterial();
+        material = model->createMaterial();
         AssignMaterial(material, IMaterial::kDisableCulling |
                        IMaterial::kCastingShadow |
                        IMaterial::kCastingShadowMap |
@@ -113,7 +114,6 @@ void CreateModel(IModel *model, const char *filename)
                        0);
         model->addMaterial(material);
     }
-    IMaterial *material = 0;
     {
         material = model->createMaterial();
         AssignMaterial(material, IMaterial::kDisableCulling |

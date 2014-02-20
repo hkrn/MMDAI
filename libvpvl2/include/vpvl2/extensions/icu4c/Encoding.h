@@ -67,7 +67,7 @@ public:
     IString *toString(const uint8 *value, vsize size, IString::Codec codec) const;
     IString *toString(const uint8 *value, IString::Codec codec, vsize maxlen) const;
     vsize estimateSize(const IString *value, IString::Codec codec) const;
-    uint8 *toByteArray(const IString *value, IString::Codec codec) const;
+    uint8 *toByteArray(const IString *value, IString::Codec codec, int &size) const;
     void disposeByteArray(uint8 *&value) const;
     IString::Codec detectCodec(const char *data, vsize length) const;
 

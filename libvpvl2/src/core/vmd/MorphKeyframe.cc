@@ -89,9 +89,8 @@ void MorphKeyframe::read(const uint8 *data)
 void MorphKeyframe::write(uint8 *data) const
 {
     MorphKeyframeChunk chunk;
-    uint8 *name = m_encodingRef->toByteArray(m_namePtr, IString::kShiftJIS);
-    internal::copyBytes(chunk.name, name, sizeof(chunk.name));
-    m_encodingRef->disposeByteArray(name);
+    uint8 *name = chunk.name;
+    internal::writeStringAsByteArray(m_namePtr, m_encodingRef, IString::kShiftJIS, sizeof(chunk.name), name);
     chunk.timeIndex = static_cast<int>(m_timeIndex);
     chunk.weight = float(m_weight);
     internal::copyBytes(data, reinterpret_cast<const uint8 *>(&chunk), sizeof(chunk));

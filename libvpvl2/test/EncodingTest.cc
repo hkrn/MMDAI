@@ -115,9 +115,11 @@ TEST_P(ConvertTest, ToByteArray)
     const IString::Codec codecEnum = GetParam();
     const String source("いろはにほへとちりぬるをわかよたれそつねならむうゐのおくやまけふこえてあさきゆめみしゑひもせすん");
     const QTextCodec *codec = QTextCodec::codecForName(GetCodecString(codecEnum));
-    uint8 *stringInBytes = encoding.toByteArray(&source, codecEnum);
+    int size = -1;
+    uint8 *stringInBytes = encoding.toByteArray(&source, codecEnum, size);
     const QString &s = QString::fromStdString(String::toStdString(source.value()));
     EXPECT_STREQ(codec->fromUnicode(s).constData(), TO_STR_C(stringInBytes));
+    EXPECT_EQ(-1, size);
     encoding.disposeByteArray(stringInBytes);
 }
 
@@ -159,10 +161,12 @@ TEST(EncodingTest, ConvertNullToString)
 TEST(EncodingTest, ConvertNullToByteArray)
 {
     Encoding encoding(0);
-    uint8 *result = encoding.toByteArray(0, IString::kUTF8);
+    int size = -1;
+    uint8 *result = encoding.toByteArray(0, IString::kUTF8, size);
     ASSERT_TRUE(result);
     ASSERT_EQ(0, strlen(reinterpret_cast<const char *>(result)));
     ASSERT_EQ(0, result[0]);
+    ASSERT_EQ(-1, size);
     encoding.disposeByteArray(result);
 }
 
