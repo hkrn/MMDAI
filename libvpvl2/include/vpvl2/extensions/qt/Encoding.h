@@ -103,7 +103,7 @@ public:
         vsize size = s ? converter->fromUnicode(s->value()).size() : 0;
         return size;
     }
-    uint8 *toByteArray(const IString *value, IString::Codec codec) const {
+    uint8 *toByteArray(const IString *value, IString::Codec codec, int &size) const {
         uint8 *data = 0;
         if (const String *s = static_cast<const String *>(value)) {
             QTextCodec *converter = detectTextCodec(codec);
@@ -111,7 +111,13 @@ public:
             QByteArray bytes = converter->fromUnicode(s->value());
             data = new (std::nothrow) uint8[bytes.size() + 1];
             Q_CHECK_PTR(data);
-            qstrcpy(reinterpret_cast<char *>(data), bytes);
+            if (size >= 0) {
+                size = qMin(bytes.size(), size);
+                qstrncpy(reinterpret_cast<char *>(data), bytes, size);
+            }
+            else {
+                qstrcpy(reinterpret_cast<char *>(data), bytes);
+            }
         }
         else {
             data = new (std::nothrow) uint8[1];

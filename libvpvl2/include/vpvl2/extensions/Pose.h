@@ -122,7 +122,8 @@ public:
         if (model) {
             if (const IString *name = model->name(IEncoding::kJapanese)) {
                 stream << "Vocaloid Pose Data file\r\n\r\n";
-                uint8 *modelName = m_encoding->toByteArray(name, kDefaultCodec);
+                int unused = -1;
+                uint8 *modelName = m_encoding->toByteArray(name, kDefaultCodec, unused);
                 stream << modelName << "\r\n";
                 m_encoding->disposeByteArray(modelName);
                 writeBones(stream, model);
@@ -346,7 +347,8 @@ private:
         for (int i = 0; i < nbones; i++) {
             const IBone *bone = bones[i];
             if (const IString *name = bone->name(IEncoding::kJapanese)) {
-                uint8 *boneName = m_encoding->toByteArray(name, kDefaultCodec);
+                int unused = -1;
+                uint8 *boneName = m_encoding->toByteArray(name, kDefaultCodec, unused);
                 stream << "Bone" << i << "{" << boneName << "\r\n";
                 m_encoding->disposeByteArray(boneName);
                 const Vector3 &position = bone->localTranslation();
@@ -376,7 +378,8 @@ private:
         for (int i = 0, morphIndex = 0; i < nmorphs; i++) {
             const IMorph *morph = morphs[i];
             if (const IString *name = morph->name(IEncoding::kJapanese)) {
-                uint8 *morphName = m_encoding->toByteArray(name, kDefaultCodec);
+                int unused = -1;
+                uint8 *morphName = m_encoding->toByteArray(name, kDefaultCodec, unused);
                 stream << "Morph" << morphIndex << "{" << morphName << "\r\n";
                 m_encoding->disposeByteArray(morphName);
                 stream << "  " << morph->weight() << ";\r\n}\r\n\r\n";
