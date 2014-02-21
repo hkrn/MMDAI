@@ -469,6 +469,33 @@ ApplicationWindow {
         Component.onCompleted: scene.project.currentModelChanged.connect(__handleCurrentModelChanged)
     }
     ListModel {
+        id: ikModel
+        function indexOf(value) {
+            if (value) {
+                for (var i = 0, l = count, uuid = value.uuid; i < l; i++) {
+                    var item = get(i).item
+                    if (item && item.uuid === uuid) {
+                        return i
+                    }
+                }
+            }
+            return 0
+        }
+        function __handleCurrentModelChanged() {
+            clear()
+            var model = scene.project.currentModel
+            if (model) {
+                var constraints = model.allIKConstraints
+                append({ "item": null, "text": qsTr("None") })
+                for (var i in constraints) {
+                    var constraint = constraints[i]
+                    append({ "item": constraint, "text": constraint.name })
+                }
+            }
+        }
+        Component.onCompleted: scene.project.currentModelChanged.connect(__handleCurrentModelChanged)
+    }
+    ListModel {
         id: rigidBodiesModel
         function indexOf(value) {
             if (value) {
@@ -596,6 +623,7 @@ ApplicationWindow {
                             { "text": qsTr("Material"), "path": "MaterialView.qml", "reference": materialsModel },
                             { "text": qsTr("Bone"), "path": "BoneView.qml", "reference": bonesModel },
                             { "text": qsTr("Morph"), "path": "MorphView.qml", "reference": morphsModel },
+                            { "text": qsTr("IK"), "path": "IKView.qml", "reference": ikModel },
                             { "text": qsTr("Label"), "path": "LabelView.qml", "reference": labelsModel },
                             { "text": qsTr("RigidBody"), "path": "RigidBodyView.qml", "reference": rigidBodiesModel },
                             { "text": qsTr("Joint"), "path": "JointView.qml", "reference": jointsModel },
