@@ -39,6 +39,7 @@
 #ifndef VPVL2_IMODEL_H_
 #define VPVL2_IMODEL_H_
 
+#include "vpvl2/IBone.h"
 #include "vpvl2/IEncoding.h"
 #include "vpvl2/IProgressReporter.h"
 #include "vpvl2/IVertex.h"
@@ -50,7 +51,6 @@ namespace vpvl2
 namespace VPVL2_VERSION_NS
 {
 
-class IBone;
 class IJoint;
 class ILabel;
 class IMaterial;
@@ -432,6 +432,8 @@ public:
      * @param value
      */
     virtual void getIndices(Array<int> &value) const = 0;
+
+    virtual void getIKConstraintRefs(Array<IBone::IKConstraint *> &value) const = 0;
 
     /**
      * カメラの位置からモデルに適用するエッジ幅を取得します.

@@ -104,6 +104,7 @@ public:
     void getVertexRefs(Array<IVertex *> &value) const;
     void getBoundingBox(Vector3 &min, Vector3 &max) const;
     void getIndices(Array<int> &value) const;
+    void getIKConstraintRefs(Array<IBone::IKConstraint *> &value) const;
     IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 & /* position */) const { return 0; }
     Vector3 worldTranslation() const { return m_position; }
     Quaternion worldOrientation() const { return m_rotation; }

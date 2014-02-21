@@ -168,6 +168,7 @@ public:
     void getTextureRefs(Array<const IString *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
     void getIndices(Array<int> &value) const;
+    void getIKConstraintRefs(Array<IBone::IKConstraint *> &value) const;
 
     bool preparse(const uint8 *data, vsize size, DataInfo &info);
     void setVisible(bool value);

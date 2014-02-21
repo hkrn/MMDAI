@@ -59,7 +59,7 @@ namespace pmx
  * Bone class represents a bone of a Polygon Model Extended object.
  */
 
-class VPVL2_API Bone VPVL2_DECL_FINAL : public IBone
+class VPVL2_API Bone VPVL2_DECL_FINAL : public IBone, public IBone::IKConstraint
 {
 public:
     enum Flags {
@@ -118,7 +118,6 @@ public:
     Label *internalParentLabelRef() const;
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
-    IBone *effectorBoneRef() const;
     IBone *parentInherentBoneRef() const;
     IBone *destinationOriginBoneRef() const;
     const IString *name(IEncoding::LanguageType type) const;
@@ -152,7 +151,6 @@ public:
     void setParentBoneRef(IBone *value);
     void setParentInherentBoneRef(IBone *value);
     void setInherentCoefficient(float32 value);
-    void setEffectorBoneRef(IBone *effector, int numIteration, float angleLimit);
     void setDestinationOriginBoneRef(IBone *value);
     void setName(const IString *value, IEncoding::LanguageType type);
     void setOrigin(const Vector3 &value);
@@ -175,6 +173,16 @@ public:
     void setTransformAfterPhysicsEnable(bool value);
     void setTransformedByExternalParentEnable(bool value);
     void setInverseKinematicsEnable(bool value);
+
+    IBone *rootBoneRef() const;
+    void setRootBoneRef(IBone *value);
+    IBone *effectorBoneRef() const;
+    void setEffectorBoneRef(IBone *value);
+    int numIterations() const;
+    void setNumIterations(int value);
+    float32 angleLimit() const;
+    void setAngleLimit(float32 value);
+    void getJointRefs(Array<IKJoint *> &value) const;
 
 private:
     struct PrivateContext;

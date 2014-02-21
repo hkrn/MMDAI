@@ -124,7 +124,6 @@ public:
 
     void setParentBoneRef(IBone * /* value */) {}
     void setParentInherentBoneRef(IBone * /* value */) {}
-    void setEffectorBoneRef(IBone * /* effector */, int /* numIteration */, float /* angleLimit */) {}
     void setDestinationOriginBoneRef(IBone * /* value */) {}
     void setOrigin(const Vector3 & /* value */) {}
     void setDestinationOrigin(const Vector3 & /* value */) {}
@@ -138,7 +137,6 @@ public:
     void setMovable(bool /* value */) {}
     void setVisible(bool /* value */) {}
     void setInteractive(bool /* value */) {}
-    void setHasInverseKinematics(bool /* value */) {}
     void setInherentOrientationEnable(bool /* value */) {}
     void setInherentTranslationEnable(bool /* value */) {}
     void setFixedAxisEnable(bool /* value */) {}
@@ -221,7 +219,6 @@ public:
 
     void setParentBoneRef(IBone * /* value */) {}
     void setParentInherentBoneRef(IBone * /* value */) {}
-    void setEffectorBoneRef(IBone * /* effector */, int /* numIteration */, float /* angleLimit */) {}
     void setDestinationOriginBoneRef(IBone * /* value */) {}
     void setOrigin(const Vector3 & /* value */) {}
     void setDestinationOrigin(const Vector3 & /* value */) {}
@@ -235,7 +232,6 @@ public:
     void setMovable(bool /* value */) {}
     void setVisible(bool /* value */) {}
     void setInteractive(bool /* value */) {}
-    void setHasInverseKinematics(bool /* value */) {}
     void setInherentOrientationEnable(bool /* value */) {}
     void setInherentTranslationEnable(bool /* value */) {}
     void setFixedAxisEnable(bool /* value */) {}
@@ -773,6 +769,10 @@ void Model::getVertexRefs(Array<IVertex *> &value) const
 }
 
 void Model::getIndices(Array<int> & /* value */) const
+{
+}
+
+void Model::getIKConstraintRefs(Array<IBone::IKConstraint *> & /* value */) const
 {
 }
 

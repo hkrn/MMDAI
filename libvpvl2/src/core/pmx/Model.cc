@@ -1231,6 +1231,18 @@ void Model::getIndices(Array<int> &value) const
     value.copy(m_context->indices);
 }
 
+void Model::getIKConstraintRefs(Array<IBone::IKConstraint *> &value) const
+{
+    const int nbones = m_context->bones.count();
+    value.clear();
+    for (int i = 0; i < nbones; i++) {
+        Bone *bone = m_context->bones[i];
+        if (bone->hasInverseKinematics()) {
+            value.append(bone);
+        }
+    }
+}
+
 bool Model::preparse(const uint8 *data, vsize size, DataInfo &info)
 {
     vsize rest = size;

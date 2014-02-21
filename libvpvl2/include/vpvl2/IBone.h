@@ -56,6 +56,29 @@ class IString;
 class VPVL2_API IBone
 {
 public:
+    struct IKJoint {
+        virtual ~IKJoint() {}
+        virtual IBone *targetBoneRef() const = 0;
+        virtual void setTargetBoneRef(IBone *value) = 0;
+        virtual bool hasAngleLimit() const = 0;
+        virtual void setAngleLimit(bool value) = 0;
+        virtual Vector3 lowerLimit() const = 0;
+        virtual void setLowerLimit(const Vector3 &value) = 0;
+        virtual Vector3 upperLimit() const = 0;
+        virtual void setUpperLimit(const Vector3 &value) = 0;
+    };
+    struct IKConstraint {
+        virtual ~IKConstraint() {}
+        virtual IBone *rootBoneRef() const = 0;
+        virtual void setRootBoneRef(IBone *value) = 0;
+        virtual IBone *effectorBoneRef() const = 0;
+        virtual void setEffectorBoneRef(IBone *value) = 0;
+        virtual int numIterations() const = 0;
+        virtual void setNumIterations(int value) = 0;
+        virtual float32 angleLimit() const = 0;
+        virtual void setAngleLimit(float32 value) = 0;
+        virtual void getJointRefs(Array<IKJoint *> &values) const = 0;
+    };
     class PropertyEventListener {
     public:
         virtual ~PropertyEventListener() {}
@@ -322,7 +345,6 @@ public:
     virtual IBone *parentInherentBoneRef() const = 0;
 
     virtual void setParentBoneRef(IBone *value) = 0;
-    virtual void setEffectorBoneRef(IBone *effector, int numIteration, float angleLimit) = 0;
     virtual void setDestinationOriginBoneRef(IBone *value) = 0;
     virtual void setParentInherentBoneRef(IBone *value) = 0;
     virtual void setOrigin(const Vector3 &value) = 0;
@@ -336,7 +358,6 @@ public:
     virtual void setMovable(bool value) = 0;
     virtual void setVisible(bool value) = 0;
     virtual void setInteractive(bool value) = 0;
-    virtual void setHasInverseKinematics(bool value) = 0;
     virtual void setInherentOrientationEnable(bool value) = 0;
     virtual void setInherentTranslationEnable(bool value) = 0;
     virtual void setFixedAxisEnable(bool value) = 0;

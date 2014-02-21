@@ -140,6 +140,7 @@ public:
     void getTextureRefs(Array<const IString *> &value) const;
     void getVertexRefs(Array<IVertex *> &value) const;
     void getIndices(Array<int> &value) const;
+    void getIKConstraintRefs(Array<IBone::IKConstraint *> &value) const;
     IVertex::EdgeSizePrecision edgeScaleFactor(const Vector3 &cameraPosition) const;
     Vector3 worldTranslation() const;
     Quaternion worldOrientation() const;
