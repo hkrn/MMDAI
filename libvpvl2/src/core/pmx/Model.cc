@@ -662,14 +662,15 @@ struct Model::PrivateContext {
     }
 
     void release() {
-        textures.releaseAll();
+        /* release objects order by reference dependency (no or child dependency first) */
         vertices.releaseAll();
         materials.releaseAll();
+        textures.releaseAll();
         labels.releaseAll();
-        bones.releaseAll();
         morphs.releaseAll();
-        rigidBodies.releaseAll();
         joints.releaseAll();
+        rigidBodies.releaseAll();
+        bones.releaseAll();
         internal::zerofill(&dataInfo, sizeof(dataInfo));
         dataInfo.encoding = encodingRef;
         dataInfo.version = 2.0f;

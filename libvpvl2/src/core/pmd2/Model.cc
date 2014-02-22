@@ -627,16 +627,17 @@ struct Model::PrivateContext {
 
     void release() {
         internal::zerofill(&dataInfo, sizeof(dataInfo));
-        textures.releaseAll();
+        /* release objects order by reference dependency (no or child dependency first) */
         vertices.releaseAll();
         materials.releaseAll();
+        textures.releaseAll();
         labels.releaseAll();
-        bones.releaseAll();
         rawConstraints.releaseAll();
         morphs.releaseAll();
-        rigidBodies.releaseAll();
         joints.releaseAll();
+        rigidBodies.releaseAll();
         constraints.releaseAll();
+        bones.releaseAll();
         internal::deleteObject(namePtr);
         internal::deleteObject(englishNamePtr);
         internal::deleteObject(commentPtr);
