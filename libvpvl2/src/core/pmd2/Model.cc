@@ -102,7 +102,7 @@ struct DefaultIKJoint : IBone::IKJoint {
     bool hasAngleLimit() const {
         return false;
     }
-    void setAngleLimit(bool /* value */) {
+    void setHasAngleLimit(bool /* value */) {
     }
     Vector3 lowerLimit() const {
         return kZeroV3;

@@ -43,6 +43,7 @@
 #include <QVector3D>
 
 #include "BoneRefObject.h"
+#include "IKConstraintRefObject.h"
 #include "JointRefObject.h"
 #include "LabelRefObject.h"
 #include "MaterialRefObject.h"
@@ -129,11 +130,14 @@ bool ModelProxy::save(const QUrl &fileUrl)
     if (file.open(QFile::WriteOnly)) {
         QByteArray bytes;
         vsize written = 0;
+        const IString::Codec &codec = m_model->encodingType();
+        m_model->setEncodingType(IString::kUTF8);
         bytes.resize(m_model->estimateSize());
         m_model->save(reinterpret_cast<uint8 *>(bytes.data()), written);
         Q_ASSERT(m_model->estimateSize() == written);
         file.write(bytes.constData(), written);
         file.close();
+        m_model->setEncodingType(codec);
         return true;
     }
     else {
@@ -1069,6 +1073,12 @@ QQmlListProperty<JointRefObject> ModelProxy::allJoints()
     return QQmlListProperty<JointRefObject>(this, m_allJoints);
 }
 
+QQmlListProperty<IKRefObject> ModelProxy::allIKConstraints()
+{
+    initializeAllIKConstraints();
+    return QQmlListProperty<IKRefObject>(this, m_allIKConstraints);
+}
+
 QList<BoneRefObject *> ModelProxy::allTargetBones() const
 {
     return m_targetBoneRefs;
@@ -1337,6 +1347,11 @@ QList<JointRefObject *> ModelProxy::allJointRefs() const
     return m_allJoints;
 }
 
+QList<IKRefObject *> ModelProxy::allIKConstraintRefs() const
+{
+    return m_allIKConstraints;
+}
+
 void ModelProxy::resetLanguage()
 {
     /* force updating language property */
@@ -1526,6 +1541,24 @@ void ModelProxy::initializeAllJoints()
             m_uuid2JointRefs.insert(joint->uuid(), joint);
         }
         qSort(m_allJoints.begin(), m_allJoints.end(), Util::LessThan());
+    }
+}
+
+void ModelProxy::initializeAllIKConstraints()
+{
+    if (m_allIKConstraints.isEmpty()) {
+        Array<IBone::IKConstraint *> constraintRefs;
+        m_model->getIKConstraintRefs(constraintRefs);
+        const int nconstraints = constraintRefs.count();
+        for (int i = 0; i < nconstraints; i++) {
+            IBone::IKConstraint *constraintRef = constraintRefs[i];
+            IKRefObject *constraint = new IKRefObject(this, constraintRef, QUuid::createUuid(), i);
+            constraint->initialize();
+            m_allIKConstraints.append(constraint);
+            m_constraint2Refs.insert(constraintRef, constraint);
+            m_uuid2ConstraintRefs.insert(constraint->uuid(), constraint);
+        }
+        qSort(m_allIKConstraints.begin(), m_allIKConstraints.end(), Util::LessThan());
     }
 }
 

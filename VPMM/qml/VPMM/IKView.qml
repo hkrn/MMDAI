@@ -59,107 +59,129 @@ ScrollView {
             value: lowerLimit.value
             when: ikUpperLimitXSpinBox.hovered || ikUpperLimitYSpinBox.hovered || ikUpperLimitZSpinBox.hovered
         }
-        GridLayout {
-            columns: 2
-            Label { text: qsTr("Target Bone") }
-            ComboBox {
-                model: bonesModel
-                editable: true
-                Layout.fillWidth: true
-            }
-            Label { text: qsTr("Number of Loops") }
-            SpinBox {
-                maximumValue: 255
-                minimumValue: 0
-            }
-            Label { text: qsTr("Angle") }
-            SpinBox {
-                maximumValue: 360
-                minimumValue: -maximumValue
-            }
-            RowLayout {
-                Layout.columnSpan: 2
-                GroupBox {
-                    title: qsTr("Lower Angle Limit")
-                    GridLayout {
-                        columns: 2
-                        Label { text: "X" }
-                        SpinBox {
-                            id: ikLowerLimitXSpinBox
-                            maximumValue: 180
-                            minimumValue: -maximumValue
-                            decimals: 5
-                            stepSize: 0.01
-                            value: lowerLimit.x
-                        }
-                        Label { text: "Y" }
-                        SpinBox {
-                            id: ikLowerLimitYSpinBox
-                            maximumValue: 180
-                            minimumValue: -maximumValue
-                            decimals: 5
-                            stepSize: 0.01
-                            value: lowerLimit.y
-                        }
-                        Label { text: "Z" }
-                        SpinBox {
-                            id: ikLowerLimitZSpinBox
-                            maximumValue: 180
-                            minimumValue: -maximumValue
-                            decimals: 5
-                            stepSize: 0.01
-                            value: lowerLimit.z
-                        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 12
+            Component.onCompleted: ikContentView.height = childrenRect.height
+            GroupBox {
+                title: qsTr("Constraint")
+                GridLayout {
+                    columns: 2
+                    Label { text: qsTr("Target Bone") }
+                    ComboBox {
+                        model: bonesModel
+                        editable: true
+                        Layout.fillWidth: true
+                        currentIndex: bonesModel.indexOf(targetObject.effectorBone)
                     }
-                }
-                GroupBox {
-                    title: qsTr("Upper Angle Limit")
-                    GridLayout {
-                        columns: 2
-                        Label { text: "X" }
-                        SpinBox {
-                            id: ikUpperLimitXSpinBox
-                            maximumValue: 180
-                            minimumValue: -maximumValue
-                            decimals: 5
-                            stepSize: 0.01
-                            value: upperLimit.x
-                        }
-                        Label { text: "Y" }
-                        SpinBox {
-                            id: ikUpperLimitYSpinBox
-                            maximumValue: 180
-                            minimumValue: -maximumValue
-                            decimals: 5
-                            stepSize: 0.01
-                            value: upperLimit.y
-                        }
-                        Label { text: "Z" }
-                        SpinBox {
-                            id: ikUpperLimitZSpinBox
-                            maximumValue: 180
-                            minimumValue: -maximumValue
-                            decimals: 5
-                            stepSize: 0.01
-                            value: upperLimit.z
-                        }
+                    Label { text: qsTr("Number of Iterations") }
+                    SpinBox {
+                        maximumValue: 255
+                        minimumValue: 0
+                        value: targetObject.numIterations
+                    }
+                    Label { text: qsTr("Angle") }
+                    SpinBox {
+                        maximumValue: 360
+                        minimumValue: -maximumValue
+                        value: targetObject.angleLimit
                     }
                 }
             }
-            TableView {
-                Layout.columnSpan: 2
-                Layout.fillWidth: true
-            }
-            RowLayout {
-                Layout.columnSpan: 2
-                Label { text: qsTr("Link Bone") }
-                ComboBox {
-                    model: bonesModel
-                    editable: true
+            GroupBox {
+                title: qsTr("Joint Bones")
+                ColumnLayout {
+                    TableView {
+                        Layout.columnSpan: 2
+                        Layout.fillWidth: true
+                    }
+                    RowLayout {
+                        Layout.columnSpan: 2
+                        Label { text: qsTr("Link Bone") }
+                        ComboBox {
+                            model: bonesModel
+                            editable: true
+                        }
+                        Button { text: qsTr("Add") }
+                    }
+                    CheckBox {
+                        id: enableAngularLimitCheckbox
+                        text: qsTr("Enable Angular Limit")
+                        checked: false
+                    }
+                    RowLayout {
+                        GroupBox {
+                            title: qsTr("Lower Angle Limit")
+                            enabled: enableAngularLimitCheckbox.checked
+                            GridLayout {
+                                columns: 2
+                                Label { text: "X" }
+                                SpinBox {
+                                    id: ikLowerLimitXSpinBox
+                                    maximumValue: 180
+                                    minimumValue: -maximumValue
+                                    decimals: 5
+                                    stepSize: 0.01
+                                    value: lowerLimit.x
+                                }
+                                Label { text: "Y" }
+                                SpinBox {
+                                    id: ikLowerLimitYSpinBox
+                                    maximumValue: 180
+                                    minimumValue: -maximumValue
+                                    decimals: 5
+                                    stepSize: 0.01
+                                    value: lowerLimit.y
+                                }
+                                Label { text: "Z" }
+                                SpinBox {
+                                    id: ikLowerLimitZSpinBox
+                                    maximumValue: 180
+                                    minimumValue: -maximumValue
+                                    decimals: 5
+                                    stepSize: 0.01
+                                    value: lowerLimit.z
+                                }
+                            }
+                        }
+                        GroupBox {
+                            title: qsTr("Upper Angle Limit")
+                            enabled: enableAngularLimitCheckbox.checked
+                            GridLayout {
+                                columns: 2
+                                Label { text: "X" }
+                                SpinBox {
+                                    id: ikUpperLimitXSpinBox
+                                    maximumValue: 180
+                                    minimumValue: -maximumValue
+                                    decimals: 5
+                                    stepSize: 0.01
+                                    value: upperLimit.x
+                                }
+                                Label { text: "Y" }
+                                SpinBox {
+                                    id: ikUpperLimitYSpinBox
+                                    maximumValue: 180
+                                    minimumValue: -maximumValue
+                                    decimals: 5
+                                    stepSize: 0.01
+                                    value: upperLimit.y
+                                }
+                                Label { text: "Z" }
+                                SpinBox {
+                                    id: ikUpperLimitZSpinBox
+                                    maximumValue: 180
+                                    minimumValue: -maximumValue
+                                    decimals: 5
+                                    stepSize: 0.01
+                                    value: upperLimit.z
+                                }
+                            }
+                        }
+                    }
                 }
-                Button { text: qsTr("Add") }
             }
+            Item { height: 20 }
         }
-        Item { height: 20 }
     }
 }

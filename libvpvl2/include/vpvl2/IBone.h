@@ -61,7 +61,7 @@ public:
         virtual IBone *targetBoneRef() const = 0;
         virtual void setTargetBoneRef(IBone *value) = 0;
         virtual bool hasAngleLimit() const = 0;
-        virtual void setAngleLimit(bool value) = 0;
+        virtual void setHasAngleLimit(bool value) = 0;
         virtual Vector3 lowerLimit() const = 0;
         virtual void setLowerLimit(const Vector3 &value) = 0;
         virtual Vector3 upperLimit() const = 0;
