@@ -461,7 +461,6 @@ static inline void writeStringAsByteArray(const IString *string, const IEncoding
     VPVL2_DCHECK_GT(bufsiz, vsize(0));
     int size = bufsiz;
     uint8 *bytes = encodingRef->toByteArray(string, codec, size);
-    VPVL2_VLOG(1, "size=" << size << " bufsiz=" << bufsiz);
     zerofill(dst, bufsiz);
     writeBytes(bytes, size, dst);
     encodingRef->disposeByteArray(bytes);
