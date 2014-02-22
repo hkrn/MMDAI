@@ -453,6 +453,7 @@ TEST(SceneTest, CreateRenderEngine)
         asset::Model model(&encoding);
         std::unique_ptr<IRenderEngine> engine(scene.createRenderEngine(&applicationContext, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::AssetRenderEngine *>(engine.get()));
+        engine->release();
         engine.reset(scene.createRenderEngine(&applicationContext, &model, Scene::kEffectCapable));
         ASSERT_TRUE(dynamic_cast<fx::AssetRenderEngine *>(engine.get()));
         engine->release();
@@ -465,6 +466,7 @@ TEST(SceneTest, CreateRenderEngine)
 #endif
         std::unique_ptr<IRenderEngine> engine(scene.createRenderEngine(&applicationContext, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.get()));
+        engine->release();
         engine.reset(scene.createRenderEngine(&applicationContext, &model, Scene::kEffectCapable));
         ASSERT_TRUE(dynamic_cast<fx::PMXRenderEngine *>(engine.get()));
         engine->release();
@@ -473,6 +475,7 @@ TEST(SceneTest, CreateRenderEngine)
         pmx::Model model(&encoding);
         std::unique_ptr<IRenderEngine> engine(scene.createRenderEngine(&applicationContext, &model, 0));
         ASSERT_TRUE(dynamic_cast<gl2::PMXRenderEngine *>(engine.get()));
+        engine->release();
         engine.reset(scene.createRenderEngine(&applicationContext, &model, Scene::kEffectCapable));
         ASSERT_TRUE(dynamic_cast<fx::PMXRenderEngine *>(engine.get()));
         engine->release();

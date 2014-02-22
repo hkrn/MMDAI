@@ -82,7 +82,7 @@ struct Archive::PrivateContext {
         std::string &bytes = originalEntries[entry];
         uint32 size(finfo.uncompressed_size);
         bytes.resize(size);
-        VPVL2_VLOG(1, "filename=" << entry << " size=" << size);
+        VPVL2_VLOG(2, "filename=" << entry << " size=" << size);
         int err = unzOpenCurrentFile(file);
         if (err != Z_OK) {
             VPVL2_LOG(WARNING, "Cannot open the file " << entry << " in zip: " << err);

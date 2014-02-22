@@ -146,7 +146,7 @@ TEST(PMXModelTest, ParseRealPMX)
         EXPECT_TRUE(model.load(reinterpret_cast<const uint8 *>(bytes.constData()), bytes.size()));
         EXPECT_EQ(IModel::kNoError, model.error());
         EXPECT_EQ(IModel::kPMXModel, model.type());
-
+#if 0
         QByteArray bytes2;
         bytes2.resize(model.estimateSize());;
         vsize written;
@@ -161,6 +161,7 @@ TEST(PMXModelTest, ParseRealPMX)
         pmx::Model model2(&encoding);
         qDebug() << "result:" << model2.load(reinterpret_cast<const uint8 *>(bytes3.constData()), bytes3.size())
                  << model2.error() << "estimated:" << model.estimateSize() << "actual:" << written;
+#endif
     }
     else {
         // skip

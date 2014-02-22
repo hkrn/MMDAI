@@ -88,6 +88,13 @@ BaseJoint::BaseJoint(IModel *modelRef)
 
 BaseJoint::~BaseJoint()
 {
+    void *bodyPtr = 0;
+    if (m_rigidBody1Ref && (bodyPtr = m_rigidBody1Ref->bodyPtr())) {
+        static_cast<btRigidBody *>(bodyPtr)->removeConstraintRef(m_constraint);
+    }
+    if (m_rigidBody2Ref && (bodyPtr = m_rigidBody2Ref->bodyPtr())) {
+        static_cast<btRigidBody *>(bodyPtr)->removeConstraintRef(m_constraint);
+    }
     internal::deleteObject(m_constraint);
     internal::deleteObject(m_ptr);
     internal::deleteObject(m_name);
