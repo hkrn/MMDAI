@@ -98,6 +98,7 @@ PFNGLPOINTSIZEPROC glPointSize = 0;
 PFNGLPOLYGONMODEPROC glPolygonMode = 0;
 PFNGLPOLYGONOFFSETPROC glPolygonOffset = 0;
 PFNGLPROGRAMPARAMETERIPROC glProgramParameteri = 0;
+PFNGLPROGRAMPARAMETERIPROC glProgramParameteriARB = 0;
 PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage = 0;
 PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisample = 0;
 PFNGLRENDERBUFFERSTORAGEMULTISAMPLECOVERAGENVPROC glRenderbufferStorageMultisampleCoverageNV = 0;
@@ -222,6 +223,7 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glPolygonMode = reinterpret_cast<PFNGLPOLYGONMODEPROC>(resolver->resolve("glPolygonMode"));
     glPolygonOffset = reinterpret_cast<PFNGLPOLYGONOFFSETPROC>(resolver->resolve("glPolygonOffset"));
     glProgramParameteri = reinterpret_cast<PFNGLPROGRAMPARAMETERIPROC>(resolver->resolve("glProgramParameteri"));
+    glProgramParameteriARB = reinterpret_cast<PFNGLPROGRAMPARAMETERIPROC>(resolver->resolve("glProgramParameteriARB"));
     glRenderbufferStorage = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEPROC>(resolver->resolve("glRenderbufferStorage"));
     glRenderbufferStorageMultisample = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(resolver->resolve("glRenderbufferStorageMultisample"));
     glShaderSource = reinterpret_cast<PFNGLSHADERSOURCEPROC>(resolver->resolve("glShaderSource"));
