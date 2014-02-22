@@ -487,12 +487,10 @@ TEST_P(PMXFragmentTest, ReadWriteBone)
     expected.setParentBoneRef(&parent);
     expected.setParentInherentBoneRef(&parentInherent);
     expected.setInherentCoefficient(0.61);
-    expected.setEffectorBoneRef(&effector, 3, 0.71);
     expected.setRotateable(true);
     expected.setMovable(true);
     expected.setVisible(true);
     expected.setInteractive(true);
-    expected.setHasInverseKinematics(true);
     expected.setInherentOrientationEnable(true);
     expected.setInherentTranslationEnable(true);
     expected.setFixedAxisEnable(true);
@@ -516,7 +514,6 @@ TEST_P(PMXFragmentTest, ReadWriteBone)
     Bone::loadBones(bones);
     ASSERT_EQ(&parent, actual.parentBoneRef());
     ASSERT_EQ(&parentInherent, actual.parentInherentBoneRef());
-    ASSERT_EQ(&effector, actual.effectorBoneRef());
 }
 
 TEST_P(PMXFragmentTest, ReadWriteJoint)

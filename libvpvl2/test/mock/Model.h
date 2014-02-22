@@ -59,6 +59,8 @@ class MockIModel : public IModel {
       void(Array<IVertex *> &value));
   MOCK_CONST_METHOD1(getIndices,
       void(Array<int> &value));
+  MOCK_CONST_METHOD1(getIKConstraintRefs,
+      void(Array<IBone::IKConstraint *> &value));
   MOCK_CONST_METHOD1(edgeScaleFactor,
       IVertex::EdgeSizePrecision(const Vector3 &cameraPosition));
   MOCK_CONST_METHOD0(worldTranslation,

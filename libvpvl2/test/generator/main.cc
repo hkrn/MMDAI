@@ -146,7 +146,6 @@ void CreateModel(IModel *model, const char *filename)
         bone->setMovable(true);
         bone->setVisible(true);
         bone->setInteractive(true);
-        bone->setHasInverseKinematics(true);
         bone->setInherentOrientationEnable(true);
         bone->setInherentTranslationEnable(true);
         bone->setLocalAxesEnable(true);
