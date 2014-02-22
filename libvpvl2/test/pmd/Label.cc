@@ -22,3 +22,60 @@ TEST(PMDModelTest, AddAndRemoveLabel)
     model.addLabel(&mockedLabel);
     ASSERT_EQ(0, model.labels().count());
 }
+
+TEST(PMDLabelTest, AddAndRemoveBone)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Label label(&model, &encoding, reinterpret_cast<const uint8 *>(""), Label::kBoneCategoryLabel);
+    Bone bone(&model, &encoding);
+    label.addBoneRef(&bone);
+    ASSERT_EQ(1, label.count());
+    ASSERT_EQ(&bone, label.boneRef(0));
+    ASSERT_EQ(static_cast<IMorph *>(0), label.morphRef(0));
+    label.removeBoneRef(&bone);
+    ASSERT_EQ(0, label.count());
+}
+
+TEST(PMDLabelTest, AddAndRemoveMorph)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Label label(&model, &encoding, reinterpret_cast<const uint8 *>(""), Label::kMorphCategoryLabel);
+    Morph morph(&model, &encoding);
+    label.addMorphRef(&morph);
+    ASSERT_EQ(1, label.count());
+    ASSERT_EQ(static_cast<IBone *>(0), label.boneRef(0));
+    ASSERT_EQ(&morph, label.morphRef(0));
+    label.removeMorphRef(&morph);
+    ASSERT_EQ(0, label.count());
+}
+
+TEST(PMDLabelTest, AddAndRemoveBoneReference)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Label label(&model, &encoding, reinterpret_cast<const uint8 *>(""), Label::kBoneCategoryLabel);
+    std::unique_ptr<Bone> bone(new Bone(&model, &encoding));
+    label.addBoneRef(bone.get());
+    ASSERT_EQ(1, label.count());
+    ASSERT_EQ(bone.get(), label.boneRef(0));
+    ASSERT_EQ(static_cast<IMorph *>(0), label.morphRef(0));
+    bone.reset();
+    ASSERT_EQ(0, label.count());
+}
+
+TEST(PMDLabelTest, AddAndRemoveMorphReference)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Label label(&model, &encoding, reinterpret_cast<const uint8 *>(""), Label::kMorphCategoryLabel);
+    std::unique_ptr<Morph> morph(new Morph(&model, &encoding));
+    label.addMorphRef(morph.get());
+    ASSERT_EQ(1, label.count());
+    ASSERT_EQ(static_cast<IBone *>(0), label.boneRef(0));
+    ASSERT_EQ(morph.get(), label.morphRef(0));
+    morph.reset();
+    ASSERT_EQ(0, label.count());
+}
+

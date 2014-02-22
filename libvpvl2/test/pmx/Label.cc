@@ -43,3 +43,50 @@ TEST(PMXModelTest, AddAndRemoveLabel)
     model.addLabel(&mockedLabel);
     ASSERT_EQ(0, model.labels().count());
 }
+
+TEST(PMXLabelTest, AddAndRemoveBoneReference)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Label label(&model);
+    std::unique_ptr<Bone> bone(new Bone(&model));
+    label.addBoneRef(bone.get());
+    ASSERT_EQ(1, label.count());
+    ASSERT_EQ(bone.get(), label.boneRef(0));
+    ASSERT_EQ(static_cast<IMorph *>(0), label.morphRef(0));
+    bone.reset();
+    ASSERT_EQ(0, label.count());
+}
+
+TEST(PMXLabelTest, AddAndRemoveMorphReference)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Label label(&model);
+    std::unique_ptr<Morph> morph(new Morph(&model));
+    label.addMorphRef(morph.get());
+    ASSERT_EQ(1, label.count());
+    ASSERT_EQ(static_cast<IBone *>(0), label.boneRef(0));
+    ASSERT_EQ(morph.get(), label.morphRef(0));
+    morph.reset();
+    ASSERT_EQ(0, label.count());
+}
+
+TEST(PMXLabelTest, AddAndRemoveMixed)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Label label(&model);
+    Bone bone(&model);
+    Morph morph(&model);
+    label.addBoneRef(&bone);
+    label.addMorphRef(&morph);
+    ASSERT_EQ(2, label.count());
+    ASSERT_EQ(&bone, label.boneRef(0));
+    ASSERT_EQ(static_cast<IMorph *>(0), label.morphRef(0));
+    ASSERT_EQ(static_cast<IBone *>(0), label.boneRef(1));
+    ASSERT_EQ(&morph, label.morphRef(1));
+    label.removeBoneRef(&bone);
+    label.removeMorphRef(&morph);
+    ASSERT_EQ(0, label.count());
+}

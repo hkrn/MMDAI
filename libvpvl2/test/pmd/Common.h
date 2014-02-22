@@ -6,6 +6,7 @@
 #include "vpvl2/extensions/icu4c/String.h"
 #include "vpvl2/pmd2/Bone.h"
 #include "vpvl2/pmd2/Joint.h"
+#include "vpvl2/pmd2/Label.h"
 #include "vpvl2/pmd2/Material.h"
 #include "vpvl2/pmd2/Model.h"
 #include "vpvl2/pmd2/Morph.h"

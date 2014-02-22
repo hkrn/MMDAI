@@ -498,6 +498,7 @@ void Label::addMorphRef(IMorph *value)
             }
         }
         if (!found) {
+            morphRef->setInternalParentLabelRef(this);
             m_context->morphRefs.append(morphRef);
         }
     }
