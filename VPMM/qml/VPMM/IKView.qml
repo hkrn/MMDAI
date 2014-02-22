@@ -45,20 +45,6 @@ ScrollView {
     property var targetObject
     Item {
         id: ikContentView
-        VPMM.Vector3 { id: upperLimit; value: targetObject.upperLimit }
-        VPMM.Vector3 { id: lowerLimit; value: targetObject.lowerLimit }
-        Binding {
-            target: targetObject
-            property: "upperLimit"
-            value: upperLimit.value
-            when: ikLowerLimitXSpinBox.hovered || ikLowerLimitYSpinBox.hovered || ikLowerLimitZSpinBox.hovered
-        }
-        Binding {
-            target: targetObject
-            property: "lowerLimit"
-            value: lowerLimit.value
-            when: ikUpperLimitXSpinBox.hovered || ikUpperLimitYSpinBox.hovered || ikUpperLimitZSpinBox.hovered
-        }
         ColumnLayout {
             anchors.fill: parent
             anchors.margins: 12
@@ -92,8 +78,12 @@ ScrollView {
                 title: qsTr("Joint Bones")
                 ColumnLayout {
                     TableView {
+                        id: ikJointsModelView
+                        property var currentJoint: targetObject.allChildJoints[currentRow]
                         Layout.columnSpan: 2
                         Layout.fillWidth: true
+                        model: targetObject.allChildJoints
+                        TableViewColumn { title: "name"; role: "name" }
                     }
                     RowLayout {
                         Layout.columnSpan: 2
@@ -107,40 +97,60 @@ ScrollView {
                     CheckBox {
                         id: enableAngularLimitCheckbox
                         text: qsTr("Enable Angular Limit")
-                        checked: false
+                        checked: {
+                            if (ikJointsModelView.currentRow >= 0) {
+                                var currentJoint = ikJointsModelView.currentJoint
+                                return currentJoint ? currentJoint.hasAngleLimit : false
+                            }
+                            return false
+                        }
                     }
                     RowLayout {
                         GroupBox {
                             title: qsTr("Lower Angle Limit")
                             enabled: enableAngularLimitCheckbox.checked
+                            VPMM.Vector3 { id: ikJointUpperLimit; value: enableAngularLimitCheckbox.checked ? ikJointsModelView.currentJoint.degreeUpperLimit : Qt.vector3d(0, 0, 0) }
+                            VPMM.Vector3 { id: ikJointLowerLimit; value: enableAngularLimitCheckbox.checked ? ikJointsModelView.currentJoint.degreeLowerLimit : Qt.vector3d(0, 0, 0) }
+                            Binding {
+                                target: targetObject
+                                property: "upperLimit"
+                                value: ikJointUpperLimit.value
+                                when: ikLowerLimitXSpinBox.hovered || ikLowerLimitYSpinBox.hovered || ikLowerLimitZSpinBox.hovered
+                            }
+                            Binding {
+                                target: targetObject
+                                property: "lowerLimit"
+                                value: ikJointLowerLimit.value
+                                when: ikUpperLimitXSpinBox.hovered || ikUpperLimitYSpinBox.hovered || ikUpperLimitZSpinBox.hovered
+                            }
                             GridLayout {
                                 columns: 2
                                 Label { text: "X" }
                                 SpinBox {
                                     id: ikLowerLimitXSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
-                                    value: lowerLimit.x
+                                    decimals: 1
+                                    stepSize: 1
+                                    value: ikJointLowerLimit.x
                                 }
                                 Label { text: "Y" }
                                 SpinBox {
                                     id: ikLowerLimitYSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
-                                    value: lowerLimit.y
+                                    decimals: 1
+                                    stepSize: 1
+                                    value: ikJointLowerLimit.y
                                 }
                                 Label { text: "Z" }
                                 SpinBox {
                                     id: ikLowerLimitZSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
-                                    value: lowerLimit.z
+                                    decimals: 1
+                                    stepSize: 1
+                                    value: ikJointLowerLimit.z
                                 }
                             }
                         }
@@ -152,29 +162,29 @@ ScrollView {
                                 Label { text: "X" }
                                 SpinBox {
                                     id: ikUpperLimitXSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
-                                    value: upperLimit.x
+                                    decimals: 1
+                                    stepSize: 1
+                                    value: ikJointUpperLimit.x
                                 }
                                 Label { text: "Y" }
                                 SpinBox {
                                     id: ikUpperLimitYSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
-                                    value: upperLimit.y
+                                    decimals: 1
+                                    stepSize: 1
+                                    value: ikJointUpperLimit.y
                                 }
                                 Label { text: "Z" }
                                 SpinBox {
                                     id: ikUpperLimitZSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
-                                    value: upperLimit.z
+                                    decimals: 1
+                                    stepSize: 1
+                                    value: ikJointUpperLimit.z
                                 }
                             }
                         }

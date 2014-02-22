@@ -85,6 +85,16 @@ QVector3D Util::fromVector3(const Vector3 &value)
     return QVector3D(value.x(), value.y(), value.z());
 }
 
+Vector3 Util::toVector3Radian(const QVector3D &value)
+{
+    return Vector3(qDegreesToRadians(value.x()), qDegreesToRadians(value.y()), qDegreesToRadians(value.z()));
+}
+
+QVector3D Util::fromVector3Radian(const Vector3 &value)
+{
+    return QVector3D(qRadiansToDegrees(value.x()), qRadiansToDegrees(value.y()), qRadiansToDegrees(value.z()));
+}
+
 vpvl2::Vector4 Util::toVector4(const QVector4D &value)
 {
     return Vector4(value.x(), value.y(), value.z(), value.w());

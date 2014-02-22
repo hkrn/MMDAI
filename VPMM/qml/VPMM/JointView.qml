@@ -49,10 +49,10 @@ ScrollView {
         VPMM.Vector3 { id: jointRotation; value: targetObject.rotation }
         VPMM.Vector3 { id: jointPositionUpperLimit; value: targetObject.positionUpperLimit }
         VPMM.Vector3 { id: jointPositionLowerLimit; value: targetObject.positionLowerLimit }
-        VPMM.Vector3 { id: jointRotationUpperLimit; value: targetObject.rotationUpperLimit }
-        VPMM.Vector3 { id: jointRotationLowerLimit; value: targetObject.rotationLowerLimit }
+        VPMM.Vector3 { id: jointRotationUpperLimit; value: targetObject.degreeRotationUpperLimit }
+        VPMM.Vector3 { id: jointRotationLowerLimit; value: targetObject.degreeRotationLowerLimit }
         VPMM.Vector3 { id: jointPositionStiffness; value: targetObject.positionStiffness }
-        VPMM.Vector3 { id: jointRotationStiffness; value: targetObject.rotationStiffness }
+        VPMM.Vector3 { id: jointRotationStiffness; value: targetObject.degreeRotationStiffness }
         Binding {
             target: targetObject
             property: "position"
@@ -199,28 +199,28 @@ ScrollView {
                         Label { text: "X" }
                         SpinBox {
                             id: jointRotationXSpinBox
-                            maximumValue: 180
+                            maximumValue: 360
                             minimumValue: -maximumValue
-                            decimals: 5
-                            stepSize: 0.01
+                            decimals: 1
+                            stepSize: 1
                             value: jointRotation.x
                         }
                         Label { text: "Y" }
                         SpinBox {
                             id: jointRotationYSpinBox
-                            maximumValue: 180
+                            maximumValue: 360
                             minimumValue: -maximumValue
-                            decimals: 5
-                            stepSize: 0.01
+                            decimals: 1
+                            stepSize: 1
                             value: jointRotation.y
                         }
                         Label { text: "Z" }
                         SpinBox {
                             id: jointRotationZSpinBox
-                            maximumValue: 180
+                            maximumValue: 360
                             minimumValue: -maximumValue
-                            decimals: 5
-                            stepSize: 0.01
+                            decimals: 1
+                            stepSize: 1
                             value: jointRotation.z
                         }
                     }
@@ -271,28 +271,28 @@ ScrollView {
                                 Label { text: "X" }
                                 SpinBox {
                                     id: jointRotationUpperLimitXSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
+                                    decimals: 1
+                                    stepSize: 1
                                     value: jointRotationUpperLimit.x
                                 }
                                 Label { text: "Y" }
                                 SpinBox {
                                     id: jointRotationUpperLimitYSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
+                                    decimals: 1
+                                    stepSize: 1
                                     value: jointRotationUpperLimit.y
                                 }
                                 Label { text: "Z" }
                                 SpinBox {
                                     id: jointRotationUpperLimitZSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
+                                    decimals: 1
+                                    stepSize: 1
                                     value: jointRotationUpperLimit.z
                                 }
                             }
@@ -345,28 +345,28 @@ ScrollView {
                                 Label { text: "X" }
                                 SpinBox {
                                     id: jointRotationLowerLimitXSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
+                                    decimals: 1
+                                    stepSize: 1
                                     value: jointRotationLowerLimit.x
                                 }
                                 Label { text: "Y" }
                                 SpinBox {
                                     id: jointRotationLowerLimitYSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
+                                    decimals: 1
+                                    stepSize: 1
                                     value: jointRotationLowerLimit.y
                                 }
                                 Label { text: "Z" }
                                 SpinBox {
                                     id: jointRotationLowerLimitZSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
+                                    decimals: 1
+                                    stepSize: 1
                                     value: jointRotationLowerLimit.z
                                 }
                             }
@@ -419,28 +419,28 @@ ScrollView {
                                 Label { text: "X" }
                                 SpinBox {
                                     id: jointRotationStiffnessXSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
+                                    decimals: 1
+                                    stepSize: 1
                                     value: jointRotationStiffness.x
                                 }
                                 Label { text: "Y" }
                                 SpinBox {
                                     id: jointRotationStiffnessYSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
+                                    decimals: 1
+                                    stepSize: 1
                                     value: jointRotationStiffness.y
                                 }
                                 Label { text: "Z" }
                                 SpinBox {
                                     id: jointRotationStiffnessZSpinBox
-                                    maximumValue: 180
+                                    maximumValue: 360
                                     minimumValue: -maximumValue
-                                    decimals: 5
-                                    stepSize: 0.01
+                                    decimals: 1
+                                    stepSize: 1
                                     value: jointRotationStiffness.z
                                 }
                             }

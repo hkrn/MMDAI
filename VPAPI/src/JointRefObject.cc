@@ -206,6 +206,21 @@ void JointRefObject::setRotation(const QVector3D &value)
     }
 }
 
+QVector3D JointRefObject::degreeRotation() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3Radian(m_jointRef->rotation());
+}
+
+void JointRefObject::setDegreeRotation(const QVector3D &value)
+{
+    if (!qFuzzyCompare(position(), value)) {
+        m_jointRef->setRotation(Util::toVector3Radian(value));
+        setDirty(true);
+        emit rotationChanged();
+    }
+}
+
 QVector3D JointRefObject::positionUpperLimit() const
 {
     Q_ASSERT(m_jointRef);
@@ -231,6 +246,21 @@ void JointRefObject::setRotationUpperLimit(const QVector3D &value)
 {
     if (!qFuzzyCompare(rotationUpperLimit(), value)) {
         m_jointRef->setRotationUpperLimit(Util::toVector3(value));
+        setDirty(true);
+        emit rotationUpperLimitChanged();
+    }
+}
+
+QVector3D JointRefObject::degreeRotationUpperLimit() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3Radian(m_jointRef->rotationUpperLimit());
+}
+
+void JointRefObject::setDegreeRotationUpperLimit(const QVector3D &value)
+{
+    if (!qFuzzyCompare(rotationUpperLimit(), value)) {
+        m_jointRef->setRotationUpperLimit(Util::toVector3Radian(value));
         setDirty(true);
         emit rotationUpperLimitChanged();
     }
@@ -266,6 +296,21 @@ void JointRefObject::setRotationLowerLimit(const QVector3D &value)
     }
 }
 
+QVector3D JointRefObject::degreeRotationLowerLimit() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3Radian(m_jointRef->rotationLowerLimit());
+}
+
+void JointRefObject::setDegreeRotationLowerLimit(const QVector3D &value)
+{
+    if (!qFuzzyCompare(rotationLowerLimit(), value)) {
+        m_jointRef->setRotationLowerLimit(Util::toVector3Radian(value));
+        setDirty(true);
+        emit rotationLowerLimitChanged();
+    }
+}
+
 QVector3D JointRefObject::positionStiffness() const
 {
     Q_ASSERT(m_jointRef);
@@ -291,6 +336,21 @@ void JointRefObject::setRotationStiffness(const QVector3D &value)
 {
     if (!qFuzzyCompare(rotationStiffness(), value)) {
         m_jointRef->setRotationStiffness(Util::toVector3(value));
+        setDirty(true);
+        emit rotationStiffnessChanged();
+    }
+}
+
+QVector3D JointRefObject::degreeRotationStiffness() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3Radian(m_jointRef->rotationStiffness());
+}
+
+void JointRefObject::setDegreeRotationStiffness(const QVector3D &value)
+{
+    if (!qFuzzyCompare(rotationStiffness(), value)) {
+        m_jointRef->setRotationStiffness(Util::toVector3Radian(value));
         setDirty(true);
         emit rotationStiffnessChanged();
     }

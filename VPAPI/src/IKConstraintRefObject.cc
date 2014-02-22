@@ -43,11 +43,14 @@
 
 using namespace vpvl2;
 
-ChildIKJoint::ChildIKJoint(IKRefObject *parentConstraintRef, IBone::IKJoint *jointRef)
+ChildIKJoint::ChildIKJoint(IKConstraintRefObject *parentConstraintRef, IBone::IKJoint *jointRef)
     : QObject(parentConstraintRef),
       m_parentConstraintRef(parentConstraintRef),
       m_jointRef(jointRef)
 {
+    Q_ASSERT(m_parentConstraintRef);
+    Q_ASSERT(m_jointRef);
+    connect(targetBone(), &BoneRefObject::nameChanged, this, &ChildIKJoint::nameChanged);
 }
 
 ChildIKJoint::~ChildIKJoint()
@@ -56,9 +59,21 @@ ChildIKJoint::~ChildIKJoint()
     m_jointRef = 0;
 }
 
-IKRefObject *ChildIKJoint::parentConstraint() const
+IKConstraintRefObject *ChildIKJoint::parentConstraint() const
 {
     return m_parentConstraintRef;
+}
+
+BoneRefObject *ChildIKJoint::targetBone() const
+{
+    Q_ASSERT(m_parentConstraintRef);
+    Q_ASSERT(m_jointRef);
+    return m_parentConstraintRef->parentModel()->resolveBoneRef(m_jointRef->targetBoneRef());
+}
+
+QString ChildIKJoint::name() const
+{
+    return targetBone()->name();
 }
 
 QVector3D ChildIKJoint::upperLimit() const
@@ -95,6 +110,40 @@ void ChildIKJoint::setLowerLimit(const QVector3D &value)
     }
 }
 
+QVector3D ChildIKJoint::degreeUpperLimit() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3Radian(m_jointRef->upperLimit());
+}
+
+void ChildIKJoint::setDegreeUpperLimit(const QVector3D &value)
+{
+    Q_ASSERT(m_jointRef);
+    Q_ASSERT(m_parentConstraintRef);
+    if (!qFuzzyCompare(upperLimit(), value)) {
+        m_jointRef->setUpperLimit(Util::toVector3Radian(value));
+        m_parentConstraintRef->setDirty(true);
+        emit upperLimitChanged();
+    }
+}
+
+QVector3D ChildIKJoint::degreeLowerLimit() const
+{
+    Q_ASSERT(m_jointRef);
+    return Util::fromVector3Radian(m_jointRef->lowerLimit());
+}
+
+void ChildIKJoint::setDegreeLowerLimit(const QVector3D &value)
+{
+    Q_ASSERT(m_jointRef);
+    Q_ASSERT(m_parentConstraintRef);
+    if (!qFuzzyCompare(lowerLimit(), value)) {
+        m_jointRef->setLowerLimit(Util::toVector3Radian(value));
+        m_parentConstraintRef->setDirty(true);
+        emit lowerLimitChanged();
+    }
+}
+
 bool ChildIKJoint::hasAngleLimit() const
 {
     Q_ASSERT(m_jointRef);
@@ -112,7 +161,7 @@ void ChildIKJoint::setHasAngleLimit(bool value)
     }
 }
 
-IKRefObject::IKRefObject(ModelProxy *parentModel,
+IKConstraintRefObject::IKConstraintRefObject(ModelProxy *parentModel,
                          IBone::IKConstraint *constraintRef,
                          const QUuid &uuid,
                          int index)
@@ -128,7 +177,7 @@ IKRefObject::IKRefObject(ModelProxy *parentModel,
     Q_ASSERT(!m_uuid.isNull());
 }
 
-IKRefObject::~IKRefObject()
+IKConstraintRefObject::~IKConstraintRefObject()
 {
     qDeleteAll(m_childJoints);
     m_childJoints.clear();
@@ -137,7 +186,7 @@ IKRefObject::~IKRefObject()
     m_dirty = false;
 }
 
-void IKRefObject::initialize()
+void IKConstraintRefObject::initialize()
 {
     Array<IBone::IKJoint *> joints;
     m_constraintRef->getJointRefs(joints);
@@ -148,34 +197,44 @@ void IKRefObject::initialize()
     }
 }
 
-bool IKRefObject::isDirty() const
+bool IKConstraintRefObject::isDirty() const
 {
     return m_dirty;
 }
 
-QUuid IKRefObject::uuid() const
+ModelProxy *IKConstraintRefObject::parentModel() const
+{
+    return m_parentModelRef;
+}
+
+QUuid IKConstraintRefObject::uuid() const
 {
     return m_uuid;
 }
 
-QString IKRefObject::name() const
+QString IKConstraintRefObject::name() const
 {
     return m_uuid.toString();
 }
 
-int IKRefObject::index() const
+int IKConstraintRefObject::index() const
 {
     return m_index;
 }
 
-BoneRefObject *IKRefObject::rootBone() const
+QQmlListProperty<ChildIKJoint> IKConstraintRefObject::allChildJoints()
+{
+    return QQmlListProperty<ChildIKJoint>(this, m_childJoints);
+}
+
+BoneRefObject *IKConstraintRefObject::rootBone() const
 {
     Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_constraintRef);
     return m_parentModelRef->resolveBoneRef(m_constraintRef->rootBoneRef());
 }
 
-void IKRefObject::setRootBone(BoneRefObject *value)
+void IKConstraintRefObject::setRootBone(BoneRefObject *value)
 {
     Q_ASSERT(m_constraintRef);
     if (rootBone() != value) {
@@ -184,14 +243,14 @@ void IKRefObject::setRootBone(BoneRefObject *value)
     }
 }
 
-BoneRefObject *IKRefObject::effectorBone() const
+BoneRefObject *IKConstraintRefObject::effectorBone() const
 {
     Q_ASSERT(m_parentModelRef);
     Q_ASSERT(m_constraintRef);
     return m_parentModelRef->resolveBoneRef(m_constraintRef->effectorBoneRef());
 }
 
-void IKRefObject::setEffectorBone(BoneRefObject *value)
+void IKConstraintRefObject::setEffectorBone(BoneRefObject *value)
 {
     Q_ASSERT(m_constraintRef);
     if (effectorBone() != value) {
@@ -200,13 +259,13 @@ void IKRefObject::setEffectorBone(BoneRefObject *value)
     }
 }
 
-qreal IKRefObject::angleLimit() const
+qreal IKConstraintRefObject::angleLimit() const
 {
     Q_ASSERT(m_constraintRef);
     return m_constraintRef->angleLimit();
 }
 
-void IKRefObject::setAngleLimit(qreal value)
+void IKConstraintRefObject::setAngleLimit(qreal value)
 {
     Q_ASSERT(m_constraintRef);
     if (!qFuzzyCompare(angleLimit(), value)) {
@@ -215,13 +274,13 @@ void IKRefObject::setAngleLimit(qreal value)
     }
 }
 
-int IKRefObject::numIterations() const
+int IKConstraintRefObject::numIterations() const
 {
     Q_ASSERT(m_constraintRef);
     return m_constraintRef->numIterations();
 }
 
-void IKRefObject::setNumIterations(int value)
+void IKConstraintRefObject::setNumIterations(int value)
 {
     Q_ASSERT(m_constraintRef);
     if (numIterations() != value) {
@@ -230,7 +289,7 @@ void IKRefObject::setNumIterations(int value)
     }
 }
 
-void IKRefObject::setDirty(bool value)
+void IKConstraintRefObject::setDirty(bool value)
 {
     if (isDirty() != value) {
         m_dirty = value;

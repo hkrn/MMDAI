@@ -106,6 +106,7 @@ static void registerQmlTypes()
     qmlRegisterUncreatableType<ChildBoneMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildBoneMorph", "");
     qmlRegisterUncreatableType<ChildFlipMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildFlipMorph", "");
     qmlRegisterUncreatableType<ChildGroupMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildGroupMorph", "");
+    qmlRegisterUncreatableType<ChildIKJoint>("com.github.mmdai.VPMM", 1, 0, "IKJoint", "");
     qmlRegisterUncreatableType<ChildImpulseMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildImpulseMorph", "");
     qmlRegisterUncreatableType<ChildMaterialMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildMaterialMorph", "");
     qmlRegisterUncreatableType<ChildUVMorphRefObject>("com.github.mmdai.VPMM", 1, 0, "ChildUVMorph", "");
@@ -113,7 +114,7 @@ static void registerQmlTypes()
     qmlRegisterUncreatableType<GraphicsDevice>("com.github.mmdai.VPMM", 1, 0, "GraphicsDevice", "");
     qmlRegisterUncreatableType<Grid>("com.github.mmdai.VPMM", 1, 0, "Grid", "");
     qmlRegisterType<Importer>("com.github.mmdai.VPMM", 1, 0, "Importer");
-    qmlRegisterUncreatableType<IKRefObject>("com.github.mmdai.VPMM", 1, 0, "IKConstraint", "");
+    qmlRegisterUncreatableType<IKConstraintRefObject>("com.github.mmdai.VPMM", 1, 0, "IKConstraint", "");
     qmlRegisterUncreatableType<JointRefObject>("com.github.mmdai.VPMM", 1, 0, "Joint", "");
     qmlRegisterUncreatableType<LabelRefObject>("com.github.mmdai.VPMM", 1, 0, "Label", "");
     qmlRegisterUncreatableType<LightKeyframeRefObject>("com.github.mmdai.VPMM", 1, 0, "LightKeyframe", "");

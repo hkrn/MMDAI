@@ -60,12 +60,16 @@ class JointRefObject : public QObject
     Q_PROPERTY(Type type READ type WRITE setType NOTIFY typeChanged FINAL)
     Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged FINAL)
     Q_PROPERTY(QVector3D rotation READ rotation WRITE setRotation NOTIFY rotationChanged FINAL)
+    Q_PROPERTY(QVector3D degreeRotation READ rotation WRITE setDegreeRotation NOTIFY rotationChanged FINAL)
     Q_PROPERTY(QVector3D positionUpperLimit READ positionUpperLimit WRITE setPositionUpperLimit NOTIFY positionUpperLimitChanged FINAL)
     Q_PROPERTY(QVector3D rotationUpperLimit READ rotationUpperLimit WRITE setRotationUpperLimit NOTIFY rotationUpperLimitChanged FINAL)
+    Q_PROPERTY(QVector3D degreeRotationUpperLimit READ degreeRotationUpperLimit WRITE setDegreeRotationUpperLimit NOTIFY rotationUpperLimitChanged FINAL)
     Q_PROPERTY(QVector3D positionLowerLimit READ positionLowerLimit WRITE setPositionLowerLimit NOTIFY positionLowerLimitChanged FINAL)
     Q_PROPERTY(QVector3D rotationLowerLimit READ rotationLowerLimit WRITE setRotationLowerLimit NOTIFY rotationLowerLimitChanged FINAL)
+    Q_PROPERTY(QVector3D degreeRotationLowerLimit READ degreeRotationLowerLimit WRITE setDegreeRotationLowerLimit NOTIFY rotationLowerLimitChanged FINAL)
     Q_PROPERTY(QVector3D positionStiffness READ positionStiffness WRITE setPositionStiffness NOTIFY positionStiffnessChanged FINAL)
     Q_PROPERTY(QVector3D rotationStiffness READ rotationStiffness WRITE setRotationStiffness NOTIFY rotationStiffnessChanged FINAL)
+    Q_PROPERTY(QVector3D degreeRotationStiffness READ degreeRotationStiffness WRITE setDegreeRotationStiffness NOTIFY rotationStiffnessChanged FINAL)
     Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
@@ -101,18 +105,26 @@ public:
     void setPosition(const QVector3D &value);
     QVector3D rotation() const;
     void setRotation(const QVector3D &value);
+    QVector3D degreeRotation() const;
+    void setDegreeRotation(const QVector3D &value);
     QVector3D positionUpperLimit() const;
     void setPositionUpperLimit(const QVector3D &value);
     QVector3D rotationUpperLimit() const;
     void setRotationUpperLimit(const QVector3D &value);
+    QVector3D degreeRotationUpperLimit() const;
+    void setDegreeRotationUpperLimit(const QVector3D &value);
     QVector3D positionLowerLimit() const;
     void setPositionLowerLimit(const QVector3D &value);
     QVector3D rotationLowerLimit() const;
     void setRotationLowerLimit(const QVector3D &value);
+    QVector3D degreeRotationLowerLimit() const;
+    void setDegreeRotationLowerLimit(const QVector3D &value);
     QVector3D positionStiffness() const;
     void setPositionStiffness(const QVector3D &value);
     QVector3D rotationStiffness() const;
     void setRotationStiffness(const QVector3D &value);
+    QVector3D degreeRotationStiffness() const;
+    void setDegreeRotationStiffness(const QVector3D &value);
     bool isDirty() const;
     void setDirty(bool value);
 

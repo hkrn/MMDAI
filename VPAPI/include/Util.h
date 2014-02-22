@@ -76,6 +76,8 @@ public:
     static QMatrix4x4 fromMatrix4(const glm::mat4 &value);
     static vpvl2::Vector3 toVector3(const QVector3D &value);
     static QVector3D fromVector3(const vpvl2::Vector3 &value);
+    static vpvl2::Vector3 toVector3Radian(const QVector3D &value);
+    static QVector3D fromVector3Radian(const vpvl2::Vector3 &value);
     static vpvl2::Vector4 toVector4(const QVector4D &value);
     static QVector4D fromVector4(const vpvl2::Vector4 &value);
     static vpvl2::Vector3 toColorRGB(const QColor &value);

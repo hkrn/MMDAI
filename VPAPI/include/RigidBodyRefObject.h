@@ -59,6 +59,7 @@ class RigidBodyRefObject : public QObject
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged FINAL)
     Q_PROPERTY(QVector3D position READ position WRITE setPosition NOTIFY positionChanged FINAL)
     Q_PROPERTY(QVector3D rotation READ rotation WRITE setRotation NOTIFY rotationChanged FINAL)
+    Q_PROPERTY(QVector3D degreeRotation READ degreeRotation WRITE setDegreeRotation NOTIFY rotationChanged FINAL)
     Q_PROPERTY(ObjectType objectType READ objectType WRITE setObjectType NOTIFY objectTypeChanged FINAL)
     Q_PROPERTY(ShapeType shapeType READ shapeType WRITE setShapeType NOTIFY shapeTypeChanged FINAL)
     Q_PROPERTY(qreal mass READ mass WRITE setMass NOTIFY massChanged FINAL)
@@ -101,6 +102,8 @@ public:
     void setPosition(const QVector3D &value);
     QVector3D rotation() const;
     void setRotation(const QVector3D &value);
+    QVector3D degreeRotation() const;
+    void setDegreeRotation(const QVector3D &value);
     ObjectType objectType() const;
     void setObjectType(const ObjectType &value);
     ShapeType shapeType() const;

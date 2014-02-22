@@ -46,7 +46,7 @@ ScrollView {
     Item {
         id: rigidBodyContentView
         VPMM.Vector3 { id: rigidBodyPosition; value: targetObject.position }
-        VPMM.Vector3 { id: rigidBodyRotation; value: targetObject.rotation }
+        VPMM.Vector3 { id: rigidBodyRotation; value: targetObject.degreeRotation }
         Binding {
             target: targetObject
             property: "posiiton"
@@ -55,7 +55,7 @@ ScrollView {
         }
         Binding {
             target: targetObject
-            property: "rotation"
+            property: "degreeRotation"
             value: rigidBodyRotation.value
             when: rigidBodyRotationXSpinBox.hovered || rigidBodyRotationXSpinBox.hovered || rigidBodyRotationXSpinBox.hovered
         }

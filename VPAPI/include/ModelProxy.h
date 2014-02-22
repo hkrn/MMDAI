@@ -57,7 +57,7 @@
 class QAbstractItemModel;
 class QStringListModel;
 class BoneRefObject;
-class IKRefObject;
+class IKConstraintRefObject;
 class JointRefObject;
 class LabelRefObject;
 class MaterialRefObject;
@@ -101,7 +101,7 @@ class ModelProxy : public QObject
     Q_PROPERTY(QQmlListProperty<VertexRefObject> allVertices READ allVertices NOTIFY allVerticesChanged FINAL)
     Q_PROPERTY(QQmlListProperty<RigidBodyRefObject> allRigidBodies READ allRigidBodies NOTIFY allRigidBodiesChanged FINAL)
     Q_PROPERTY(QQmlListProperty<JointRefObject> allJoints READ allJoints NOTIFY allJointsChanged FINAL)
-    Q_PROPERTY(QQmlListProperty<IKRefObject> allIKConstraints READ allIKConstraints NOTIFY allIKConstraintsChanged FINAL)
+    Q_PROPERTY(QQmlListProperty<IKConstraintRefObject> allIKConstraints READ allIKConstraints NOTIFY allIKConstraintsChanged FINAL)
     Q_PROPERTY(QQmlListProperty<BoneRefObject> targetBones READ targetBones NOTIFY targetBonesChanged FINAL)
     Q_PROPERTY(BoneRefObject *firstTargetBone READ firstTargetBone NOTIFY firstTargetBoneChanged FINAL)
     Q_PROPERTY(MorphRefObject *firstTargetMorph READ firstTargetMorph WRITE setFirstTargetMorph NOTIFY firstTargetMorphChanged FINAL)
@@ -189,7 +189,7 @@ public:
     QQmlListProperty<VertexRefObject> allVertices();
     QQmlListProperty<RigidBodyRefObject> allRigidBodies();
     QQmlListProperty<JointRefObject> allJoints();
-    QQmlListProperty<IKRefObject> allIKConstraints();
+    QQmlListProperty<IKConstraintRefObject> allIKConstraints();
     QQmlListProperty<BoneRefObject> targetBones();
     VersionType version() const;
     void setVersion(const VersionType &value);
@@ -240,7 +240,7 @@ public:
     QList<VertexRefObject *> allVertexRefs() const;
     QList<RigidBodyRefObject *> allRigidBodyRefs() const;
     QList<JointRefObject *> allJointRefs() const;
-    QList<IKRefObject *> allIKConstraintRefs() const;
+    QList<IKConstraintRefObject *> allIKConstraintRefs() const;
 
 signals:
     void parentBindingModelChanged();
@@ -363,7 +363,7 @@ private:
     QHash<const vpvl2::IVertex *, VertexRefObject *> m_vertex2Refs;
     QHash<const vpvl2::IRigidBody *, RigidBodyRefObject *> m_rigidBody2Refs;
     QHash<const vpvl2::IJoint *, JointRefObject *> m_joint2Refs;
-    QHash<const vpvl2::IBone::IKConstraint *, IKRefObject *> m_constraint2Refs;
+    QHash<const vpvl2::IBone::IKConstraint *, IKConstraintRefObject *> m_constraint2Refs;
     QHash<const QString, BoneRefObject *> m_name2BoneRefs;
     QHash<const QUuid, BoneRefObject *> m_uuid2BoneRefs;
     QHash<const QString, MorphRefObject *> m_name2MorphRefs;
@@ -375,7 +375,7 @@ private:
     QHash<const QUuid, RigidBodyRefObject *> m_uuid2RigidBodyRefs;
     QHash<const QString, JointRefObject *> m_name2JointRefs;
     QHash<const QUuid, JointRefObject *> m_uuid2JointRefs;
-    QHash<const QUuid, IKRefObject *> m_uuid2ConstraintRefs;
+    QHash<const QUuid, IKConstraintRefObject *> m_uuid2ConstraintRefs;
     QList<LabelRefObject *> m_allLabels;
     QList<BoneRefObject *> m_allBones;
     QList<BoneRefObject *> m_targetBoneRefs;
@@ -384,7 +384,7 @@ private:
     QList<VertexRefObject *> m_allVertices;
     QList<RigidBodyRefObject *> m_allRigidBodies;
     QList<JointRefObject *> m_allJoints;
-    QList<IKRefObject *> m_allIKConstraints;
+    QList<IKConstraintRefObject *> m_allIKConstraints;
     QList<ModelProxy *> m_bindingModels;
     QUndoStack *m_undoStackRef;
     MorphRefObject * m_targetMorphRef;

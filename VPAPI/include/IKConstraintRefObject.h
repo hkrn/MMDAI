@@ -40,50 +40,64 @@
 
 #include <QJsonValue>
 #include <QObject>
+#include <QQmlListProperty>
 #include <QUuid>
 #include <QVector3D>
 #include <vpvl2/IModel.h>
 
 class BoneRefObject;
-class IKRefObject;
+class IKConstraintRefObject;
 class ModelProxy;
 
 class ChildIKJoint : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(IKRefObject *parentConstraint READ parentConstraint CONSTANT FINAL)
+    Q_PROPERTY(IKConstraintRefObject *parentConstraint READ parentConstraint CONSTANT FINAL)
+    Q_PROPERTY(QString name READ name NOTIFY nameChanged FINAL)
+    Q_PROPERTY(BoneRefObject *targetBone READ targetBone CONSTANT FINAL)
     Q_PROPERTY(QVector3D upperLimit READ upperLimit WRITE setUpperLimit NOTIFY upperLimitChanged FINAL)
     Q_PROPERTY(QVector3D lowerLimit READ lowerLimit WRITE setLowerLimit NOTIFY lowerLimitChanged FINAL)
+    Q_PROPERTY(QVector3D degreeUpperLimit READ degreeUpperLimit WRITE setDegreeUpperLimit NOTIFY upperLimitChanged FINAL)
+    Q_PROPERTY(QVector3D degreeLowerLimit READ degreeLowerLimit WRITE setDegreeLowerLimit NOTIFY lowerLimitChanged FINAL)
     Q_PROPERTY(bool hasAngleLimit READ hasAngleLimit WRITE setHasAngleLimit NOTIFY hasAngleLimitChanged FINAL)
 
 public:
-    ChildIKJoint(IKRefObject *parentConstraintRef, vpvl2::IBone::IKJoint *jointRef);
+    ChildIKJoint(IKConstraintRefObject *parentConstraintRef, vpvl2::IBone::IKJoint *jointRef);
     ~ChildIKJoint();
 
-    IKRefObject *parentConstraint() const;
+    IKConstraintRefObject *parentConstraint() const;
+    BoneRefObject *targetBone() const;
+    QString name() const;
     QVector3D upperLimit() const;
     void setUpperLimit(const QVector3D &value);
     QVector3D lowerLimit() const;
     void setLowerLimit(const QVector3D &value);
+    QVector3D degreeUpperLimit() const;
+    void setDegreeUpperLimit(const QVector3D &value);
+    QVector3D degreeLowerLimit() const;
+    void setDegreeLowerLimit(const QVector3D &value);
     bool hasAngleLimit() const;
     void setHasAngleLimit(bool value);
 
 signals:
+    void nameChanged();
     void upperLimitChanged();
     void lowerLimitChanged();
     void hasAngleLimitChanged();
 
 private:
-    IKRefObject *m_parentConstraintRef;
+    IKConstraintRefObject *m_parentConstraintRef;
     vpvl2::IBone::IKJoint *m_jointRef;
 };
 
-class IKRefObject : public QObject
+class IKConstraintRefObject : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
     Q_PROPERTY(QString name READ name CONSTANT FINAL)
     Q_PROPERTY(int index READ index CONSTANT FINAL)
+    Q_PROPERTY(QQmlListProperty<ChildIKJoint> allChildJoints READ allChildJoints NOTIFY allChildJointsChanged)
     Q_PROPERTY(BoneRefObject *rootBone READ rootBone WRITE setRootBone NOTIFY rootBoneChanged FINAL)
     Q_PROPERTY(BoneRefObject *effectorBone READ effectorBone WRITE setEffectorBone NOTIFY effectorBoneChanged FINAL)
     Q_PROPERTY(qreal angleLimit READ angleLimit WRITE setAngleLimit NOTIFY angleLimitChanged FINAL)
@@ -91,14 +105,16 @@ class IKRefObject : public QObject
     Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
-    IKRefObject(ModelProxy *parentModel, vpvl2::IBone::IKConstraint *constraintRef, const QUuid &uuid, int index);
-    ~IKRefObject();
+    IKConstraintRefObject(ModelProxy *parentModel, vpvl2::IBone::IKConstraint *constraintRef, const QUuid &uuid, int index);
+    ~IKConstraintRefObject();
 
     void initialize();
 
+    ModelProxy *parentModel() const;
     QUuid uuid() const;
     QString name() const;
     int index() const;
+    QQmlListProperty<ChildIKJoint> allChildJoints();
     BoneRefObject *rootBone() const;
     void setRootBone(BoneRefObject *value);
     BoneRefObject *effectorBone() const;
@@ -111,6 +127,7 @@ public:
     void setDirty(bool value);
 
 signals:
+    void allChildJointsChanged();
     void rootBoneChanged();
     void effectorBoneChanged();
     void angleLimitChanged();

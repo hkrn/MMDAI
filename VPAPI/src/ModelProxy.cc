@@ -1073,10 +1073,10 @@ QQmlListProperty<JointRefObject> ModelProxy::allJoints()
     return QQmlListProperty<JointRefObject>(this, m_allJoints);
 }
 
-QQmlListProperty<IKRefObject> ModelProxy::allIKConstraints()
+QQmlListProperty<IKConstraintRefObject> ModelProxy::allIKConstraints()
 {
     initializeAllIKConstraints();
-    return QQmlListProperty<IKRefObject>(this, m_allIKConstraints);
+    return QQmlListProperty<IKConstraintRefObject>(this, m_allIKConstraints);
 }
 
 QList<BoneRefObject *> ModelProxy::allTargetBones() const
@@ -1347,7 +1347,7 @@ QList<JointRefObject *> ModelProxy::allJointRefs() const
     return m_allJoints;
 }
 
-QList<IKRefObject *> ModelProxy::allIKConstraintRefs() const
+QList<IKConstraintRefObject *> ModelProxy::allIKConstraintRefs() const
 {
     return m_allIKConstraints;
 }
@@ -1552,7 +1552,7 @@ void ModelProxy::initializeAllIKConstraints()
         const int nconstraints = constraintRefs.count();
         for (int i = 0; i < nconstraints; i++) {
             IBone::IKConstraint *constraintRef = constraintRefs[i];
-            IKRefObject *constraint = new IKRefObject(this, constraintRef, QUuid::createUuid(), i);
+            IKConstraintRefObject *constraint = new IKConstraintRefObject(this, constraintRef, QUuid::createUuid(), i);
             constraint->initialize();
             m_allIKConstraints.append(constraint);
             m_constraint2Refs.insert(constraintRef, constraint);

@@ -168,6 +168,32 @@ QVector3D RigidBodyRefObject::rotation() const
     return Util::fromVector3(m_rigidBodyRef->rotation());
 }
 
+void RigidBodyRefObject::setRotation(const QVector3D &value)
+{
+    Q_ASSERT(m_rigidBodyRef);
+    if (!qFuzzyCompare(rotation(), value)) {
+        m_rigidBodyRef->setRotation(Util::toVector3(value));
+        setDirty(true);
+        emit rotationChanged();
+    }
+}
+
+QVector3D RigidBodyRefObject::degreeRotation() const
+{
+    Q_ASSERT(m_rigidBodyRef);
+    return Util::fromVector3Radian(m_rigidBodyRef->rotation());
+}
+
+void RigidBodyRefObject::setDegreeRotation(const QVector3D &value)
+{
+    Q_ASSERT(m_rigidBodyRef);
+    if (!qFuzzyCompare(rotation(), value)) {
+        m_rigidBodyRef->setRotation(Util::toVector3Radian(value));
+        setDirty(true);
+        emit rotationChanged();
+    }
+}
+
 RigidBodyRefObject::ObjectType RigidBodyRefObject::objectType() const
 {
     Q_ASSERT(m_rigidBodyRef);
@@ -195,16 +221,6 @@ void RigidBodyRefObject::setShapeType(const ShapeType &value)
     if (shapeType() != value) {
         m_rigidBodyRef->setShapeType(static_cast<IRigidBody::ShapeType>(value));
         emit shapeTypeChanged();
-    }
-}
-
-void RigidBodyRefObject::setRotation(const QVector3D &value)
-{
-    Q_ASSERT(m_rigidBodyRef);
-    if (!qFuzzyCompare(rotation(), value)) {
-        m_rigidBodyRef->setRotation(Util::toVector3(value));
-        setDirty(true);
-        emit rotationChanged();
     }
 }
 
