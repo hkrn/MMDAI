@@ -64,6 +64,40 @@ using namespace vpvl2::VPVL2_VERSION_NS;
 using namespace vpvl2::VPVL2_VERSION_NS::pmx;
 
 struct DefaultIKJoint : vpvl2::IBone::IKJoint {
+    static void clampAngle(const Scalar &min, const Scalar &max, const Scalar &result, Scalar &output) {
+        if (btFuzzyZero(min) && btFuzzyZero(max)) {
+            output = 0;
+        }
+        else if (result < min) {
+            output = min;
+        }
+        else if (result > max) {
+            output = max;
+        }
+    }
+    static Scalar clampAngle2(const Scalar &value, const Scalar &lower, const Scalar &upper, bool ikt) {
+        Scalar v = value;
+        if (v < lower) {
+            const Scalar &tf = 2 * lower - v;
+            v = (tf <= upper && ikt) ? tf : lower;
+        }
+        if (v > upper) {
+            const Scalar &tf = 2 * lower - v;
+            v = (tf <= lower && ikt) ? tf : upper;
+        }
+        return v;
+    }
+    static void setRotation(const Scalar &x, const Scalar &y, const Scalar &z,
+                            const Vector3 &lowerLimit, const Vector3 &upperLimit, bool ikt,
+                            Quaternion &rx, Quaternion &ry, Quaternion &rz) {
+        const Scalar &x2 = clampAngle2(x, lowerLimit.x(), upperLimit.x(), ikt);
+        const Scalar &y2 = clampAngle2(y, lowerLimit.y(), upperLimit.y(), ikt);
+        const Scalar &z2 = clampAngle2(z, lowerLimit.z(), upperLimit.z(), ikt);
+        rx.setRotation(kUnitX, x2);
+        ry.setRotation(kUnitY, y2);
+        rz.setRotation(kUnitZ, z2);
+    }
+
     DefaultIKJoint()
         : m_targetBoneRef(0),
           m_targetBoneIndex(-1),
@@ -106,6 +140,88 @@ struct DefaultIKJoint : vpvl2::IBone::IKJoint {
     }
     void setUpperLimit(const Vector3 &value) {
         m_upperLimit = value;
+    }
+
+    bool rotate(const Bone *effectorBoneRef, const Vector3 &rootBonePosition, const Scalar &angleLimit, Quaternion &rotation, Scalar &angle) const {
+        Bone *jointBoneRef = m_targetBoneRef;
+        const Vector3 &currentEffectorPosition = effectorBoneRef->worldTransform().getOrigin();
+        const Transform &jointBoneTransform = jointBoneRef->worldTransform();
+        const Transform &inversedJointBoneTransform = jointBoneTransform.inverse();
+        Vector3 localRootBonePosition = inversedJointBoneTransform * rootBonePosition;
+        Vector3 localEffectorPosition = inversedJointBoneTransform * currentEffectorPosition;
+        localRootBonePosition.normalize();
+        localEffectorPosition.normalize();
+        const Scalar &dot = localRootBonePosition.dot(localEffectorPosition);
+        if (btFuzzyZero(dot)) {
+            return false;
+        }
+        const Vector3 &localAxis = localEffectorPosition.cross(localRootBonePosition).safeNormalize();
+        angle = btAcos(btClamped(dot, -1.0f, 1.0f));
+        btClamp(angle, -angleLimit, angleLimit);
+        rotation.setRotation(localAxis, angle);
+        return true;
+    }
+    void constrainAxisAngle(const Scalar &angle, Quaternion &rotation) const {
+        //const Matrix3x3 &jointRotationMatrix = jointBoneTransform.getBasis();
+        Vector3 localAxis = kUnitX;
+        if (btFuzzyZero(m_lowerLimit.y()) && btFuzzyZero(m_upperLimit.y())
+                && btFuzzyZero(m_lowerLimit.z()) && btFuzzyZero(m_upperLimit.z())) {
+            const Scalar &axisX = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[0]) >= 0, 1.0f, -1.0f);
+            localAxis.setValue(axisX, 0.0, 0.0);
+        }
+        else if (btFuzzyZero(m_lowerLimit.x()) && btFuzzyZero(m_upperLimit.x())
+                 && btFuzzyZero(m_lowerLimit.z()) && btFuzzyZero(m_upperLimit.z())) {
+            const Scalar &axisY = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[1]) >= 0, 1.0f, -1.0f);
+            localAxis.setValue(0.0, axisY, 0.0);
+        }
+        else if (btFuzzyZero(m_lowerLimit.x()) && btFuzzyZero(m_upperLimit.x())
+                 && btFuzzyZero(m_lowerLimit.y()) && btFuzzyZero(m_upperLimit.y())) {
+            const Scalar &axisZ = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[2]) >= 0, 1.0f, -1.0f);
+            localAxis.setValue(0.0, 0.0, axisZ);
+        }
+        rotation.setRotation(localAxis, angle);
+    }
+    void constrainRotation(Quaternion &jointRotation, bool performConstrain) const {
+#if 1
+        (void) performConstrain;
+        Scalar x1, y1, z1, x2, y2, z2, x3, y3, z3;
+        Matrix3x3 matrix(jointRotation);
+        matrix.getEulerZYX(z1, y1, x1);
+        matrix.setRotation(m_targetBoneRef->localOrientation());
+        matrix.getEulerZYX(z2, y2, x2);
+        x3 = x1 + x2; y3 = y1 + y2; z3 = z1 + z2;
+        clampAngle(m_lowerLimit.x(), m_upperLimit.x(), x3, x1);
+        clampAngle(m_lowerLimit.y(), m_upperLimit.y(), y3, y1);
+        clampAngle(m_lowerLimit.z(), m_upperLimit.z(), z3, z1);
+        jointRotation.setEulerZYX(z1, y1, x1);
+#else
+        static const Scalar &kEulerAngleLimit = btRadians(90), &kEulerAngleLimit2 = btRadians(88);
+        Scalar x, y, z;
+        Quaternion rx, ry, rz, result;
+        Matrix3x3 matrix(jointRotation);
+        if (m_lowerLimit.x() > -kEulerAngleLimit && m_upperLimit.x() < kEulerAngleLimit) {
+            x = btClamped(btAsin(matrix[2][1]), -kEulerAngleLimit2, kEulerAngleLimit);
+            y = btAtan2(matrix[2][0], matrix[2][2]);
+            z = btAtan2(matrix[0][1], matrix[1][1]);
+            setRotation(x, y, z, m_lowerLimit, m_upperLimit, performConstrain, rx, ry, rz);
+            result = ry * rx * rz;
+        }
+        else if (m_lowerLimit.y() > -kEulerAngleLimit && m_upperLimit.y() < kEulerAngleLimit) {
+            x = btClamped(btAsin(matrix[0][2]), -kEulerAngleLimit2, kEulerAngleLimit);
+            y = btAtan2(matrix[1][2], matrix[2][2]);
+            z = btAtan2(matrix[0][1], matrix[0][0]);
+            setRotation(x, y, z, m_lowerLimit, m_upperLimit, performConstrain, rx, ry, rz);
+            result = rz * ry * rx;
+        }
+        else {
+            x = btClamped(btAsin(matrix[1][0]), -kEulerAngleLimit2, kEulerAngleLimit);
+            y = btAtan2(matrix[1][2], matrix[1][1]);
+            z = btAtan2(matrix[2][0], matrix[0][0]);
+            setRotation(x, y, z, m_lowerLimit, m_upperLimit, performConstrain, rx, ry, rz);
+            result = rx * rz * ry;
+        }
+        jointRotation = result.normalized();
+#endif
     }
 
     Bone *m_targetBoneRef;
@@ -204,21 +320,6 @@ struct Bone::PrivateContext {
         enableInverseKinematics = false;
     }
 
-    static void clampAngle(const Scalar &min,
-                           const Scalar &max,
-                           const Scalar &result,
-                           Scalar &output)
-    {
-        if (btFuzzyZero(min) && btFuzzyZero(max)) {
-            output = 0;
-        }
-        else if (result < min) {
-            output = min;
-        }
-        else if (result > max) {
-            output = max;
-        }
-    }
     static void setPositionToIKUnit(const Vector3 &inputLower,
                                     const Vector3 &inputUpper,
                                     float *outputLower,
@@ -252,29 +353,6 @@ struct Bone::PrivateContext {
         outputLower.setValue(inputLower[0], inputLower[1], inputLower[2]);
         outputUpper.setValue(inputUpper[0], inputUpper[1], inputUpper[2]);
 #endif
-    }
-
-    static Scalar clampAngle2(const Scalar &value, const Scalar &lower, const Scalar &upper, bool ikt) {
-        Scalar v = value;
-        if (v < lower) {
-            const Scalar &tf = 2 * lower - v;
-            v = (tf <= upper && ikt) ? tf : lower;
-        }
-        if (v > upper) {
-            const Scalar &tf = 2 * lower - v;
-            v = (tf <= lower && ikt) ? tf : upper;
-        }
-        return v;
-    }
-    static void setMatrix(const Scalar &x, const Scalar &y, const Scalar &z,
-                          const Vector3 &lowerLimit, const Vector3 &upperLimit, bool ikt,
-                          Matrix3x3 &mx, Matrix3x3 &my, Matrix3x3 &mz) {
-        const Scalar &x2 = PrivateContext::clampAngle2(x, lowerLimit.x(), upperLimit.x(), ikt);
-        const Scalar &y2 = PrivateContext::clampAngle2(y, lowerLimit.y(), upperLimit.y(), ikt);
-        const Scalar &z2 = PrivateContext::clampAngle2(z, lowerLimit.z(), upperLimit.z(), ikt);
-        mx.setRotation(Quaternion(Vector3(1, 0, 0), x2));
-        my.setRotation(Quaternion(Vector3(0, 1, 0), y2));
-        mz.setRotation(Quaternion(Vector3(0, 0, 1), z2));
     }
 
     void updateWorldTransform() {
@@ -812,105 +890,28 @@ void Bone::solveInverseKinematics()
     }
     const Array<DefaultIKJoint *> &constraints = m_context->joints;
     const Vector3 &rootBonePosition = m_context->worldTransform.getOrigin();
-    const float32 angleLimit = m_context->angleLimit;
     const int nconstraints = constraints.count();
-    const int niteration = m_context->numIterations;
-    const int numHalfOfIteration = niteration / 2;
+    const int numIterations = m_context->numIterations;
+    const int numHalfOfIteration = numIterations / 2;
     Bone *effectorBoneRef = m_context->effectorBoneRef;
     const Quaternion originalTargetRotation = effectorBoneRef->localOrientation();
     Quaternion jointRotation(Quaternion::getIdentity()), newJointLocalRotation;
-    Matrix3x3 matrix, mx, my, mz, result;
-    Vector3 localEffectorPosition(kZeroV3), localRootBonePosition(kZeroV3), localAxis(kZeroV3);
-    for (int i = 0; i < niteration; i++) {
+    Scalar angle = 0;
+    for (int i = 0; i < numIterations; i++) {
         const bool performConstraint = i < numHalfOfIteration;
         for (int j = 0; j < nconstraints; j++) {
-            const DefaultIKJoint *constraint = constraints[j];
-            Bone *jointBoneRef = constraint->m_targetBoneRef;
-            const Vector3 &currentEffectorPosition = effectorBoneRef->worldTransform().getOrigin();
-            const Transform &jointBoneTransform = jointBoneRef->worldTransform();
-            const Transform &inversedJointBoneTransform = jointBoneTransform.inverse();
-            localRootBonePosition = inversedJointBoneTransform * rootBonePosition;
-            localEffectorPosition = inversedJointBoneTransform * currentEffectorPosition;
-            localRootBonePosition.normalize();
-            localEffectorPosition.normalize();
-            const Scalar &dot = localRootBonePosition.dot(localEffectorPosition);
-            if (btFuzzyZero(dot)) {
+            const DefaultIKJoint *joint = constraints[j];
+            const Scalar &angleLimit = m_context->angleLimit * (j + 1) * 2;
+            if (!joint->rotate(effectorBoneRef, rootBonePosition, angleLimit, jointRotation, angle)) {
                 break;
             }
-            localAxis = localEffectorPosition.cross(localRootBonePosition).safeNormalize();
-            const Scalar &newAngleLimit = angleLimit * (j + 1) * 2;
-            Scalar angle = btAcos(btClamped(dot, -1.0f, 1.0f));
-            btClamp(angle, -newAngleLimit, newAngleLimit);
-            jointRotation.setRotation(localAxis, angle);
-            if (constraint->m_hasAngleLimit && performConstraint) {
-                const Vector3 &lowerLimit = constraint->m_lowerLimit;
-                const Vector3 &upperLimit = constraint->m_upperLimit;
+            Bone *jointBoneRef = joint->m_targetBoneRef;
+            if (joint->hasAngleLimit() && performConstraint) {
                 if (i == 0) {
-                    //const Matrix3x3 &jointRotationMatrix = jointBoneTransform.getBasis();
-                    if (btFuzzyZero(lowerLimit.y()) && btFuzzyZero(upperLimit.y())
-                            && btFuzzyZero(lowerLimit.z()) && btFuzzyZero(upperLimit.z())) {
-                        const Scalar &axisX = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[0]) >= 0, 1.0f, -1.0f);
-                        localAxis.setValue(axisX, 0.0, 0.0);
-                    }
-                    else if (btFuzzyZero(lowerLimit.x()) && btFuzzyZero(upperLimit.x())
-                             && btFuzzyZero(lowerLimit.z()) && btFuzzyZero(upperLimit.z())) {
-                        const Scalar &axisY = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[1]) >= 0, 1.0f, -1.0f);
-                        localAxis.setValue(0.0, axisY, 0.0);
-                    }
-                    else if (btFuzzyZero(lowerLimit.x()) && btFuzzyZero(upperLimit.x())
-                             && btFuzzyZero(lowerLimit.y()) && btFuzzyZero(upperLimit.y())) {
-                        const Scalar &axisZ = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[2]) >= 0, 1.0f, -1.0f);
-                        localAxis.setValue(0.0, 0.0, axisZ);
-                    }
-                    jointRotation.setRotation(localAxis, angle);
+                    joint->constrainAxisAngle(angle, jointRotation);
                 }
                 else {
-#if 1
-                    (void) mx;
-                    (void) my;
-                    (void) mz;
-                    (void) result;
-                    Scalar x1, y1, z1, x2, y2, z2, x3, y3, z3;
-                    matrix.setRotation(jointRotation);
-                    matrix.getEulerZYX(z1, y1, x1);
-                    matrix.setRotation(jointBoneRef->localOrientation());
-                    matrix.getEulerZYX(z2, y2, x2);
-                    x3 = x1 + x2; y3 = y1 + y2; z3 = z1 + z2;
-                    PrivateContext::clampAngle(lowerLimit.x(), upperLimit.x(), x3, x1);
-                    PrivateContext::clampAngle(lowerLimit.y(), upperLimit.y(), y3, y1);
-                    PrivateContext::clampAngle(lowerLimit.z(), upperLimit.z(), z3, z1);
-                    jointRotation.setEulerZYX(z1, y1, x1);
-#else
-                    const Scalar &limit = btRadians(90), &limit2 = btRadians(88);
-                    Scalar x, y, z;
-                    matrix.setRotation(Quaternion(-rotation.x(), -rotation.y(), rotation.z(), rotation.w()));
-                    matrix.transpose();
-                    if (lowerLimit.x() > -limit && upperLimit.x() < limit) {
-                        x = btClamped(btAsin(matrix[2][1]), -limit2, limit);
-                        y = btAtan2(matrix[2][0], matrix[2][2]);
-                        z = btAtan2(matrix[0][1], matrix[1][1]);
-                        PrivateContext::setMatrix(x, y, z, lowerLimit, upperLimit, ikt, mx, my, mz);
-                        result = mz * mx * my;
-                    }
-                    else if (lowerLimit.y() > -limit && upperLimit.y() < limit) {
-                        x = btClamped(btAsin(matrix[0][2]), -limit2, limit);
-                        y = btAtan2(matrix[1][2], matrix[2][2]);
-                        z = btAtan2(matrix[0][1], matrix[0][0]);
-                        PrivateContext::setMatrix(x, y, z, lowerLimit, upperLimit, ikt, mx, my, mz);
-                        result = mx * my * mz;
-                        result.setIdentity();
-                    }
-                    else {
-                        x = btClamped(btAsin(matrix[1][0]), -limit2, limit);
-                        y = btAtan2(matrix[1][2], matrix[1][1]);
-                        z = btAtan2(matrix[2][0], matrix[0][0]);
-                        PrivateContext::setMatrix(x, y, z, lowerLimit, upperLimit, ikt, mx, my, mz);
-                        result = my * mz * mx;
-                    }
-                    result.transpose();
-                    result.getRotation(rotation);
-                    rotation.setValue(-rotation.x(), -rotation.y(), rotation.z(), rotation.w());
-#endif
+                    joint->constrainRotation(jointRotation, performConstraint);
                 }
                 newJointLocalRotation = jointRotation * jointBoneRef->localOrientation();
             }
@@ -923,8 +924,8 @@ void Bone::solveInverseKinematics()
             jointBoneRef->setLocalOrientation(newJointLocalRotation);
             jointBoneRef->m_context->jointRotation = jointRotation;
             for (int k = j; k >= 0; k--) {
-                DefaultIKJoint *constraint = constraints[k];
-                Bone *jointBoneRef = constraint->m_targetBoneRef;
+                DefaultIKJoint *joint = constraints[k];
+                jointBoneRef = joint->m_targetBoneRef;
                 jointBoneRef->m_context->updateWorldTransform();
             }
             effectorBoneRef->m_context->updateWorldTransform();
