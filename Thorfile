@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/tools/thor/alsoft.rb'
+require File.dirname(__FILE__) + '/tools/thor/anttweakbar.rb'
 require File.dirname(__FILE__) + '/tools/thor/alure.rb'
 require File.dirname(__FILE__) + '/tools/thor/assimp.rb'
 require File.dirname(__FILE__) + '/tools/thor/bullet.rb'
@@ -39,6 +40,8 @@ module Mmdai
       "glfw",
       "sfml2",
       "sdl2",
+      "gizmo",
+      "anttweakbar",
       "vpvl2"
     ]
 
