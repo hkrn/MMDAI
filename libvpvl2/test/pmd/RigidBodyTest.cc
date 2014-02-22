@@ -1,0 +1,61 @@
+#include "Common.h"
+
+TEST(PMDPropertyEventListener, HandleRigidBodyPropertyEvents)
+{
+    RigidBody body(0, 0);
+    MockRigidBodyPropertyEventListener listener;
+    TestHandleEvents<IRigidBody::PropertyEventListener>(listener, body);
+    float32 angularDamping(0.1), friction(0.2), linearDamping(0.3), mass(0.4), restitution(0.5);
+    uint8 collisionGroupID(1);
+    uint16_t collisionMask(2);
+    Bone bone(0, 0);
+    IRigidBody::ShapeType shapeType(IRigidBody::kCapsureShape);
+    IRigidBody::ObjectType objectType(IRigidBody::kAlignedObject);
+    String japaneseName("Japanese Name"), englishName("English Name");
+    Vector3 position(1, 2, 3), rotation(0.4, 0.5, 0.6), size(7, 8, 9);
+    EXPECT_CALL(listener, angularDampingWillChange(angularDamping, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, boneRefWillChange(&bone, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, collisionGroupIDWillChange(collisionGroupID, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, collisionMaskWillChange(collisionMask, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, frictionWillChange(friction, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, linearDampingWillChange(linearDamping, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, massWillChange(mass, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(&japaneseName, IEncoding::kJapanese, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kJapanese, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(&englishName, IEncoding::kEnglish, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kEnglish, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, positionWillChange(position, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, restitutionWillChange(restitution, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, rotationWillChange(rotation, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, shapeTypeWillChange(shapeType, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, sizeWillChange(size, &body)).WillOnce(Return());
+    EXPECT_CALL(listener, objectTypeWillChange(objectType, &body)).WillOnce(Return());
+    body.addEventListenerRef(&listener);
+    body.setAngularDamping(angularDamping);
+    body.setBoneRef(&bone);
+    body.setCollisionGroupID(collisionGroupID);
+    body.setCollisionMask(collisionMask);
+    body.setFriction(friction);
+    body.setLinearDamping(linearDamping);
+    body.setMass(mass);
+    body.setName(&japaneseName, IEncoding::kJapanese);
+    body.setName(&japaneseName, IEncoding::kJapanese);
+    body.setName(0, IEncoding::kJapanese);
+    body.setName(0, IEncoding::kJapanese);
+    body.setName(&englishName, IEncoding::kEnglish);
+    body.setName(&englishName, IEncoding::kEnglish);
+    body.setName(0, IEncoding::kEnglish);
+    body.setName(0, IEncoding::kEnglish);
+    body.setPosition(position);
+    body.setPosition(position);
+    body.setRestitution(restitution);
+    body.setRestitution(restitution);
+    body.setRotation(rotation);
+    body.setRotation(rotation);
+    body.setShapeType(shapeType);
+    body.setShapeType(shapeType);
+    body.setSize(size);
+    body.setSize(size);
+    body.setObjectType(objectType);
+    body.setObjectType(objectType);
+}
