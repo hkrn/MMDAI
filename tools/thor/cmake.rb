@@ -62,7 +62,7 @@ module Mmdai
           build_options[:library_output_path] = "#{build_path}/lib"
         end
         if is_darwin? then
-          add_cc_flags "-mmacosx-version-min=" + (build_options[:cmake_osx_deployment_target] || 10.6), build_options
+          add_cc_flags "-mmacosx-version-min=" + (build_options[:cmake_osx_deployment_target] || "10.6"), build_options
           build_options.delete :cmake_osx_deployment_target
         end
         envvars = [
