@@ -128,6 +128,7 @@ ApplicationWindow {
     Action {
         id: loadModelAction
         text: qsTr("Load Model")
+        enabled: !scene.project.currentModel
         tooltip: qsTr("Load a model from file. The loaded model will make current.")
         onTriggered: loadModelDialog.open()
     }
@@ -140,6 +141,7 @@ ApplicationWindow {
     Action {
         id: importModelAction
         text: qsTr("Import Model")
+        enabled: !scene.project.currentModel
         onTriggered: importModelDialog.open()
     }
     SaveDialog {
@@ -161,6 +163,7 @@ ApplicationWindow {
         text: qsTr("Save Model As")
         tooltip: qsTr("Save the current model to the specified file.")
         shortcut: "Ctrl+Shift+S"
+        enabled: scene.project.currentModel
         function save(fileUrl) {
             var fileUrlString = fileUrl.toString(),
                     indexOf = fileUrlString.lastIndexOf("/"),
@@ -232,7 +235,12 @@ ApplicationWindow {
         text: qsTr("Delete Current Model")
         tooltip: qsTr("Delete current model. this will delete model and the bound motions, cannot be undone.")
         enabled: scene.project.currentModel
-        onTriggered: scene.project.deleteModel(scene.project.currentModel)
+        onTriggered: {
+            while (stackView.depth > 1) {
+                stackView.pop(null)
+            }
+            scene.project.deleteModel(scene.project.currentModel)
+        }
     }
     Action {
         id: openGlobalPreferenceAction
