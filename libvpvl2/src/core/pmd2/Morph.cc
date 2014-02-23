@@ -192,8 +192,10 @@ bool Morph::loadMorphs(const Array<Morph *> &morphs, const Array<pmd2::Vertex *>
                     int vertexIndex = morphVertex->index;
                     if (internal::checkBound(vertexIndex, 0, nBaseVertices)) {
                         int baseVertexIndex = baseVertices[vertexIndex]->index;
+                        pmd2::Vertex *vertex = vertices[baseVertexIndex];
                         morphVertex->base = baseVertexIndex;
-                        vertexRefs.append(vertices[baseVertexIndex]);
+                        morphVertex->vertex = vertex;
+                        vertexRefs.append(vertex);
                     }
                 }
             }
