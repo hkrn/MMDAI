@@ -45,7 +45,7 @@
 namespace
 {
 
-using namespace vpvl2::pmx;
+using namespace vpvl2::VPVL2_VERSION_NS::pmx;
 
 #pragma pack(push, 1)
 
