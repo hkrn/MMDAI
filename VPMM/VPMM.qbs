@@ -75,7 +75,7 @@ CppApplication {
     readonly property var commonFiles: [
         "src/*.cc",
         "include/*.h",
-        // "licenses/licenses.qrc",
+        "../VPVM/licenses/licenses.qrc",
         "../libvpvl2/src/resources/resources.qrc"
     ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
     readonly property var commonDefiles: [

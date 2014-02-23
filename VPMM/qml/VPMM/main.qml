@@ -115,6 +115,8 @@ ApplicationWindow {
             Item { Layout.fillHeight: true }
         }
     }
+
+    WindowLoader { id: aboutWindowLoader; loaderSource: Qt.resolvedUrl("AboutWindow.qml") }
     FontLoader { id: fontAwesome; source: "FontAwesome.%1".arg(isOSX ? "otf" : "ttf") }
 
     FileDialog {
