@@ -24,6 +24,41 @@ TEST(PMDModelTest, AddAndRemoveBone)
     ASSERT_EQ(0, model.bones().count());
 }
 
+TEST(PMDModelTest, RemoveBoneReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Bone bone(&model, &encoding), childBone(&model, &encoding);
+    String s("testBone");
+    bone.setName(&s, IEncoding::kDefaultLanguage);
+    model.addBone(&bone);
+    ASSERT_EQ(&bone, model.findBoneRef(&s));
+    childBone.setParentBoneRef(&bone);
+    childBone.setParentInherentBoneRef(&bone);
+    childBone.setDestinationOriginBoneRef(&bone);
+    model.addBone(&childBone);
+    Vertex vertex(&model);
+    for (int i = 0; i < Vertex::kMaxBones; i++) {
+        vertex.setBoneRef(i, &bone);
+    }
+    model.addVertex(&vertex);
+    RigidBody body(&model, &encoding);
+    body.setBoneRef(&bone);
+    model.addRigidBody(&body);
+    model.removeBone(&bone);
+    model.removeBone(&childBone);
+    model.removeRigidBody(&body);
+    model.removeVertex(&vertex);
+    ASSERT_EQ(Factory::sharedNullBoneRef(), body.boneRef());
+    for (int i = 0; i < Vertex::kMaxBones; i++) {
+        ASSERT_EQ(Factory::sharedNullBoneRef(), vertex.boneRef(i));
+    }
+    ASSERT_EQ(static_cast<IBone *>(0), childBone.parentBoneRef());
+    ASSERT_EQ(static_cast<IBone *>(0), childBone.parentInherentBoneRef());
+    ASSERT_EQ(static_cast<IBone *>(0), childBone.destinationOriginBoneRef());
+    ASSERT_EQ(static_cast<IBone *>(0), model.findBoneRef(&s));
+}
+
 TEST_P(PMDLanguageTest, RenameBone)
 {
     Encoding encoding(0);

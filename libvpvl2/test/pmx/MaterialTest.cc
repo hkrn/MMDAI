@@ -458,3 +458,27 @@ TEST(PMXModelTest, AddAndRemoveMaterial)
     model.addMaterial(&mockedMaterial);
     ASSERT_EQ(0, model.materials().count());
 }
+
+TEST(PMXModelTest, RemoveMaterialReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Material material(&model);
+    model.addMaterial(&material);
+    Vertex vertex(&model);
+    vertex.setMaterialRef(&material);
+    model.addVertex(&vertex);
+    Morph::Material materialMorph;
+    materialMorph.materials = new Array<IMaterial *>();
+    materialMorph.materials->append(&material);
+    Morph parentMaterialMorph(&model);
+    parentMaterialMorph.setType(IMorph::kMaterialMorph);
+    parentMaterialMorph.addMaterialMorph(&materialMorph);
+    model.addMorph(&parentMaterialMorph);
+    model.removeMaterial(&material);
+    model.removeVertex(&vertex);
+    parentMaterialMorph.removeMaterialMorph(&materialMorph);
+    model.removeMorph(&parentMaterialMorph);
+    ASSERT_EQ(Factory::sharedNullMaterialRef(), vertex.materialRef());
+    ASSERT_EQ(0, materialMorph.materials->count());
+}

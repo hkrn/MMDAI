@@ -23,3 +23,16 @@ TEST(PMDModelTest, AddAndRemoveMorph)
     model.addMorph(&mockedMorph);
     ASSERT_EQ(0, model.morphs().count());
 }
+
+TEST(PMDModelTest, RemoveMorphReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Morph morph(&model, &encoding);
+    String s("testMorph");
+    morph.setName(&s, IEncoding::kDefaultLanguage);
+    model.addMorph(&morph);
+    ASSERT_EQ(&morph, model.findMorphRef(&s));
+    model.removeMorph(&morph);
+    ASSERT_EQ(static_cast<IMorph *>(0), model.findMorphRef(&s));
+}

@@ -205,9 +205,9 @@ public:
     IProgressReporter *progressReporterRef() const;
     void setProgressReporterRef(IProgressReporter *value);
     void addBoneHash(Bone *bone);
-    void removeBoneHash(const Bone *bone);
+    void removeBoneHash(const IBone *bone);
     void addMorphHash(Morph *morph);
-    void removeMorphHash(const Morph *morph);
+    void removeMorphHash(const IMorph *morph);
 
     const PointerArray<Vertex> &vertices() const;
     const Array<int> &indices() const;

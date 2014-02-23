@@ -235,3 +235,39 @@ TEST(PMXModelTest, AddAndRemoveVertex)
     model.addVertex(&mockedVertex);
     ASSERT_EQ(0, model.vertices().count());
 }
+
+TEST(PMXModelTest, RemoveVertexReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Vertex vertex(&model);
+    model.addVertex(&vertex);
+    Morph::Vertex vertexMorph;
+    vertexMorph.vertex = &vertex;
+    Morph parentVertexMorph(&model);
+    parentVertexMorph.setType(IMorph::kVertexMorph);
+    parentVertexMorph.addVertexMorph(&vertexMorph);
+    model.addMorph(&parentVertexMorph);
+    PointerArray<Morph::UV> uvMorphs;
+    PointerArray<Morph> parentUVMorphs;
+    for (int i = int(IMorph::kTexCoordMorph); i <= int(IMorph::kUVA4Morph); i++) {
+        Morph::UV *uvMorph = uvMorphs.append(new Morph::UV());
+        Morph *parentUVMorph = parentUVMorphs.append(new Morph(&model));
+        uvMorph->vertex = &vertex;
+        parentUVMorph->setType(static_cast<IMorph::Type>(i));
+        parentUVMorph->addUVMorph(uvMorph);
+        model.addMorph(parentUVMorph);
+    }
+    model.removeVertex(&vertex);
+    parentVertexMorph.removeVertexMorph(&vertexMorph);
+    model.removeMorph(&parentVertexMorph);
+    for (int i = int(IMorph::kTexCoordMorph); i <= int(IMorph::kUVA4Morph); i++) {
+        const int index = i - int(IMorph::kTexCoordMorph);
+        parentUVMorphs[index]->removeUVMorph(uvMorphs[index]);
+        model.removeMorph(parentUVMorphs[index]);
+        ASSERT_EQ(static_cast<IVertex *>(0), uvMorphs[index]->vertex);
+    }
+    ASSERT_EQ(static_cast<IVertex *>(0), vertexMorph.vertex);
+    uvMorphs.releaseAll();
+    parentUVMorphs.releaseAll();
+}

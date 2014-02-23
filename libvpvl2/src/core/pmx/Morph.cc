@@ -962,8 +962,9 @@ void Morph::updateMaterialMorphs(const WeightPrecision &value)
         const Array<IMaterial *> *materials = v->materials;
         const int nmaterials = materials->count();
         for (int j = 0; j < nmaterials; j++) {
-            pmx::Material *material = static_cast<pmx::Material *>(materials->at(j));
-            material->mergeMorph(v, value);
+            if (pmx::Material *material = static_cast<pmx::Material *>(materials->at(j))) {
+                material->mergeMorph(v, value);
+            }
         }
     }
 }

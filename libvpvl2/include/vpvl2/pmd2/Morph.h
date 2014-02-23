@@ -115,6 +115,8 @@ public:
     void getFlipMorphs(Array<Flip *> &morphs) const;
     void getImpulseMorphs(Array<Impulse *> &morphs) const;
 
+    Array<IMorph::Vertex *> &vertices() const;
+
 private:
     struct PrivateContext;
     PrivateContext *m_context;

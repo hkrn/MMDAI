@@ -1897,6 +1897,26 @@ void Model::addVertex(IVertex *value)
 void Model::removeBone(IBone *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->bones);
+    internal::ModelHelper::removeBoneReferenceInBones(value, m_context->bones);
+    internal::ModelHelper::removeBoneReferenceInRigidBodies(value, m_context->rigidBodies);
+    internal::ModelHelper::removeBoneReferenceInVertices(value, m_context->vertices);
+    if (value) {
+        removeBoneHash(value);
+    }
+    const int nmorphs = m_context->morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_context->morphs[i];
+        if (morph->type() == IMorph::kBoneMorph) {
+            const Array<Morph::Bone *> &children = morph->bones();
+            const int nchildren = children.count();
+            for (int j = 0; j < nchildren; j++) {
+                Morph::Bone *child = children[j];
+                if (child->bone == value) {
+                    child->bone = 0;
+                }
+            }
+        }
+    }
 }
 
 void Model::removeJoint(IJoint *value)
@@ -1912,16 +1932,82 @@ void Model::removeLabel(ILabel *value)
 void Model::removeMaterial(IMaterial *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->materials);
+    internal::ModelHelper::removeMaterialReferenceInVertices(value, m_context->vertices);
+    const int nmorphs = m_context->morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_context->morphs[i];
+        if (morph->type() == IMorph::kMaterialMorph) {
+            const Array<Morph::Material *> &children = morph->materials();
+            const int nchildren = children.count();
+            for (int j = 0; j < nchildren; j++) {
+                Morph::Material *child = children[j];
+                const int nmaterials = child->materials->count();
+                for (int k = nmaterials - 1; k >= 0; k--) {
+                    if (child->materials->at(k) == value) {
+                        child->materials->removeAt(k);
+                    }
+                }
+            }
+        }
+    }
 }
 
 void Model::removeMorph(IMorph *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->morphs);
+    if (value) {
+        removeMorphHash(value);
+    }
+    const int nmorphs = m_context->morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_context->morphs[i];
+        switch (morph->type()) {
+        case IMorph::kFlipMorph: {
+            const Array<Morph::Flip *> &children = morph->flips();
+            const int nchildren = children.count();
+            for (int j = 0; j < nchildren; j++) {
+                Morph::Flip *child = children[j];
+                if (child->morph == value) {
+                    child->morph = 0;
+                }
+            }
+            break;
+        }
+        case IMorph::kGroupMorph: {
+            const Array<Morph::Group *> &children = morph->groups();
+            const int nchildren = children.count();
+            for (int j = 0; j < nchildren; j++) {
+                Morph::Group *child = children[j];
+                if (child->morph == value) {
+                    child->morph = 0;
+                }
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
 }
 
 void Model::removeRigidBody(IRigidBody *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->rigidBodies);
+    internal::ModelHelper::removeRigidBodyReferenceInJoints(value, m_context->joints);
+    const int nmorphs = m_context->morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_context->morphs[i];
+        if (morph->type() == IMorph::kImpulseMorph) {
+            const Array<Morph::Impulse *> &children = morph->impulses();
+            const int nchildren = children.count();
+            for (int j = 0; j < nchildren; j++) {
+                Morph::Impulse *child = children[j];
+                if (child->rigidBody == value) {
+                    child->rigidBody = 0;
+                }
+            }
+        }
+    }
 }
 
 void Model::removeSoftBody(ISoftBody *value)
@@ -1932,6 +2018,41 @@ void Model::removeSoftBody(ISoftBody *value)
 void Model::removeVertex(IVertex *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->vertices);
+    const int nmorphs = m_context->morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_context->morphs[i];
+        switch (morph->type()) {
+        case IMorph::kTexCoordMorph:
+        case IMorph::kUVA1Morph:
+        case IMorph::kUVA2Morph:
+        case IMorph::kUVA3Morph:
+        case IMorph::kUVA4Morph:
+        {
+            const Array<Morph::UV *> &children = morph->uvs();
+            const int nchildren = children.count();
+            for (int j = 0; j < nchildren; j++) {
+                Morph::UV *child = children[j];
+                if (child->vertex == value) {
+                    child->vertex = 0;
+                }
+            }
+            break;
+        }
+        case IMorph::kVertexMorph: {
+            const Array<Morph::Vertex *> &children = morph->vertices();
+            const int nchildren = children.count();
+            for (int j = 0; j < nchildren; j++) {
+                Morph::Vertex *child = children[j];
+                if (child->vertex == value) {
+                    child->vertex = 0;
+                }
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
 }
 
 IProgressReporter *Model::progressReporterRef() const
@@ -1955,7 +2076,7 @@ void Model::addBoneHash(Bone *bone)
     }
 }
 
-void Model::removeBoneHash(const Bone *bone)
+void Model::removeBoneHash(const IBone *bone)
 {
     VPVL2_DCHECK(bone);
     if (const IString *name = bone->name(IEncoding::kJapanese)) {
@@ -1977,7 +2098,7 @@ void Model::addMorphHash(Morph *morph)
     }
 }
 
-void Model::removeMorphHash(const Morph *morph)
+void Model::removeMorphHash(const IMorph *morph)
 {
     VPVL2_DCHECK(morph);
     if (const IString *name = morph->name(IEncoding::kJapanese)) {

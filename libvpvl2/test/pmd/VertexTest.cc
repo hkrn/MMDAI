@@ -53,3 +53,21 @@ TEST(PMDModelTest, AddAndRemoveVertex)
     model.addVertex(&mockedVertex);
     ASSERT_EQ(0, model.vertices().count());
 }
+
+TEST(PMDModelTest, RemoveVertexReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Vertex vertex(&model);
+    model.addVertex(&vertex);
+    Morph::Vertex vertexMorph;
+    vertexMorph.vertex = &vertex;
+    Morph parentVertexMorph(&model, &encoding);
+    parentVertexMorph.setType(IMorph::kVertexMorph);
+    parentVertexMorph.addVertexMorph(&vertexMorph);
+    model.addMorph(&parentVertexMorph);
+    model.removeVertex(&vertex);
+    parentVertexMorph.removeVertexMorph(&vertexMorph);
+    model.removeMorph(&parentVertexMorph);
+    ASSERT_EQ(static_cast<IVertex *>(0), vertexMorph.vertex);
+}

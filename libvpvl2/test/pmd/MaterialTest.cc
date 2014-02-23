@@ -22,3 +22,17 @@ TEST(PMDModelTest, AddAndRemoveMaterial)
     model.addMaterial(&mockedMaterial);
     ASSERT_EQ(0, model.materials().count());
 }
+
+TEST(PMDModelTest, RemoveMaterialReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Material material(&model, &encoding);
+    model.addMaterial(&material);
+    Vertex vertex(&model);
+    vertex.setMaterialRef(&material);
+    model.addVertex(&vertex);
+    model.removeMaterial(&material);
+    model.removeVertex(&vertex);
+    ASSERT_EQ(Factory::sharedNullMaterialRef(), vertex.materialRef());
+}

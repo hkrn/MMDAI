@@ -334,6 +334,37 @@ TEST(PMXModelTest, AddAndRemoveMorph)
     ASSERT_EQ(0, model.morphs().count());
 }
 
+TEST(PMXModelTest, RemoveMorphReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Morph morph(&model);
+    String s("testMorph");
+    morph.setName(&s, IEncoding::kDefaultLanguage);
+    model.addMorph(&morph);
+    ASSERT_EQ(&morph, model.findMorphRef(&s));
+    Morph parentGroupMorph(&model);
+    Morph::Group groupMorph;
+    groupMorph.morph = &morph;
+    parentGroupMorph.setType(IMorph::kGroupMorph);
+    parentGroupMorph.addGroupMorph(&groupMorph);
+    model.addMorph(&parentGroupMorph);
+    Morph parentFlipMorph(&model);
+    Morph::Flip flipMorph;
+    flipMorph.morph = &morph;
+    parentFlipMorph.setType(IMorph::kFlipMorph);
+    parentFlipMorph.addFlipMorph(&flipMorph);
+    model.addMorph(&parentFlipMorph);
+    model.removeMorph(&morph);
+    parentGroupMorph.removeGroupMorph(&groupMorph);
+    model.removeMorph(&parentGroupMorph);
+    parentFlipMorph.removeFlipMorph(&flipMorph);
+    model.removeMorph(&parentFlipMorph);
+    ASSERT_EQ(static_cast<IMorph *>(0), model.findMorphRef(&s));
+    ASSERT_EQ(static_cast<IMorph *>(0), groupMorph.morph);
+    ASSERT_EQ(static_cast<IMorph *>(0), flipMorph.morph);
+}
+
 TEST_P(PMXLanguageTest, RenameMorph)
 {
     Encoding encoding(0);

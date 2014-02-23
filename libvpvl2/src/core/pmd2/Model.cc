@@ -1842,6 +1842,12 @@ void Model::addTexture(const IString *value)
 void Model::removeBone(IBone *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->bones);
+    internal::ModelHelper::removeBoneReferenceInBones(value, m_context->bones);
+    internal::ModelHelper::removeBoneReferenceInRigidBodies(value, m_context->rigidBodies);
+    internal::ModelHelper::removeBoneReferenceInVertices(value, m_context->vertices);
+    if (value) {
+        removeBoneHash(value);
+    }
 }
 
 void Model::removeJoint(IJoint *value)
@@ -1857,21 +1863,40 @@ void Model::removeLabel(ILabel *value)
 void Model::removeMaterial(IMaterial *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->materials);
+    internal::ModelHelper::removeMaterialReferenceInVertices(value, m_context->vertices);
 }
 
 void Model::removeMorph(IMorph *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->morphs);
+    if (value) {
+        removeMorphHash(value);
+    }
 }
 
 void Model::removeRigidBody(IRigidBody *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->rigidBodies);
+    internal::ModelHelper::removeRigidBodyReferenceInJoints(value, m_context->joints);
 }
 
 void Model::removeVertex(IVertex *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->vertices);
+    const int nmorphs = m_context->morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_context->morphs[i];
+        if (morph->type() == IMorph::kVertexMorph) {
+            const Array<IMorph::Vertex *> &children = morph->vertices();
+            const int nchildren = children.count();
+            for (int j = 0; j < nchildren; j++) {
+                IMorph::Vertex *child = children[j];
+                if (child->vertex == value) {
+                    child->vertex = 0;
+                }
+            }
+        }
+    }
 }
 
 IProgressReporter *Model::progressReporterRef() const
@@ -1895,7 +1920,7 @@ void Model::addBoneHash(Bone *bone)
     }
 }
 
-void Model::removeBoneHash(const Bone *bone)
+void Model::removeBoneHash(const IBone *bone)
 {
     VPVL2_DCHECK(bone);
     if (const IString *name = bone->name(IEncoding::kJapanese)) {
@@ -1917,7 +1942,7 @@ void Model::addMorphHash(Morph *morph)
     }
 }
 
-void Model::removeMorphHash(const Morph *morph)
+void Model::removeMorphHash(const IMorph *morph)
 {
     VPVL2_DCHECK(morph);
     if (const IString *name = morph->name(IEncoding::kJapanese)) {

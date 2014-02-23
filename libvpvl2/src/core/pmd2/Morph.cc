@@ -484,6 +484,11 @@ void Morph::getImpulseMorphs(Array<Impulse *> &morphs) const
     morphs.clear();
 }
 
+Array<IMorph::Vertex *> &Morph::vertices() const
+{
+    return m_context->vertices;
+}
+
 } /* namespace pmd2 */
 } /* namespace VPVL2_VERSION_NS */
 } /* namespace vpvl2 */

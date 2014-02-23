@@ -23,6 +23,31 @@ TEST(PMXModelTest, AddAndRemoveRigidBody)
     ASSERT_EQ(0, model.rigidBodies().count());
 }
 
+TEST(PMXModelTest, RemoveRigidBodyReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    RigidBody rigidBody(&model, &encoding);
+    model.addRigidBody(&rigidBody);
+    Joint joint(&model);
+    joint.setRigidBody1Ref(&rigidBody);
+    joint.setRigidBody2Ref(&rigidBody);
+    model.addJoint(&joint);
+    Morph::Impulse impluseMorph;
+    impluseMorph.rigidBody = &rigidBody;
+    Morph parentImpulseMorph(&model);
+    parentImpulseMorph.setType(IMorph::kImpulseMorph);
+    parentImpulseMorph.addImpulseMorph(&impluseMorph);
+    model.addMorph(&parentImpulseMorph);
+    model.removeRigidBody(&rigidBody);
+    model.removeJoint(&joint);
+    parentImpulseMorph.removeImpulseMorph(&impluseMorph);
+    model.removeMorph(&parentImpulseMorph);
+    ASSERT_EQ(static_cast<IRigidBody *>(0), joint.rigidBody1Ref());
+    ASSERT_EQ(static_cast<IRigidBody *>(0), joint.rigidBody2Ref());
+    ASSERT_EQ(static_cast<IRigidBody *>(0), impluseMorph.rigidBody);
+}
+
 TEST_P(PMXFragmentTest, ReadWriteRigidBody)
 {
     vsize indexSize = GetParam();
