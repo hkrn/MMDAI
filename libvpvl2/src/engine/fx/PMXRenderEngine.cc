@@ -503,7 +503,7 @@ void PMXRenderEngine::update()
             Array<Vector3> aabb;
             if (void *address = m_bundle->map(VertexBundle::kVertexBuffer, 0, m_dynamicBuffer->size())) {
                 m_dynamicBuffer->performTransform(address, m_sceneRef->cameraRef()->position());
-                m_dynamicBuffer->getAabb(address, aabb);
+                m_dynamicBuffer->computeAabb(address, aabb);
                 m_bundle->unmap(VertexBundle::kVertexBuffer, address);
             }
             m_bundle->unbind(VertexBundle::kVertexBuffer);

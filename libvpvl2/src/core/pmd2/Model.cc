@@ -346,9 +346,9 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         internal::ParallelSkinningVertexProcessor<pmd2::Model, pmd2::Vertex, Unit> processor(modelRef, &vertices, cameraPosition, bufferPtr);
         processor.execute(enableParallelUpdate);
     }
-    void getAabb(const void *address, Array<Vector3> &values) const {
+    void computeAabb(const void *address, Array<Vector3> &values) const {
         const Array<Material *> &materials = modelRef->materials();
-        internal::ParallelCalcAabbProcessor<pmd2::Material, Unit> processor(&materials, &values, address);
+        internal::ParallelComputeAabbProcessor<pmd2::Material, Unit> processor(&materials, &values, address);
         processor.execute(enableParallelUpdate);
     }
     void setParallelUpdateEnable(bool value) {

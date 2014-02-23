@@ -355,15 +355,15 @@ private:
 };
 
 template<typename TMaterial, typename TUnit>
-class ParallelCalcAabbProcessor VPVL2_DECL_FINAL {
+class ParallelComputeAabbProcessor VPVL2_DECL_FINAL {
 public:
-    ParallelCalcAabbProcessor(const Array<TMaterial *> *materials, Array<Vector3> *value, const void *address)
+    ParallelComputeAabbProcessor(const Array<TMaterial *> *materials, Array<Vector3> *value, const void *address)
         : m_materials(materials),
           m_bufferRef(static_cast<const TUnit *>(address)),
           m_aabb(value)
     {
     }
-    ~ParallelCalcAabbProcessor() {
+    ~ParallelComputeAabbProcessor() {
         m_bufferRef = 0;
     }
 

@@ -94,7 +94,7 @@ public:
         virtual void setupBindPose(void *address) const = 0;
         virtual void update(void *address) const = 0;
         virtual void performTransform(void *address, const Vector3 &cameraPosition) const = 0;
-        virtual void getAabb(const void *address, Array<Vector3> &values) const = 0;
+        virtual void computeAabb(const void *address, Array<Vector3> &values) const = 0;
         virtual void setParallelUpdateEnable(bool value) = 0;
     };
     struct StaticVertexBuffer : Buffer {
