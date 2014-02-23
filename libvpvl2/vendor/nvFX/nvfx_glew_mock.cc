@@ -251,11 +251,11 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glViewport = reinterpret_cast<PFNGLVIEWPORTPROC>(resolver->resolve("glViewport"));
 
     int version = resolver->queryVersion();
-    if (version < FunctionResolver::makeVersion(3, 0) && resolver->hasExtension("GL_APPLE_vertex_array_object")) {
+    if (version < FunctionResolver::makeVersion(3, 0) && resolver->hasExtension("APPLE_vertex_array_object")) {
         glBindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolve("glBindVertexArrayAPPLE"));
         glGenVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolve("glGenVertexArraysAPPLE"));
     }
-    else if (version >= FunctionResolver::makeVersion(3, 0) || resolver->hasExtension("GL_ARB_vertex_array_object")) {
+    else if (version >= FunctionResolver::makeVersion(3, 0) || resolver->hasExtension("ARB_vertex_array_object")) {
         glBindVertexArray = reinterpret_cast<PFNGLBINDVERTEXARRAYPROC>(resolver->resolve("glBindVertexArray"));
         glGenVertexArrays = reinterpret_cast<PFNGLGENVERTEXARRAYSPROC>(resolver->resolve("glGenVertexArrays"));
     }
