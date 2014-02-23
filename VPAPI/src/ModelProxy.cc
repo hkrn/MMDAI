@@ -1492,6 +1492,9 @@ void ModelProxy::initializeAllMorphs()
     const int nmorphs = morphs.count();
     for (int i = 0; i < nmorphs; i++) {
         IMorph *morphRef = morphs[i];
+        if (morphRef->category() == IMorph::kBase) {
+            continue;
+        }
         if (MorphRefObject *morphObject = m_morph2Refs.value(morphRef)) {
             morphObject->initialize();
         }
