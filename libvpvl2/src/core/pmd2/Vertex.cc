@@ -101,7 +101,6 @@ struct Vertex::PrivateContext {
     }
 
     Model *parentModelRef;
-    Array<PropertyEventListener *> eventRefs;
     Vector3 origin;
     Vector3 normal;
     Vector3 texcoord;
@@ -244,26 +243,6 @@ void Vertex::mergeMorph(const Vector3 &value, const IMorph::WeightPrecision &wei
     m_context->morphDelta += value * w;
 }
 
-void Vertex::addEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-        m_context->eventRefs.append(value);
-    }
-}
-
-void Vertex::removeEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-    }
-}
-
-void Vertex::getEventListenerRefs(Array<PropertyEventListener *> &value)
-{
-    value.copy(m_context->eventRefs);
-}
-
 IModel *Vertex::parentModelRef() const
 {
     return m_context->parentModelRef;
@@ -351,26 +330,17 @@ int Vertex::index() const
 
 void Vertex::setOrigin(const Vector3 &value)
 {
-    if (m_context->origin != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, originWillChange(value, this));
-        m_context->origin = value;
-    }
+    m_context->origin = value;
 }
 
 void Vertex::setNormal(const Vector3 &value)
 {
-    if (m_context->normal != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, normalWillChange(value, this));
-        m_context->normal = value;
-    }
+    m_context->normal = value;
 }
 
 void Vertex::setTextureCoord(const Vector3 &value)
 {
-    if (m_context->texcoord != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, textureCoordWillChange(value, this));
-        m_context->texcoord = value;
-    }
+    m_context->texcoord = value;
 }
 
 void Vertex::setSdefC(const Vector3 & /* value */)
@@ -399,34 +369,22 @@ void Vertex::setType(Type /* value */)
 
 void Vertex::setEdgeSize(const EdgeSizePrecision &value)
 {
-    if (m_context->edgeSize != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, edgeSizeWillChange(value, this));
-        m_context->edgeSize = value;
-    }
+    m_context->edgeSize = value;
 }
 
 void Vertex::setWeight(int index, const WeightPrecision &weight)
 {
-    if (index == 0 && m_context->weight != weight) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, weightWillChange(index, weight, this));
-        m_context->weight = weight;
-    }
+    m_context->weight = weight;
 }
 
 void Vertex::setBoneRef(int index, IBone *value)
 {
-    if (internal::checkBound(index, 0, kMaxBones) && m_context->boneRefs[index] != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, boneRefWillChange(index, value, this));
-        m_context->boneRefs[index] = value ? value : Factory::sharedNullBoneRef();
-    }
+    m_context->boneRefs[index] = value ? value : Factory::sharedNullBoneRef();
 }
 
 void Vertex::setMaterialRef(IMaterial *value)
 {
-    if (m_context->materialRef != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, materialRefWillChange(value, this));
-        m_context->materialRef = value ? value : Factory::sharedNullMaterialRef();
-    }
+    m_context->materialRef = value ? value : Factory::sharedNullMaterialRef();
 }
 
 void Vertex::setIndex(int value)

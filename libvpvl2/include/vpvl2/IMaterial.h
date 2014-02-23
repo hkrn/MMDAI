@@ -88,31 +88,8 @@ public:
         int end;
         int count;
     };
-    class PropertyEventListener {
-    public:
-        virtual ~PropertyEventListener() {}
-        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IMaterial *material) = 0;
-        virtual void userDataAreaWillChange(const IString *value, IMaterial *material) = 0;
-        virtual void mainTextureWillChange(const IString *value, IMaterial *material) = 0;
-        virtual void sphereTextureWillChange(const IString *value, IMaterial *material) = 0;
-        virtual void toonTextureWillChange(const IString *value, IMaterial *material) = 0;
-        virtual void sphereTextureRenderModeWillChange(SphereTextureRenderMode value, IMaterial *material) = 0;
-        virtual void ambientWillChange(const Color &value, IMaterial *material) = 0;
-        virtual void diffuseWillChange(const Color &value, IMaterial *material) = 0;
-        virtual void specularWillChange(const Color &value, IMaterial *material) = 0;
-        virtual void edgeColorWillChange(const Color &value, IMaterial *material) = 0;
-        virtual void indexRangeWillChange(const IndexRange &value, IMaterial *material) = 0;
-        virtual void shininessWillChange(float32 value, IMaterial *material) = 0;
-        virtual void edgeSizeWillChange(const IVertex::EdgeSizePrecision &value, IMaterial *material) = 0;
-        virtual void flagsWillChange(int value, IMaterial *material) = 0;
-        virtual void visibleWillChange(bool value, IMaterial *material) = 0;
-    };
 
     virtual ~IMaterial() {}
-
-    virtual void addEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void removeEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void getEventListenerRefs(Array<PropertyEventListener *> &value) = 0;
 
     /**
      * 親のモデルのインスタンスを返します.

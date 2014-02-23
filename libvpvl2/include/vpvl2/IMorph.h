@@ -88,15 +88,6 @@ public:
         kOther,
         kMaxCategoryType
     };
-
-    class PropertyEventListener {
-    public:
-        virtual ~PropertyEventListener() {}
-        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IMorph *morph) = 0;
-        virtual void weightWillChange(const WeightPrecision &value, IMorph *morph) = 0;
-        virtual void typeWillChange(Type value, IMorph *morph) = 0;
-        virtual void categoryWillChange(Category value, IMorph *morph) = 0;
-    };
     struct Bone {
         Bone()
             : bone(0),
@@ -197,10 +188,6 @@ public:
     };
 
     virtual ~IMorph() {}
-
-    virtual void addEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void removeEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void getEventListenerRefs(Array<PropertyEventListener *> &value) = 0;
 
     /**
      * モーフの名前を返します.

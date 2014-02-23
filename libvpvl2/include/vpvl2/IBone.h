@@ -79,20 +79,8 @@ public:
         virtual void setAngleLimit(float32 value) = 0;
         virtual void getJointRefs(Array<IKJoint *> &values) const = 0;
     };
-    class PropertyEventListener {
-    public:
-        virtual ~PropertyEventListener() {}
-        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IBone *bone) = 0;
-        virtual void localTranslationWillChange(const Vector3 &value, IBone *bone) = 0;
-        virtual void localOrientationWillChange(const Quaternion &value, IBone *bone) = 0;
-        virtual void inverseKinematicsEnableWillChange(bool value, IBone *bone) = 0;
-    };
 
     virtual ~IBone() {}
-
-    virtual void addEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void removeEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void getEventListenerRefs(Array<PropertyEventListener *> &value) = 0;
 
     /**
      * ボーン名を返します.

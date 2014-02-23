@@ -66,10 +66,6 @@ public:
     BaseJoint(IModel *modelRef);
     ~BaseJoint();
 
-    void addEventListenerRef(PropertyEventListener *value);
-    void removeEventListenerRef(PropertyEventListener *value);
-    void getEventListenerRefs(Array<PropertyEventListener *> &value);
-
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);
     void updateTransform();
@@ -122,7 +118,6 @@ protected:
     IRigidBody *m_rigidBody2Ref;
     IString *m_name;
     IString *m_englishName;
-    Array<PropertyEventListener *> m_eventRefs;
     Vector3 m_position;
     Vector3 m_rotation;
     Vector3 m_positionLowerLimit;

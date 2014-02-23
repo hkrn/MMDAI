@@ -63,10 +63,6 @@ public:
     Morph(Model *parentModelRef, IEncoding *encodingRef);
     ~Morph();
 
-    void addEventListenerRef(PropertyEventListener *value);
-    void removeEventListenerRef(PropertyEventListener *value);
-    void getEventListenerRefs(Array<PropertyEventListener *> &value);
-
     void resetTransform();
     Label *internalParentLabelRef() const;
     IModel *parentModelRef() const;

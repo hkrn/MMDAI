@@ -877,7 +877,6 @@ struct Model::PrivateContext {
     Array<Bone *> sortedBoneRefs;
     Hash<HashString, IBone *> name2boneRefs;
     Hash<HashString, IMorph *> name2morphRefs;
-    Array<PropertyEventListener *> eventRefs;
     DataInfo dataInfo;
     Vector3 position;
     Quaternion rotation;
@@ -1387,26 +1386,6 @@ int Model::count(ObjectType value) const
     return 0;
 }
 
-void Model::addEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-        m_context->eventRefs.append(value);
-    }
-}
-
-void Model::removeEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-    }
-}
-
-void Model::getEventListenerRefs(Array<PropertyEventListener *> &value)
-{
-    value.copy(m_context->eventRefs);
-}
-
 IModel::Type Model::type() const
 {
     return kPMDModel;
@@ -1606,12 +1585,12 @@ IVertex::EdgeSizePrecision Model::edgeScaleFactor(const Vector3 &cameraPosition)
 
 void Model::setName(const IString *value, IEncoding::LanguageType type)
 {
-    internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type, this, m_context->eventRefs);
+    internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type);
 }
 
 void Model::setComment(const IString *value, IEncoding::LanguageType type)
 {
-    internal::ModelHelper::setComment(value, m_context->commentPtr, m_context->englishCommentPtr, type, this, m_context->eventRefs);
+    internal::ModelHelper::setName(value, m_context->commentPtr, m_context->englishCommentPtr, type);
 }
 
 void Model::setEncodingType(IString::Codec /* value */)
@@ -1620,50 +1599,32 @@ void Model::setEncodingType(IString::Codec /* value */)
 
 void Model::setWorldTranslation(const Vector3 &value)
 {
-    if (m_context->position != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, worldTranslationWillChange(value, this));
-        m_context->position = value;
-    }
+    m_context->position = value;
 }
 
 void Model::setWorldOrientation(const Quaternion &value)
 {
-    if (m_context->rotation != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, worldOrientationWillChange(value, this));
-        m_context->rotation = value;
-    }
+    m_context->rotation = value;
 }
 
 void Model::setOpacity(const Scalar &value)
 {
-    if (m_context->opacity != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, opacityWillChange(value, this));
-        m_context->opacity = value;
-    }
+    m_context->opacity = value;
 }
 
 void Model::setScaleFactor(const Scalar &value)
 {
-    if (m_context->scaleFactor != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, scaleFactorWillChange(value, this));
-        m_context->scaleFactor = value;
-    }
+    m_context->scaleFactor = value;
 }
 
 void Model::setEdgeColor(const Color &value)
 {
-    if (m_context->edgeColor != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, edgeColorWillChange(value, this));
-        m_context->edgeColor = value;
-    }
+    m_context->edgeColor = value;
 }
 
 void Model::setEdgeWidth(const IVertex::EdgeSizePrecision &value)
 {
-    if (m_context->edgeWidth != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, edgeWidthWillChange(value, this));
-        m_context->edgeWidth = value;
-    }
+    m_context->edgeWidth = value;
 }
 
 void Model::setParentSceneRef(Scene *value)
@@ -1674,33 +1635,23 @@ void Model::setParentSceneRef(Scene *value)
 void Model::setParentModelRef(IModel *value)
 {
     if (m_context->parentModelRef != value && !internal::ModelHelper::hasModelLoopChain(value, this)) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, parentModelRefWillChange(value, this));
         m_context->parentModelRef = value;
     }
 }
 
 void Model::setParentBoneRef(IBone *value)
 {
-    if (m_context->parentBoneRef != value && !internal::ModelHelper::hasBoneLoopChain(value, m_context->parentModelRef)) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, parentBoneRefWillChange(value, this));
-        m_context->parentBoneRef = value;
-    }
+    m_context->parentBoneRef = value;
 }
 
 void Model::setPhysicsEnable(bool value)
 {
-    if (m_context->physicsEnabled != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, physicsEnableWillChange(value, this));
-        m_context->physicsEnabled = value;
-    }
+    m_context->physicsEnabled = value;
 }
 
 void Model::setVisible(bool value)
 {
-    if (m_context->visible != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, visibleWillChange(value, this));
-        m_context->visible = value;
-    }
+    m_context->visible = value;
 }
 
 void Model::getAabb(Vector3 &min, Vector3 &max) const
@@ -1711,11 +1662,8 @@ void Model::getAabb(Vector3 &min, Vector3 &max) const
 
 void Model::setAabb(const Vector3 &min, const Vector3 &max)
 {
-    if (m_context->aabbMin != min || m_context->aabbMax != max) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, aabbWillChange(min, max, this));
-        m_context->aabbMin = min;
-        m_context->aabbMax = max;
-    }
+    m_context->aabbMin = min;
+    m_context->aabbMax = max;
 }
 
 float32 Model::version() const

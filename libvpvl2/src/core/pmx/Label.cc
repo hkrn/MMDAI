@@ -99,7 +99,6 @@ struct Label::PrivateContext {
     IString *name;
     IString *englishName;
     PointerArray<Pair> pairs;
-    Array<PropertyEventListener *> eventRefs;
     int index;
     bool special;
 };
@@ -374,29 +373,9 @@ int Label::count() const
     return m_context->pairs.count();
 }
 
-void Label::addEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-        m_context->eventRefs.append(value);
-    }
-}
-
-void Label::removeEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-    }
-}
-
-void Label::getEventListenerRefs(Array<PropertyEventListener *> &value)
-{
-    value.copy(m_context->eventRefs);
-}
-
 void Label::setName(const IString *value, IEncoding::LanguageType type)
 {
-    internal::ModelHelper::setName(value, m_context->name, m_context->englishName, type, this, m_context->eventRefs);
+    internal::ModelHelper::setName(value, m_context->name, m_context->englishName, type);
 }
 
 void Label::setSpecial(bool value)

@@ -98,7 +98,6 @@ struct Morph::PrivateContext {
     IEncoding *encodingRef;
     IString *namePtr;
     IString *englishNamePtr;
-    Array<PropertyEventListener *> eventRefs;
     Category category;
     WeightPrecision weight;
     PointerArray<IMorph::Vertex> vertices;
@@ -325,28 +324,8 @@ const IString *Morph::name(IEncoding::LanguageType type) const
 void Morph::setName(const IString *value, IEncoding::LanguageType type)
 {
     m_context->parentModelRef->removeMorphHash(this);
-    internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type, this, m_context->eventRefs);
+    internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type);
     m_context->parentModelRef->addMorphHash(this);
-}
-
-void Morph::addEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-        m_context->eventRefs.append(value);
-    }
-}
-
-void Morph::removeEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-    }
-}
-
-void Morph::getEventListenerRefs(Array<PropertyEventListener *> &value)
-{
-    value.copy(m_context->eventRefs);
 }
 
 int Morph::index() const
@@ -381,10 +360,7 @@ void Morph::setInternalParentLabelRef(Label *value)
 
 void Morph::setWeight(const WeightPrecision &value)
 {
-    if (m_context->weight != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, weightWillChange(value, this));
-        m_context->weight = value;
-    }
+    m_context->weight = value;
 }
 
 void Morph::setIndex(int value)
@@ -470,10 +446,7 @@ void Morph::setType(Type /* value */)
 
 void Morph::setCategory(Category value)
 {
-    if (m_context->category != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, categoryWillChange(value, this));
-        m_context->category = value;
-    }
+    m_context->category = value;
 }
 
 void Morph::getBoneMorphs(Array<Bone *> &morphs) const

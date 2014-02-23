@@ -89,10 +89,6 @@ public:
     BaseRigidBody(IModel *parentModelRef, IEncoding *encodingRef);
     ~BaseRigidBody();
 
-    void addEventListenerRef(PropertyEventListener *value);
-    void removeEventListenerRef(PropertyEventListener *value);
-    void getEventListenerRefs(Array<PropertyEventListener *> &value);
-
     void syncLocalTransform();
     void joinWorld(void *value);
     void leaveWorld(void *value);
@@ -159,7 +155,6 @@ protected:
     IBone *m_boneRef;
     IString *m_name;
     IString *m_englishName;
-    Array<PropertyEventListener *> m_eventRefs;
     int m_boneIndex;
     Vector3 m_size;
     Vector3 m_position;

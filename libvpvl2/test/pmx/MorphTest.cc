@@ -1,31 +1,5 @@
 #include "Common.h"
 
-TEST(PMXPropertyEventListener, HandleMorphPropertyEvents)
-{
-    pmx::Model model(0);
-    Morph morph(&model);
-    MockMorphPropertyEventListener listener;
-    TestHandleEvents<IMorph::PropertyEventListener>(listener, morph);
-    IMorph::WeightPrecision weight(0.42);
-    String japaneseName("Japanese"), englishName("English");
-    EXPECT_CALL(listener, nameWillChange(&japaneseName, IEncoding::kJapanese, &morph)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kJapanese, &morph)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(&englishName, IEncoding::kEnglish, &morph)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kEnglish, &morph)).WillOnce(Return());
-    EXPECT_CALL(listener, weightWillChange(weight, &morph)).WillOnce(Return());
-    morph.addEventListenerRef(&listener);
-    morph.setName(&japaneseName, IEncoding::kJapanese);
-    morph.setName(&japaneseName, IEncoding::kJapanese);
-    morph.setName(0, IEncoding::kJapanese);
-    morph.setName(0, IEncoding::kJapanese);
-    morph.setName(&englishName, IEncoding::kEnglish);
-    morph.setName(&englishName, IEncoding::kEnglish);
-    morph.setName(0, IEncoding::kEnglish);
-    morph.setName(0, IEncoding::kEnglish);
-    morph.setWeight(weight);
-    morph.setWeight(weight);
-}
-
 TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
 {
     vsize indexSize = GetParam();

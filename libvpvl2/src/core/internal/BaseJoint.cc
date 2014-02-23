@@ -115,26 +115,6 @@ BaseJoint::~BaseJoint()
     m_index = -1;
 }
 
-void BaseJoint::addEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_eventRefs.remove(value);
-        m_eventRefs.append(value);
-    }
-}
-
-void BaseJoint::removeEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_eventRefs.remove(value);
-    }
-}
-
-void BaseJoint::getEventListenerRefs(Array<PropertyEventListener *> &value)
-{
-    value.copy(m_eventRefs);
-}
-
 void BaseJoint::joinWorld(btDiscreteDynamicsWorld *worldRef)
 {
     worldRef->addConstraint(m_constraint);
@@ -271,7 +251,6 @@ void BaseJoint::setParentModelRef(IModel *value)
 void BaseJoint::setRigidBody1Ref(IRigidBody *value)
 {
     if (value != m_rigidBody1Ref) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, rigidBody1RefWillChange(value, this));
         m_rigidBody1Ref = value;
         m_rigidBodyIndex1 = value ? value->index() : -1;
     }
@@ -280,7 +259,6 @@ void BaseJoint::setRigidBody1Ref(IRigidBody *value)
 void BaseJoint::setRigidBody2Ref(IRigidBody *value)
 {
     if (value != m_rigidBody2Ref) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, rigidBody2RefWillChange(value, this));
         m_rigidBody2Ref = value;
         m_rigidBodyIndex2 = value ? value->index() : -1;
     }
@@ -288,79 +266,52 @@ void BaseJoint::setRigidBody2Ref(IRigidBody *value)
 
 void BaseJoint::setName(const IString *value, IEncoding::LanguageType type)
 {
-    internal::ModelHelper::setName(value, m_name, m_englishName, type, this, m_eventRefs);
+    internal::ModelHelper::setName(value, m_name, m_englishName, type);
 }
 
 void BaseJoint::setPosition(const Vector3 &value)
 {
-    if (m_position != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, positionWillChange(value, this));
-        m_position = value;
-    }
+    m_position = value;
 }
 
 void BaseJoint::setRotation(const Vector3 &value)
 {
-    if (m_rotation != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, rotationWillChange(value, this));
-        m_rotation = value;
-    }
+    m_rotation = value;
 }
 
 void BaseJoint::setPositionLowerLimit(const Vector3 &value)
 {
-    if (m_positionLowerLimit != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, positionLowerLimitWillChange(value, this));
-        m_positionLowerLimit = value;
-    }
+    m_positionLowerLimit = value;
 }
 
 void BaseJoint::setPositionUpperLimit(const Vector3 &value)
 {
-    if (m_positionUpperLimit != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, positionUpperLimitWillChange(value, this));
-        m_positionUpperLimit = value;
-    }
+    m_positionUpperLimit = value;
 }
 
 void BaseJoint::setRotationLowerLimit(const Vector3 &value)
 {
-    if (m_rotationLowerLimit != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, rotationLowerLimitWillChange(value, this));
-        m_rotationLowerLimit = value;
-    }
+    m_rotationLowerLimit = value;
 }
 
 void BaseJoint::setRotationUpperLimit(const Vector3 &value)
 {
-    if (m_rotationUpperLimit != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, rotationUpperLimitWillChange(value, this));
-        m_rotationUpperLimit = value;
-    }
+    m_rotationUpperLimit = value;
 }
 
 void BaseJoint::setPositionStiffness(const Vector3 &value)
 {
-    if (m_positionStiffness != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, positionStiffnessWillChange(value, this));
-        m_positionStiffness = value;
-    }
+    m_positionStiffness = value;
 }
 
 void BaseJoint::setRotationStiffness(const Vector3 &value)
 {
-    if (m_rotationStiffness != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, rotationStiffnessWillChange(value, this));
-        m_rotationStiffness = value;
-    }
+    m_rotationStiffness = value;
 }
 
 void BaseJoint::setType(Type value)
 {
-    if (m_type != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, typeWillChange(value, this));
-        m_type = value;
-    }
+    m_type = value;
 }
 
 void BaseJoint::setIndex(int value)

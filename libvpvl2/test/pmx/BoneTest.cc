@@ -1,39 +1,5 @@
 #include "Common.h"
 
-TEST(PMXPropertyEventListener, HandleBonePropertyEvents)
-{
-    pmx::Model model(0);
-    Bone bone(&model);
-    MockBonePropertyEventListener listener;
-    TestHandleEvents<IBone::PropertyEventListener>(listener, bone);
-    String japaneseName("Japanese"), englishName("English");
-    Vector3 v(1, 2, 3);
-    Quaternion q(0.1, 0.2, 0.3);
-    bool enableIK = false;
-    EXPECT_CALL(listener, nameWillChange(&japaneseName, IEncoding::kJapanese, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kJapanese, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(&englishName, IEncoding::kEnglish, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kEnglish, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, inverseKinematicsEnableWillChange(enableIK, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, localTranslationWillChange(v, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, localOrientationWillChange(q, &bone)).WillOnce(Return());
-    bone.addEventListenerRef(&listener);
-    bone.setName(&japaneseName, IEncoding::kJapanese);
-    bone.setName(&japaneseName, IEncoding::kJapanese);
-    bone.setName(0, IEncoding::kJapanese);
-    bone.setName(0, IEncoding::kJapanese);
-    bone.setName(&englishName, IEncoding::kEnglish);
-    bone.setName(&englishName, IEncoding::kEnglish);
-    bone.setName(0, IEncoding::kEnglish);
-    bone.setName(0, IEncoding::kEnglish);
-    bone.setLocalTranslation(v);
-    bone.setLocalTranslation(v);
-    bone.setLocalOrientation(q);
-    bone.setLocalOrientation(q);
-    bone.setInverseKinematicsEnable(enableIK);
-    bone.setInverseKinematicsEnable(enableIK);
-}
-
 TEST_P(PMXFragmentTest, ReadWriteBone)
 {
     vsize indexSize = GetParam();

@@ -60,10 +60,6 @@ public:
     static void writeSoftBodies(const Array<SoftBody *> &bodies, const Model::DataInfo &info, uint8 *&data);
     static vsize estimateTotalSize(const Array<SoftBody *> &bodies, const Model::DataInfo &info);
 
-    void addEventListenerRef(PropertyEventListener *value);
-    void removeEventListenerRef(PropertyEventListener *value);
-    void getEventListenerRefs(Array<PropertyEventListener *> &value);
-
     void read(const uint8 *data, const Model::DataInfo &info, vsize &size);
     void write(uint8 *&data, const Model::DataInfo &info) const;
     vsize estimateSize(const Model::DataInfo &info) const;
