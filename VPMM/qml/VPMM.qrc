@@ -1,5 +1,21 @@
 <RCC>
     <qresource prefix="/qml">
+        <file>VPMM/AboutWindow.qml</file>
+        <file>VPMM/main.qml</file>
+        <file>VPMM/WindowLoader.qml</file>
+        <file>VPMM/JointView.qml</file>
+        <file>VPMM/IKView.qml</file>
+        <file>VPMM/RigidBodyView.qml</file>
+        <file>VPMM/BoneView.qml</file>
+        <file>VPMM/MaterialView.qml</file>
+        <file>VPMM/MorphView.qml</file>
+        <file>VPMM/Scene.qml</file>
+        <file>VPMM/FontAwesome.js</file>
+        <file>VPMM/FontAwesome.otf</file>
+        <file>VPMM/FontAwesome.ttf</file>
+        <file>VPMM/SaveDialog.qml</file>
+        <file>VPMM/LabelView.qml</file>
+        <file>VPMM/SoftBodyView.qml</file>
+        <file>VPMM/VertexView.qml</file>
     </qresource>
 </RCC>
-

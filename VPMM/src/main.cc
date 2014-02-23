@@ -144,6 +144,7 @@ int main(int argc, char *argv[])
     QCommandLineParser parser;
     parser.setApplicationDescription(QApplication::tr("VPMM (a.k.a MMDAI2) is an application to import/edit model like PMXEditor (PMXE)"));
     Application application(&parser, argc, argv);
+    setApplicationDescription("VPMM", application);
     QTranslator translator;
     translator.load(QLocale::system(), "VPMM", ".", Util::resourcePath("translations"), ".qm");
     application.installTranslator(&translator);
