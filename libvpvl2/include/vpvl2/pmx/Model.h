@@ -147,9 +147,6 @@ public:
     void save(uint8 *data, vsize &written) const;
     vsize estimateSize() const;
 
-    void addEventListenerRef(PropertyEventListener *value);
-    void removeEventListenerRef(PropertyEventListener *value);
-    void getEventListenerRefs(Array<PropertyEventListener *> &value);
     void joinWorld(btDiscreteDynamicsWorld *worldRef);
     void leaveWorld(btDiscreteDynamicsWorld *worldRef);
     void resetAllVerticesTransform();
@@ -269,9 +266,9 @@ public:
     IProgressReporter *progressReporterRef() const;
     void setProgressReporterRef(IProgressReporter *value);
     void addBoneHash(Bone *bone);
-    void removeBoneHash(const Bone *bone);
+    void removeBoneHash(const IBone *bone);
     void addMorphHash(Morph *morph);
-    void removeMorphHash(const Morph *morph);
+    void removeMorphHash(const IMorph *morph);
     int findTextureIndex(const IString *value, int defaultIfNotFound) const;
     IString *addTexture(const IString *value);
     void removeTexture(IString *&value);

@@ -110,9 +110,6 @@ public:
     Model(IEncoding *encodingRef);
     ~Model();
 
-    void addEventListenerRef(PropertyEventListener *value);
-    void removeEventListenerRef(PropertyEventListener *value);
-    void getEventListenerRefs(Array<PropertyEventListener *> &value);
     Type type() const;
     const IString *name(IEncoding::LanguageType type) const;
     const IString *comment(IEncoding::LanguageType type) const;
@@ -208,9 +205,9 @@ public:
     IProgressReporter *progressReporterRef() const;
     void setProgressReporterRef(IProgressReporter *value);
     void addBoneHash(Bone *bone);
-    void removeBoneHash(const Bone *bone);
+    void removeBoneHash(const IBone *bone);
     void addMorphHash(Morph *morph);
-    void removeMorphHash(const Morph *morph);
+    void removeMorphHash(const IMorph *morph);
 
     const PointerArray<Vertex> &vertices() const;
     const Array<int> &indices() const;

@@ -66,28 +66,7 @@ public:
         kHingeConstraint,
         kMaxType
     };
-    class PropertyEventListener {
-    public:
-        virtual ~PropertyEventListener() {}
-        virtual void rigidBody1RefWillChange(IRigidBody *value, IJoint *joint) = 0;
-        virtual void rigidBody2RefWillChange(IRigidBody *value, IJoint *joint) = 0;
-        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IJoint *joint) = 0;
-        virtual void positionWillChange(const Vector3 &value, IJoint *joint) = 0;
-        virtual void rotationWillChange(const Vector3 &value, IJoint *joint) = 0;
-        virtual void positionLowerLimitWillChange(const Vector3 &value, IJoint *joint) = 0;
-        virtual void positionUpperLimitWillChange(const Vector3 &value, IJoint *joint) = 0;
-        virtual void rotationLowerLimitWillChange(const Vector3 &value, IJoint *joint) = 0;
-        virtual void rotationUpperLimitWillChange(const Vector3 &value, IJoint *joint) = 0;
-        virtual void positionStiffnessWillChange(const Vector3 &value, IJoint *joint) = 0;
-        virtual void rotationStiffnessWillChange(const Vector3 &value, IJoint *joint) = 0;
-        virtual void typeWillChange(IJoint::Type value, IJoint *joint) = 0;
-    };
-
     virtual ~IJoint() {}
-
-    virtual void addEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void removeEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void getEventListenerRefs(Array<PropertyEventListener *> &value) = 0;
 
     virtual void *constraintPtr() const = 0;
     virtual IModel *parentModelRef() const = 0;

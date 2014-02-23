@@ -53,22 +53,6 @@
 #include <windows.h>
 #endif
 
-#define VPVL2_TRIGGER_PROPERTY_EVENTS(events, expr) do { \
-    const int nevents = events.count(); \
-    for (int i = 0; i < nevents; i++) { \
-      PropertyEventListener *event = events[i]; \
-      event->expr; \
-    } \
-  } while (0)
-
-#define VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(events, expr, TEventListener) do { \
-    const int nevents = events.count(); \
-    for (int i = 0; i < nevents; i++) { \
-      TEventListener *event = events[i]; \
-      event->expr; \
-    } \
-  } while (0)
-
 namespace vpvl2
 {
 namespace VPVL2_VERSION_NS
@@ -112,12 +96,15 @@ static inline vsize estimateSize(const IString *string, const IEncoding *encodin
     return value;
 }
 
-static inline void
-setString(const IString *newValue, IString *&value)
+static inline void setString(const IString *newValue, IString *&value)
 {
     if (newValue && newValue != value) {
         delete value;
         value = newValue->clone();
+    }
+    else if (!newValue && newValue != value) {
+        delete value;
+        value = 0;
     }
 }
 

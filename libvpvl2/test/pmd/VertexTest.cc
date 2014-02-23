@@ -31,48 +31,6 @@ TEST(PMDVertexTest, NullRef)
     ASSERT_EQ(vertex.materialRef(), Factory::sharedNullMaterialRef());
 }
 
-
-TEST(PMDPropertyEventListener, HandleVertexPropertyEvents)
-{
-    Vertex vertex(0);
-    MockVertexPropertyEventListener listener;
-    TestHandleEvents<IVertex::PropertyEventListener>(listener, vertex);
-    Bone bone(0, 0);
-    Material material(0, 0);
-    IVertex::EdgeSizePrecision edgeSize(0.42);
-    IVertex::WeightPrecision weightSize(0.84);
-    IVertex::Type type(IVertex::kBdef4);
-    Vector3 origin(1, 2, 3), normal(origin.normalized()), texcoord(0.4, 0.5, 0.6);
-    Vector4 uv(0.6, 0.7, 0.8, 0.9);
-    /* type/UV should not be called */
-    EXPECT_CALL(listener, boneRefWillChange(0, &bone, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, edgeSizeWillChange(edgeSize, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, materialRefWillChange(&material, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, normalWillChange(normal, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, originWillChange(origin, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, textureCoordWillChange(texcoord, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, weightWillChange(0, weightSize, &vertex)).WillOnce(Return());
-    vertex.addEventListenerRef(&listener);
-    vertex.setBoneRef(0, &bone);
-    vertex.setBoneRef(0, &bone);
-    vertex.setEdgeSize(edgeSize);
-    vertex.setEdgeSize(edgeSize);
-    vertex.setMaterialRef(&material);
-    vertex.setMaterialRef(&material);
-    vertex.setNormal(normal);
-    vertex.setNormal(normal);
-    vertex.setOrigin(origin);
-    vertex.setOrigin(origin);
-    vertex.setTextureCoord(texcoord);
-    vertex.setTextureCoord(texcoord);
-    vertex.setType(type);
-    vertex.setType(type);
-    vertex.setOriginUV(0, uv);
-    vertex.setOriginUV(0, uv);
-    vertex.setWeight(0, weightSize);
-    vertex.setWeight(0, weightSize);
-}
-
 TEST(PMDModelTest, AddAndRemoveVertex)
 {
     Encoding encoding(0);
@@ -94,4 +52,22 @@ TEST(PMDModelTest, AddAndRemoveVertex)
     EXPECT_CALL(mockedVertex, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
     model.addVertex(&mockedVertex);
     ASSERT_EQ(0, model.vertices().count());
+}
+
+TEST(PMDModelTest, RemoveVertexReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Vertex vertex(&model);
+    model.addVertex(&vertex);
+    Morph::Vertex vertexMorph;
+    vertexMorph.vertex = &vertex;
+    Morph parentVertexMorph(&model, &encoding);
+    parentVertexMorph.setType(IMorph::kVertexMorph);
+    parentVertexMorph.addVertexMorph(&vertexMorph);
+    model.addMorph(&parentVertexMorph);
+    model.removeVertex(&vertex);
+    parentVertexMorph.removeVertexMorph(&vertexMorph);
+    model.removeMorph(&parentVertexMorph);
+    ASSERT_EQ(static_cast<IVertex *>(0), vertexMorph.vertex);
 }

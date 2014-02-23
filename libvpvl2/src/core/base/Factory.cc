@@ -71,9 +71,6 @@ public:
         return &bone;
     }
 
-    void addEventListenerRef(PropertyEventListener * /* value */) {}
-    void removeEventListenerRef(PropertyEventListener * /* value */) {}
-    void getEventListenerRefs(Array<PropertyEventListener *> &value) { value.clear(); }
     const IString *name(IEncoding::LanguageType /* type */) const { return 0; }
     void setName(const IString * /* value */, IEncoding::LanguageType /* type */) {}
     int index() const { return -1; }
@@ -146,9 +143,6 @@ public:
         return &material;
     }
 
-    void addEventListenerRef(PropertyEventListener * /* value */) {}
-    void removeEventListenerRef(PropertyEventListener * /* value */) {}
-    void getEventListenerRefs(Array<PropertyEventListener *> &value) { value.clear(); }
     IModel *parentModelRef() const { return 0; }
     const IString *name(IEncoding::LanguageType /* type */) const { return 0; }
     const IString *englishName() const { return 0; }

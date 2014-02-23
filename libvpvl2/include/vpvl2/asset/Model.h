@@ -73,9 +73,6 @@ public:
     Model(IEncoding *encoding);
     ~Model();
 
-    void addEventListenerRef(PropertyEventListener * /* value */) {}
-    void removeEventListenerRef(PropertyEventListener * /* value */) {}
-    void getEventListenerRefs(Array<PropertyEventListener *> &value) { value.clear(); }
     Type type() const { return kAssetModel; }
     const IString *name(IEncoding::LanguageType /* type */) const { return m_name; }
     const IString *comment(IEncoding::LanguageType /* type */) const { return m_name; }

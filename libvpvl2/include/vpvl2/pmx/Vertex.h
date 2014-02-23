@@ -74,10 +74,6 @@ public:
     Vertex(IModel *modelRef);
     ~Vertex();
 
-    void addEventListenerRef(PropertyEventListener *value);
-    void removeEventListenerRef(PropertyEventListener *value);
-    void getEventListenerRefs(Array<PropertyEventListener *> &value);
-
     static bool preparse(uint8 *&data, vsize &rest, Model::DataInfo &info);
     static bool loadVertices(const Array<Vertex *> &vertices, const Array<Bone *> &bones);
     static void writeVertices(const Array<Vertex *> &vertices, const Model::DataInfo &info, uint8 *&data);

@@ -3,12 +3,6 @@ namespace VPVL2_VERSION_NS {
 
 class MockIVertex : public IVertex {
  public:
-  MOCK_METHOD1(addEventListenerRef,
-      void(PropertyEventListener *value));
-  MOCK_METHOD1(removeEventListenerRef,
-      void(PropertyEventListener *value));
-  MOCK_METHOD1(getEventListenerRefs,
-      void(Array<PropertyEventListener *> &value));
   MOCK_CONST_METHOD0(parentModelRef,
       IModel*());
   MOCK_CONST_METHOD2(performSkinning,

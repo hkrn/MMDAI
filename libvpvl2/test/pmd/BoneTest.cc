@@ -1,39 +1,5 @@
 #include "Common.h"
 
-TEST(PMDPropertyEventListener, HandleBonePropertyEvents)
-{
-    pmd2::Model model(0);
-    Bone bone(&model, 0);
-    MockBonePropertyEventListener listener;
-    TestHandleEvents<IBone::PropertyEventListener>(listener, bone);
-    Vector3 v(1, 2, 3);
-    Quaternion q(0.1, 0.2, 0.3);
-    bool enableIK = false;
-    String japaneseName("Japanese"), englishName("English");
-    EXPECT_CALL(listener, nameWillChange(&japaneseName, IEncoding::kJapanese, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kJapanese, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(&englishName, IEncoding::kEnglish, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kEnglish, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, inverseKinematicsEnableWillChange(enableIK, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, localTranslationWillChange(v, &bone)).WillOnce(Return());
-    EXPECT_CALL(listener, localOrientationWillChange(q, &bone)).WillOnce(Return());
-    bone.addEventListenerRef(&listener);
-    bone.setName(&japaneseName, IEncoding::kJapanese);
-    bone.setName(&japaneseName, IEncoding::kJapanese);
-    bone.setName(0, IEncoding::kJapanese);
-    bone.setName(0, IEncoding::kJapanese);
-    bone.setName(&englishName, IEncoding::kEnglish);
-    bone.setName(&englishName, IEncoding::kEnglish);
-    bone.setName(0, IEncoding::kEnglish);
-    bone.setName(0, IEncoding::kEnglish);
-    bone.setLocalTranslation(v);
-    bone.setLocalTranslation(v);
-    bone.setLocalOrientation(q);
-    bone.setLocalOrientation(q);
-    bone.setInverseKinematicsEnable(enableIK);
-    bone.setInverseKinematicsEnable(enableIK);
-}
-
 TEST(PMDModelTest, AddAndRemoveBone)
 {
     Encoding encoding(0);
@@ -56,6 +22,41 @@ TEST(PMDModelTest, AddAndRemoveBone)
     EXPECT_CALL(mockedBone, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
     model.addBone(&mockedBone);
     ASSERT_EQ(0, model.bones().count());
+}
+
+TEST(PMDModelTest, RemoveBoneReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Bone bone(&model, &encoding), childBone(&model, &encoding);
+    String s("testBone");
+    bone.setName(&s, IEncoding::kDefaultLanguage);
+    model.addBone(&bone);
+    ASSERT_EQ(&bone, model.findBoneRef(&s));
+    childBone.setParentBoneRef(&bone);
+    childBone.setParentInherentBoneRef(&bone);
+    childBone.setDestinationOriginBoneRef(&bone);
+    model.addBone(&childBone);
+    Vertex vertex(&model);
+    for (int i = 0; i < Vertex::kMaxBones; i++) {
+        vertex.setBoneRef(i, &bone);
+    }
+    model.addVertex(&vertex);
+    RigidBody body(&model, &encoding);
+    body.setBoneRef(&bone);
+    model.addRigidBody(&body);
+    model.removeBone(&bone);
+    model.removeBone(&childBone);
+    model.removeRigidBody(&body);
+    model.removeVertex(&vertex);
+    ASSERT_EQ(Factory::sharedNullBoneRef(), body.boneRef());
+    for (int i = 0; i < Vertex::kMaxBones; i++) {
+        ASSERT_EQ(Factory::sharedNullBoneRef(), vertex.boneRef(i));
+    }
+    ASSERT_EQ(static_cast<IBone *>(0), childBone.parentBoneRef());
+    ASSERT_EQ(static_cast<IBone *>(0), childBone.parentInherentBoneRef());
+    ASSERT_EQ(static_cast<IBone *>(0), childBone.destinationOriginBoneRef());
+    ASSERT_EQ(static_cast<IBone *>(0), model.findBoneRef(&s));
 }
 
 TEST_P(PMDLanguageTest, RenameBone)

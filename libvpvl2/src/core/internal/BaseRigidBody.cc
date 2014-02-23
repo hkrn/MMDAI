@@ -239,26 +239,6 @@ void BaseRigidBody::updateTransform()
     m_body->setInterpolationWorldTransform(newTransform);
 }
 
-void BaseRigidBody::addEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_eventRefs.remove(value);
-        m_eventRefs.append(value);
-    }
-}
-
-void BaseRigidBody::removeEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_eventRefs.remove(value);
-    }
-}
-
-void BaseRigidBody::getEventListenerRefs(Array<PropertyEventListener *> &value)
-{
-    value.copy(m_eventRefs);
-}
-
 const Transform BaseRigidBody::createTransform() const
 {
     Matrix3x3 basis;
@@ -442,7 +422,7 @@ int BaseRigidBody::index() const VPVL2_DECL_NOEXCEPT
 
 void BaseRigidBody::setName(const IString *value, IEncoding::LanguageType type)
 {
-    internal::ModelHelper::setName(value, m_name, m_englishName, type, this, m_eventRefs);
+    internal::ModelHelper::setName(value, m_name, m_englishName, type);
 }
 
 void BaseRigidBody::setParentModelRef(IModel *value)
@@ -453,7 +433,6 @@ void BaseRigidBody::setParentModelRef(IModel *value)
 void BaseRigidBody::setBoneRef(IBone *value)
 {
     if (value != m_boneRef) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, boneRefWillChange(value, this));
         if (value) {
             m_boneIndex = value->index();
             m_boneRef = value;
@@ -468,98 +447,62 @@ void BaseRigidBody::setBoneRef(IBone *value)
 
 void BaseRigidBody::setAngularDamping(float32 value)
 {
-    if (m_angularDamping != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, angularDampingWillChange(value, this));
-        m_angularDamping = value;
-    }
+    m_angularDamping = value;
 }
 
 void BaseRigidBody::setCollisionGroupID(uint8 value)
 {
-    if (m_collisionGroupID != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, collisionGroupIDWillChange(value, this));
-        m_collisionGroupID = value;
-    }
+    m_collisionGroupID = value;
 }
 
 void BaseRigidBody::setCollisionMask(uint16 value)
 {
-    if (m_collisionGroupMask != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, collisionMaskWillChange(value, this));
-        m_collisionGroupMask = value;
-    }
+    m_collisionGroupMask = value;
 }
 
 void BaseRigidBody::setFriction(float32 value)
 {
-    if (m_friction != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, frictionWillChange(value, this));
-        m_friction = value;
-    }
+    m_friction = value;
 }
 
 void BaseRigidBody::setLinearDamping(float32 value)
 {
-    if (m_linearDamping != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, linearDampingWillChange(value, this));
-        m_linearDamping = value;
-    }
+    m_linearDamping = value;
 }
 
 void BaseRigidBody::setMass(float32 value)
 {
-    if (m_mass != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, massWillChange(value, this));
-        m_mass = value;
-    }
+    m_mass = value;
 }
 
 void BaseRigidBody::setPosition(const Vector3 &value)
 {
-    if (m_position != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, positionWillChange(value, this));
-        m_position = value;
-    }
+    m_position = value;
 }
 
 void BaseRigidBody::setRestitution(float32 value)
 {
-    if (m_restitution != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, restitutionWillChange(value, this));
-        m_restitution = value;
-    }
+    m_restitution = value;
 }
 
 void BaseRigidBody::setRotation(const Vector3 &value)
 {
-    if (m_rotation != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, rotationWillChange(value, this));
-        m_rotation = value;
-    }
+    m_rotation = value;
 }
 
 void BaseRigidBody::setShapeType(ShapeType value)
 {
-    if (m_shapeType != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, shapeTypeWillChange(value, this));
-        m_shapeType = value;
-    }
+    m_shapeType = value;
 }
 
 void BaseRigidBody::setSize(const Vector3 &value)
 {
-    if (m_size != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, sizeWillChange(value, this));
-        m_size = value;
-    }
+    m_size = value;
 }
 
 void BaseRigidBody::setObjectType(ObjectType value)
 {
-    if (m_type != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, objectTypeWillChange(value, this));
-        m_type = value;
-    }
+    m_type = value;
 }
 
 void BaseRigidBody::setIndex(int value)

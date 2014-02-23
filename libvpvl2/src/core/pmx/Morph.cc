@@ -499,7 +499,6 @@ struct Morph::PrivateContext {
     Label *parentLabelRef;
     IString *namePtr;
     IString *englishNamePtr;
-    Array<PropertyEventListener *> eventRefs;
     IMorph::WeightPrecision weight;
     IMorph::WeightPrecision internalWeight;
     IMorph::Category category;
@@ -837,26 +836,6 @@ vsize Morph::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
-void Morph::addEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-        m_context->eventRefs.append(value);
-    }
-}
-
-void Morph::removeEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-    }
-}
-
-void Morph::getEventListenerRefs(Array<PropertyEventListener *> &value)
-{
-    value.copy(m_context->eventRefs);
-}
-
 IMorph::WeightPrecision Morph::weight() const
 {
     return m_context->weight;
@@ -865,7 +844,6 @@ IMorph::WeightPrecision Morph::weight() const
 void Morph::setWeight(const IMorph::WeightPrecision &value)
 {
     if (m_context->weight != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, weightWillChange(value, this));
         m_context->weight = value;
         m_context->dirty = true;
     }
@@ -984,8 +962,9 @@ void Morph::updateMaterialMorphs(const WeightPrecision &value)
         const Array<IMaterial *> *materials = v->materials;
         const int nmaterials = materials->count();
         for (int j = 0; j < nmaterials; j++) {
-            pmx::Material *material = static_cast<pmx::Material *>(materials->at(j));
-            material->mergeMorph(v, value);
+            if (pmx::Material *material = static_cast<pmx::Material *>(materials->at(j))) {
+                material->mergeMorph(v, value);
+            }
         }
     }
 }
@@ -1050,7 +1029,7 @@ const IString *Morph::name(IEncoding::LanguageType type) const
 void Morph::setName(const IString *value, IEncoding::LanguageType type)
 {
     m_context->parentModelRef->removeMorphHash(this);
-    internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type, this, m_context->eventRefs);
+    internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type);
     m_context->parentModelRef->addMorphHash(this);
 }
 
@@ -1217,18 +1196,12 @@ void Morph::setInternalParentLabelRef(Label *value)
 
 void Morph::setCategory(Category value)
 {
-    if (m_context->category != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, categoryWillChange(value, this));
-        m_context->category = value;
-    }
+    m_context->category = value;
 }
 
 void Morph::setType(Type value)
 {
-    if (m_context->type != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, typeWillChange(value, this));
-        m_context->type = value;
-    }
+    m_context->type = value;
 }
 
 void Morph::setIndex(int value)

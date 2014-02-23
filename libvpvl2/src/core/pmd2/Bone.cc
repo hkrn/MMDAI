@@ -125,7 +125,6 @@ struct Bone::PrivateContext {
     IBone *parentBoneRef;
     IBone *targetBoneRef;
     IBone *childBoneRef;
-    Array<PropertyEventListener *> eventRefs;
     Vector3 fixedAxis;
     Vector3 origin;
     Vector3 offset;
@@ -291,26 +290,6 @@ void Bone::performTransform()
     getLocalTransform(m_context->localTransform);
 }
 
-void Bone::addEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-        m_context->eventRefs.append(value);
-    }
-}
-
-void Bone::removeEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-    }
-}
-
-void Bone::getEventListenerRefs(Array<PropertyEventListener *> &value)
-{
-    value.copy(m_context->eventRefs);
-}
-
 const IString *Bone::name(IEncoding::LanguageType type) const
 {
     switch (type) {
@@ -327,7 +306,7 @@ const IString *Bone::name(IEncoding::LanguageType type) const
 void Bone::setName(const IString *value, IEncoding::LanguageType type)
 {
     m_context->parentModelRef->removeBoneHash(this);
-    internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type, this, m_context->eventRefs);
+    internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type);
     m_context->parentModelRef->addBoneHash(this);
 }
 
@@ -407,18 +386,12 @@ void Bone::getEffectorBones(Array<IBone *> & /* value */) const
 
 void Bone::setLocalTranslation(const Vector3 &value)
 {
-    if (m_context->localTranslation != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, localTranslationWillChange(value, this));
-        m_context->localTranslation = value;
-    }
+    m_context->localTranslation = value;
 }
 
 void Bone::setLocalOrientation(const Quaternion &value)
 {
-    if (m_context->rotation != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, localOrientationWillChange(value, this));
-        m_context->rotation = value;
-    }
+    m_context->rotation = value;
 }
 
 void Bone::setTargetBoneRef(IBone *value)
@@ -581,10 +554,7 @@ void Bone::setDestinationOriginBoneRef(IBone *value)
 
 void Bone::setInverseKinematicsEnable(bool value)
 {
-    if (m_context->enableInverseKinematics != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, inverseKinematicsEnableWillChange(value, this));
-        m_context->enableInverseKinematics = value;
-    }
+    m_context->enableInverseKinematics = value;
 }
 
 void Bone::setIndex(int value)

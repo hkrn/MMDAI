@@ -57,10 +57,6 @@ public:
     Material(Model *parentModelRef, IEncoding *encodingRef);
     ~Material();
 
-    void addEventListenerRef(PropertyEventListener *value);
-    void removeEventListenerRef(PropertyEventListener *value);
-    void getEventListenerRefs(Array<PropertyEventListener *> &value);
-
     IModel *parentModelRef() const;
     const IString *name(IEncoding::LanguageType type) const;
     const IString *userDataArea() const;

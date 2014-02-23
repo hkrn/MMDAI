@@ -94,7 +94,7 @@ public:
         virtual void setupBindPose(void *address) const = 0;
         virtual void update(void *address) const = 0;
         virtual void performTransform(void *address, const Vector3 &cameraPosition) const = 0;
-        virtual void getAabb(const void *address, Array<Vector3> &values) const = 0;
+        virtual void computeAabb(const void *address, Array<Vector3> &values) const = 0;
         virtual void setParallelUpdateEnable(bool value) = 0;
     };
     struct StaticVertexBuffer : Buffer {
@@ -117,27 +117,6 @@ public:
         virtual const float32 *bytes(int materialIndex) const = 0;
         virtual vsize size(int materialIndex) const = 0;
     };
-    class PropertyEventListener {
-    public:
-        virtual ~PropertyEventListener() {}
-        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, IModel *model) = 0;
-        virtual void commentWillChange(const IString *value, IEncoding::LanguageType type, IModel *model) = 0;
-        virtual void worldTranslationWillChange(const Vector3 &value, IModel *model) = 0;
-        virtual void worldOrientationWillChange(const Quaternion &value, IModel *model) = 0;
-        virtual void opacityWillChange(const Scalar &value, IModel *model) = 0;
-        virtual void scaleFactorWillChange(const Scalar &value, IModel *model) = 0;
-        virtual void edgeColorWillChange(const Vector3 &value, IModel *model) = 0;
-        virtual void edgeWidthWillChange(const IVertex::EdgeSizePrecision &value, IModel *model) = 0;
-        virtual void parentModelRefWillChange(IModel *value, IModel *model) = 0;
-        virtual void parentBoneRefWillChange(IBone *value, IModel *model) = 0;
-        virtual void visibleWillChange(bool value, IModel *model) = 0;
-        virtual void physicsEnableWillChange(bool value, IModel *model) = 0;
-        virtual void aabbWillChange(const Vector3 &min, const Vector3 &max, IModel *model) = 0;
-        virtual void versionWillChange(float32 value, IModel *model) = 0;
-        virtual void maxUVCountWillChange(int value, IModel *model) = 0;
-        virtual void encodingTypeWillChange(IString::Codec value, IModel *model) = 0;
-    };
-
     /**
       * Type of parsing errors.
       */
@@ -187,10 +166,6 @@ public:
     };
 
     virtual ~IModel() {}
-
-    virtual void addEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void removeEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void getEventListenerRefs(Array<PropertyEventListener *> &value) = 0;
 
     /**
      * モデルの型を返します.

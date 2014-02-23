@@ -1,31 +1,5 @@
 #include "Common.h"
 
-TEST(PMDPropertyEventListener, HandleMorphPropertyEvents)
-{
-    pmd2::Model model(0);
-    Morph morph(&model, 0);
-    MockMorphPropertyEventListener listener;
-    TestHandleEvents<IMorph::PropertyEventListener>(listener, morph);
-    String japaneseName("Japanese"), englishName("English");
-    IMorph::WeightPrecision weight(0.42);
-    EXPECT_CALL(listener, nameWillChange(&japaneseName, IEncoding::kJapanese, &morph)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kJapanese, &morph)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(&englishName, IEncoding::kEnglish, &morph)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kEnglish, &morph)).WillOnce(Return());
-    EXPECT_CALL(listener, weightWillChange(weight, &morph)).WillOnce(Return());
-    morph.addEventListenerRef(&listener);
-    morph.setName(&japaneseName, IEncoding::kJapanese);
-    morph.setName(&japaneseName, IEncoding::kJapanese);
-    morph.setName(0, IEncoding::kJapanese);
-    morph.setName(0, IEncoding::kJapanese);
-    morph.setName(&englishName, IEncoding::kEnglish);
-    morph.setName(&englishName, IEncoding::kEnglish);
-    morph.setName(0, IEncoding::kEnglish);
-    morph.setName(0, IEncoding::kEnglish);
-    morph.setWeight(weight);
-    morph.setWeight(weight);
-}
-
 TEST(PMDModelTest, AddAndRemoveMorph)
 {
     Encoding encoding(0);
@@ -48,4 +22,17 @@ TEST(PMDModelTest, AddAndRemoveMorph)
     EXPECT_CALL(mockedMorph, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
     model.addMorph(&mockedMorph);
     ASSERT_EQ(0, model.morphs().count());
+}
+
+TEST(PMDModelTest, RemoveMorphReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Morph morph(&model, &encoding);
+    String s("testMorph");
+    morph.setName(&s, IEncoding::kDefaultLanguage);
+    model.addMorph(&morph);
+    ASSERT_EQ(&morph, model.findMorphRef(&s));
+    model.removeMorph(&morph);
+    ASSERT_EQ(static_cast<IMorph *>(0), model.findMorphRef(&s));
 }

@@ -182,25 +182,14 @@ public:
         m_direction.setZero();
     }
 
-    void addEventListenerRef(PropertyEventListener *value) {
-        m_eventRefs.append(value);
-    }
-    void removeEventListenerRef(PropertyEventListener *value) {
-        m_eventRefs.remove(value);
-    }
-    void getEventListenerRefs(Array<PropertyEventListener *> &value) {
-        value.copy(m_eventRefs);
-    }
     Vector3 color() const VPVL2_DECL_NOEXCEPT { return m_color; }
     Vector3 direction() const VPVL2_DECL_NOEXCEPT { return m_direction; }
     bool isToonEnabled() const VPVL2_DECL_NOEXCEPT { return m_enableToon; }
     IMotion *motion() const VPVL2_DECL_NOEXCEPT { return m_motion; }
     void setColor(const Vector3 &value) VPVL2_DECL_NOEXCEPT {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, colorWillChange(value, this));
         m_color = value;
     }
     void setDirection(const Vector3 &value) VPVL2_DECL_NOEXCEPT {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_eventRefs, directionWillChange(value, this));
         m_direction = value;
     }
     void setToonEnable(bool value) VPVL2_DECL_NOEXCEPT {
@@ -225,7 +214,6 @@ public:
 private:
     Scene *m_sceneRef;
     IMotion *m_motion;
-    Array<PropertyEventListener *> m_eventRefs;
     Vector3 m_color;
     Vector3 m_direction;
     bool m_enableToon;
@@ -259,15 +247,6 @@ public:
         m_zfar = 0;
     }
 
-    void addEventListenerRef(PropertyEventListener *value) {
-        m_eventRefs.append(value);
-    }
-    void removeEventListenerRef(PropertyEventListener *value) {
-        m_eventRefs.remove(value);
-    }
-    void getEventListenerRefs(Array<PropertyEventListener *> &value) {
-        value.copy(m_eventRefs);
-    }
     Transform modelViewTransform() const VPVL2_DECL_NOEXCEPT { return m_transform; }
     Vector3 lookAt() const VPVL2_DECL_NOEXCEPT { return m_lookAt; }
     Vector3 position() const VPVL2_DECL_NOEXCEPT { return m_position; }
@@ -320,7 +299,6 @@ public:
 private:
     Scene *m_sceneRef;
     IMotion *m_motion;
-    Array<PropertyEventListener *> m_eventRefs;
     Transform m_transform;
     Quaternion m_rotation;
     Vector3 m_lookAt;

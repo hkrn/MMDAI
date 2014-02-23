@@ -346,9 +346,9 @@ struct DefaultDynamicVertexBuffer : public IModel::DynamicVertexBuffer {
         internal::ParallelSkinningVertexProcessor<pmd2::Model, pmd2::Vertex, Unit> processor(modelRef, &vertices, cameraPosition, bufferPtr);
         processor.execute(enableParallelUpdate);
     }
-    void getAabb(const void *address, Array<Vector3> &values) const {
+    void computeAabb(const void *address, Array<Vector3> &values) const {
         const Array<Material *> &materials = modelRef->materials();
-        internal::ParallelCalcAabbProcessor<pmd2::Material, Unit> processor(&materials, &values, address);
+        internal::ParallelComputeAabbProcessor<pmd2::Material, Unit> processor(&materials, &values, address);
         processor.execute(enableParallelUpdate);
     }
     void setParallelUpdateEnable(bool value) {
@@ -877,7 +877,6 @@ struct Model::PrivateContext {
     Array<Bone *> sortedBoneRefs;
     Hash<HashString, IBone *> name2boneRefs;
     Hash<HashString, IMorph *> name2morphRefs;
-    Array<PropertyEventListener *> eventRefs;
     DataInfo dataInfo;
     Vector3 position;
     Quaternion rotation;
@@ -1387,26 +1386,6 @@ int Model::count(ObjectType value) const
     return 0;
 }
 
-void Model::addEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-        m_context->eventRefs.append(value);
-    }
-}
-
-void Model::removeEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-    }
-}
-
-void Model::getEventListenerRefs(Array<PropertyEventListener *> &value)
-{
-    value.copy(m_context->eventRefs);
-}
-
 IModel::Type Model::type() const
 {
     return kPMDModel;
@@ -1606,12 +1585,12 @@ IVertex::EdgeSizePrecision Model::edgeScaleFactor(const Vector3 &cameraPosition)
 
 void Model::setName(const IString *value, IEncoding::LanguageType type)
 {
-    internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type, this, m_context->eventRefs);
+    internal::ModelHelper::setName(value, m_context->namePtr, m_context->englishNamePtr, type);
 }
 
 void Model::setComment(const IString *value, IEncoding::LanguageType type)
 {
-    internal::ModelHelper::setComment(value, m_context->commentPtr, m_context->englishCommentPtr, type, this, m_context->eventRefs);
+    internal::ModelHelper::setName(value, m_context->commentPtr, m_context->englishCommentPtr, type);
 }
 
 void Model::setEncodingType(IString::Codec /* value */)
@@ -1620,50 +1599,32 @@ void Model::setEncodingType(IString::Codec /* value */)
 
 void Model::setWorldTranslation(const Vector3 &value)
 {
-    if (m_context->position != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, worldTranslationWillChange(value, this));
-        m_context->position = value;
-    }
+    m_context->position = value;
 }
 
 void Model::setWorldOrientation(const Quaternion &value)
 {
-    if (m_context->rotation != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, worldOrientationWillChange(value, this));
-        m_context->rotation = value;
-    }
+    m_context->rotation = value;
 }
 
 void Model::setOpacity(const Scalar &value)
 {
-    if (m_context->opacity != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, opacityWillChange(value, this));
-        m_context->opacity = value;
-    }
+    m_context->opacity = value;
 }
 
 void Model::setScaleFactor(const Scalar &value)
 {
-    if (m_context->scaleFactor != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, scaleFactorWillChange(value, this));
-        m_context->scaleFactor = value;
-    }
+    m_context->scaleFactor = value;
 }
 
 void Model::setEdgeColor(const Color &value)
 {
-    if (m_context->edgeColor != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, edgeColorWillChange(value, this));
-        m_context->edgeColor = value;
-    }
+    m_context->edgeColor = value;
 }
 
 void Model::setEdgeWidth(const IVertex::EdgeSizePrecision &value)
 {
-    if (m_context->edgeWidth != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, edgeWidthWillChange(value, this));
-        m_context->edgeWidth = value;
-    }
+    m_context->edgeWidth = value;
 }
 
 void Model::setParentSceneRef(Scene *value)
@@ -1674,33 +1635,23 @@ void Model::setParentSceneRef(Scene *value)
 void Model::setParentModelRef(IModel *value)
 {
     if (m_context->parentModelRef != value && !internal::ModelHelper::hasModelLoopChain(value, this)) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, parentModelRefWillChange(value, this));
         m_context->parentModelRef = value;
     }
 }
 
 void Model::setParentBoneRef(IBone *value)
 {
-    if (m_context->parentBoneRef != value && !internal::ModelHelper::hasBoneLoopChain(value, m_context->parentModelRef)) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, parentBoneRefWillChange(value, this));
-        m_context->parentBoneRef = value;
-    }
+    m_context->parentBoneRef = value;
 }
 
 void Model::setPhysicsEnable(bool value)
 {
-    if (m_context->physicsEnabled != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, physicsEnableWillChange(value, this));
-        m_context->physicsEnabled = value;
-    }
+    m_context->physicsEnabled = value;
 }
 
 void Model::setVisible(bool value)
 {
-    if (m_context->visible != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, visibleWillChange(value, this));
-        m_context->visible = value;
-    }
+    m_context->visible = value;
 }
 
 void Model::getAabb(Vector3 &min, Vector3 &max) const
@@ -1711,11 +1662,8 @@ void Model::getAabb(Vector3 &min, Vector3 &max) const
 
 void Model::setAabb(const Vector3 &min, const Vector3 &max)
 {
-    if (m_context->aabbMin != min || m_context->aabbMax != max) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, aabbWillChange(min, max, this));
-        m_context->aabbMin = min;
-        m_context->aabbMax = max;
-    }
+    m_context->aabbMin = min;
+    m_context->aabbMax = max;
 }
 
 float32 Model::version() const
@@ -1894,6 +1842,12 @@ void Model::addTexture(const IString *value)
 void Model::removeBone(IBone *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->bones);
+    internal::ModelHelper::removeBoneReferenceInBones(value, m_context->bones);
+    internal::ModelHelper::removeBoneReferenceInRigidBodies(value, m_context->rigidBodies);
+    internal::ModelHelper::removeBoneReferenceInVertices(value, m_context->vertices);
+    if (value) {
+        removeBoneHash(value);
+    }
 }
 
 void Model::removeJoint(IJoint *value)
@@ -1909,21 +1863,40 @@ void Model::removeLabel(ILabel *value)
 void Model::removeMaterial(IMaterial *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->materials);
+    internal::ModelHelper::removeMaterialReferenceInVertices(value, m_context->vertices);
 }
 
 void Model::removeMorph(IMorph *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->morphs);
+    if (value) {
+        removeMorphHash(value);
+    }
 }
 
 void Model::removeRigidBody(IRigidBody *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->rigidBodies);
+    internal::ModelHelper::removeRigidBodyReferenceInJoints(value, m_context->joints);
 }
 
 void Model::removeVertex(IVertex *value)
 {
     internal::ModelHelper::removeObject(this, value, m_context->vertices);
+    const int nmorphs = m_context->morphs.count();
+    for (int i = 0; i < nmorphs; i++) {
+        Morph *morph = m_context->morphs[i];
+        if (morph->type() == IMorph::kVertexMorph) {
+            const Array<IMorph::Vertex *> &children = morph->vertices();
+            const int nchildren = children.count();
+            for (int j = 0; j < nchildren; j++) {
+                IMorph::Vertex *child = children[j];
+                if (child->vertex == value) {
+                    child->vertex = 0;
+                }
+            }
+        }
+    }
 }
 
 IProgressReporter *Model::progressReporterRef() const
@@ -1947,7 +1920,7 @@ void Model::addBoneHash(Bone *bone)
     }
 }
 
-void Model::removeBoneHash(const Bone *bone)
+void Model::removeBoneHash(const IBone *bone)
 {
     VPVL2_DCHECK(bone);
     if (const IString *name = bone->name(IEncoding::kJapanese)) {
@@ -1969,7 +1942,7 @@ void Model::addMorphHash(Morph *morph)
     }
 }
 
-void Model::removeMorphHash(const Morph *morph)
+void Model::removeMorphHash(const IMorph *morph)
 {
     VPVL2_DCHECK(morph);
     if (const IString *name = morph->name(IEncoding::kJapanese)) {

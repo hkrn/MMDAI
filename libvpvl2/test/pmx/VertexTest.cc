@@ -1,61 +1,5 @@
 #include "Common.h"
 
-
-TEST(PMXPropertyEventListener, HandleVertexPropertyEvents)
-{
-    Vertex vertex(0);
-    MockVertexPropertyEventListener listener;
-    TestHandleEvents<IVertex::PropertyEventListener>(listener, vertex);
-    Bone bone(0);
-    Material material(0);
-    IVertex::EdgeSizePrecision edgeSize(0.42);
-    IVertex::WeightPrecision weightSize(0.84);
-    IVertex::Type type(IVertex::kBdef4);
-    Vector3 origin(1, 2, 3), normal(origin.normalized()), texcoord(0.4, 0.5, 0.6),
-            c(0.01, 0.02, 0.03), r0(0.04, 0.05, 0.06), r1(0.07, 0.08, 0.09);
-    Vector4 uv(0.6, 0.7, 0.8, 0.9);
-    EXPECT_CALL(listener, boneRefWillChange(0, &bone, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, edgeSizeWillChange(edgeSize, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, materialRefWillChange(&material, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, normalWillChange(normal, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, originWillChange(origin, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, textureCoordWillChange(texcoord, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, sdefCWillChange(c, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, sdefR0WillChange(r0, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, sdefR1WillChange(r1, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, typeWillChange(type, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, originUVWillChange(0, uv, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, morphUVWillChange(0, uv, &vertex)).WillOnce(Return());
-    EXPECT_CALL(listener, weightWillChange(0, weightSize, &vertex)).WillOnce(Return());
-    vertex.addEventListenerRef(&listener);
-    vertex.setBoneRef(0, &bone);
-    vertex.setBoneRef(0, &bone);
-    vertex.setEdgeSize(edgeSize);
-    vertex.setEdgeSize(edgeSize);
-    vertex.setMaterialRef(&material);
-    vertex.setMaterialRef(&material);
-    vertex.setNormal(normal);
-    vertex.setNormal(normal);
-    vertex.setOrigin(origin);
-    vertex.setOrigin(origin);
-    vertex.setTextureCoord(texcoord);
-    vertex.setTextureCoord(texcoord);
-    vertex.setSdefC(c);
-    vertex.setSdefC(c);
-    vertex.setSdefR0(r0);
-    vertex.setSdefR0(r0);
-    vertex.setSdefR1(r1);
-    vertex.setSdefR1(r1);
-    vertex.setType(type);
-    vertex.setType(type);
-    vertex.setOriginUV(0, uv);
-    vertex.setOriginUV(0, uv);
-    vertex.setMorphUV(0, uv);
-    vertex.setMorphUV(0, uv);
-    vertex.setWeight(0, weightSize);
-    vertex.setWeight(0, weightSize);
-}
-
 TEST_P(PMXFragmentTest, ReadWriteVertexBdef1)
 {
     vsize indexSize = GetParam();
@@ -290,4 +234,40 @@ TEST(PMXModelTest, AddAndRemoveVertex)
     EXPECT_CALL(mockedVertex, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
     model.addVertex(&mockedVertex);
     ASSERT_EQ(0, model.vertices().count());
+}
+
+TEST(PMXModelTest, RemoveVertexReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Vertex vertex(&model);
+    model.addVertex(&vertex);
+    Morph::Vertex vertexMorph;
+    vertexMorph.vertex = &vertex;
+    Morph parentVertexMorph(&model);
+    parentVertexMorph.setType(IMorph::kVertexMorph);
+    parentVertexMorph.addVertexMorph(&vertexMorph);
+    model.addMorph(&parentVertexMorph);
+    PointerArray<Morph::UV> uvMorphs;
+    PointerArray<Morph> parentUVMorphs;
+    for (int i = int(IMorph::kTexCoordMorph); i <= int(IMorph::kUVA4Morph); i++) {
+        Morph::UV *uvMorph = uvMorphs.append(new Morph::UV());
+        Morph *parentUVMorph = parentUVMorphs.append(new Morph(&model));
+        uvMorph->vertex = &vertex;
+        parentUVMorph->setType(static_cast<IMorph::Type>(i));
+        parentUVMorph->addUVMorph(uvMorph);
+        model.addMorph(parentUVMorph);
+    }
+    model.removeVertex(&vertex);
+    parentVertexMorph.removeVertexMorph(&vertexMorph);
+    model.removeMorph(&parentVertexMorph);
+    for (int i = int(IMorph::kTexCoordMorph); i <= int(IMorph::kUVA4Morph); i++) {
+        const int index = i - int(IMorph::kTexCoordMorph);
+        parentUVMorphs[index]->removeUVMorph(uvMorphs[index]);
+        model.removeMorph(parentUVMorphs[index]);
+        ASSERT_EQ(static_cast<IVertex *>(0), uvMorphs[index]->vertex);
+    }
+    ASSERT_EQ(static_cast<IVertex *>(0), vertexMorph.vertex);
+    uvMorphs.releaseAll();
+    parentUVMorphs.releaseAll();
 }

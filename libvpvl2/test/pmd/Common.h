@@ -1,5 +1,4 @@
 #include "../Common.h"
-#include "../PropertyEventHandlers.h"
 
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/extensions/icu4c/Encoding.h"

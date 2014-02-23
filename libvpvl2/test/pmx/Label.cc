@@ -1,26 +1,5 @@
 #include "Common.h"
 
-TEST(PMXPropertyEventListener, HandleLabelPropertyEvents)
-{
-    Label label(0);
-    MockLabelPropertyEventListener listener;
-    TestHandleEvents<ILabel::PropertyEventListener>(listener, label);
-    String japaneseName("Japanese"), englishName("English");
-    EXPECT_CALL(listener, nameWillChange(&japaneseName, IEncoding::kJapanese, &label)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kJapanese, &label)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(&englishName, IEncoding::kEnglish, &label)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kEnglish, &label)).WillOnce(Return());
-    label.addEventListenerRef(&listener);
-    label.setName(&japaneseName, IEncoding::kJapanese);
-    label.setName(&japaneseName, IEncoding::kJapanese);
-    label.setName(0, IEncoding::kJapanese);
-    label.setName(0, IEncoding::kJapanese);
-    label.setName(&englishName, IEncoding::kEnglish);
-    label.setName(&englishName, IEncoding::kEnglish);
-    label.setName(0, IEncoding::kEnglish);
-    label.setName(0, IEncoding::kEnglish);
-}
-
 TEST(PMXModelTest, AddAndRemoveLabel)
 {
     Encoding encoding(0);

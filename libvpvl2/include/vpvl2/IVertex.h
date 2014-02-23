@@ -69,29 +69,7 @@ public:
         kMaxType
     };
 
-    class PropertyEventListener {
-    public:
-        virtual ~PropertyEventListener() {}
-        virtual void originWillChange(const Vector3 &value, IVertex *vertex) = 0;
-        virtual void normalWillChange(const Vector3 &value, IVertex *vertex) = 0;
-        virtual void textureCoordWillChange(const Vector3 &value, IVertex *vertex) = 0;
-        virtual void sdefCWillChange(const Vector3 &value, IVertex *vertex) = 0;
-        virtual void sdefR0WillChange(const Vector3 &value, IVertex *vertex) = 0;
-        virtual void sdefR1WillChange(const Vector3 &value, IVertex *vertex) = 0;
-        virtual void originUVWillChange(int index, const Vector4 &value, IVertex *vertex) = 0;
-        virtual void morphUVWillChange(int index, const Vector4 &value, IVertex *vertex) = 0;
-        virtual void typeWillChange(Type value, IVertex *vertex) = 0;
-        virtual void edgeSizeWillChange(const EdgeSizePrecision &value, IVertex *vertex) = 0;
-        virtual void weightWillChange(int index, const WeightPrecision &weight, IVertex *vertex) = 0;
-        virtual void boneRefWillChange(int index, IBone *value, IVertex *vertex) = 0;
-        virtual void materialRefWillChange(IMaterial *value, IVertex *vertex) = 0;
-    };
-
     virtual ~IVertex() {}
-
-    virtual void addEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void removeEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void getEventListenerRefs(Array<PropertyEventListener *> &value) = 0;
 
     /**
      * 親のモデルのインスタンスを返します.

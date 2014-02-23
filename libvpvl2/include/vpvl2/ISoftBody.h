@@ -65,17 +65,8 @@ public:
         kFOneSided,
         kMaxAeroModelType
     };
-    class PropertyEventListener {
-    public:
-        virtual ~PropertyEventListener() {}
-        virtual void nameWillChange(const IString *value, IEncoding::LanguageType type, ISoftBody *body) = 0;
-    };
 
     virtual ~ISoftBody() {}
-
-    virtual void addEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void removeEventListenerRef(PropertyEventListener *value) = 0;
-    virtual void getEventListenerRefs(Array<PropertyEventListener *> &value) = 0;
 
     /**
      * ソフトボディの名前を返します.

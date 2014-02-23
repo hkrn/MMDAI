@@ -179,56 +179,84 @@ public:
             objects.remove(object);
         }
     }
-    template<typename TCaller, typename TEventListener>
-    static void setName(const IString *value, IString *&namePtr, IString *&englishNamePtr, IEncoding::LanguageType language, TCaller *caller, const Array<TEventListener *> &eventRefs) {
+    template<typename IBone, typename TBone>
+    static void removeBoneReferenceInBones(IBone *value, Array<TBone *> &bones) {
+        const int nbones = bones.count();
+        for (int i = 0; i < nbones; i++) {
+            TBone *bone = bones[i];
+            if (bone->parentBoneRef() == value) {
+                bone->setParentBoneRef(0);
+            }
+            if (bone->parentInherentBoneRef() == value) {
+                bone->setParentInherentBoneRef(0);
+            }
+            if (bone->destinationOriginBoneRef() == value) {
+                bone->setDestinationOriginBoneRef(0);
+            }
+        }
+    }
+    template<typename IBone, typename TRigidBody>
+    static void removeBoneReferenceInRigidBodies(IBone *value, Array<TRigidBody *> &rigidBodies) {
+        const int nbodies = rigidBodies.count();
+        for (int i = 0; i < nbodies; i++) {
+            TRigidBody *body = rigidBodies[i];
+            if (body->boneRef() == value) {
+                body->setBoneRef(0);
+            }
+        }
+    }
+    template<typename IBone, typename TVertex>
+    static void removeBoneReferenceInVertices(IBone *value, Array<TVertex *> &vertices) {
+        const int nvertices = vertices.count();
+        for (int i = 0; i < nvertices; i++) {
+            TVertex *vertex = vertices[i];
+            for (int j = 0; j < 4; j++) {
+                if (vertex->boneRef(j) == value) {
+                    vertex->setBoneRef(j, 0);
+                }
+            }
+        }
+    }
+    template<typename IMaterial, typename TVertex>
+    static void removeMaterialReferenceInVertices(IMaterial *value, Array<TVertex *> &vertices) {
+        const int nvertices = vertices.count();
+        for (int i = 0; i < nvertices; i++) {
+            TVertex *vertex = vertices[i];
+            if (vertex->materialRef() == value) {
+                vertex->setMaterialRef(0);
+            }
+        }
+    }
+    template<typename IRigidBody, typename TJoint>
+    static void removeRigidBodyReferenceInJoints(IRigidBody *value, Array<TJoint *> &joints) {
+        const int njoints = joints.count();
+        for (int i = 0; i < njoints; i++) {
+            TJoint *joint = joints[i];
+            if (joint->rigidBody1Ref() == value) {
+                joint->setRigidBody1Ref(0);
+            }
+            if (joint->rigidBody2Ref() == value) {
+                joint->setRigidBody2Ref(0);
+            }
+        }
+    }
+    static void setName(const IString *value, IString *&namePtr, IString *&englishNamePtr, IEncoding::LanguageType language) {
         switch (language) {
         case IEncoding::kDefaultLanguage:
         case IEncoding::kJapanese:
             if (value && !value->equals(namePtr)) {
-                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, nameWillChange(value, language, caller), TEventListener);
                 internal::setString(value, namePtr);
             }
             else if (!value && value != namePtr) {
-                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, nameWillChange(value, language, caller), TEventListener);
                 internal::deleteObject(namePtr);
             }
             break;
         case IEncoding::kEnglish:
             if (value && !value->equals(englishNamePtr)) {
-                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, nameWillChange(value, language, caller), TEventListener);
                 internal::setString(value, englishNamePtr);
             }
             else if (!value && value != englishNamePtr) {
-                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, nameWillChange(value, language, caller), TEventListener);
                 internal::deleteObject(englishNamePtr);
-            }
-            break;
-        default:
-            break;
-        }
-    }
-    template<typename TCaller, typename TEventListener>
-    static void setComment(const IString *value, IString *&commentPtr, IString *&englishCommentPtr, IEncoding::LanguageType language, TCaller *caller, const Array<TEventListener *> &eventRefs) {
-        switch (language) {
-        case IEncoding::kDefaultLanguage:
-        case IEncoding::kJapanese:
-            if (value && !value->equals(commentPtr)) {
-                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, commentWillChange(value, language, caller), TEventListener);
-                internal::setString(value, commentPtr);
-            }
-            else if (!value && value != commentPtr) {
-                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, commentWillChange(value, language, caller), TEventListener);
-                internal::deleteObject(commentPtr);
-            }
-            break;
-        case IEncoding::kEnglish:
-            if (value && !value->equals(englishCommentPtr)) {
-                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, commentWillChange(value, language, caller), TEventListener);
-                internal::setString(value, englishCommentPtr);
-            }
-            else if (!value && value != englishCommentPtr) {
-                VPVL2_TRIGGER_PROPERTY_EVENTS_TYPED(eventRefs, commentWillChange(value, language, caller), TEventListener);
-                internal::deleteObject(englishCommentPtr);
             }
             break;
         default:

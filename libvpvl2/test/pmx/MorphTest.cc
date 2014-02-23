@@ -1,31 +1,5 @@
 #include "Common.h"
 
-TEST(PMXPropertyEventListener, HandleMorphPropertyEvents)
-{
-    pmx::Model model(0);
-    Morph morph(&model);
-    MockMorphPropertyEventListener listener;
-    TestHandleEvents<IMorph::PropertyEventListener>(listener, morph);
-    IMorph::WeightPrecision weight(0.42);
-    String japaneseName("Japanese"), englishName("English");
-    EXPECT_CALL(listener, nameWillChange(&japaneseName, IEncoding::kJapanese, &morph)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kJapanese, &morph)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(&englishName, IEncoding::kEnglish, &morph)).WillOnce(Return());
-    EXPECT_CALL(listener, nameWillChange(0, IEncoding::kEnglish, &morph)).WillOnce(Return());
-    EXPECT_CALL(listener, weightWillChange(weight, &morph)).WillOnce(Return());
-    morph.addEventListenerRef(&listener);
-    morph.setName(&japaneseName, IEncoding::kJapanese);
-    morph.setName(&japaneseName, IEncoding::kJapanese);
-    morph.setName(0, IEncoding::kJapanese);
-    morph.setName(0, IEncoding::kJapanese);
-    morph.setName(&englishName, IEncoding::kEnglish);
-    morph.setName(&englishName, IEncoding::kEnglish);
-    morph.setName(0, IEncoding::kEnglish);
-    morph.setName(0, IEncoding::kEnglish);
-    morph.setWeight(weight);
-    morph.setWeight(weight);
-}
-
 TEST_P(PMXFragmentTest, ReadWriteBoneMorph)
 {
     vsize indexSize = GetParam();
@@ -358,6 +332,37 @@ TEST(PMXModelTest, AddAndRemoveMorph)
     EXPECT_CALL(mockedMorph, parentModelRef()).WillOnce(Return(static_cast<IModel *>(0)));
     model.addMorph(&mockedMorph);
     ASSERT_EQ(0, model.morphs().count());
+}
+
+TEST(PMXModelTest, RemoveMorphReferences)
+{
+    Encoding encoding(0);
+    Model model(&encoding);
+    Morph morph(&model);
+    String s("testMorph");
+    morph.setName(&s, IEncoding::kDefaultLanguage);
+    model.addMorph(&morph);
+    ASSERT_EQ(&morph, model.findMorphRef(&s));
+    Morph parentGroupMorph(&model);
+    Morph::Group groupMorph;
+    groupMorph.morph = &morph;
+    parentGroupMorph.setType(IMorph::kGroupMorph);
+    parentGroupMorph.addGroupMorph(&groupMorph);
+    model.addMorph(&parentGroupMorph);
+    Morph parentFlipMorph(&model);
+    Morph::Flip flipMorph;
+    flipMorph.morph = &morph;
+    parentFlipMorph.setType(IMorph::kFlipMorph);
+    parentFlipMorph.addFlipMorph(&flipMorph);
+    model.addMorph(&parentFlipMorph);
+    model.removeMorph(&morph);
+    parentGroupMorph.removeGroupMorph(&groupMorph);
+    model.removeMorph(&parentGroupMorph);
+    parentFlipMorph.removeFlipMorph(&flipMorph);
+    model.removeMorph(&parentFlipMorph);
+    ASSERT_EQ(static_cast<IMorph *>(0), model.findMorphRef(&s));
+    ASSERT_EQ(static_cast<IMorph *>(0), groupMorph.morph);
+    ASSERT_EQ(static_cast<IMorph *>(0), flipMorph.morph);
 }
 
 TEST_P(PMXLanguageTest, RenameMorph)

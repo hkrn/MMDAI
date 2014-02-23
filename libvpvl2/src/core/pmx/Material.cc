@@ -189,7 +189,6 @@ struct Material::PrivateContext {
     IString *mainTextureRef;
     IString *sphereTextureRef;
     IString *toonTextureRef;
-    Array<PropertyEventListener *> eventRefs;
     IMaterial::SphereTextureRenderMode sphereTextureRenderMode;
     RGB3 ambient;
     RGBA3 diffuse;
@@ -526,26 +525,6 @@ void Material::resetMorph()
     m_context->toonTextureBlend.reset();
 }
 
-void Material::addEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-        m_context->eventRefs.append(value);
-    }
-}
-
-void Material::removeEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-    }
-}
-
-void Material::getEventListenerRefs(Array<PropertyEventListener *> &value)
-{
-    value.copy(m_context->eventRefs);
-}
-
 IModel *Material::parentModelRef() const
 {
     return m_context->modelRef;
@@ -711,17 +690,15 @@ bool Material::isVisible() const
 
 void Material::setName(const IString *value, IEncoding::LanguageType type)
 {
-    internal::ModelHelper::setName(value, m_context->name, m_context->englishName, type, this, m_context->eventRefs);
+    internal::ModelHelper::setName(value, m_context->name, m_context->englishName, type);
 }
 
 void Material::setUserDataArea(const IString *value)
 {
     if (value && !value->equals(m_context->userDataArea)) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, userDataAreaWillChange(value, this));
         internal::setString(value, m_context->userDataArea);
     }
     else if (!value && value != m_context->userDataArea) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, userDataAreaWillChange(value, this));
         internal::deleteObject(m_context->userDataArea);
         m_context->userDataArea = 0;
     }
@@ -731,12 +708,10 @@ void Material::setMainTexture(const IString *value)
 {
     if (value && !value->equals(m_context->mainTextureRef)) {
         m_context->modelRef->removeTexture(m_context->mainTextureRef);
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, mainTextureWillChange(value, this));
         m_context->mainTextureRef = m_context->modelRef->addTexture(value);
     }
     else if (!value && value != m_context->mainTextureRef) {
         m_context->modelRef->removeTexture(m_context->mainTextureRef);
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, mainTextureWillChange(value, this));
         m_context->mainTextureRef = 0;
         m_context->mainTextureIndex = -1;
     }
@@ -746,12 +721,10 @@ void Material::setSphereTexture(const IString *value)
 {
     if (value && !value->equals(m_context->sphereTextureRef)) {
         m_context->modelRef->removeTexture(m_context->sphereTextureRef);
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sphereTextureWillChange(value, this));
         m_context->sphereTextureRef = m_context->modelRef->addTexture(value);
     }
     else if (!value && value != m_context->sphereTextureRef) {
         m_context->modelRef->removeTexture(m_context->sphereTextureRef);
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sphereTextureWillChange(value, this));
         m_context->sphereTextureRef = 0;
         m_context->sphereTextureIndex = -1;
     }
@@ -761,12 +734,10 @@ void Material::setToonTexture(const IString *value)
 {
     if (value && !value->equals(m_context->toonTextureRef)) {
         m_context->modelRef->removeTexture(m_context->toonTextureRef);
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, toonTextureWillChange(value, this));
         m_context->toonTextureRef = m_context->modelRef->addTexture(value);
     }
     else if (!value && value != m_context->toonTextureRef) {
         m_context->modelRef->removeTexture(m_context->toonTextureRef);
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, toonTextureWillChange(value, this));
         m_context->toonTextureRef = 0;
         m_context->toonTextureIndex = -1;
     }
@@ -774,16 +745,12 @@ void Material::setToonTexture(const IString *value)
 
 void Material::setSphereTextureRenderMode(SphereTextureRenderMode value)
 {
-    if (m_context->sphereTextureRenderMode != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, sphereTextureRenderModeWillChange(value, this));
-        m_context->sphereTextureRenderMode = value;
-    }
+    m_context->sphereTextureRenderMode = value;
 }
 
 void Material::setAmbient(const Color &value)
 {
     if (m_context->ambient.base != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, ambientWillChange(value, this));
         m_context->ambient.base = value;
         m_context->ambient.base.setW(1);
         m_context->ambient.calculate();
@@ -793,7 +760,6 @@ void Material::setAmbient(const Color &value)
 void Material::setDiffuse(const Color &value)
 {
     if (m_context->diffuse.base != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, diffuseWillChange(value, this));
         m_context->diffuse.base = value;
         m_context->diffuse.calculate();
     }
@@ -802,7 +768,6 @@ void Material::setDiffuse(const Color &value)
 void Material::setSpecular(const Color &value)
 {
     if (m_context->specular.base != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, specularWillChange(value, this));
         m_context->specular.base = value;
         m_context->specular.base.setW(1);
         m_context->specular.calculate();
@@ -812,7 +777,6 @@ void Material::setSpecular(const Color &value)
 void Material::setEdgeColor(const Color &value)
 {
     if (m_context->edgeColor.base != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, edgeColorWillChange(value, this));
         m_context->edgeColor.base = value;
         m_context->edgeColor.calculate();
     }
@@ -820,26 +784,17 @@ void Material::setEdgeColor(const Color &value)
 
 void Material::setIndexRange(const IndexRange &value)
 {
-    if (m_context->indexRange != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, indexRangeWillChange(value, this));
-        m_context->indexRange = value;
-    }
+    m_context->indexRange = value;
 }
 
 void Material::setShininess(float32 value)
 {
-    if (!btFuzzyZero(m_context->shininess.x() - value)) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, shininessWillChange(value, this));
-        m_context->shininess.setX(value);
-    }
+    m_context->shininess.setX(value);
 }
 
 void Material::setEdgeSize(const IVertex::EdgeSizePrecision &value)
 {
-    if (!btFuzzyZero(m_context->edgeSize.x() - value)) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, edgeSizeWillChange(value, this));
-        m_context->edgeSize.setX(Scalar(value));
-    }
+    m_context->edgeSize.setX(Scalar(value));
 }
 
 void Material::setMainTextureIndex(int value)
@@ -859,10 +814,7 @@ void Material::setToonTextureIndex(int value)
 
 void Material::setFlags(int value)
 {
-    if (m_context->flags != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, flagsWillChange(value, this));
-        m_context->flags = value;
-    }
+    m_context->flags = value;
 }
 
 void Material::setIndex(int value)
@@ -907,10 +859,7 @@ void Material::setVertexColorEnabled(bool value)
 
 void Material::setVisible(bool value)
 {
-    if (m_context->visible != value) {
-        VPVL2_TRIGGER_PROPERTY_EVENTS(m_context->eventRefs, visibleWillChange(value, this));
-        m_context->visible = value;
-    }
+    m_context->visible = value;
 }
 
 } /* namespace pmx */

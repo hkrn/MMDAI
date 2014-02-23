@@ -575,6 +575,7 @@ TEST_P(SceneModelTest, SetParentSceneRef)
     /* IModel#parentSceneRef should be null if the motion is removed from the scene */
     ASSERT_EQ(static_cast<Scene *>(0), modelPtr->parentSceneRef());
     IModel *m = modelPtr.release();
+    enginePtr->release();
     scene.deleteModel(m);
 }
 

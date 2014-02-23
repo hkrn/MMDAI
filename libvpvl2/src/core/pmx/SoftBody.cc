@@ -124,7 +124,6 @@ struct SoftBody::PrivateContext {
     IModel *modelRef;
     IString *name;
     IString *englishName;
-    Array<PropertyEventListener *> eventRefs;
     int index;
 };
 
@@ -241,26 +240,6 @@ vsize SoftBody::estimateSize(const Model::DataInfo &info) const
     return size;
 }
 
-void SoftBody::addEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-        m_context->eventRefs.append(value);
-    }
-}
-
-void SoftBody::removeEventListenerRef(PropertyEventListener *value)
-{
-    if (value) {
-        m_context->eventRefs.remove(value);
-    }
-}
-
-void SoftBody::getEventListenerRefs(Array<PropertyEventListener *> &value)
-{
-    value.copy(m_context->eventRefs);
-}
-
 const IString *SoftBody::name(IEncoding::LanguageType type) const
 {
     switch (type) {
@@ -341,7 +320,7 @@ int SoftBody::index() const
 
 void SoftBody::setName(const IString *value, IEncoding::LanguageType type)
 {
-    internal::ModelHelper::setName(value, m_context->name, m_context->englishName, type, this, m_context->eventRefs);
+    internal::ModelHelper::setName(value, m_context->name, m_context->englishName, type);
 }
 
 void SoftBody::setIndex(int value)
