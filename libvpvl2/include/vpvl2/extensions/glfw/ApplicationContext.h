@@ -159,15 +159,15 @@ public:
         RegexMatcher filenameMatcher(".+/((.+)\\.\\w+)$", 0, status);
         filenameMatcher.reset(UnicodeString::fromUTF8(path));
         if (filenameMatcher.find()) {
-            basename = String::toStdString(filenameMatcher.group(1, status));
-            filename = String::toStdString(filenameMatcher.group(2, status));
+            filename = String::toStdString(filenameMatcher.group(1, status));
+            basename = String::toStdString(filenameMatcher.group(2, status));
             return true;
         }
         return false;
     }
     bool extractModelNameFromFileName(const std::string &path, std::string &modelName) const {
         UErrorCode status = U_ZERO_ERROR;
-        RegexMatcher extractMatcher("^.+\\[(.+)(?:\\.(?:cg)?fx)?\\]$", 0, status);
+        RegexMatcher extractMatcher("^.+\\[(.+)(?:\\.(?:cg|glsl)?fx)?\\]$", 0, status);
         extractMatcher.reset(UnicodeString::fromUTF8(path));
         if (extractMatcher.find()) {
             status = U_ZERO_ERROR;

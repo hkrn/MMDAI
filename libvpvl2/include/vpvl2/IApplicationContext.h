@@ -140,7 +140,7 @@ public:
 
     virtual ~IApplicationContext() {}
 
-    virtual ITexture *uploadTexture(const char *name) = 0;
+    virtual ITexture *uploadTexture(const IString *name) = 0;
 
     /**
      * モデルのテクスチャをサーバ (GPU) にアップロードします.

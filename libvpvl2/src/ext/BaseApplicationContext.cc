@@ -388,21 +388,23 @@ bool BaseApplicationContext::ModelContext::findTexture(const std::string &path, 
 void BaseApplicationContext::ModelContext::storeTexture(const std::string &key, int flags, ITexture *textureRef)
 {
     VPVL2_DCHECK(!key.empty());
-    pushAnnotationGroup("BaseApplicationContext::ModelContext#cacheTexture", m_applicationContextRef);
-    textureRef->bind();
-    textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAG_FILTER, int(BaseTexture::kGL_LINEAR));
-    textureRef->setParameter(BaseTexture::kGL_TEXTURE_MIN_FILTER, int(BaseTexture::kGL_LINEAR));
-    if (internal::hasFlagBits(flags, IApplicationContext::kToonTexture)) {
-        textureRef->setParameter(BaseTexture::kGL_TEXTURE_WRAP_S, int(BaseTexture::kGL_CLAMP_TO_EDGE));
-        textureRef->setParameter(BaseTexture::kGL_TEXTURE_WRAP_T, int(BaseTexture::kGL_CLAMP_TO_EDGE));
+    if (textureRef) {
+        pushAnnotationGroup("BaseApplicationContext::ModelContext#cacheTexture", m_applicationContextRef);
+        textureRef->bind();
+        textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAG_FILTER, int(BaseTexture::kGL_LINEAR));
+        textureRef->setParameter(BaseTexture::kGL_TEXTURE_MIN_FILTER, int(BaseTexture::kGL_LINEAR));
+        if (internal::hasFlagBits(flags, IApplicationContext::kToonTexture)) {
+            textureRef->setParameter(BaseTexture::kGL_TEXTURE_WRAP_S, int(BaseTexture::kGL_CLAMP_TO_EDGE));
+            textureRef->setParameter(BaseTexture::kGL_TEXTURE_WRAP_T, int(BaseTexture::kGL_CLAMP_TO_EDGE));
+        }
+        if (m_maxAnisotropyValue > 0) {
+            textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropyValue);
+        }
+        textureRef->unbind();
+        annotateObject(BaseTexture::kGL_TEXTURE, textureRef->data(), ("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+        addTextureCache(key, textureRef);
+        popAnnotationGroup(m_applicationContextRef);
     }
-    if (m_maxAnisotropyValue > 0) {
-        textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropyValue);
-    }
-    textureRef->unbind();
-    annotateObject(BaseTexture::kGL_TEXTURE, textureRef->data(), ("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-    addTextureCache(key, textureRef);
-    popAnnotationGroup(m_applicationContextRef);
 }
 
 int BaseApplicationContext::ModelContext::countTextures() const
@@ -435,7 +437,9 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const std::string 
         VPVL2_VLOG(2, path << " is already cached, skipped.");
     }
     else {
-        textureRef = m_applicationContextRef->uploadTexture(path.c_str());
+        IString *s = String::create(path);
+        textureRef = m_applicationContextRef->uploadTexture(s);
+        delete s;
         storeTexture(path, flags, textureRef);
     }
     return textureRef;
@@ -561,17 +565,19 @@ void BaseApplicationContext::release()
     popAnnotationGroup(this);
 }
 
-ITexture *BaseApplicationContext::uploadTexture(const char *name)
+ITexture *BaseApplicationContext::uploadTexture(const IString *name)
 {
     ITexture *texturePtr = 0;
     MapBuffer buffer(this);
-    std::string path(name);
-    /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
-    if (mapFile(path, &buffer)) {
-        texturePtr = createTexture(buffer.address, buffer.size, true);
-        if (!texturePtr) {
-            VPVL2_LOG(WARNING, "Cannot load texture from " << path << ": " << stbi_failure_reason());
-            return false;
+    if (const String *s = static_cast<const String *>(name)) {
+        const std::string &path = s->toStdString();
+        /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
+        if (mapFile(path, &buffer)) {
+            texturePtr = createTexture(buffer.address, buffer.size, true);
+            if (!texturePtr) {
+                VPVL2_LOG(WARNING, "Cannot load texture from " << path << ": " << stbi_failure_reason());
+                return 0;
+            }
         }
     }
     return texturePtr;
@@ -589,7 +595,7 @@ ITexture *BaseApplicationContext::uploadModelTexture(const IString *name, int fl
     ITexture *texturePtr = 0;
     if (internal::hasFlagBits(flags, IApplicationContext::kToonTexture)) {
         if (!internal::hasFlagBits(flags, IApplicationContext::kSystemToonTexture)) {
-            /* it's directory if name2.empty() is true */
+            /* apply fallback if toon directory is specified (nameName.empty() is true) */
             if (newName.empty()) {
                 const std::string &newToonPath = toonDirectory() + "/toon0.bmp";
                 if (!context->findTexture(newToonPath, texturePtr)) {
@@ -602,8 +608,8 @@ ITexture *BaseApplicationContext::uploadModelTexture(const IString *name, int fl
                 VPVL2_VLOG(2, "Try loading a model toon texture from archive: " << newName);
                 texturePtr = internalUploadTexture(newName, std::string(), flags, context);
             }
-            else if (const IString *directoryRef = context->directoryRef()) {
-                const std::string &path = static_cast<const String *>(directoryRef)->toStdString() + "/" + newName;
+            else if (const String *directoryRef = static_cast<const String *>(context->directoryRef())) {
+                const std::string &path = directoryRef->toStdString() + "/" + newName;
                 VPVL2_VLOG(2, "Try loading a model toon texture: " << path);
                 texturePtr = internalUploadTexture(newName, path, flags, context);
             }
@@ -614,10 +620,16 @@ ITexture *BaseApplicationContext::uploadModelTexture(const IString *name, int fl
             texturePtr = uploadSystemToonTexture(newName, flags, context);
         }
     }
-    else if (const IString *directoryRef = context->directoryRef()) {
-        const std::string &path = static_cast<const String *>(directoryRef)->toStdString() + "/" + newName;
-        VPVL2_VLOG(2, "Loading a model texture: " << path);
-        texturePtr = internalUploadTexture(newName, path, flags, context);
+    else if (const String *directoryRef = static_cast<const String *>(context->directoryRef())) {
+        /* skip model directory (nameName.empty() is true) */
+        if (!newName.empty()) {
+            const std::string &path = directoryRef->toStdString() + "/" + newName;
+            VPVL2_VLOG(2, "Loading a model texture: " << path);
+            texturePtr = internalUploadTexture(newName, path, flags, context);
+        }
+        else {
+            VPVL2_VLOG(2, "Found empty texture filename");
+        }
     }
     return texturePtr;
 }
@@ -1120,7 +1132,6 @@ void BaseApplicationContext::parseOffscreenSemantic(IEffect *effectRef, const IS
                 for (int j = 0; j < npasses; j++) {
                     IEffect::Pass *pass = passes[j];
                     pass->setupOverrides(defaultEffectRef);
-                    passes.append(pass);
                 }
                 m_offscreenTechniques.append(technique);
             }
@@ -1447,15 +1458,18 @@ std::string BaseApplicationContext::resolveEffectFilePath(const IModel *model, c
     const std::string &path = findModelFilePath(model);
     if (!path.empty()) {
         std::string fileName, baseName, modelName;
-        if (extractFilePath(path, fileName, baseName) && extractModelNameFromFileName(fileName, modelName)) {
-            const std::string &newEffectPath = static_cast<const String *>(dir)->toStdString()
-                    + "/" + modelName + ".cgfx";
+        if (extractFilePath(path, fileName, baseName)) {
+            extractModelNameFromFileName(fileName, modelName);
+            if (modelName.empty()) {
+                modelName = baseName;
+            }
+            const std::string &newEffectPath = static_cast<const String *>(dir)->toStdString() + "/" + modelName + ".glslfx";
             if (existsFile(newEffectPath)) {
                 return newEffectPath;
             }
         }
     }
-    return static_cast<const String *>(dir)->toStdString() + "/default.cgfx";
+    return static_cast<const String *>(dir)->toStdString() + "/default.glslfx";
 }
 
 void BaseApplicationContext::deleteEffectRef(const std::string &path)
@@ -1631,7 +1645,7 @@ ITexture *BaseApplicationContext::createTexture(const void *ptr, const BaseSurfa
 {
     VPVL2_DCHECK(ptr);
     FunctionResolver *resolver = sharedFunctionResolverInstance();
-    pushAnnotationGroup("BaseApplicationContext::ModelContext#createTexture", resolver);
+    pushAnnotationGroup("BaseApplicationContext#createTexture", resolver);
     Texture2D *texture = new (std::nothrow) Texture2D(resolver, format, size, 0);
     if (texture) {
         texture->create();

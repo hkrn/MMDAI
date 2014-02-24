@@ -179,7 +179,7 @@ public:
     void initializeOpenGLContext(bool enableDebug);
     void release();
 
-    ITexture *uploadTexture(const char *name);
+    ITexture *uploadTexture(const IString *name);
     ITexture *uploadModelTexture(const IString *name, int flags, void *userData);
     void getMatrix(float32 value[], const IModel *model, int flags) const;
     IString *loadShaderSource(ShaderType type, const IModel *model, void *userData);
