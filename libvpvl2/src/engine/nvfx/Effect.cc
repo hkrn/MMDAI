@@ -781,6 +781,7 @@ Effect::Effect(EffectContext *contextRef, IApplicationContext *applicationContex
       m_dirty(false)
 {
     appendShaderHeader(container, applicationContextRef->sharedFunctionResolverInstance());
+    uploadTextureResources();
 }
 
 Effect::~Effect()
@@ -1053,15 +1054,18 @@ IApplicationContext *Effect::applicationContextRef() const
     return m_applicationContextRef;
 }
 
-void Effect::loadResources()
+void Effect::uploadTextureResources()
 {
+    m_textureResources.releaseAll();
     for (int i = 0; nvFX::IResource *resource = m_container->findResource(i); i++) {
         nvFX::IAnnotation *annotation = resource->annotations();
         if (const char *name = annotation->getAnnotationString("defaultFile")) {
-            if (ITexture *texturePtr = m_applicationContextRef->uploadTexture(name)) {
+            IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(name));
+            if (ITexture *texturePtr = m_applicationContextRef->uploadTexture(s)) {
                 resource->setGLTexture(texturePtr->data());
                 m_textureResources.append(texturePtr);
             }
+            delete s;
         }
     }
 }
@@ -1157,6 +1161,7 @@ void Effect::resetEffect(nvFX::IContainer *container)
         container->setName(reinterpret_cast<const char *>(m_name->toByteArray()));
     }
     appendShaderHeader(container, m_applicationContextRef->sharedFunctionResolverInstance());
+    uploadTextureResources();
 }
 
 void Effect::pushAnnotationGroupWithName(const char *message)

@@ -106,7 +106,7 @@ public:
     const char *errorString() const;
 
     IApplicationContext *applicationContextRef() const;
-    void loadResources();
+    void uploadTextureResources();
     void release();
 
 private:
