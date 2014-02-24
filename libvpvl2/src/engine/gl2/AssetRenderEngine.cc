@@ -314,8 +314,7 @@ bool AssetRenderEngine::upload(void *userData)
             if (SplitTexturePath(path, mainTexture, subTexture)) {
                 if (m_context->textures[mainTexture] == 0) {
                     IString *mainTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
-                    ret = m_applicationContextRef->uploadTexture(mainTexturePath, 0, userData, texturePtr);
-                    if (ret) {
+                    if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(mainTexturePath, 0, userData)) {
                         m_context->textures[mainTexture] = m_context->allocatedTextures.insert(texturePtr, texturePtr);
                         VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << texturePtr);
                         internal::deleteObject(mainTexturePath);
@@ -327,8 +326,7 @@ bool AssetRenderEngine::upload(void *userData)
                 }
                 if (m_context->textures[subTexture] == 0) {
                     IString *subTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(subTexture.c_str()));
-                    ret = m_applicationContextRef->uploadTexture(subTexturePath, 0, userData, texturePtr);
-                    if (ret) {
+                    if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(subTexturePath, 0, userData)) {
                         m_context->textures[subTexture] = m_context->allocatedTextures.insert(texturePtr, texturePtr);
                         VPVL2_VLOG(2, "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << texturePtr);
                         internal::deleteObject(subTexturePath);
@@ -341,8 +339,7 @@ bool AssetRenderEngine::upload(void *userData)
             }
             else if (m_context->textures[mainTexture] == 0) {
                 IString *mainTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
-                ret = m_applicationContextRef->uploadTexture(mainTexturePath, 0, userData, texturePtr);
-                if (ret) {
+                if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(mainTexturePath, 0, userData)) {
                     m_context->textures[mainTexture] = m_context->allocatedTextures.insert(texturePtr, texturePtr);
                     VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << texturePtr);
                     internal::deleteObject(mainTexturePath);

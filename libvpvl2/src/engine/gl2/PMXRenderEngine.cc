@@ -979,14 +979,13 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
     m_modelRef->getMaterialRefs(materials);
     const int nmaterials = materials.count();
     m_context->materialTextureRefs.resize(nmaterials);
-    ITexture *texturePtr = 0;
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const IString *name = material->name(IEncoding::kDefaultLanguage); (void) name;
         const int materialIndex = material->index(); (void) materialIndex;
         MaterialTextureRefs &materialPrivate = m_context->materialTextureRefs[i];
         if (const IString *mainTexturePath = material->mainTexture()) {
-            if (m_applicationContextRef->uploadTexture(mainTexturePath, 0, userData, texturePtr)) {
+            if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(mainTexturePath, 0, userData)) {
                 materialPrivate.mainTextureRef = m_context->allocatedTextures.insert(texturePtr, texturePtr);
                 VPVL2_VLOG(2, "Binding the texture as a main texture (material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texturePtr->data() << ")");
             }
@@ -996,7 +995,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
         }
         if (const IString *sphereTexturePath = material->sphereTexture()) {
-            if (m_applicationContextRef->uploadTexture(sphereTexturePath, 0, userData, texturePtr)) {
+            if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(sphereTexturePath, 0, userData)) {
                 materialPrivate.sphereTextureRef = m_context->allocatedTextures.insert(texturePtr, texturePtr);
                 VPVL2_VLOG(2, "Binding the texture as a sphere texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texturePtr->data());
             }
@@ -1010,9 +1009,9 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             internal::snprintf(buf, sizeof(buf), "toon%02d.bmp", material->toonTextureIndex() + 1);
             IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(buf));
             // bridge.flags |= IApplicationContext::kSystemToonTexture;
-            bool ret = m_applicationContextRef->uploadTexture(s, IApplicationContext::kToonTexture | IApplicationContext::kSystemToonTexture, userData, texturePtr);
+            ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(s, IApplicationContext::kToonTexture | IApplicationContext::kSystemToonTexture, userData);
             internal::deleteObject(s);
-            if (ret) {
+            if (texturePtr) {
                 materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(texturePtr, texturePtr);
                 VPVL2_VLOG(2, "Binding the texture as a shared toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texturePtr->data());
             }
@@ -1022,7 +1021,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
         }
         else if (const IString *toonTexturePath = material->toonTexture()) {
-            if (m_applicationContextRef->uploadTexture(toonTexturePath, IApplicationContext::kToonTexture, userData, texturePtr)) {
+            if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(toonTexturePath, IApplicationContext::kToonTexture, userData)) {
                 materialPrivate.toonTextureRef = m_context->allocatedTextures.insert(texturePtr, texturePtr);
                 VPVL2_VLOG(2, "Binding the texture as a toon texture: material=" << internal::cstr(name, "(null)") << " index=" << materialIndex << " ID=" << texturePtr->data());
             }

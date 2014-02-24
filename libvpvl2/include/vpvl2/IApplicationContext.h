@@ -140,6 +140,8 @@ public:
 
     virtual ~IApplicationContext() {}
 
+    virtual ITexture *uploadTexture(const char *name) = 0;
+
     /**
      * モデルのテクスチャをサーバ (GPU) にアップロードします.
      *
@@ -152,7 +154,7 @@ public:
      * @param userData
      * @return bool
      */
-    virtual bool uploadTexture(const IString *name, int flags, void *userData, ITexture *&texturePtr) = 0;
+    virtual ITexture *uploadModelTexture(const IString *name, int flags, void *userData) = 0;
 
     /**
      * 取得する型に応じた行列を取得します.

@@ -125,16 +125,6 @@ public:
     virtual IBone *parentBoneRef() const = 0;
 
     /**
-     * ボーンの接続元のインスタンスを返します.
-     *
-     * hasInverseKinematics が true の時のみ有効です。false の場合は常に 0 を返します。
-     *
-     * @return IBone
-     * @sa hasInverseKinematics
-     */
-    virtual IBone *effectorBoneRef() const = 0;
-
-    /**
      * ボーンのワールド変換行列を返します.
      *
      * ボーンの位置を求めるにはこれが返す値の Transform::getOrigin によって求めることが出来ます。

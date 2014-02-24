@@ -330,11 +330,6 @@ IBone *Bone::parentBoneRef() const
     return m_context->parentBoneRef;
 }
 
-IBone *Bone::effectorBoneRef() const
-{
-    return m_context->targetBoneRef;
-}
-
 Transform Bone::worldTransform() const
 {
     return m_context->worldTransform;

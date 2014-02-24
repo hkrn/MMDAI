@@ -348,8 +348,7 @@ namespace extensions
 using namespace gl;
 
 BaseApplicationContext::ModelContext::ModelContext(BaseApplicationContext *applicationContextRef, extensions::Archive *archiveRef, const IString *directory)
-    : pixelStorei(reinterpret_cast<PFNGLPIXELSTOREIPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glPixelStorei"))),
-      m_directoryRef(directory),
+    : m_directoryRef(directory),
       m_archiveRef(archiveRef),
       m_applicationContextRef(applicationContextRef),
       m_maxAnisotropyValue(0)
@@ -386,105 +385,29 @@ bool BaseApplicationContext::ModelContext::findTexture(const std::string &path, 
     return false;
 }
 
-bool BaseApplicationContext::ModelContext::storeTexture(const std::string &key, int flags, ITexture *textureRef)
+void BaseApplicationContext::ModelContext::storeTexture(const std::string &key, int flags, ITexture *textureRef)
 {
     VPVL2_DCHECK(!key.empty());
-    bool ok = textureRef != 0;
-    if (textureRef) {
-        pushAnnotationGroup("BaseApplicationContext::ModelContext#cacheTexture", m_applicationContextRef);
-        textureRef->bind();
-        textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAG_FILTER, int(BaseTexture::kGL_LINEAR));
-        textureRef->setParameter(BaseTexture::kGL_TEXTURE_MIN_FILTER, int(BaseTexture::kGL_LINEAR));
-        if (internal::hasFlagBits(flags, IApplicationContext::kToonTexture)) {
-            textureRef->setParameter(BaseTexture::kGL_TEXTURE_WRAP_S, int(BaseTexture::kGL_CLAMP_TO_EDGE));
-            textureRef->setParameter(BaseTexture::kGL_TEXTURE_WRAP_T, int(BaseTexture::kGL_CLAMP_TO_EDGE));
-        }
-        if (m_maxAnisotropyValue > 0) {
-            textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropyValue);
-        }
-        textureRef->unbind();
-        annotateObject(BaseTexture::kGL_TEXTURE, textureRef->data(), ("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
-        addTextureCache(key, textureRef);
-        popAnnotationGroup(m_applicationContextRef);
+    pushAnnotationGroup("BaseApplicationContext::ModelContext#cacheTexture", m_applicationContextRef);
+    textureRef->bind();
+    textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAG_FILTER, int(BaseTexture::kGL_LINEAR));
+    textureRef->setParameter(BaseTexture::kGL_TEXTURE_MIN_FILTER, int(BaseTexture::kGL_LINEAR));
+    if (internal::hasFlagBits(flags, IApplicationContext::kToonTexture)) {
+        textureRef->setParameter(BaseTexture::kGL_TEXTURE_WRAP_S, int(BaseTexture::kGL_CLAMP_TO_EDGE));
+        textureRef->setParameter(BaseTexture::kGL_TEXTURE_WRAP_T, int(BaseTexture::kGL_CLAMP_TO_EDGE));
     }
-    return ok;
+    if (m_maxAnisotropyValue > 0) {
+        textureRef->setParameter(BaseTexture::kGL_TEXTURE_MAX_ANISOTROPY_EXT, m_maxAnisotropyValue);
+    }
+    textureRef->unbind();
+    annotateObject(BaseTexture::kGL_TEXTURE, textureRef->data(), ("key=" + key).c_str(), m_applicationContextRef->sharedFunctionResolverInstance());
+    addTextureCache(key, textureRef);
+    popAnnotationGroup(m_applicationContextRef);
 }
 
 int BaseApplicationContext::ModelContext::countTextures() const
 {
     return m_textureRefCache.size();
-}
-
-ITexture *BaseApplicationContext::ModelContext::createTexture(const void *ptr, const BaseSurface::Format &format, const Vector3 &size, bool /* mipmap */) const
-{
-    VPVL2_DCHECK(ptr);
-    FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
-    pushAnnotationGroup("BaseApplicationContext::ModelContext#createTexture", resolver);
-    Texture2D *texture = new (std::nothrow) Texture2D(resolver, format, size, 0);
-    if (texture) {
-        texture->create();
-        texture->bind();
-        texture->fillPixels(ptr);
-        texture->generateMipmaps();
-        texture->unbind();
-    }
-    popAnnotationGroup(resolver);
-    return texture;
-}
-
-ITexture *BaseApplicationContext::ModelContext::createTexture(const uint8 *data, vsize size, bool mipmap)
-{
-    VPVL2_DCHECK(data && size > 0);
-    Vector3 textureSize;
-    ITexture *texturePtr = 0;
-    int x = 0, y = 0, ncomponents = 0;
-#ifdef VPVL2_LINK_FREEIMAGE
-    FIMEMORY *memory = FreeImage_OpenMemory(const_cast<uint8_t *>(data), size);
-    FREE_IMAGE_FORMAT format = FreeImage_GetFileTypeFromMemory(memory);
-    if (format != FIF_UNKNOWN) {
-        if (FIBITMAP *bitmap = FreeImage_LoadFromMemory(format, memory)) {
-            if (FIBITMAP *bitmap32 = FreeImage_ConvertTo32Bits(bitmap)) {
-                FreeImage_FlipVertical(bitmap32);
-                textureSize.setValue(FreeImage_GetWidth(bitmap32), FreeImage_GetHeight(bitmap32), 1);
-                texturePtr = uploadTexture(FreeImage_GetBits(bitmap32), m_applicationContextRef->textureFormat(), textureSize, mipmap, false);
-                FreeImage_Unload(bitmap);
-                FreeImage_Unload(bitmap32);
-                return texturePtr;
-            }
-            else {
-                VPVL2_LOG(WARNING, "Cannot convert loaded image to 32bits image");
-            }
-            FreeImage_Unload(bitmap);
-        }
-        else {
-            VPVL2_LOG(WARNING, "Cannot decode the image");
-        }
-    }
-    else {
-        VPVL2_LOG(WARNING, "Cannot detect image format");
-    }
-    FreeImage_CloseMemory(memory);
-#endif
-    /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
-    if (stbi_uc *ptr = stbi_load_from_memory(data, int(size), &x, &y, &ncomponents, 4)) {
-        textureSize.setValue(Scalar(x), Scalar(y), 1);
-        texturePtr = createTexture(ptr, m_applicationContextRef->defaultTextureFormat(), textureSize, mipmap);
-        stbi_image_free(ptr);
-    }
-    return texturePtr;
-}
-
-void BaseApplicationContext::ModelContext::optimizeTexture(ITexture *texture)
-{
-    FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
-    texture->bind();
-    if (resolver->hasExtension("APPLE_texture_range")) {
-        texture->setParameter(kGL_TEXTURE_STORAGE_HINT_APPLE, int(kGL_STORAGE_CACHED_APPLE));
-    }
-    if (resolver->hasExtension("APPLE_client_storage")) {
-        pixelStorei(kGL_UNPACK_CLIENT_STORAGE_APPLE, kGL_TRUE);
-    }
-    texture->unbind();
 }
 
 void BaseApplicationContext::ModelContext::getTextureRefCaches(TextureRefCacheMap &value) const
@@ -504,42 +427,35 @@ const IString *BaseApplicationContext::ModelContext::directoryRef() const
     return m_directoryRef;
 }
 
-bool BaseApplicationContext::ModelContext::uploadTexture(const std::string &path, int flags, ITexture *&textureRef)
+ITexture *BaseApplicationContext::ModelContext::uploadTexture(const std::string &path, int flags)
 {
     VPVL2_DCHECK(!path.empty());
-    if (path[path.length() - 1] == '/') {
-        VPVL2_VLOG(2, path << " is the directory, skipped.");
-        return true;
-    }
-    else if (findTexture(path, textureRef)) {
+    ITexture *textureRef = 0;
+    if (findTexture(path, textureRef)) {
         VPVL2_VLOG(2, path << " is already cached, skipped.");
-        return true;
     }
-    MapBuffer buffer(m_applicationContextRef);
-    /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
-    if (m_applicationContextRef->mapFile(path, &buffer)) {
-        textureRef = createTexture(buffer.address, buffer.size, true);
-        if (!textureRef) {
-            VPVL2_LOG(WARNING, "Cannot load texture from " << path << ": " << stbi_failure_reason());
-            return false;
-        }
+    else {
+        textureRef = m_applicationContextRef->uploadTexture(path.c_str());
+        storeTexture(path, flags, textureRef);
     }
-    return storeTexture(path, flags, textureRef);
+    return textureRef;
 }
 
-bool BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsize size, const std::string &key, int flags, ITexture *&textureRef)
+ITexture *BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsize size, const std::string &key, int flags)
 {
     VPVL2_DCHECK(data && size > 0);
+    ITexture *textureRef = 0;
     if (findTexture(key, textureRef)) {
         VPVL2_VLOG(2, key << " is already cached, skipped.");
-        return true;
+        return textureRef;
     }
-    textureRef = createTexture(data, size, internal::hasFlagBits(flags, IApplicationContext::kGenerateTextureMipmap));
+    textureRef = m_applicationContextRef->createTexture(data, size, internal::hasFlagBits(flags, IApplicationContext::kGenerateTextureMipmap));
     if (!textureRef) {
         VPVL2_LOG(WARNING, "Cannot load texture with key " << key << ": " << stbi_failure_reason());
-        return false;
+        return 0;
     }
-    return storeTexture(key, flags, textureRef);
+    storeTexture(key, flags, textureRef);
+    return textureRef;
 }
 
 bool BaseApplicationContext::initializeOnce(const char *argv0, const char *logdir, int vlog)
@@ -566,6 +482,7 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
       clear(0),
       clearColor(0),
       clearDepth(0),
+      pixelStorei(0),
       m_configRef(configRef),
       m_sceneRef(sceneRef),
       m_encodingRef(encodingRef),
@@ -594,6 +511,7 @@ void BaseApplicationContext::initializeOpenGLContext(bool enableDebug)
     clear = reinterpret_cast<PFNGLCLEARPROC>(resolver->resolveSymbol("glClear"));
     clearColor = reinterpret_cast<PFNGLCLEARCOLORPROC>(resolver->resolveSymbol("glClearColor"));
     clearDepth = reinterpret_cast<PFNGLCLEARDEPTHPROC>(resolver->resolveSymbol("glClearDepth"));
+    pixelStorei = reinterpret_cast<PFNGLPIXELSTOREIPROC>(resolver->resolveSymbol("glPixelStorei"));
     if (enableDebug && resolver->hasExtension("ARB_debug_output")) {
         typedef void (GLAPIENTRY * GLDEBUGPROCARB) (GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam);
         typedef void (GLAPIENTRY * PFNGLDEBUGMESSAGECONTROLARBPROC) (GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint* ids, GLboolean enabled);
@@ -643,9 +561,24 @@ void BaseApplicationContext::release()
     popAnnotationGroup(this);
 }
 
-bool BaseApplicationContext::uploadTexture(const IString *name, int flags, void *userData, ITexture *&texturePtr)
+ITexture *BaseApplicationContext::uploadTexture(const char *name)
 {
-    bool ret = false;
+    ITexture *texturePtr = 0;
+    MapBuffer buffer(this);
+    std::string path(name);
+    /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
+    if (mapFile(path, &buffer)) {
+        texturePtr = createTexture(buffer.address, buffer.size, true);
+        if (!texturePtr) {
+            VPVL2_LOG(WARNING, "Cannot load texture from " << path << ": " << stbi_failure_reason());
+            return false;
+        }
+    }
+    return texturePtr;
+}
+
+ITexture *BaseApplicationContext::uploadModelTexture(const IString *name, int flags, void *userData)
+{
     ModelContext *context = static_cast<ModelContext *>(userData);
     std::string newName = static_cast<const String *>(name)->toStdString();
     std::string::size_type pos(newName.find('\\'));
@@ -653,6 +586,7 @@ bool BaseApplicationContext::uploadTexture(const IString *name, int flags, void 
         newName.replace(pos, 1, "/");
         pos = newName.find('\\', pos + 1);
     }
+    ITexture *texturePtr = 0;
     if (internal::hasFlagBits(flags, IApplicationContext::kToonTexture)) {
         if (!internal::hasFlagBits(flags, IApplicationContext::kSystemToonTexture)) {
             /* it's directory if name2.empty() is true */
@@ -661,42 +595,42 @@ bool BaseApplicationContext::uploadTexture(const IString *name, int flags, void 
                 if (!context->findTexture(newToonPath, texturePtr)) {
                     /* uses default system texture loader */
                     VPVL2_VLOG(2, "Try loading a system default toon texture from archive: " << newToonPath);
-                    ret = context->uploadTexture(newToonPath, flags, texturePtr);
+                    texturePtr = context->uploadTexture(newToonPath, flags);
                 }
             }
             else if (context->archiveRef()) {
                 VPVL2_VLOG(2, "Try loading a model toon texture from archive: " << newName);
-                ret = internalUploadTexture(newName, std::string(), flags, context, texturePtr);
+                texturePtr = internalUploadTexture(newName, std::string(), flags, context);
             }
             else if (const IString *directoryRef = context->directoryRef()) {
                 const std::string &path = static_cast<const String *>(directoryRef)->toStdString() + "/" + newName;
                 VPVL2_VLOG(2, "Try loading a model toon texture: " << path);
-                ret = internalUploadTexture(newName, path, flags, context, texturePtr);
+                texturePtr = internalUploadTexture(newName, path, flags, context);
             }
         }
-        if (!ret) {
+        if (!texturePtr) {
             flags |= IApplicationContext::kSystemToonTexture;
             VPVL2_VLOG(2, "Loading a system default toon texture: " << newName);
-            ret = uploadSystemToonTexture(newName, flags, context, texturePtr);
+            texturePtr = uploadSystemToonTexture(newName, flags, context);
         }
     }
     else if (const IString *directoryRef = context->directoryRef()) {
         const std::string &path = static_cast<const String *>(directoryRef)->toStdString() + "/" + newName;
         VPVL2_VLOG(2, "Loading a model texture: " << path);
-        ret = internalUploadTexture(newName, path, flags, context, texturePtr);
+        texturePtr = internalUploadTexture(newName, path, flags, context);
     }
-    return ret;
+    return texturePtr;
 }
 
-bool BaseApplicationContext::uploadSystemToonTexture(const std::string &name, int flags, ModelContext *context, ITexture *&texturePtr)
+ITexture *BaseApplicationContext::uploadSystemToonTexture(const std::string &name, int flags, ModelContext *context)
 {
     MapBuffer buffer(this);
     const std::string &path = toonDirectory() + "/" + name;
     /* open a (system) toon texture from library resource */
-    return mapFile(path, &buffer) ? context->uploadTexture(buffer.address, buffer.size, path, flags,texturePtr) : false;
+    return mapFile(path, &buffer) ? context->uploadTexture(buffer.address, buffer.size, path, flags) : 0;
 }
 
-bool BaseApplicationContext::internalUploadTexture(const std::string &name, const std::string &path, int flags, ModelContext *context, ITexture *&texturePtr)
+ITexture *BaseApplicationContext::internalUploadTexture(const std::string &name, const std::string &path, int flags, ModelContext *context)
 {
     if (!internal::hasFlagBits(flags, IApplicationContext::kSystemToonTexture)) {
         if (Archive *archiveRef = context->archiveRef()) {
@@ -705,18 +639,18 @@ bool BaseApplicationContext::internalUploadTexture(const std::string &name, cons
             if (const std::string *bytesRef = archiveRef->dataRef(name)) {
                 const uint8 *ptr = reinterpret_cast<const uint8 *>(bytesRef->data());
                 vsize size = bytesRef->size();
-                return uploadTextureOpaque(ptr, size, name, flags, context, texturePtr);
+                return uploadTextureOpaque(ptr, size, name, flags, context);
             }
             VPVL2_LOG(WARNING, "Cannot load a bridge from archive: " << name);
             /* force true to continue loading texture if path is directory */
-            return false;
+            return 0;
         }
         else if (!existsFile(path)) {
             VPVL2_LOG(WARNING, "Cannot load inexist " << path);
-            return true; /* skip */
+            return new Texture2D(sharedFunctionResolverInstance(), BaseSurface::Format(), kZeroV3, 0); /* skip */
         }
     }
-    return uploadTextureOpaque(path, flags, context, texturePtr);
+    return uploadTextureOpaque(path, flags, context);
 }
 
 void BaseApplicationContext::validateEffectResources()
@@ -735,18 +669,18 @@ void BaseApplicationContext::deleteEffectParameterUIWidget(IEffect *effectRef)
     }
 }
 
-bool BaseApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context, ITexture *&texturePtr)
+ITexture *BaseApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context)
 {
     /* fallback to default texture loader */
     VPVL2_VLOG(2, "Using default texture loader (stbi_image) instead of inherited class texture loader.");
-    return context->uploadTexture(data, size, key, flags, texturePtr);
+    return context->uploadTexture(data, size, key, flags);
 }
 
-bool BaseApplicationContext::uploadTextureOpaque(const std::string &path, int flags, ModelContext *context, ITexture *&texturePtr)
+ITexture *BaseApplicationContext::uploadTextureOpaque(const std::string &path, int flags, ModelContext *context)
 {
     /* fallback to default texture loader */
     VPVL2_VLOG(2, "Using default texture loader (stbi_image) instead of inherited class texture loader.");
-    return context->uploadTexture(path, flags, texturePtr);
+    return context->uploadTexture(path, flags);
 }
 
 BaseSurface::Format BaseApplicationContext::defaultTextureFormat() const
@@ -1691,6 +1625,78 @@ void BaseApplicationContext::renderShadowMap()
         shadowMapRef->unbind();
         popAnnotationGroup(this);
     }
+}
+
+ITexture *BaseApplicationContext::createTexture(const void *ptr, const BaseSurface::Format &format, const Vector3 &size) const
+{
+    VPVL2_DCHECK(ptr);
+    FunctionResolver *resolver = sharedFunctionResolverInstance();
+    pushAnnotationGroup("BaseApplicationContext::ModelContext#createTexture", resolver);
+    Texture2D *texture = new (std::nothrow) Texture2D(resolver, format, size, 0);
+    if (texture) {
+        texture->create();
+        texture->bind();
+        texture->fillPixels(ptr);
+        texture->generateMipmaps();
+        texture->unbind();
+    }
+    popAnnotationGroup(resolver);
+    return texture;
+}
+
+ITexture *BaseApplicationContext::createTexture(const uint8 *data, vsize size, bool mipmap)
+{
+    VPVL2_DCHECK(data && size > 0);
+    Vector3 textureSize;
+    ITexture *texturePtr = 0;
+    int x = 0, y = 0, ncomponents = 0;
+#ifdef VPVL2_LINK_FREEIMAGE
+    FIMEMORY *memory = FreeImage_OpenMemory(const_cast<uint8_t *>(data), size);
+    FREE_IMAGE_FORMAT format = FreeImage_GetFileTypeFromMemory(memory);
+    if (format != FIF_UNKNOWN) {
+        if (FIBITMAP *bitmap = FreeImage_LoadFromMemory(format, memory)) {
+            if (FIBITMAP *bitmap32 = FreeImage_ConvertTo32Bits(bitmap)) {
+                FreeImage_FlipVertical(bitmap32);
+                textureSize.setValue(FreeImage_GetWidth(bitmap32), FreeImage_GetHeight(bitmap32), 1);
+                texturePtr = uploadTexture(FreeImage_GetBits(bitmap32), m_applicationContextRef->textureFormat(), textureSize, mipmap, false);
+                FreeImage_Unload(bitmap);
+                FreeImage_Unload(bitmap32);
+                return texturePtr;
+            }
+            else {
+                VPVL2_LOG(WARNING, "Cannot convert loaded image to 32bits image");
+            }
+            FreeImage_Unload(bitmap);
+        }
+        else {
+            VPVL2_LOG(WARNING, "Cannot decode the image");
+        }
+    }
+    else {
+        VPVL2_LOG(WARNING, "Cannot detect image format");
+    }
+    FreeImage_CloseMemory(memory);
+#endif
+    /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
+    if (stbi_uc *ptr = stbi_load_from_memory(data, int(size), &x, &y, &ncomponents, 4)) {
+        textureSize.setValue(Scalar(x), Scalar(y), 1);
+        texturePtr = createTexture(ptr, defaultTextureFormat(), textureSize);
+        stbi_image_free(ptr);
+    }
+    return texturePtr;
+}
+
+void BaseApplicationContext::optimizeTexture(ITexture *texture)
+{
+    FunctionResolver *resolver = sharedFunctionResolverInstance();
+    texture->bind();
+    if (resolver->hasExtension("APPLE_texture_range")) {
+        texture->setParameter(kGL_TEXTURE_STORAGE_HINT_APPLE, int(kGL_STORAGE_CACHED_APPLE));
+    }
+    if (resolver->hasExtension("APPLE_client_storage")) {
+        pixelStorei(kGL_UNPACK_CLIENT_STORAGE_APPLE, kGL_TRUE);
+    }
+    texture->unbind();
 }
 
 #ifdef VPVl2_ENABLE_NVIDIA_CG

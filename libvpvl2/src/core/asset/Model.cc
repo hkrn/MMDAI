@@ -77,7 +77,6 @@ public:
     int index() const { return 0; }
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return 0; }
-    IBone *effectorBoneRef() const { return 0; }
     Transform worldTransform() const {
         return m_worldTransform;
     }
@@ -170,7 +169,6 @@ public:
     int index() const { return -1; }
     IModel *parentModelRef() const { return m_modelRef; }
     IBone *parentBoneRef() const { return 0; }
-    IBone *effectorBoneRef() const { return 0; }
     Transform worldTransform() const {
         return Transform::getIdentity();
     }

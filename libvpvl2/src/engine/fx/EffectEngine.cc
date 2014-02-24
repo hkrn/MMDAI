@@ -891,8 +891,7 @@ void RenderColorTargetSemantic::addFrameBufferObjectParameter(IEffect::Parameter
     if (enableResourceName && annotationRef) {
         const char *name = annotationRef->stringValue();
         IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8*>(name));
-        ITexture *texturePtr = 0;
-        if (m_applicationContextRef->uploadTexture(s, 0, userData, texturePtr)) {
+        if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(s, 0, userData)) {
             samplerParameterRef->setSampler(texturePtr);
             m_path2parameterRefs.insert(name, textureParameterRef);
             ITexture *tex = m_textures.append(new TexturePtrRef(texturePtr));

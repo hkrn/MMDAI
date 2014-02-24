@@ -106,6 +106,7 @@ public:
     const char *errorString() const;
 
     IApplicationContext *applicationContextRef() const;
+    void loadResources();
     void release();
 
 private:
@@ -137,6 +138,7 @@ private:
     EffectContext *m_effectContextRef;
     nvFX::IContainer *m_container;
     IString *m_name;
+    PointerArray<ITexture> m_textureResources;
     Array<uint32> m_renderColorTargetIndices;
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;
     Array<IEffect::Parameter *> m_interactiveParameters;

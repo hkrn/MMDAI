@@ -184,14 +184,14 @@ public:
         if (image.loadFromMemory(data, size)) {
             return uploadTextureSFML(image, key, flags, context, texturePtr);
         }
-        return context->uploadTexture(data, size, key, flags, texturePtr);
+        return context->uploadModelTexture(data, size, key, flags, texturePtr);
     }
     bool uploadTextureOpaque(const std::string &path, int flags, ModelContext *context, ITexture *&texturePtr) {
         sf::Image image;
         if (image.loadFromFile(path)) {
             return uploadTextureSFML(image, path, flags, context, texturePtr);
         }
-        return context->uploadTexture(path, flags, texturePtr);
+        return context->uploadModelTexture(path, flags, texturePtr);
     }
     bool uploadTextureSFML(const sf::Image &image, const std::string &key, int flags, ModelContext *context, ITexture *&texturePtr) {
         const Vector3 size(image.getSize().x, image.getSize().y, 1);

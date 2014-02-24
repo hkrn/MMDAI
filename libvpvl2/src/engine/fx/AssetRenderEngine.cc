@@ -181,7 +181,6 @@ bool AssetRenderEngine::upload(void *userData)
             flags |= IApplicationContext::kGenerateTextureMipmap;
         }
     }
-    ITexture *texturePtr = 0;
     for (unsigned int i = 0; i < nmaterials; i++) {
         aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
@@ -192,8 +191,7 @@ bool AssetRenderEngine::upload(void *userData)
             if (PrivateEffectEngine::splitTexturePath(path, mainTexture, subTexture)) {
                 if (m_textureMap[mainTexture] == 0) {
                     IString *mainTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
-                    texturePtr = 0;
-                    if (m_applicationContextRef->uploadTexture(mainTexturePath, flags, userData, texturePtr)) {
+                    if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(mainTexturePath, flags, userData)) {
                         m_textureMap[mainTexture] = m_allocatedTextures.insert(texturePtr, texturePtr);
                         if (engine) {
                             engine->materialTexture.setTexture(material, texturePtr);
@@ -204,8 +202,7 @@ bool AssetRenderEngine::upload(void *userData)
                 }
                 if (m_textureMap[subTexture] == 0) {
                     IString *subTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(subTexture.c_str()));
-                    texturePtr = 0;
-                    if (m_applicationContextRef->uploadTexture(subTexturePath, flags, userData, texturePtr)) {
+                    if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(subTexturePath, flags, userData)) {
                         m_textureMap[subTexture] = m_allocatedTextures.insert(texturePtr, texturePtr);
                         if (engine) {
                             engine->materialSphereMap.setTexture(material, texturePtr);
@@ -217,8 +214,7 @@ bool AssetRenderEngine::upload(void *userData)
             }
             else if (m_textureMap[mainTexture] == 0) {
                 IString *mainTexturePath = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(mainTexture.c_str()));
-                texturePtr = 0;
-                if (m_applicationContextRef->uploadTexture(mainTexturePath, flags, userData, texturePtr)) {
+                if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(mainTexturePath, flags, userData)) {
                     m_textureMap[mainTexture] = m_allocatedTextures.insert(texturePtr, texturePtr);
                     if (engine) {
                         engine->materialTexture.setTexture(material, texturePtr);
@@ -334,7 +330,7 @@ void AssetRenderEngine::preparePostProcess()
 
 void AssetRenderEngine::performPreProcess()
 {
-    if (m_currentEffectEngineRef) {
+    if (hasPreProcess()) {
         pushAnnotationGroup(std::string("AssetRenderEngine#performPreProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef);
         m_currentEffectEngineRef->executeProcess(m_modelRef, 0, IEffect::kPreProcess);
         popAnnotationGroup(m_applicationContextRef);
@@ -343,7 +339,7 @@ void AssetRenderEngine::performPreProcess()
 
 void AssetRenderEngine::performPostProcess(IEffect *nextPostEffect)
 {
-    if (m_currentEffectEngineRef) {
+    if (hasPostProcess()) {
         pushAnnotationGroup(std::string("AssetRenderEngine#performPostProcess name=").append(internal::cstr(m_modelRef->name(IEncoding::kDefaultLanguage), "")).c_str(), m_applicationContextRef);
         m_currentEffectEngineRef->executeProcess(m_modelRef, nextPostEffect, IEffect::kPostProcess);
         popAnnotationGroup(m_applicationContextRef);

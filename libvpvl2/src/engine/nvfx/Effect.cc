@@ -787,6 +787,7 @@ Effect::~Effect()
 {
     release();
     internal::deleteObject(m_name);
+    m_textureResources.releaseAll();
     m_name = 0;
     m_applicationContextRef = 0;
     m_effectContextRef = 0;
@@ -1050,6 +1051,19 @@ const char *Effect::errorString() const
 IApplicationContext *Effect::applicationContextRef() const
 {
     return m_applicationContextRef;
+}
+
+void Effect::loadResources()
+{
+    for (int i = 0; nvFX::IResource *resource = m_container->findResource(i); i++) {
+        nvFX::IAnnotation *annotation = resource->annotations();
+        if (const char *name = annotation->getAnnotationString("defaultFile")) {
+            if (ITexture *texturePtr = m_applicationContextRef->uploadTexture(name)) {
+                resource->setGLTexture(texturePtr->data());
+                m_textureResources.append(texturePtr);
+            }
+        }
+    }
 }
 
 void Effect::release()

@@ -82,7 +82,6 @@ public:
     Label *internalParentLabelRef() const;
     IModel *parentModelRef() const;
     IBone *parentBoneRef() const;
-    IBone *effectorBoneRef() const;
     Transform worldTransform() const;
     Transform localTransform() const;
     void getLocalTransform(Transform &world2LocalTransform) const;

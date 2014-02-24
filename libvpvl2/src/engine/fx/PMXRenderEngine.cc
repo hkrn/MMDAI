@@ -870,7 +870,6 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             flags |= IApplicationContext::kGenerateTextureMipmap;
         }
     }
-    ITexture *texturePtr = 0;
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
         const IString *name = material->name(IEncoding::kJapanese); (void) name;
@@ -878,8 +877,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
         MaterialContext &materialPrivate = m_materialContexts[i];
         annotateMaterial("uploadMaterial", material);
         if (const IString *mainTexturePath = material->mainTexture()) {
-            texturePtr = 0;
-            if (m_applicationContextRef->uploadTexture(mainTexturePath, flags, userData, texturePtr)) {
+            if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(mainTexturePath, flags, userData)) {
                 materialPrivate.mainTextureRef = m_allocatedTextures.insert(texturePtr, texturePtr);
                 if (engine) {
                     engine->materialTexture.setTexture(material, texturePtr);
@@ -894,8 +892,7 @@ bool PMXRenderEngine::uploadMaterials(void *userData)
             }
         }
         if (const IString *sphereTexturePath = material->sphereTexture()) {
-            texturePtr = 0;
-            if (m_applicationContextRef->uploadTexture(sphereTexturePath, flags, userData, texturePtr)) {
+            if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(sphereTexturePath, flags, userData)) {
                 materialPrivate.sphereTextureRef = m_allocatedTextures.insert(texturePtr, texturePtr);
                 if (engine) {
                     engine->materialSphereMap.setTexture(material, texturePtr);
@@ -1105,11 +1102,10 @@ void PMXRenderEngine::uploadToonTexture(const IMaterial *material,
     m_applicationContextRef->getToonColor(toonTexturePath, context.toonTextureColor, userData);
     const Color &c = context.toonTextureColor; (void) c;
     VPVL2_VLOG(2, "Fetched color from toon texture: material=" << name << " index=" << index << " shared=" << internal::hasFlagBits(flags, IApplicationContext::kSystemToonTexture) << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
-    ITexture *texturePtr = 0;
-    m_applicationContextRef->uploadTexture(toonTexturePath, flags, userData, texturePtr);
+    ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(toonTexturePath, flags, userData);
     if (!texturePtr) {
         flags |= IApplicationContext::kSystemToonTexture;
-        m_applicationContextRef->uploadTexture(toonTexturePath, flags, userData, texturePtr);
+        texturePtr = m_applicationContextRef->uploadModelTexture(toonTexturePath, flags, userData);
     }
     if (texturePtr) {
         context.toonTextureRef = m_allocatedTextures.insert(texturePtr, texturePtr);

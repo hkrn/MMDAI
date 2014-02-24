@@ -79,14 +79,14 @@ public:
     bool existsFile(const std::string &path) const;
     bool extractFilePath(const std::string &path, std::string &fileName, std::string &basename) const;
     bool extractModelNameFromFileName(const std::string &path, std::string &modelName) const;
-    bool uploadTextureOpaque(const vpvl2::uint8 *data, vpvl2::vsize size, const std::string &key, int flags, ModelContext *context, vpvl2::ITexture *&texturePtr);
-    bool uploadTextureOpaque(const std::string &path, int flags, ModelContext *context, vpvl2::ITexture *&texturePtr);
+    vpvl2::ITexture *uploadTextureOpaque(const vpvl2::uint8 *data, vpvl2::vsize size, const std::string &key, int flags, ModelContext *context);
+    vpvl2::ITexture *uploadTextureOpaque(const std::string &path, int flags, ModelContext *context);
     FunctionResolver *sharedFunctionResolverInstance() const;
 #ifdef QT_OPENGL_ES_2
     vpvl2::gl::BaseSurface::Format defaultTextureFormat() const;
 #endif
 
-    bool uploadTextureQt(const QImage &image, const std::string &key, int flags, ModelContext *modelContext, vpvl2::ITexture *&texturePtr);
+    vpvl2::ITexture *uploadTextureQt(const QImage &image, const std::string &key, int flags, ModelContext *context);
     void uploadEnqueuedModelProxies(ProjectProxy *projectProxy, QList<ModelProxyPair> &succeededModelProxies, QList<ModelProxyPair> &failedModelProxies);
     void uploadEnqueuedEffects(ProjectProxy *projectProxy, QList<ModelProxy *> &succeededEffects, QList<ModelProxy *> &failedEffects);
     QList<ModelProxy *> deleteEnqueuedModelProxies(ProjectProxy *projectProxy);

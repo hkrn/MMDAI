@@ -176,19 +176,19 @@ public:
         }
         return false;
     }
-    bool uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context, ITexture *&texturePtr) {
-        if (context->uploadTexture(data, size, key, flags, texturePtr)) {
-            // context->optimizeTexture(bridge.dataRef);
-            return true;
+    ITexture *uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context) {
+        ITexture *texturePtr = context->uploadTexture(data, size, key, flags);
+        if (texturePtr) {
+            // optimizeTexture(texturePtr);
         }
-        return false;
+        return texturePtr;
     }
-    bool uploadTextureOpaque(const std::string &key, int flags, ModelContext *context, ITexture *&texturePtr) {
-        if (context->uploadTexture(key, flags, texturePtr)) {
-            // context->optimizeTexture(bridge.dataRef);
-            return true;
+    ITexture *uploadTextureOpaque(const std::string &key, int flags, ModelContext *context) {
+        ITexture *texturePtr = context->uploadTexture(key, flags);
+        if (texturePtr) {
+            // optimizeTexture(texturePtr);
         }
-        return false;
+        return texturePtr;
     }
 
     struct Resolver : FunctionResolver {
