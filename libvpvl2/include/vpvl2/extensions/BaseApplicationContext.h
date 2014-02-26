@@ -370,6 +370,7 @@ private:
 
     static void debugMessageCallback(gl::GLenum source, gl::GLenum type, gl::GLuint id, gl::GLenum severity,
                                      gl::GLsizei length, const gl::GLchar *message, gl::GLvoid *userData);
+    void addGlobalEffect(const std::string &alias, const std::string &filename, StringMap &includeBuffers);
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BaseApplicationContext)
 };

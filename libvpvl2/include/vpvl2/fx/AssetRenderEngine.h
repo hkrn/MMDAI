@@ -92,10 +92,10 @@ public:
     void release();
     void update();
     void setUpdateOptions(int options);
-    void renderModel();
-    void renderEdge();
-    void renderShadow();
-    void renderZPlot();
+    void renderModel(IEffect::Pass *overridePass);
+    void renderEdge(IEffect::Pass *overridePass);
+    void renderShadow(IEffect::Pass *overridePass);
+    void renderZPlot(IEffect::Pass *overridePass);
     bool hasPreProcess() const;
     bool hasPostProcess() const;
     void preparePostProcess();
@@ -161,8 +161,8 @@ private:
     bool uploadRecurse(const aiScene *scene, const aiNode *node, void *userData);
     void initializeEffectParameters();
     void refreshEffect();
-    void renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap);
-    void renderZPlotRecurse(const aiScene *scene, const aiNode *node);
+    void renderRecurse(const aiScene *scene, const aiNode *node, IEffect::Pass *overridePass, const bool hasShadowMap);
+    void renderZPlotRecurse(const aiScene *scene, const aiNode *node, IEffect::Pass *overridePass);
     void setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap);
     void createVertexBundle(const aiMesh *mesh, const Vertices &vertices, const Indices &indices);
     void unbindVertexBundle(const aiMesh *mesh);
@@ -183,7 +183,6 @@ private:
     PointerHash<HashPtr, gl::VertexBundle> m_vbo;
     PointerHash<HashPtr, gl::VertexBundleLayout> m_vao;
     IEffect *m_defaultEffectRef;
-    IEffect::Pass *m_overridePass;
     int m_nvertices;
     int m_nmeshes;
     bool m_cullFaceState;

@@ -82,10 +82,10 @@ public:
     void release();
     void update();
     void setUpdateOptions(int options);
-    void renderModel();
-    void renderEdge();
-    void renderShadow();
-    void renderZPlot();
+    void renderModel(IEffect::Pass *overridePass);
+    void renderEdge(IEffect::Pass *overridePass);
+    void renderShadow(IEffect::Pass *overridePass);
+    void renderZPlot(IEffect::Pass *overridePass);
     bool hasPreProcess() const;
     bool hasPostProcess() const;
     void preparePostProcess();
@@ -94,7 +94,6 @@ public:
     IEffect *effectRef(IEffect::ScriptOrderType type) const;
     IEffect *defaultEffectRef() const;
     void setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData);
-    void setOverridePass(IEffect::Pass *pass);
     bool testVisible();
 
     void bindVertexBundle();
@@ -207,7 +206,6 @@ private:
     PointerHash<HashInt, PrivateEffectEngine> m_effectEngines;
     PointerArray<PrivateEffectEngine> m_oseffects;
     IEffect *m_defaultEffectRef;
-    IEffect::Pass *m_overridePass;
     gl::GLenum m_indexType;
     Vector3 m_aabbMin;
     Vector3 m_aabbMax;

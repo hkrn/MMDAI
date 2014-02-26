@@ -157,7 +157,8 @@ public:
     bool extractFilePath(const std::string &path, std::string &filename, std::string &basename) const {
         UErrorCode status = U_ZERO_ERROR;
         RegexMatcher filenameMatcher(".+/((.+)\\.\\w+)$", 0, status);
-        filenameMatcher.reset(UnicodeString::fromUTF8(path));
+        UnicodeString subject(UnicodeString::fromUTF8(path));
+        filenameMatcher.reset(subject);
         if (filenameMatcher.find()) {
             filename = String::toStdString(filenameMatcher.group(1, status));
             basename = String::toStdString(filenameMatcher.group(2, status));

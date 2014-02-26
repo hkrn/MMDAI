@@ -78,10 +78,10 @@ public:
     void release();
     void update();
     void setUpdateOptions(int options);
-    void renderModel();
-    void renderEdge();
-    void renderShadow();
-    void renderZPlot();
+    void renderModel(IEffect::Pass *overridePass);
+    void renderEdge(IEffect::Pass *overridePass);
+    void renderShadow(IEffect::Pass *overridePass);
+    void renderZPlot(IEffect::Pass *overridePass);
     bool hasPreProcess() const;
     bool hasPostProcess() const;
     void preparePostProcess();

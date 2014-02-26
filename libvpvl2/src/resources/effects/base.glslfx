@@ -1,62 +1,6 @@
-uniform bool use_texture;
-uniform bool use_spheremap;
-uniform bool use_toon;
-uniform bool spadd;
-uniform bool spsub;
-uniform float VertexCount;
-uniform float SubsetCount;
-uniform int BoneCountVPVL2;
-uniform bool use_boneTransformTextureVPVL2;
+#include ":vpvl2/declarations.glslfxh"
 
 namespace vpvl2 {
-
-uniform mat4 worldViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Camera"; >;
-uniform mat4 lightViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Light"; >;
-uniform vec3 materialAmbient           : AMBIENT < Object = "Geometry"; >;
-uniform vec4 materialDiffuse           : DIFFUSE < Object = "Geometry"; >;
-uniform vec3 materialEmissive          : EMISSIVE < Object = "Geometry"; >;
-uniform vec3 materialSpecular          : SPECULAR < Object = "Geometry"; >;
-uniform float materialShininess        : SPECULARPOWER < Object = "Geometry"; >;
-uniform vec3 lightAmbient              : AMBIENT < Object = "Light"; >;
-uniform vec3 lightDiffuse              : DIFFUSE < Object = "Light"; >;
-uniform vec3 lightSpecular             : SPECULAR < Object = "Light"; >;
-uniform vec3 cameraPosition            : POSITION < Object = "Camera"; >;
-uniform vec3 lightDirection            : DIRECTION < Object = "Light"; >;
-uniform vec4 edgeColor                 : EDGECOLOR;
-uniform float edgeWidth                : EDGEWIDTH;
-
-uniform sampler2D mainTextureSampler   : MATERIALTEXTURE;
-uniform sampler2D toonTextureSampler   : MATERIALTOONTEXTURE;
-uniform sampler2D sphereTextureSampler : MATERIALSPHEREMAP;
-uniform sampler2D depthTextureSampler  : TEXUNIT0;
-
-uniform sampler2D boneTransformSampler : BONETRANSFORMTEXTUREVPVL2;
-uniform float edgeScaleFactor          : EDGESCALEFACTORVPVL2;
-
-SamplerState defaultLinearFilterSamplerState {
-    TEXTURE_MIN_FILTER = LINEAR;
-    TEXTURE_MAG_FILTER = LINEAR;
-}
-SamplerState defaultNearestFilterSamplerState {
-    TEXTURE_MIN_FILTER = NEAREST;
-    TEXTURE_MAG_FILTER = NEAREST;
-}
-SamplerState defaultLinearFilterMipmapSamplerState {
-    TEXTURE_MIN_FILTER = LINEAR_MIPMAP_LINEAR;
-    TEXTURE_MAG_FILTER = LINEAR;
-}
-SamplerState defaultToonSamplerState {
-    TEXTURE_MIN_FILTER = LINEAR;
-    TEXTURE_MAG_FILTER = LINEAR;
-    TEXTURE_WRAP_S = CLAMP_TO_EDGE;
-    TEXTURE_WRAP_T = CLAMP_TO_EDGE;
-}
-SamplerState defaultDepthSamplerState {
-    TEXTURE_MIN_FILTER = NEAREST;
-    TEXTURE_MAG_FILTER = NEAREST;
-    TEXTURE_WRAP_S = CLAMP_TO_EDGE;
-    TEXTURE_WRAP_T = CLAMP_TO_EDGE;
-}
 
 GLSLShader global performTransform {
 
@@ -67,11 +11,8 @@ const int kBdef4 = 2;
 const int kSdef  = 3;
 const int kQdef  = 4;
 
-mat4 vpvl2FXGetBoneTransformMatrix(const float index) {
-    float newIndex = index / float(BoneCountVPVL2);
-    mat4 matrix = kIdenticalMatrix;
-    vec4 p = vpvl2FXGetTexturePixel2D(vpvl2_NS_boneTransformSampler, vec2(0.0,  newIndex));
-    vec4 q = vpvl2FXGetTexturePixel2D(vpvl2_NS_boneTransformSampler, vec2(0.5,  newIndex));
+mat4 vpvl2FXCreateMatrix4FromQuaternion(const vec4 p, const vec4 q) {
+    mat4 matrix;
     matrix[0] = vec4(
         1.0 - 2.0 * q.y * q.y - 2.0 * q.z * q.z,
         2.0 * q.x * q.y + 2.0 * q.w * q.z,
@@ -92,6 +33,14 @@ mat4 vpvl2FXGetBoneTransformMatrix(const float index) {
     );
     matrix[3] = p;
     return matrix;
+}
+
+mat4 vpvl2FXGetBoneTransformMatrix(const float index) {
+    float newIndex = index / float(BoneCountVPVL2);
+    mat4 matrix = kIdenticalMatrix;
+    vec4 p = vpvl2FXGetTexturePixel2D(vpvl2_NS_boneTransformSampler, vec2(0.0,  newIndex));
+    vec4 q = vpvl2FXGetTexturePixel2D(vpvl2_NS_boneTransformSampler, vec2(0.5,  newIndex));
+    return vpvl2FXCreateMatrix4FromQuaternion(p, q);
 }
 
 vec4 vpvl2FXPerformSkinning(const vec3 origin3, const vec4 boneIndices, const vec4 boneWeights, const float base, const int type) {
@@ -264,7 +213,7 @@ vec4 vpvl2FXApplyStandardLight(const vec4 color, const vec4 origin, const vec3 n
 
 }
 
-GLSLShader transformVertex {
+GLSLShader global transformVertex {
 
 const vec2 kHalf2 = vec2(0.5);
 const vec2 kOne2  = vec2(1.0);
@@ -296,7 +245,7 @@ void vpvl2FXTransformVertex(inout vec4 origin,
 
 } /* transformVertex */
 
-GLSLShader transformVertexEdge {
+GLSLShader global transformVertexEdge {
 
 vec4 vpvl2FXPerformEdgeTransform(const vec4 origin, const vec4 normal, const vec4 boneIndices, const vec4 boneWeights);
 vec4 vpvl2FXPerformNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
@@ -320,7 +269,7 @@ void vpvl2FXTransformVertex(inout vec4 origin,
 
 } /* transformVertexEdge */
 
-GLSLShader transformVertexShadow {
+GLSLShader global transformVertexShadow {
 
 vec4 vpvl2FXPerformPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 vec4 vpvl2FXPerformNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
@@ -344,7 +293,7 @@ void vpvl2FXTransformVertex(inout vec4 origin,
 
 } /* transformVertexShadow */
 
-GLSLShader transformVertexZplot {
+GLSLShader global transformVertexZplot {
 
 vec4 vpvl2FXPerformPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 vec4 vpvl2FXPerformNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
@@ -387,7 +336,7 @@ void vpvl2FXTransformVertex(inout vec4 origin,
 
 } /* discardVertex */
 
-GLSLShader mainObjectVS {
+GLSLShader global mainObjectVS {
 
 #if __VERSION__ >= 130
 out gl_PerVertex {
@@ -563,7 +512,7 @@ vec4 vpvl2FXTransformFragment(const vec4 origin,
 
 } /* transformFragmentZplot */
 
-GLSLShader mainObjectPS {
+GLSLShader global mainObjectPS {
 
 #if __VERSION__ >= 130
 layout(location=0) out vec4 vpvl2_outPixelColor;

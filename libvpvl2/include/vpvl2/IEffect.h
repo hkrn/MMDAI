@@ -135,6 +135,7 @@ public:
         virtual const Annotation *annotationRef(const char *name) const = 0;
         virtual const char *name() const = 0;
         virtual void getPasses(Array<Pass *> &passes) const = 0;
+        virtual void getOverridePasses(Array<Pass *> &passes) const = 0;
         virtual void setOverridePass(Pass *pass) = 0;
     };
     class Pass {
@@ -382,6 +383,8 @@ public:
     virtual void activateVertexAttribute(VertexAttributeType vtype) = 0;
 
     virtual void deactivateVertexAttribute(VertexAttributeType vtype) = 0;
+
+    virtual void validate() = 0;
 
     virtual void setupOverride(const IEffect *effectRef) = 0;
 

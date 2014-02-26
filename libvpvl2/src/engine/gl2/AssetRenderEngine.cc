@@ -253,7 +253,7 @@ AssetRenderEngine::~AssetRenderEngine()
     m_sceneRef = 0;
 }
 
-void AssetRenderEngine::renderModel()
+void AssetRenderEngine::renderModel(IEffect::Pass * /* overridePass */)
 {
     if (!m_modelRef || !m_modelRef->isVisible())
         return;
@@ -265,17 +265,17 @@ void AssetRenderEngine::renderModel()
     }
 }
 
-void AssetRenderEngine::renderEdge()
+void AssetRenderEngine::renderEdge(IEffect::Pass * /* overridePass */)
 {
     /* do nothing */
 }
 
-void AssetRenderEngine::renderShadow()
+void AssetRenderEngine::renderShadow(IEffect::Pass * /* overridePass */)
 {
     /* do nothing */
 }
 
-void AssetRenderEngine::renderZPlot()
+void AssetRenderEngine::renderZPlot(IEffect::Pass * /* overridePass */)
 {
     if (!m_modelRef || !m_modelRef->isVisible())
         return;
@@ -414,11 +414,6 @@ IEffect *AssetRenderEngine::defaultEffectRef() const
 }
 
 void AssetRenderEngine::setEffect(IEffect * /* effectRef */, IEffect::ScriptOrderType /* type */, void * /* userData */)
-{
-    /* do nothing */
-}
-
-void AssetRenderEngine::setOverridePass(IEffect::Pass * /* pass */)
 {
     /* do nothing */
 }

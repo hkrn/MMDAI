@@ -95,28 +95,28 @@ public:
      *
      * @brief renderModel
      */
-    virtual void renderModel() = 0;
+    virtual void renderModel(IEffect::Pass *overridePass) = 0;
 
     /**
      * モデルのエッジを描画します.
      *
      * @brief renderEdge
      */
-    virtual void renderEdge() = 0;
+    virtual void renderEdge(IEffect::Pass *overridePass) = 0;
 
     /**
      * モデルの投影影を描写します.
      *
      * @brief renderShadow
      */
-    virtual void renderShadow() = 0;
+    virtual void renderShadow(IEffect::Pass *overridePass) = 0;
 
     /**
      * セルフシャドウ用の深度テクスチャ向けの描画をします.
      *
      * @brief renderZPlot
      */
-    virtual void renderZPlot() = 0;
+    virtual void renderZPlot(IEffect::Pass *overridePass) = 0;
 
     /**
      * モデルのバッファをアップデートします.
@@ -198,8 +198,6 @@ public:
      * @param userData
      */
     virtual void setEffect(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData) = 0;
-
-    virtual void setOverridePass(IEffect::Pass *pass) = 0;
 
     /**
      * モデルが可視かどうかを判定します.

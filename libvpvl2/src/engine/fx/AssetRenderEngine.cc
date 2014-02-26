@@ -140,7 +140,6 @@ AssetRenderEngine::AssetRenderEngine(IApplicationContext *applicationContextRef,
       m_sceneRef(scene),
       m_modelRef(model),
       m_defaultEffectRef(0),
-      m_overridePass(0),
       m_nvertices(0),
       m_nmeshes(0),
       m_cullFaceState(true)
@@ -259,7 +258,7 @@ void AssetRenderEngine::setUpdateOptions(int /* options */)
     /* do nothing */
 }
 
-void AssetRenderEngine::renderModel()
+void AssetRenderEngine::renderModel(IEffect::Pass *overridePass)
 {
     if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->opacity()) ||
             !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
@@ -275,7 +274,7 @@ void AssetRenderEngine::renderModel()
     initializeEffectParameters();
     refreshEffect();
     const aiScene *a = m_modelRef->aiScenePtr();
-    renderRecurse(a, a->mRootNode, hasShadowMap);
+    renderRecurse(a, a->mRootNode, overridePass, hasShadowMap);
     if (!m_cullFaceState) {
         enable(kGL_CULL_FACE);
         m_cullFaceState = true;
@@ -283,17 +282,17 @@ void AssetRenderEngine::renderModel()
     popAnnotationGroup(m_applicationContextRef);
 }
 
-void AssetRenderEngine::renderEdge()
+void AssetRenderEngine::renderEdge(IEffect::Pass * /* overridePass */)
 {
     /* do nothing */
 }
 
-void AssetRenderEngine::renderShadow()
+void AssetRenderEngine::renderShadow(IEffect::Pass * /* overridePass */)
 {
     /* do nothing */
 }
 
-void AssetRenderEngine::renderZPlot()
+void AssetRenderEngine::renderZPlot(IEffect::Pass *overridePass)
 {
     if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(m_modelRef->opacity()) ||
             !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
@@ -304,7 +303,7 @@ void AssetRenderEngine::renderZPlot()
     refreshEffect();
     const aiScene *a = m_modelRef->aiScenePtr();
     disable(kGL_CULL_FACE);
-    renderZPlotRecurse(a, a->mRootNode);
+    renderZPlotRecurse(a, a->mRootNode, overridePass);
     enable(kGL_CULL_FACE);
     popAnnotationGroup(m_applicationContextRef);
 }
@@ -445,11 +444,6 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
     popAnnotationGroup(resolver);
 }
 
-void AssetRenderEngine::setOverridePass(IEffect::Pass *pass)
-{
-    m_overridePass = pass;
-}
-
 bool AssetRenderEngine::testVisible()
 {
     const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
@@ -467,7 +461,7 @@ bool AssetRenderEngine::testVisible()
         GLuint query = 0;
         genQueries(1, &query);
         beginQuery(target, query);
-        renderEdge();
+        renderEdge(0);
         endQuery(target);
         GLint result = 0;
         getQueryObjectiv(query, kGL_QUERY_RESULT, &result);
@@ -601,7 +595,7 @@ void AssetRenderEngine::refreshEffect()
     }
 }
 
-void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, const bool hasShadowMap)
+void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, IEffect::Pass *overridePass, const bool hasShadowMap)
 {
     pushAnnotationGroup("AssetRenderEngine#renderRecurse", m_applicationContextRef);
     const unsigned int nmeshes = node->mNumMeshes;
@@ -614,7 +608,18 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
         IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
         vsize nindices = *m_numIndices.find(mesh);
         if (technique) {
-            technique->setOverridePass(m_overridePass);
+            if (overridePass) {
+                technique->setOverridePass(overridePass);
+            }
+            else {
+                Array<IEffect::Pass *> passes;
+                technique->getOverridePasses(passes);
+                if (passes.count() > 0) {
+                    overridePass = passes[0];
+                    technique = m_currentEffectEngineRef->findDefaultTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
+                    technique->setOverridePass(overridePass);
+                }
+            }
             bindVertexBundle(mesh);
             command.count = nindices;
             setDrawCommandMode(command, mesh);
@@ -627,12 +632,12 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
     }
     const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
     for (unsigned int i = 0; i < nChildNodes; i++) {
-        renderRecurse(scene, node->mChildren[i], hasShadowMap);
+        renderRecurse(scene, node->mChildren[i], overridePass, hasShadowMap);
     }
     popAnnotationGroup(m_applicationContextRef);
 }
 
-void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *node)
+void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *node, IEffect::Pass *overridePass)
 {
     pushAnnotationGroup("AssetRenderEngine#renderZPlotRecurse", m_applicationContextRef);
     const unsigned int nmeshes = node->mNumMeshes;
@@ -648,7 +653,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
         bindVertexBundle(mesh);
         IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false);
         if (technique) {
-            technique->setOverridePass(m_overridePass);
+            technique->setOverridePass(overridePass);
             vsize nindices = *m_numIndices.find(mesh);
             command.count = nindices;
             setDrawCommandMode(command, mesh);
@@ -661,7 +666,7 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
     }
     const unsigned int nChildNodes = node->mChildren ? node->mNumChildren : 0;
     for (unsigned int i = 0; i < nChildNodes; i++) {
-        renderZPlotRecurse(scene, node->mChildren[i]);
+        renderZPlotRecurse(scene, node->mChildren[i], overridePass);
     }
     popAnnotationGroup(m_applicationContextRef);
 }

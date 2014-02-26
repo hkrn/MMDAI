@@ -302,9 +302,9 @@ class RenderColorTargetSemantic : public BaseParameter
 public:
     struct TextureReference {
         TextureReference(gl::FrameBufferObject *fbo,
-                ITexture *tex,
-                IEffect::Parameter *p,
-                IEffect::Parameter *s)
+                         ITexture *tex,
+                         IEffect::Parameter *p,
+                         IEffect::Parameter *s)
             : frameBufferObjectRef(fbo),
               textureRef(tex),
               textureParameterRef(p),
@@ -502,7 +502,7 @@ class VPVL2_API EffectEngine
 {
 public:
     typedef Array<IEffect::Technique *> Techniques;
-    typedef btAlignedObjectArray<IEffect::Pass *> Passes;
+    typedef std::vector<IEffect::Pass *> Passes;
     typedef Hash<HashPtr, Passes> TechniquePasses;
     enum ScriptOutputType {
         kColor
@@ -589,11 +589,17 @@ public:
     void invalidate();
     void clearEffect();
     IEffect::Technique *findTechnique(const char *pass,
-                                       int offset,
-                                       int nmaterials,
-                                       bool hasTexture,
-                                       bool hasSphereMap,
-                                       bool useToon) const;
+                                      int offset,
+                                      int nmaterials,
+                                      bool hasTexture,
+                                      bool hasSphereMap,
+                                      bool useToon) const;
+    IEffect::Technique *findDefaultTechnique(const char *pass,
+                                             int offset,
+                                             int nmaterials,
+                                             bool hasTexture,
+                                             bool hasSphereMap,
+                                             bool useToon) const;
     void executeScriptExternal();
     bool hasTechniques(IEffect::ScriptOrderType order) const;
     void executeProcess(const IModel *model,
@@ -699,12 +705,12 @@ private:
                               bool hasSphereMap,
                               bool useToon);
     static IEffect::Technique *findTechniqueIn(const Techniques &techniques,
-                                                const char *pass,
-                                                int offset,
-                                                int nmaterials,
-                                                bool hasTexture,
-                                                bool hasSphereMap,
-                                                bool useToon);
+                                               const char *pass,
+                                               int offset,
+                                               int nmaterials,
+                                               bool hasTexture,
+                                               bool hasSphereMap,
+                                               bool useToon);
 
     void setScriptStateFromRenderColorTargetSemantic(const RenderColorTargetSemantic &semantic,
                                                      const std::string &value,

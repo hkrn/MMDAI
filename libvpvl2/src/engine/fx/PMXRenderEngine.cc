@@ -290,7 +290,6 @@ PMXRenderEngine::PMXRenderEngine(IApplicationContext *applicationContextRef,
       m_indexBuffer(0),
       m_bundle(0),
       m_defaultEffectRef(0),
-      m_overridePass(0),
       m_indexType(kGL_UNSIGNED_INT),
       m_aabbMin(SIMD_INFINITY, SIMD_INFINITY, SIMD_INFINITY),
       m_aabbMax(-SIMD_INFINITY, -SIMD_INFINITY, -SIMD_INFINITY),
@@ -519,7 +518,7 @@ void PMXRenderEngine::setUpdateOptions(int options)
     m_dynamicBuffer->setParallelUpdateEnable(internal::hasFlagBits(options, kParallelUpdate));
 }
 
-void PMXRenderEngine::renderModel()
+void PMXRenderEngine::renderModel(IEffect::Pass *overridePass)
 {
     initializeEffectParameters(0);
     if (!m_modelRef->isVisible() || !m_currentEffectEngineRef || !m_currentEffectEngineRef->isStandardEffect()) {
@@ -558,7 +557,7 @@ void PMXRenderEngine::renderModel()
                 }
                 updateDrawPrimitivesCommand(material, command);
                 if (!btFuzzyZero(material->diffuse().w())) {
-                    technique->setOverridePass(m_overridePass);
+                    technique->setOverridePass(overridePass);
                     updateMaterialParameters(material, materialContext);
                     annotateMaterial("renderModel", material);
                     pushAnnotationGroup(std::string("PMXRenderEngine::PrivateEffectEngine#executeTechniquePasses name=").append(technique->name()).c_str(), m_applicationContextRef);
@@ -577,7 +576,7 @@ void PMXRenderEngine::renderModel()
     popAnnotationGroup(m_applicationContextRef);
 }
 
-void PMXRenderEngine::renderEdge()
+void PMXRenderEngine::renderEdge(IEffect::Pass *overridePass)
 {
     initializeEffectParameters(0);
     if (!m_modelRef->isVisible() || btFuzzyZero(m_modelRef->edgeWidth())
@@ -599,7 +598,7 @@ void PMXRenderEngine::renderEdge()
         const int nindices = material->indexRange().count;
         if (material->isVisible() && material->isEdgeEnabled()) {
             if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("edge", i, nmaterials, false, false, true)) {
-                technique->setOverridePass(m_overridePass);
+                technique->setOverridePass(overridePass);
                 updateDrawPrimitivesCommand(material, command);
                 annotateMaterial("renderEdge", material);
                 m_currentEffectEngineRef->edgeColor.setGeometryColor(material->edgeColor());
@@ -615,7 +614,7 @@ void PMXRenderEngine::renderEdge()
     popAnnotationGroup(m_applicationContextRef);
 }
 
-void PMXRenderEngine::renderShadow()
+void PMXRenderEngine::renderShadow(IEffect::Pass *overridePass)
 {
     if (!m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
@@ -636,7 +635,7 @@ void PMXRenderEngine::renderShadow()
         const int nindices = material->indexRange().count;
         if (material->isVisible() && material->isCastingShadowEnabled()) {
             if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("shadow", i, nmaterials, false, false, true)) {
-                technique->setOverridePass(m_overridePass);
+                technique->setOverridePass(overridePass);
                 updateDrawPrimitivesCommand(material, command);
                 updateMaterialParameters(material, m_materialContexts[i]);
                 annotateMaterial("renderShadow", material);
@@ -652,7 +651,7 @@ void PMXRenderEngine::renderShadow()
     popAnnotationGroup(m_applicationContextRef);
 }
 
-void PMXRenderEngine::renderZPlot()
+void PMXRenderEngine::renderZPlot(IEffect::Pass *overridePass)
 {
     if (!m_modelRef->isVisible() || !m_currentEffectEngineRef || m_currentEffectEngineRef->scriptOrder() != IEffect::kStandard) {
         return;
@@ -673,7 +672,7 @@ void PMXRenderEngine::renderZPlot()
         const int nindices = material->indexRange().count;
         if (material->isVisible() && material->isCastingShadowMapEnabled()) {
             if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmaterials, false, false, true)) {
-                technique->setOverridePass(m_overridePass);
+                technique->setOverridePass(overridePass);
                 updateDrawPrimitivesCommand(material, command);
                 updateMaterialParameters(material, m_materialContexts[i]);
                 annotateMaterial("renderZplot", material);
@@ -788,11 +787,6 @@ void PMXRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType typ
     popAnnotationGroup(m_applicationContextRef);
 }
 
-void PMXRenderEngine::setOverridePass(IEffect::Pass *pass)
-{
-    m_overridePass = pass;
-}
-
 bool PMXRenderEngine::testVisible()
 {
     const IApplicationContext::FunctionResolver *resolver = m_applicationContextRef->sharedFunctionResolverInstance();
@@ -810,7 +804,7 @@ bool PMXRenderEngine::testVisible()
         GLuint query = 0;
         genQueries(1, &query);
         beginQuery(target, query);
-        renderEdge();
+        renderEdge(0);
         endQuery(target);
         GLint result = 0;
         getQueryObjectiv(query, kGL_QUERY_RESULT, &result);

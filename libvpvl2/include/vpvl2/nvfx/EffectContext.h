@@ -40,6 +40,7 @@
 #define VPVL2_NVFX_EFFECTCONTEXT_H_
 
 #include "vpvl2/Common.h"
+#include "vpvl2/extensions/StringMap.h"
 
 namespace vpvl2
 {
@@ -57,6 +58,8 @@ class VPVL2_API EffectContext VPVL2_DECL_FINAL
 {
 public:
     static bool initializeGLEW(const IApplicationContext::FunctionResolver *resolver);
+    static void enableIncludeCallback(const extensions::StringMap &includeBuffers, const extensions::StringList &includePaths);
+    static void disableIncludeCallback();
     static void enableMessageCallback();
     static void disableMessageCallback();
 

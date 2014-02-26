@@ -1,0 +1,61 @@
+uniform bool use_texture;
+uniform bool use_spheremap;
+uniform bool use_toon;
+uniform bool spadd;
+uniform bool spsub;
+uniform float VertexCount;
+uniform float SubsetCount;
+uniform int BoneCountVPVL2;
+uniform bool use_boneTransformTextureVPVL2;
+
+namespace vpvl2 {
+
+uniform mat4 worldViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Camera"; >;
+uniform mat4 lightViewProjectionMatrix : WORLDVIEWPROJECTION < Object = "Light"; >;
+uniform vec3 materialAmbient           : AMBIENT < Object = "Geometry"; >;
+uniform vec4 materialDiffuse           : DIFFUSE < Object = "Geometry"; >;
+uniform vec3 materialEmissive          : EMISSIVE < Object = "Geometry"; >;
+uniform vec3 materialSpecular          : SPECULAR < Object = "Geometry"; >;
+uniform float materialShininess        : SPECULARPOWER < Object = "Geometry"; >;
+uniform vec3 lightAmbient              : AMBIENT < Object = "Light"; >;
+uniform vec3 lightDiffuse              : DIFFUSE < Object = "Light"; >;
+uniform vec3 lightSpecular             : SPECULAR < Object = "Light"; >;
+uniform vec3 cameraPosition            : POSITION < Object = "Camera"; >;
+uniform vec3 lightDirection            : DIRECTION < Object = "Light"; >;
+uniform vec4 edgeColor                 : EDGECOLOR;
+uniform float edgeWidth                : EDGEWIDTH;
+
+uniform sampler2D mainTextureSampler   : MATERIALTEXTURE;
+uniform sampler2D toonTextureSampler   : MATERIALTOONTEXTURE;
+uniform sampler2D sphereTextureSampler : MATERIALSPHEREMAP;
+uniform sampler2D depthTextureSampler  : TEXUNIT0;
+
+uniform sampler2D boneTransformSampler : BONETRANSFORMTEXTUREVPVL2;
+uniform float edgeScaleFactor          : EDGESCALEFACTORVPVL2;
+
+SamplerState defaultLinearFilterSamplerState {
+    TEXTURE_MIN_FILTER = LINEAR;
+    TEXTURE_MAG_FILTER = LINEAR;
+}
+SamplerState defaultNearestFilterSamplerState {
+    TEXTURE_MIN_FILTER = NEAREST;
+    TEXTURE_MAG_FILTER = NEAREST;
+}
+SamplerState defaultLinearFilterMipmapSamplerState {
+    TEXTURE_MIN_FILTER = LINEAR_MIPMAP_LINEAR;
+    TEXTURE_MAG_FILTER = LINEAR;
+}
+SamplerState defaultToonSamplerState {
+    TEXTURE_MIN_FILTER = LINEAR;
+    TEXTURE_MAG_FILTER = LINEAR;
+    TEXTURE_WRAP_S = CLAMP_TO_EDGE;
+    TEXTURE_WRAP_T = CLAMP_TO_EDGE;
+}
+SamplerState defaultDepthSamplerState {
+    TEXTURE_MIN_FILTER = NEAREST;
+    TEXTURE_MAG_FILTER = NEAREST;
+    TEXTURE_WRAP_S = CLAMP_TO_EDGE;
+    TEXTURE_WRAP_T = CLAMP_TO_EDGE;
+}
+
+} /* namespace vpvl2 */

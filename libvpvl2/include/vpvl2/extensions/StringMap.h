@@ -51,6 +51,8 @@ namespace VPVL2_VERSION_NS
 namespace extensions
 {
 
+typedef std::vector<std::string> StringList;
+
 class VPVL2_API StringMap VPVL2_DECL_FINAL : public std::map<const std::string, std::string> {
 public:
     StringMap();

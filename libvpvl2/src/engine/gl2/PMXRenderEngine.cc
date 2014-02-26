@@ -685,7 +685,7 @@ void PMXRenderEngine::setUpdateOptions(int options)
     }
 }
 
-void PMXRenderEngine::renderModel()
+void PMXRenderEngine::renderModel(IEffect::Pass * /* overridePass */)
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
@@ -775,7 +775,7 @@ void PMXRenderEngine::renderModel()
     }
 }
 
-void PMXRenderEngine::renderShadow()
+void PMXRenderEngine::renderShadow(IEffect::Pass * /* overridePass */)
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;
@@ -815,7 +815,7 @@ void PMXRenderEngine::renderShadow()
     shadowProgram->unbind();
 }
 
-void PMXRenderEngine::renderEdge()
+void PMXRenderEngine::renderEdge(IEffect::Pass * /* overridePass */)
 {
     if (!m_modelRef || !m_modelRef->isVisible() || btFuzzyZero(Scalar(m_modelRef->edgeWidth())) || !m_context)
         return;
@@ -868,7 +868,7 @@ void PMXRenderEngine::renderEdge()
     edgeProgram->unbind();
 }
 
-void PMXRenderEngine::renderZPlot()
+void PMXRenderEngine::renderZPlot(IEffect::Pass * /* overridePass */)
 {
     if (!m_modelRef || !m_modelRef->isVisible() || !m_context)
         return;

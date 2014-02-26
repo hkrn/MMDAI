@@ -1670,26 +1670,28 @@ IEffect::Technique *EffectEngine::findTechnique(const char *pass,
                                                 bool useToon) const
 {
     if (m_effectRef->isEnabled()) {
-        if (IEffect::Technique *technique = findTechniqueIn(m_techniques,
-                                                            pass,
-                                                            offset,
-                                                            nmaterials,
-                                                            hasTexture,
-                                                            hasSphereMap,
-                                                            useToon)) {
+        if (IEffect::Technique *technique = findTechniqueIn(m_techniques, pass, offset, nmaterials, hasTexture, hasSphereMap, useToon)) {
             return technique;
         }
     }
-    if (IEffect::Technique *technique = findTechniqueIn(m_defaultTechniques,
-                                                        pass,
-                                                        offset,
-                                                        nmaterials,
-                                                        hasTexture,
-                                                        hasSphereMap,
-                                                        useToon)) {
-        return technique;
-    }
-    return 0;
+    return findDefaultTechnique(pass, offset, nmaterials, hasTexture, hasSphereMap, useToon);
+}
+
+IEffect::Technique *EffectEngine::findDefaultTechnique(const char *pass,
+                                                       int offset,
+                                                       int nmaterials,
+                                                       bool hasTexture,
+                                                       bool hasSphereMap,
+                                                       bool useToon) const
+{
+    IEffect::Technique *technique = findTechniqueIn(m_defaultTechniques,
+                                                    pass,
+                                                    offset,
+                                                    nmaterials,
+                                                    hasTexture,
+                                                    hasSphereMap,
+                                                    useToon);
+    return technique;
 }
 
 void EffectEngine::executeScriptExternal()

@@ -281,21 +281,6 @@ public:
     IEffect *createEffectFromFile(const IString *path, IApplicationContext *applicationContextRef);
 
     /**
-     * モデルにあるエフェクトからエフェクトのインスタンスを作成します.
-     *
-     * エフェクトの作成は時間がかかるので、別途呼び出し用のスレッドを作成して実行してください。
-     *
-     * VPVL2_ENABLE_NVIDIA_CG か VPVL2_LINK_NVFX なしでビルドした場合は何もしません。
-     *
-     * @brief createEffectFromModel
-     * @param model
-     * @param dir
-     * @param applicationContextRef
-     * @return
-     */
-    IEffect *createEffectFromModel(const IModel *model, const IString *dir, IApplicationContext *applicationContextRef);
-
-    /**
      * フォールバックとして使われるエフェクトを作成します.
      *
      * 初回時の作成は時間がかかりますが、２回目以降は Scene にキャッシュした結果を返します。

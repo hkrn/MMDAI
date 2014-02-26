@@ -268,6 +268,9 @@ struct Effect::PrivateContext {
                 value.append(const_cast<CFPass *>(it->second));
             }
         }
+        void getOverridePasses(Array<IEffect::Pass *> &passes) const {
+            passes.clear();
+        }
         void setOverridePass(Pass * /* pass */) {
         }
 

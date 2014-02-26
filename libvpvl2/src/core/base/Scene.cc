@@ -413,36 +413,38 @@ struct Scene::PrivateContext VPVL2_DECL_FINAL
         motions.append(new MotionPtr(motion, 0, ownMemory));
     }
     IEffect *createEffectFromFile(const IString *path, IApplicationContext *applicationContextRef) {
+        IEffect *effectPtr = 0;
+#ifdef VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT
+#ifdef VPVL2_LINK_NVFX
+        effectPtr = effectContextNvFX.compileFromFile(path, applicationContextRef);
+#endif /* VPVL2_LINK_NVFX */
+#ifdef VPVL2_ENABLE_NVIDIA_CG
+        if (!effectPtr) {
+            effectPtr = effectContextCgFX.compileFromFile(path, applicationContextRef);
+        }
+#endif /* VPVL2_ENABLE_NVIDIA_CG */
+#else
         (void) path;
         (void) applicationContextRef;
-        IEffect *effectRef = 0;
-#ifdef VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT
-#ifdef VPVL2_LINK_NVFX
-        effectRef = effectContextNvFX.compileFromFile(path, applicationContextRef);
-#endif /* VPVL2_LINK_NVFX */
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-        if (!effectRef) {
-            effectRef = effectContextCgFX.compileFromFile(path, applicationContextRef);
-        }
-#endif /* VPVL2_ENABLE_NVIDIA_CG */
 #endif /* VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT */
-        return effectRef;
+        return effectPtr;
     }
     IEffect *createEffectFromSource(const IString *source, IApplicationContext *applicationContextRef) {
-        (void) source;
-        (void) applicationContextRef;
-        IEffect *effectRef = 0;
+        IEffect *effectPtr = 0;
 #ifdef VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT
 #ifdef VPVL2_LINK_NVFX
-        effectRef = effectContextNvFX.compileFromSource(source, applicationContextRef);
+        effectPtr = effectContextNvFX.compileFromSource(source, applicationContextRef);
 #endif /* VPVL2_LINK_NVFX */
 #ifdef VPVL2_ENABLE_NVIDIA_CG
-        if (!effectRef) {
-            effectRef = effectContextCgFX.compileFromSource(source, applicationContextRef);
+        if (!effectPtr) {
+            effectPtr = effectContextCgFX.compileFromSource(source, applicationContextRef);
         }
 #endif /* VPVL2_ENABLE_NVIDIA_CG */
+#else
+        (void) source;
+        (void) applicationContextRef;
 #endif /* VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT */
-        return effectRef;
+        return effectPtr;
     }
     void removeModelPtr(IModel *model) {
         const int nmodels = models.count();
@@ -865,22 +867,6 @@ IEffect *Scene::createDefaultStandardEffectRef(IApplicationContext *applicationC
         m_context->defaultEffect = effectRef = m_context->createEffectFromSource(source, applicationContextRef);
     }
     return effectRef;
-}
-
-IEffect *Scene::createEffectFromModel(const IModel *model, const IString *dir, IApplicationContext *applicationContextRef)
-{
-    VPVL2_CHECK(model);
-    VPVL2_CHECK(dir);
-    VPVL2_CHECK(applicationContextRef);
-#ifdef VPVL2_ENABLE_NVIDIA_CG
-    const IString *pathRef = applicationContextRef->effectFilePath(model, dir);
-    return m_context->createEffectFromFile(pathRef, applicationContextRef);
-#else
-    (void) model;
-    (void) dir;
-    (void) applicationContextRef;
-    return 0;
-#endif
 }
 
 void Scene::removeModel(IModel *model)

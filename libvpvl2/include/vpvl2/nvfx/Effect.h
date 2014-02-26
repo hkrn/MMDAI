@@ -94,6 +94,7 @@ public:
     void setVertexAttributePointer(VertexAttributeType vtype, Parameter::Type ptype, vsize stride, const void *ptr);
     void activateVertexAttribute(VertexAttributeType vtype);
     void deactivateVertexAttribute(VertexAttributeType vtype);
+    void validate();
     void setupOverride(const IEffect *effectRef);
     const IString *name() const;
     void setName(const IString *value);

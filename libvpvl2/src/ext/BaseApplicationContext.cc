@@ -130,6 +130,8 @@ struct DefaultLogger {
 /* Cg and ICU */
 #if defined(VPVL2_LINK_NVFX)
 #include <FxLib.h>
+#include <vpvl2/nvfx/Effect.h>
+#include <vpvl2/nvfx/EffectContext.h>
 #elif defined(VPVL2_ENABLE_NVIDIA_CG)
 #include <vpvl2/extensions/fx/Util.h>
 #include <unicode/regex.h>
@@ -476,6 +478,7 @@ void BaseApplicationContext::terminate()
     FreeImage_DeInitialise();
     TwTerminate();
     uninstallLogger();
+    nvfx::EffectContext::disableMessageCallback();
     Assimp::DefaultLogger::set(0);
     Scene::terminate();
 }
@@ -532,6 +535,10 @@ void BaseApplicationContext::initializeOpenGLContext(bool enableDebug)
     getIntegerv(kGL_MAX_SAMPLES, &m_samplesMSAA);
     TwInit(resolver->query(FunctionResolver::kQueryCoreProfile) != 0 ? TW_OPENGL_CORE : TW_OPENGL, 0);
     popAnnotationGroup(resolver);
+    StringMap includeBuffers;
+    StringList includePaths;
+    addGlobalEffect(":vpvl2/declarations.glslfxh", "declarations.glslfx", includeBuffers);
+    nvfx::EffectContext::enableIncludeCallback(includeBuffers, includePaths);
 }
 
 BaseApplicationContext::~BaseApplicationContext()
@@ -1235,10 +1242,8 @@ void BaseApplicationContext::renderOffscreen()
                 if (pass->isRenderable()) {
                     for (int k = 0; k < nengines; k++) {
                         IRenderEngine *engine = engines[k];
-                        engine->setOverridePass(pass);
-                        engine->renderEdge();
-                        engine->renderModel();
-                        engine->setOverridePass(0);
+                        engine->renderEdge(pass);
+                        engine->renderModel(pass);
                     }
                     pass->resetState();
                 }
@@ -1405,6 +1410,8 @@ IEffect *BaseApplicationContext::createEffectRef(const std::string &path)
         effectRef = *value;
     }
     else if (existsFile(path)) {
+        IEffect *defaultEffectRef = m_sceneRef->createDefaultStandardEffectRef(this);
+        defaultEffectRef->validate();
         IStringSmartPtr pathPtr(String::create(path));
         IEffectSmartPtr effectPtr(m_sceneRef->createEffectFromFile(pathPtr.get(), this));
         if (!effectPtr.get() || !effectPtr->internalPointer()) {
@@ -1416,6 +1423,7 @@ IEffect *BaseApplicationContext::createEffectRef(const std::string &path)
             IStringSmartPtr namePtr(String::create(name));
             effectRef = m_effectCaches.insert(key, effectPtr.release());
             effectRef->setName(namePtr.get());
+            defaultEffectRef->setupOverride(effectRef);
             validateEffectResources();
             m_effectRef2Paths.insert(effectRef, path);
             VPVL2_LOG(INFO, "Created a effect: " << path);
@@ -1634,7 +1642,7 @@ void BaseApplicationContext::renderShadowMap()
         const int nengines = engines.count();
         for (int i = 0; i < nengines; i++) {
             IRenderEngine *engine = engines[i];
-            engine->renderZPlot();
+            engine->renderZPlot(0);
         }
         shadowMapRef->unbind();
         popAnnotationGroup(this);
@@ -1771,6 +1779,15 @@ void BaseApplicationContext::debugMessageCallback(GLenum source, GLenum type, GL
         break;
     default:
         break;
+    }
+}
+
+void BaseApplicationContext::addGlobalEffect(const std::string &alias, const std::string &filename, StringMap &includeBuffers)
+{
+    MapBuffer buffer(this);
+    if (mapFile(effectDirectory() + "/" + filename, &buffer)) {
+        std::string source(reinterpret_cast<const char *>(buffer.address), buffer.size);
+        includeBuffers.insert(std::make_pair(alias, source));
     }
 }
 

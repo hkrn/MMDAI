@@ -54,8 +54,34 @@
 namespace {
 
 using namespace vpvl2::VPVL2_VERSION_NS;
+using namespace vpvl2::VPVL2_VERSION_NS::extensions;
 
 VPVL2_DECL_TLS static bool g_initialized = false;
+VPVL2_DECL_TLS static StringMap g_includeBuffers;
+VPVL2_DECL_TLS static StringList g_includePaths;
+
+static void handleIncludeCallback(const char *incName, FILE *&fp, const char *&buf)
+{
+    StringMap::const_iterator it = g_includeBuffers.find(incName);
+    VPVL2_VLOG(2, "include=" << incName);
+    if (it != g_includeBuffers.end()) {
+        fp = 0;
+        buf = it->second.c_str();
+    }
+    else {
+        std::string s;
+        for (StringList::const_iterator it = g_includePaths.begin(), end = g_includePaths.end(); it != end; it++) {
+            s.assign(*it);
+            s.append("/");
+            s.append(incName);
+            VPVL2_VLOG(2, "include=" << s);
+            if (FILE *f = fopen(s.c_str(), "r")) {
+                fp = f;
+                break;
+            }
+        }
+    }
+}
 
 static void handleErrorCallback(const char *message)
 {
@@ -109,6 +135,20 @@ bool EffectContext::initializeGLEW(const IApplicationContext::FunctionResolver *
         g_initialized = true;
     }
     return g_initialized;
+}
+
+void EffectContext::enableIncludeCallback(const StringMap &includeBuffers, const StringList &includePaths)
+{
+    g_includeBuffers = includeBuffers;
+    g_includePaths = includePaths;
+    nvFX::setIncludeCallback(handleIncludeCallback);
+}
+
+void EffectContext::disableIncludeCallback()
+{
+    g_includeBuffers.clear();
+    g_includePaths.clear();
+    nvFX::setIncludeCallback(0);
 }
 
 void EffectContext::enableMessageCallback()
