@@ -1094,7 +1094,7 @@ void PMXRenderEngine::uploadToonTexture(const IMaterial *material,
     const char *name = internal::cstr(material->name(IEncoding::kDefaultLanguage), "(null)");
     const int index = material->index();
     m_applicationContextRef->getToonColor(toonTexturePath, context.toonTextureColor, userData);
-    const Color &c = context.toonTextureColor; (void) c;
+    const Color &c = context.toonTextureColor;
     VPVL2_VLOG(2, "Fetched color from toon texture: material=" << name << " index=" << index << " shared=" << internal::hasFlagBits(flags, IApplicationContext::kSystemToonTexture) << " R=" << c.x() << " G=" << c.y() << " B=" << c.z());
     ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(toonTexturePath, flags, userData);
     if (!texturePtr) {

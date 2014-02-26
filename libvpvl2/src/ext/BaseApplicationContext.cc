@@ -666,7 +666,7 @@ ITexture *BaseApplicationContext::internalUploadTexture(const std::string &name,
         }
         else if (!existsFile(path)) {
             VPVL2_LOG(WARNING, "Cannot load inexist " << path);
-            return new Texture2D(sharedFunctionResolverInstance(), BaseSurface::Format(), kZeroV3, 0); /* skip */
+            return 0;
         }
     }
     return uploadTextureOpaque(path, flags, context);
