@@ -67,8 +67,8 @@ VPVL2_MAKE_SMARTPTR(Encoding);
 }
 }
 
-using namespace vpvl2::v0_33_0;
-using namespace vpvl2::v0_33_0::extensions;
+using namespace vpvl2;
+using namespace vpvl2::extensions;
 
 namespace ui {
 
@@ -90,10 +90,10 @@ static void drawScreen(const Scene &scene)
     }
     for (int i = 0, nengines = enginesForStandard.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForStandard[i];
-        engine->renderModel();
-        engine->renderEdge();
+        engine->renderModel(0);
+        engine->renderEdge(0);
         if (!scene.shadowMapRef()) {
-            engine->renderShadow();
+            engine->renderShadow(0);
         }
     }
     for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
@@ -216,12 +216,15 @@ static void loadAllModels(const StringMap &settings,
              */
             applicationContextRef->addModelFilePath(model.get(), icu4c::String::toStdString(modelPath));
             if ((flags & Scene::kEffectCapable) != 0) {
-                //effectRef = applicationContextRef->createEffectRef(model.get(), &dir);
-                //if (effectRef) {
-                //    effectRef->createFrameBufferObject();
-                engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
-                //}
-                effectRef = engine->effectRef(IEffect::kDefault);
+#if 1
+                effectRef = applicationContextRef->createEffectRef(model.get(), &dir);
+                if (effectRef) {
+                    // effectRef->createFrameBufferObject();
+                    engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
+                }
+#else
+                 engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
+#endif
             }
             if (engine->upload(&modelContext)) {
                 engine->setUpdateOptions(parallel ? IRenderEngine::kParallelUpdate : IRenderEngine::kNone);

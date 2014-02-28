@@ -1590,10 +1590,10 @@ void RenderTarget::drawScene()
     }
     for (int i = 0, nengines = enginesForStandard.count(); i < nengines; i++) {
         IRenderEngine *engine = enginesForStandard[i];
-        engine->renderModel();
-        engine->renderEdge();
+        engine->renderModel(0);
+        engine->renderEdge(0);
         if (isProjectiveShadow) {
-            engine->renderShadow();
+            engine->renderShadow(0);
         }
     }
     for (int i = 0, nengines = enginesForPostProcess.count(); i < nengines; i++) {
