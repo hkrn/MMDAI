@@ -37,7 +37,7 @@ static void HandleNVFXError(const char *message)
 static void HandleIncludeCallback(const char *filename, FILE *&fp, const char *&buffer)
 {
     fp = fopen(filename, "rb");
-    buffer = "";
+    buffer = 0;
 }
 
 static bool ParseEffect(const char *filename, bool isCoreProfileEnabled)
@@ -50,42 +50,89 @@ static bool ParseEffect(const char *filename, bool isCoreProfileEnabled)
     }
     if (nvFX::loadEffectFromFile(container, filename)) {
         container->getExInterface()->separateShadersEnable(false);
-        if (!nvFX::getResourceRepositorySingleton()->validate(0, 0, 1, 1, 1, 0, 0)) {
+        nvFX::getResourceRepositorySingleton()->setParams(0, 0, 1, 1, 1, 0, 0);
+        if (!nvFX::getResourceRepositorySingleton()->validateAll()) {
             std::cerr << "Cannot validate resource repository" << std::endl;
             nvFX::IContainer::destroy(container);
             return false;
         }
-        if (!nvFX::getFrameBufferObjectsRepositorySingleton()->validate(0, 0, 1, 1, 0, 0, 0)) {
+        nvFX::getFrameBufferObjectsRepositorySingleton()->setParams(0, 0, 1, 1, 0, 0, 0);
+        if (!nvFX::getFrameBufferObjectsRepositorySingleton()->validateAll()) {
             std::cerr << "Cannot validate frame buffer object repository" << std::endl;
             nvFX::IContainer::destroy(container);
             return false;
         }
-        int i = 0;
+
+        char appendingHeader[2048];
+        static const char kAppendingShaderHeader[] =
+#if 1
+                "#if defined(GL_ES) || __VERSION__ >= 150\n"
+                "precision highp float;\n"
+                "#else\n"
+                "#define highp\n"
+                "#define mediump\n"
+                "#define lowp\n"
+                "#endif\n"
+                "#if __VERSION__ >= 130\n"
+                "#define vpvl2FXGetTexturePixel2D(samp, uv) texture(samp, (uv))\n"
+                "#define layout(expr)\n"
+                "#else\n"
+                "#define vpvl2FXGetTexturePixel2D(samp, uv) texture2D(samp, (uv))\n"
+                "#define layout(expr)\n"
+                "#endif\n"
+                "#if __VERSION__ >= 400\n"
+                "#define vpvl2FXFMA(v, m, a) fma((v), (m), (a))\n"
+                "#else\n"
+                "#define vpvl2FXFMA(v, m, a) ((v) * (m) + (a))\n"
+                "#endif\n"
+                "#define vpvl2FXSaturate(v, t) clamp((v), t(0), t(1))\n"
+#else
+                ""
+#endif
+                ;
         if (isCoreProfileEnabled) {
-            /* define #version first for OSX core profile */
-            nvFX::IShader *shader = container->findShader(i);
-            while (shader) {
-                nvFX::TargetType type = shader->getType();
-                const char *name = shader->getName();
-                if (*name == '\0' && type == nvFX::TGLSL) {
-                    static const char appendingHeader[] =
-                            "#version 150"
-                            ""
-                            ;
-                    shader->getExInterface()->addHeaderCode(appendingHeader);
-                }
-                shader = container->findShader(++i);
-            }
-            i = 0;
+            static const char kFormat[] = "#version %d core\n%s";
+            snprintf(appendingHeader, sizeof(appendingHeader), kFormat, 150, kAppendingShaderHeader);
         }
+        else {
+            static const char kFormat[] = "#version %d\n%s";
+            snprintf(appendingHeader, sizeof(appendingHeader), kFormat, 120, kAppendingShaderHeader);
+        }
+        int i = 0;
+        while (nvFX::IShader *shader = container->findShader(i++)) {
+            nvFX::TargetType type = shader->getType();
+            const char *name = shader->getName();
+            if (*name == '\0' && type == nvFX::TGLSL) {
+                shader->getExInterface()->addHeaderCode(appendingHeader);
+            }
+        }
+        i = 0;
         nvFX::ITechnique *technique = container->findTechnique(i);
         while (technique) {
             int j = 0;
             std::cerr << "technique[" << i << "]: " << technique->getName() << std::endl;
             nvFX::IPass *pass = technique->getPass(j);
+            char buffer[16384];
             while (pass) {
                 bool validated = pass->validate();
                 std::cerr << "pass[" << j << "]: " << pass->getName() << " validated=" << validated << std::endl;
+                if (validated) {
+                    nvFX::IProgram *program = pass->getExInterface()->getProgram(0);
+                    GLsizei size = 0, count = 0;
+                    GLuint shaders[2];
+                    glGetAttachedShaders(program->getProgram(), sizeof(shaders) / sizeof(shaders[0]), &count, shaders);
+                    glGetShaderSource(shaders[0], sizeof(buffer), &size, buffer);
+                    if (FILE *fp = fopen((std::string(pass->getName()) + ".vert").c_str(), "wb")) {
+                        fwrite(buffer, size, 1, fp);
+                        fclose(fp);
+                    }
+                    glGetShaderSource(shaders[1], sizeof(buffer), &size, buffer);
+                    if (FILE *fp = fopen((std::string(pass->getName()) + ".frag").c_str(), "wb")) {
+                        fwrite(buffer, size, 1, fp);
+                        fclose(fp);
+                    }
+                    std::cerr << "program[" << j << "]: " << program->getProgram() << std::endl;
+                }
                 pass = technique->getPass(++j);
             }
             technique = container->findTechnique(++i);
@@ -129,7 +176,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     bool isCoreProfileEnabled = false;
-#ifdef ENABLE_OPENGL_CORE_PROFILE
+#if 0 //def ENABLE_OPENGL_CORE_PROFILE
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
