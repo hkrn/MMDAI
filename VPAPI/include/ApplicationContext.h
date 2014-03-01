@@ -77,7 +77,7 @@ public:
     bool mapFile(const std::string &path, MapBuffer *buffer) const;
     bool unmapFile(MapBuffer *buffer) const;
     bool existsFile(const std::string &path) const;
-    bool extractFilePath(const std::string &path, std::string &fileName, std::string &basename) const;
+    bool extractFilePath(const std::string &path, std::string &dir, std::string &filename, std::string &basename) const;
     bool extractModelNameFromFileName(const std::string &path, std::string &modelName) const;
     vpvl2::ITexture *uploadTextureOpaque(const vpvl2::uint8 *data, vpvl2::vsize size, const std::string &key, int flags, ModelContext *context);
     vpvl2::ITexture *uploadTextureOpaque(const std::string &path, int flags, ModelContext *context);

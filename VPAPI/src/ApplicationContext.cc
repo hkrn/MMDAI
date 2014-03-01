@@ -251,10 +251,11 @@ bool ApplicationContext::existsFile(const std::string &path) const
     return QFile::exists(QString::fromStdString(path));
 }
 
-bool ApplicationContext::extractFilePath(const std::string &path, std::string &fileName, std::string &basename) const
+bool ApplicationContext::extractFilePath(const std::string &path, std::string &dir, std::string &filename, std::string &basename) const
 {
     QFileInfo finfo(QString::fromStdString(path));
-    fileName = finfo.fileName().toStdString();
+    dir      = finfo.dir().absolutePath().toStdString();
+    filename = finfo.fileName().toStdString();
     basename = finfo.baseName().toStdString();
     return true;
 }
