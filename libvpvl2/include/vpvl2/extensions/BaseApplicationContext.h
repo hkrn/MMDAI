@@ -180,6 +180,7 @@ public:
     void release();
 
     ITexture *uploadTexture(const IString *name);
+    ITexture *uploadEffectTexture(const IString *name, const IEffect *effectRef);
     ITexture *uploadModelTexture(const IString *name, int flags, void *userData);
     void getMatrix(float32 value[], const IModel *model, int flags) const;
     IString *loadShaderSource(ShaderType type, const IModel *model, void *userData);
@@ -283,7 +284,7 @@ public:
     virtual bool mapFile(const std::string &path, MapBuffer *bufferRef) const = 0;
     virtual bool unmapFile(MapBuffer *bufferRef) const = 0;
     virtual bool existsFile(const std::string &path) const = 0;
-    virtual bool extractFilePath(const std::string &path, std::string &fileName, std::string &basename) const = 0;
+    virtual bool extractFilePath(const std::string &path, std::string &dir, std::string &filename, std::string &basename) const = 0;
     virtual bool extractModelNameFromFileName(const std::string &path, std::string &modelName) const = 0;
 
 protected:

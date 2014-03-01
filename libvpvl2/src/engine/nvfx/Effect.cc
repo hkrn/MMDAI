@@ -799,20 +799,23 @@ bool Effect::isInteractiveParameter(const Parameter *value)
     return name && widget;
 }
 
-Effect::Effect(EffectContext *contextRef, IApplicationContext *applicationContextRef, nvFX::IContainer *container)
+Effect::Effect(EffectContext *contextRef, IApplicationContext *applicationContextRef, nvFX::IContainer *container, const IString *pathRef)
     : enableVertexAttribArray(reinterpret_cast<PFNGLENABLEVERTEXATTRIBARRAYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glEnableVertexAttribArray"))),
       disableVertexAttribArray(reinterpret_cast<PFNGLDISABLEVERTEXATTRIBARRAYPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glDisableVertexAttribArray"))),
       vertexAttribPointer(reinterpret_cast<PFNGLVERTEXATTRIBPOINTERPROC>(applicationContextRef->sharedFunctionResolverInstance()->resolveSymbol("glVertexAttribPointer"))),
       m_applicationContextRef(applicationContextRef),
       m_effectContextRef(contextRef),
       m_container(container),
+      m_path(0),
       m_name(0),
+      m_texturePathPtr(0),
       m_parentEffectRef(0),
       m_parentFrameBufferObject(0),
       m_scriptOrderType(kStandard),
       m_enabled(true),
       m_dirty(false)
 {
+    m_path = pathRef ? pathRef->clone() : 0;
     appendShaderHeader(container, applicationContextRef->sharedFunctionResolverInstance());
     uploadTextureResources();
 }
@@ -820,7 +823,9 @@ Effect::Effect(EffectContext *contextRef, IApplicationContext *applicationContex
 Effect::~Effect()
 {
     release();
+    internal::deleteObject(m_path);
     internal::deleteObject(m_name);
+    internal::deleteObject(m_texturePathPtr);
     m_textureResources.releaseAll();
     m_name = 0;
     m_applicationContextRef = 0;
@@ -1022,6 +1027,11 @@ void Effect::setupOverride(const IEffect *effectRef)
     }
 }
 
+const IString *Effect::path() const
+{
+    return m_path;
+}
+
 const IString *Effect::name() const
 {
     return m_name;
@@ -1105,12 +1115,16 @@ void Effect::uploadTextureResources()
     for (int i = 0; nvFX::IResource *resource = m_container->findResource(i); i++) {
         nvFX::IAnnotation *annotation = resource->annotations();
         if (const char *name = annotation->getAnnotationString("defaultFile")) {
-            IString *s = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(name));
-            if (ITexture *texturePtr = m_applicationContextRef->uploadTexture(s)) {
+            m_texturePathPtr = m_applicationContextRef->toUnicode(reinterpret_cast<const uint8 *>(name));
+            if (ITexture *texturePtr = m_applicationContextRef->uploadEffectTexture(m_texturePathPtr, this)) {
+                VPVL2_VLOG(1, "Created the effect texture resource: name=" << name << " ID=" << texturePtr->data());
                 resource->setGLTexture(texturePtr->data());
                 m_textureResources.append(texturePtr);
             }
-            delete s;
+            else {
+                VPVL2_LOG(WARNING, "Cannot create the effect texture resource: name=" << name);
+            }
+            internal::deleteObject(m_texturePathPtr);
         }
     }
 }

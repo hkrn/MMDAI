@@ -388,6 +388,8 @@ public:
 
     virtual void setupOverride(const IEffect *effectRef) = 0;
 
+    virtual const IString *path() const = 0;
+
     virtual const IString *name() const = 0;
 
     virtual void setName(const IString *value) = 0;

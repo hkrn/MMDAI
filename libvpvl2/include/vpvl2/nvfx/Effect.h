@@ -65,7 +65,7 @@ class VPVL2_API Effect VPVL2_DECL_FINAL : public IEffect {
 public:
     static bool isInteractiveParameter(const Parameter *value);
 
-    Effect(EffectContext *contextRef, IApplicationContext *applicationContextRef, nvFX::IContainer *container);
+    Effect(EffectContext *contextRef, IApplicationContext *applicationContextRef, nvFX::IContainer *container, const IString *pathRef);
     ~Effect();
 
     void createFrameBufferObject();
@@ -96,6 +96,7 @@ public:
     void deactivateVertexAttribute(VertexAttributeType vtype);
     void validate();
     void setupOverride(const IEffect *effectRef);
+    const IString *path() const;
     const IString *name() const;
     void setName(const IString *value);
     bool isEnabled() const;
@@ -138,7 +139,9 @@ private:
     IApplicationContext *m_applicationContextRef;
     EffectContext *m_effectContextRef;
     nvFX::IContainer *m_container;
+    IString *m_path;
     IString *m_name;
+    IString *m_texturePathPtr;
     PointerArray<ITexture> m_textureResources;
     Array<uint32> m_renderColorTargetIndices;
     Array<OffscreenRenderTarget> m_offscreenRenderTargets;

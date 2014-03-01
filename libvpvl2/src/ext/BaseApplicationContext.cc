@@ -439,9 +439,8 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const std::string 
         VPVL2_VLOG(2, path << " is already cached, skipped.");
     }
     else {
-        IString *s = String::create(path);
-        textureRef = m_applicationContextRef->uploadTexture(s);
-        delete s;
+        IStringSmartPtr pathPtr(String::create(path));
+        textureRef = m_applicationContextRef->uploadTexture(pathPtr.get());
         storeTexture(path, flags, textureRef);
     }
     return textureRef;
@@ -588,6 +587,19 @@ ITexture *BaseApplicationContext::uploadTexture(const IString *name)
         }
     }
     return texturePtr;
+}
+
+ITexture *BaseApplicationContext::uploadEffectTexture(const IString *name, const IEffect *effectRef)
+{
+    if (const String *pathRef = static_cast<const String *>(effectRef->path())) {
+        std::string dir, filename, baseName;
+        if (extractFilePath(pathRef->toStdString(), dir, filename, baseName)) {
+            const std::string &newName = static_cast<const String *>(name)->toStdString();
+            IStringSmartPtr pathPtr(String::create(dir + "/" + newName));
+            return uploadTexture(pathPtr.get());
+        }
+    }
+    return 0;
 }
 
 ITexture *BaseApplicationContext::uploadModelTexture(const IString *name, int flags, void *userData)
@@ -784,8 +796,8 @@ IString *BaseApplicationContext::loadShaderSource(ShaderType type, const IModel 
 {
     std::string file;
     if (type == kModelEffectTechniques) {
-        IStringSmartPtr path(String::create(resolveEffectFilePath(model, static_cast<const IString *>(userData))));
-        return loadShaderSource(type, path.get());
+        IStringSmartPtr pathPtr(String::create(resolveEffectFilePath(model, static_cast<const IString *>(userData))));
+        return loadShaderSource(type, pathPtr.get());
     }
     switch (model->type()) {
     case IModel::kAssetModel:
@@ -990,19 +1002,19 @@ void BaseApplicationContext::setEffectModelRef(const IEffect *effectRef, IModel 
 void BaseApplicationContext::addModelFilePath(IModel *model, const std::string &path)
 {
     if (model) {
-        std::string fileName, baseName;
-        if (extractFilePath(path, fileName, baseName)) {
+        std::string dir, filename, baseName;
+        if (extractFilePath(path, dir, filename, baseName)) {
             if (!model->name(IEncoding::kDefaultLanguage)) {
-                IStringSmartPtr s(String::create(fileName));
-                model->setName(s.get(), IEncoding::kDefaultLanguage);
+                IStringSmartPtr filenamePtr(String::create(filename));
+                model->setName(filenamePtr.get(), IEncoding::kDefaultLanguage);
             }
             m_basename2ModelRefs.insert(baseName.c_str(), model);
             m_modelRef2Basenames.insert(model, baseName);
         }
         else {
             if (!model->name(IEncoding::kDefaultLanguage)) {
-                IStringSmartPtr s(String::create(path));
-                model->setName(s.get(), IEncoding::kDefaultLanguage);
+                IStringSmartPtr pathPtr(String::create(path));
+                model->setName(pathPtr.get(), IEncoding::kDefaultLanguage);
             }
             m_basename2ModelRefs.insert(path.c_str(), model);
         }
@@ -1463,21 +1475,22 @@ std::string BaseApplicationContext::findEffectFilePath(const IEffect *effectRef)
 
 std::string BaseApplicationContext::resolveEffectFilePath(const IModel *model, const IString *dir) const
 {
-    const std::string &path = findModelFilePath(model);
+    const std::string &path = findModelFilePath(model),
+            &modelDir = static_cast<const String *>(dir)->toStdString();
     if (!path.empty()) {
-        std::string fileName, baseName, modelName;
-        if (extractFilePath(path, fileName, baseName)) {
-            extractModelNameFromFileName(fileName, modelName);
+        std::string dirname, filename, basename, modelName;
+        if (extractFilePath(path, dirname, filename, basename)) {
+            extractModelNameFromFileName(filename, modelName);
             if (modelName.empty()) {
-                modelName = baseName;
+                modelName = basename;
             }
-            const std::string &newEffectPath = static_cast<const String *>(dir)->toStdString() + "/" + modelName + ".glslfx";
+            const std::string &newEffectPath = modelDir + "/" + modelName + ".glslfx";
             if (existsFile(newEffectPath)) {
                 return newEffectPath;
             }
         }
     }
-    return static_cast<const String *>(dir)->toStdString() + "/default.glslfx";
+    return modelDir + "/default.glslfx";
 }
 
 void BaseApplicationContext::deleteEffectRef(const std::string &path)

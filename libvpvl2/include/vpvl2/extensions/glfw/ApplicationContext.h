@@ -154,14 +154,15 @@ public:
         return ::access(path.c_str(), R_OK) == 0;
 #endif
     }
-    bool extractFilePath(const std::string &path, std::string &filename, std::string &basename) const {
+    bool extractFilePath(const std::string &path, std::string &dir, std::string &filename, std::string &basename) const {
         UErrorCode status = U_ZERO_ERROR;
-        RegexMatcher filenameMatcher(".+/((.+)\\.\\w+)$", 0, status);
+        RegexMatcher filenameMatcher("(.+)/((.+)\\.\\w+)$", 0, status);
         UnicodeString subject(UnicodeString::fromUTF8(path));
         filenameMatcher.reset(subject);
         if (filenameMatcher.find()) {
-            filename = String::toStdString(filenameMatcher.group(1, status));
-            basename = String::toStdString(filenameMatcher.group(2, status));
+            dir      = String::toStdString(filenameMatcher.group(1, status));
+            filename = String::toStdString(filenameMatcher.group(2, status));
+            basename = String::toStdString(filenameMatcher.group(3, status));
             return true;
         }
         return false;
