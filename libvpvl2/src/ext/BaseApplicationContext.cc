@@ -647,7 +647,8 @@ ITexture *BaseApplicationContext::uploadModelTexture(const IString *name, int fl
             texturePtr = internalUploadTexture(newName, path, flags, context);
         }
         else {
-            VPVL2_VLOG(2, "Found empty texture filename");
+            VPVL2_VLOG(2, "Found empty texture filename and create empty texture object");
+            texturePtr = new Texture2D(sharedFunctionResolverInstance(), BaseSurface::Format(), kZeroV3, 0);
         }
     }
     return texturePtr;
