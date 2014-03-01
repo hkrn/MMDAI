@@ -544,8 +544,10 @@ void PMXRenderEngine::renderModel(IEffect::Pass *overridePass)
         const IMaterial *material = materials[i];
         if (material->isVisible()) {
             const MaterialContext &materialContext = m_materialContexts[i];
+            const ITexture *mainTextureRef = materialContext.mainTextureRef, *sphereTextureRef = materialContext.sphereTextureRef;
             const char *const target = hasShadowMap && material->isShadowMapEnabled() ? "object_ss" : "object";
-            const bool hasMainTexture = materialContext.mainTextureRef != 0, hasSphereMap = materialContext.sphereTextureRef != 0 && material->sphereTextureRenderMode() != IMaterial::kNone;
+            const bool hasMainTexture = mainTextureRef && mainTextureRef->data(),
+                    hasSphereMap = sphereTextureRef && sphereTextureRef->data() && material->sphereTextureRenderMode() != IMaterial::kNone;
             if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmaterials, hasMainTexture, hasSphereMap, true)) {
                 if (!hasModelTransparent && m_cullFaceState && material->isCullingDisabled()) {
                     disable(kGL_CULL_FACE);
@@ -1061,8 +1063,9 @@ void PMXRenderEngine::updateDrawPrimitivesCommand(const IMaterial *material, Eff
 void PMXRenderEngine::updateMaterialParameters(const IMaterial *material, const MaterialContext &context)
 {
     const Color &toonColor = context.toonTextureColor, &diffuse = material->diffuse();
+    const ITexture *mainTextureRef = context.mainTextureRef, *sphereTextureRef = context.sphereTextureRef;
     const IMaterial::SphereTextureRenderMode renderMode = material->sphereTextureRenderMode();
-    const bool hasMainTexture = context.mainTextureRef != 0, hasSphereMap = context.sphereTextureRef != 0 && renderMode != IMaterial::kNone;
+    const bool hasMainTexture = mainTextureRef && mainTextureRef->data(), hasSphereMap = sphereTextureRef && sphereTextureRef->data() && renderMode != IMaterial::kNone;
     m_currentEffectEngineRef->ambient.setGeometryColor(diffuse);
     m_currentEffectEngineRef->diffuse.setGeometryColor(diffuse);
     m_currentEffectEngineRef->emissive.setGeometryColor(material->ambient());
