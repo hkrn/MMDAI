@@ -312,6 +312,7 @@ protected:
 
     virtual ITexture *uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context);
     virtual ITexture *uploadTextureOpaque(const std::string &path, int flags, ModelContext *context);
+    virtual ITexture *handleNullTextureObject() const;
     virtual gl::BaseSurface::Format defaultTextureFormat() const;
 
     const StringMap *m_configRef;

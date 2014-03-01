@@ -633,7 +633,7 @@ ITexture *BaseApplicationContext::uploadModelTexture(const IString *name, int fl
                 texturePtr = internalUploadTexture(newName, path, flags, context);
             }
         }
-        if (!texturePtr) {
+        if (!texturePtr || !texturePtr->data()) {
             flags |= IApplicationContext::kSystemToonTexture;
             VPVL2_VLOG(2, "Loading a system default toon texture: " << newName);
             texturePtr = uploadSystemToonTexture(newName, flags, context);
@@ -648,7 +648,7 @@ ITexture *BaseApplicationContext::uploadModelTexture(const IString *name, int fl
         }
         else {
             VPVL2_VLOG(2, "Found empty texture filename and create empty texture object");
-            texturePtr = new Texture2D(sharedFunctionResolverInstance(), BaseSurface::Format(), kZeroV3, 0);
+            texturePtr = handleNullTextureObject();
         }
     }
     return texturePtr;
@@ -674,12 +674,11 @@ ITexture *BaseApplicationContext::internalUploadTexture(const std::string &name,
                 return uploadTextureOpaque(ptr, size, name, flags, context);
             }
             VPVL2_LOG(WARNING, "Cannot load a bridge from archive: " << name);
-            /* force true to continue loading texture if path is directory */
-            return 0;
+            return handleNullTextureObject();
         }
         else if (!existsFile(path)) {
             VPVL2_LOG(WARNING, "Cannot load inexist " << path);
-            return 0;
+            return handleNullTextureObject();
         }
     }
     return uploadTextureOpaque(path, flags, context);
@@ -713,6 +712,12 @@ ITexture *BaseApplicationContext::uploadTextureOpaque(const std::string &path, i
     /* fallback to default texture loader */
     VPVL2_VLOG(2, "Using default texture loader (stbi_image) instead of inherited class texture loader.");
     return context->uploadTexture(path, flags);
+}
+
+ITexture *BaseApplicationContext::handleNullTextureObject() const
+{
+    /* create an null texture object and continues loading model even if texture is not found */
+    return new Texture2D(sharedFunctionResolverInstance(), defaultTextureFormat(), kZeroV3, 0);
 }
 
 BaseSurface::Format BaseApplicationContext::defaultTextureFormat() const
