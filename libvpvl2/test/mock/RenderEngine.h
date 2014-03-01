@@ -9,14 +9,14 @@ class MockIRenderEngine : public IRenderEngine {
       bool(void *userData));
   MOCK_METHOD0(release,
       void());
-  MOCK_METHOD0(renderModel,
-      void());
-  MOCK_METHOD0(renderEdge,
-      void());
-  MOCK_METHOD0(renderShadow,
-      void());
-  MOCK_METHOD0(renderZPlot,
-      void());
+  MOCK_METHOD1(renderModel,
+      void(IEffect::Pass *overridePass));
+  MOCK_METHOD1(renderEdge,
+      void(IEffect::Pass *overridePass));
+  MOCK_METHOD1(renderShadow,
+      void(IEffect::Pass *overridePass));
+  MOCK_METHOD1(renderZPlot,
+      void(IEffect::Pass *overridePass));
   MOCK_METHOD0(update,
       void());
   MOCK_METHOD1(setUpdateOptions,
@@ -35,8 +35,6 @@ class MockIRenderEngine : public IRenderEngine {
       IEffect*(IEffect::ScriptOrderType type));
   MOCK_METHOD3(setEffect,
       void(IEffect *effectRef, IEffect::ScriptOrderType type, void *userData));
-  MOCK_METHOD1(setOverridePass,
-      void(IEffect::Pass *pass));
   MOCK_METHOD0(testVisible,
       bool());
 };

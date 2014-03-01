@@ -3,8 +3,12 @@ namespace VPVL2_VERSION_NS {
 
 class MockIApplicationContext : public IApplicationContext {
  public:
-  MOCK_METHOD4(uploadTexture,
-      bool(const IString *name, int flags, void *userData, ITexture *&texturePtr));
+  MOCK_METHOD1(uploadTexture,
+      ITexture*(const IString *name));
+  MOCK_METHOD2(uploadEffectTexture,
+      ITexture*(const IString *name, const IEffect *effectRef));
+  MOCK_METHOD3(uploadModelTexture,
+      ITexture*(const IString *name, int flags, void *userData));
   MOCK_CONST_METHOD3(getMatrix,
       void(float32 value[16], const IModel *model, int flags));
   MOCK_METHOD2(loadShaderSource,
