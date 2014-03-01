@@ -274,7 +274,6 @@ struct Effect::NvFXPass : IEffect::Pass {
             castPasses(passes, overridePasses);
             const int numOverridePasses = overridePasses.count();
              m_valueRef->setupOverrides(&overridePasses[0], numOverridePasses);
-             m_valueRef->execute(&m_info);
             for (int i = 0; i < numOverridePasses; i++) {
                 nvFX::IPass *passRef = overridePasses[i];
                 passRef->validate();
