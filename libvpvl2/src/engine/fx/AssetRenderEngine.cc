@@ -701,13 +701,13 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
     // * ambient = diffuse
     // * specular / 10
     // * emissive
-    aiColor4D ambient, diffuse, specular;
+    aiColor4D emissive, diffuse, specular;
     Color color;
-    if (material->Get(AI_MATKEY_COLOR_AMBIENT, ambient) == aiReturn_SUCCESS) {
-        color.setValue(ambient.r, ambient.g, ambient.b, ambient.a);
+    if (material->Get(AI_MATKEY_COLOR_EMISSIVE, emissive) == aiReturn_SUCCESS) {
+        color.setValue(emissive.r, emissive.g, emissive.b, emissive.a);
     }
     else {
-        color.setValue(1, 1, 1, 1);
+        color.setValue(0, 0, 0, 1);
     }
     m_currentEffectEngineRef->emissive.setGeometryColor(color);
     if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) == aiReturn_SUCCESS) {

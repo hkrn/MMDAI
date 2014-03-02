@@ -143,7 +143,6 @@ GLSLShader global noApplyToon {
 
 vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
     vec4 newColor = color;
-    // newColor.rgb += vec3(max(0, dot(normal, -vpvl2_NS_lightDirection))) * vpvl2_NS_materialDiffuse.rgb;
     return newColor;
 }
 
