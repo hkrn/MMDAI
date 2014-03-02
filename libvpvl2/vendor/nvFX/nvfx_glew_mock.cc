@@ -1,5 +1,6 @@
-#include "GL/glew.h"
+#ifndef GLEW_STATIC /* should not be compiled in nvFX */
 
+#include "GL/glew.h"
 #ifndef VPVL2_NO_CONFIG
 #include "vpvl2/Common.h"
 using namespace vpvl2::VPVL2_VERSION_NS;
@@ -8,7 +9,7 @@ using namespace vpvl2::VPVL2_VERSION_NS;
 #include <vector>
 #define VPVL2_LINK_GLSLOPT
 #define VPVL2_LOG(level, message)
-#endif
+#endif /* VPVL2_NO_CONFIG */
 
 #ifdef VPVL2_LINK_GLSLOPT
 #include "glsl_optimizer.h"
@@ -21,7 +22,7 @@ static void *g_context = 0;
 }
 #define glslopt_initialize(target) static_cast<void *>(0)
 #define glslopt_cleanup(ctx)
-#endif
+#endif /* VPVL2_LINK_GLSLOPT */
 
 namespace nvFX {
 
@@ -222,7 +223,7 @@ static void __glShaderSource(GLuint shader, GLsizei count, const GLchar **string
         __glShaderSourceProc(shader, sources.size(), ptrs.data(), lengths.data());
     }
 }
-#endif
+#endif /* VPVL2_LINK_GLSLOPT */
 
 void initializeOpenGLFunctions(const FunctionResolver *resolver)
 {
@@ -323,7 +324,7 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
 
     glGetError = reinterpret_cast<PFNGLGETERRORPROC>(__glGetError); // reinterpret_cast<PFNGLGETERRORPROC>(resolver->resolve("glGetError"));
 #ifdef VPVL2_LINK_GLSLOPT
-    glShaderSource = __glShaderSource;
+    glShaderSource = reinterpret_cast<PFNGLSHADERSOURCEPROC>(__glShaderSource);
     __glShaderSourceProc = reinterpret_cast<PFNGLSHADERSOURCEPROC>(resolver->resolve("glShaderSource"));
 #else
     glShaderSource = reinterpret_cast<PFNGLSHADERSOURCEPROC>(resolver->resolve("glShaderSource"));
@@ -417,3 +418,4 @@ void cleanup()
 
 } /* namespace nvFX */
 
+#endif /* GLEW_STATIC */
