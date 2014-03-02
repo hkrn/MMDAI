@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(nvfxcc)
 
+include(FindPackageHandleStandardArgs)
 option(ENABLE_REGAL "Enable linking with Regal" FALSE)
 option(ENABLE_OPENGL_CORE_PROFILE "Enable invoking nvfxcc with OpenGL Core Profile" TRUE)
 set(CMAKE_BUILD_TYPE "Debug")
@@ -10,8 +11,9 @@ if(ENABLE_OPENGL_CORE_PROFILE)
 endif()
 
 # GLEW (fake)
+add_definitions(-DVPVL2_NO_CONFIG)
 set(GLEW_BUNDLE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../libvpvl2/vendor/nvFX")
-include_directories(${GLEW_BUNDLE_ROOT})
+include_directories(${GLEW_BUNDLE_ROOT} ${VPVL2_CONFIG_ROOT})
 aux_source_directory(${GLEW_BUNDLE_ROOT} NVFX_GLEW_SRC)
 
 aux_source_directory(. SRC_LIST)
@@ -29,6 +31,7 @@ if(NOT GLFW_INCLUDE_DIR)
 endif()
 target_link_libraries(${PROJECT_NAME} ${GLFW_LIBRARY})
 include_directories(${GLFW_INCLUDE_DIR})
+find_package_handle_standard_args(GLFW DEFAULT_MSG GLFW_INCLUDE_DIR GLFW_LIBRARY)
 
 # nvFX
 set(NVFX_BUNDLE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../nvfx-src/build-debug/install-root")
@@ -47,6 +50,7 @@ if(NOT NVFX_INCLUDE_DIR)
 endif()
 target_link_libraries(${PROJECT_NAME} ${NVFX_FXPARSER_LIBRARY} ${NVFX_FXLIBGL_LIBRARY} ${NVFX_FXLIB_LIBRARY})
 include_directories(${NVFX_INCLUDE_DIR})
+find_package_handle_standard_args(nvFX DEFAULT_MSG NVFX_INCLUDE_DIR NVFX_FXPARSER_LIBRARY NVFX_FXLIBGL_LIBRARY NVFX_FXLIB_LIBRARY)
 
 # Regal
 if(ENABLE_REGAL)
@@ -56,7 +60,19 @@ if(ENABLE_REGAL)
   find_path(REGAL_INCLUDE_DIR GL/Regal.h PATH_SUFFIXES include PATHS ${REGAL_ROOT} NO_DEFAULT_PATH)
   target_link_libraries(${PROJECT_NAME} ${REGAL_LIBRARY})
   include_directories(${REGAL_INCLUDE_DIR})
+  find_package_handle_standard_args(Regal DEFAULT_MSG REGAL_INCLUDE_DIR REGAL_LIBRARY)
 endif()
+
+# GLSL Optimizer
+add_definitions(-DENABLE_GLSL_OPTIMIZER)
+set(GLSLOPT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../glsl-optimizer-src")
+find_library(GLSLOPT_LIBRARY glsl_optimizer PATH_SUFFIXES build-debug PATHS ${GLSLOPT_ROOT} NO_DEFAULT_PATH)
+find_library(GLCPP_LIBRARY glcpp-library PATH_SUFFIXES build-debug PATHS ${GLSLOPT_ROOT} NO_DEFAULT_PATH)
+find_library(MESA_LIBRARY mesa PATH_SUFFIXES build-debug PATHS ${GLSLOPT_ROOT} NO_DEFAULT_PATH)
+find_path(GLSLOPT_INCLUDE_DIR glsl_optimizer.h PATH_SUFFIXES src/glsl PATHS ${GLSLOPT_ROOT} NO_DEFAULT_PATH)
+target_link_libraries(${PROJECT_NAME} ${MESA_LIBRARY} ${GLCPP_LIBRARY} ${GLSLOPT_LIBRARY} )
+include_directories(${GLSLOPT_INCLUDE_DIR})
+find_package_handle_standard_args(GLSLOptimizer DEFAULT_MSG GLSLOPT_INCLUDE_DIR MESA_LIBRARY GLCPP_LIBRARY GLSLOPT_LIBRARY)
 
 if(APPLE)
   find_library(COCOA_FRAMEWORK Cocoa)
