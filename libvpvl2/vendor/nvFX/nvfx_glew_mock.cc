@@ -13,11 +13,11 @@ using namespace vpvl2::VPVL2_VERSION_NS;
 #ifdef VPVL2_LINK_GLSLOPT
 #include "glsl_optimizer.h"
 namespace {
-struct glslopt_ctx *g_context = 0;
+static struct glslopt_ctx *g_context = 0;
 }
 #else
 namespace {
-void *g_context = 0;
+static void *g_context = 0;
 }
 #define glslopt_initialize(target) static_cast<void *>(0)
 #define glslopt_cleanup(ctx)
