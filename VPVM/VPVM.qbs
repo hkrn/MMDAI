@@ -95,7 +95,7 @@ CppApplication {
                 v[RegExp.$1] = RegExp.$2
             }
         }
-        return [ v["VPVL2_VERSION_MAJOR"], v["VPVL2_VERSION_COMPAT"], "7" ].join(".")
+        return [ v["VPVL2_VERSION_MAJOR"], v["VPVL2_VERSION_COMPAT"], "8" ].join(".")
     }
     files: commonFiles
     cpp.defines: commonDefiles

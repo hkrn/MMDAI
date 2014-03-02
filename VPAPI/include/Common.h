@@ -11,7 +11,7 @@ static inline void setApplicationDescription(const QString &name, QApplication &
 {
     application.setApplicationDisplayName(name);
     application.setApplicationName(name);
-    application.setApplicationVersion("0.33.7");
+    application.setApplicationVersion("0.33.8");
     application.setOrganizationName("MMDAI Project");
     application.setOrganizationDomain("mmdai.github.com");
 }
