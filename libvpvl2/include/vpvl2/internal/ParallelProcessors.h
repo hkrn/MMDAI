@@ -93,7 +93,7 @@ public:
 #ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
         Vector3 position;
-        for (int i = range.begin(); i != range.end(); ++i) {
+        for (int i = range.begin(), end = range.end(); i != end; ++i) {
             performTransform(i, position);
         }
     }
@@ -147,7 +147,7 @@ public:
     }
 #ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
-        for (int i = range.begin(); i != range.end(); ++i) {
+        for (int i = range.begin(), end = range.end(); i != end; ++i) {
             performTransform(i);
         }
     }
@@ -199,7 +199,7 @@ public:
     }
 #ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
-        for (int i = range.begin(); i != range.end(); ++i) {
+        for (int i = range.begin(), end = range.end(); i != end; ++i) {
             performTransform(i);
         }
     }
@@ -247,7 +247,7 @@ public:
     }
 #ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
-        for (int i = range.begin(); i != range.end(); ++i) {
+        for (int i = range.begin(), end = range.end(); i != end; ++i) {
             performTransform(i);
         }
     }
@@ -289,7 +289,7 @@ public:
     }
 #ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
-        for (int i = range.begin(); i != range.end(); ++i) {
+        for (int i = range.begin(), end = range.end(); i != end; ++i) {
             performTransform(i);
         }
     }
@@ -331,7 +331,7 @@ public:
     }
 #ifdef VPVL2_LINK_INTEL_TBB
     void operator()(const tbb::blocked_range<int> &range) const {
-        for (int i = range.begin(); i != range.end(); ++i) {
+        for (int i = range.begin(), end = range.end(); i != end; ++i) {
             performTransform(i);
         }
     }
@@ -397,7 +397,7 @@ public:
         }
         void operator()(const tbb::blocked_range<int> &range) {
             Vector3 aabbMin(kAabbMin), aabbMax(kAabbMax);
-            for (int i = range.begin(); i != range.end(); ++i) {
+            for (int i = range.begin(), end = range.end(); i != end; ++i) {
                 performTransform(i, bufferRef, aabbMin, aabbMax);
             }
             min = aabbMin;
