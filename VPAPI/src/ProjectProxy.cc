@@ -751,7 +751,7 @@ void ProjectProxy::setAccelerationType(AccelerationType value)
         case OpenCLGPUAcceleration:
             m_project->setAccelerationType(Scene::kOpenCLAccelerationType1);
             break;
-        case VertexShaderSkinning:
+        case VertexShaderAcceleration:
             m_project->setAccelerationType(Scene::kVertexShaderAccelerationType1);
             break;
         case NoAcceleration:

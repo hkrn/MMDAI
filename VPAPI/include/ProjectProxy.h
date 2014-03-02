@@ -114,10 +114,10 @@ class ProjectProxy : public QObject, protected vpvl2::IProgressReporter
 
 public:
     enum AccelerationType {
-        NoAcceleration        = vpvl2::Scene::kSoftwareFallback,
-        OpenCLGPUAcceleration = vpvl2::Scene::kOpenCLAccelerationType1,
-        VertexShaderSkinning  = vpvl2::Scene::kVertexShaderAccelerationType1,
-        OpenCLCPUAcceleration = vpvl2::Scene::kOpenCLAccelerationType2,
+        NoAcceleration           = vpvl2::Scene::kSoftwareFallback,
+        OpenCLGPUAcceleration    = vpvl2::Scene::kOpenCLAccelerationType1,
+        VertexShaderAcceleration = vpvl2::Scene::kVertexShaderAccelerationType1,
+        OpenCLCPUAcceleration    = vpvl2::Scene::kOpenCLAccelerationType2,
         ParallelAcceleration,
         MaxAccelerationType
     };

@@ -768,7 +768,7 @@ void RenderTarget::loadJson(const QUrl &fileUrl)
                     string2AccelerationType.insert("opencl", ProjectProxy::OpenCLGPUAcceleration);
                     string2AccelerationType.insert("opencl_gpu", ProjectProxy::OpenCLGPUAcceleration);
                     string2AccelerationType.insert("opencl_cpu", ProjectProxy::OpenCLCPUAcceleration);
-                    string2AccelerationType.insert("vss", ProjectProxy::VertexShaderSkinning);
+                    string2AccelerationType.insert("vss", ProjectProxy::VertexShaderAcceleration);
                     string2AccelerationType.insert("parallel", ProjectProxy::ParallelAcceleration);
                     const QString &accelerationType = projectObject.value("accelerationType").toString();
                     if (string2AccelerationType.contains(accelerationType)) {
