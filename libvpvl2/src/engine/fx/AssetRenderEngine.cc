@@ -181,7 +181,7 @@ bool AssetRenderEngine::upload(void *userData)
         }
     }
     for (unsigned int i = 0; i < nmaterials; i++) {
-        aiMaterial *material = scene->mMaterials[i];
+        const aiMaterial *material = scene->mMaterials[i];
         aiReturn found = AI_SUCCESS;
         int textureIndex = 0;
         while (found == AI_SUCCESS) {
@@ -193,7 +193,7 @@ bool AssetRenderEngine::upload(void *userData)
                     if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(mainTexturePath, flags, userData)) {
                         m_textureMap[mainTexture] = m_allocatedTextures.insert(texturePtr, texturePtr);
                         if (engine) {
-                            engine->materialTexture.setTexture(material, texturePtr);
+                            engine->materialTexture.setTexture(texturePtr, texturePtr);
                         }
                         VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << texturePtr);
                     }
@@ -204,7 +204,7 @@ bool AssetRenderEngine::upload(void *userData)
                     if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(subTexturePath, flags, userData)) {
                         m_textureMap[subTexture] = m_allocatedTextures.insert(texturePtr, texturePtr);
                         if (engine) {
-                            engine->materialSphereMap.setTexture(material, texturePtr);
+                            engine->materialSphereMap.setTexture(texturePtr, texturePtr);
                         }
                         VPVL2_VLOG(2, "Loaded a sub texture: name=" << internal::cstr(subTexturePath, "(null)") << " ID=" << texturePtr);
                     }
@@ -216,7 +216,7 @@ bool AssetRenderEngine::upload(void *userData)
                 if (ITexture *texturePtr = m_applicationContextRef->uploadModelTexture(mainTexturePath, flags, userData)) {
                     m_textureMap[mainTexture] = m_allocatedTextures.insert(texturePtr, texturePtr);
                     if (engine) {
-                        engine->materialTexture.setTexture(material, texturePtr);
+                        engine->materialTexture.setTexture(texturePtr, texturePtr);
                     }
                     VPVL2_VLOG(2, "Loaded a main texture: name=" << internal::cstr(mainTexturePath, "(null)") << " ID=" << texturePtr);
                 }
@@ -385,7 +385,7 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
                 aiString texturePath;
                 /* copy current material textures/spheres parameters to offscreen effect */
                 for (unsigned int i = 0; i < nmaterials; i++) {
-                    aiMaterial *material = scene->mMaterials[i];
+                    const aiMaterial *material = scene->mMaterials[i];
                     aiReturn found = AI_SUCCESS;
                     int textureIndex = 0;
                     while (found == AI_SUCCESS) {
@@ -397,12 +397,12 @@ void AssetRenderEngine::setEffect(IEffect *effectRef, IEffect::ScriptOrderType t
                         if (PrivateEffectEngine::splitTexturePath(texture, mainTexture, subTexture)) {
                             Textures::const_iterator sub = m_textureMap.find(subTexture);
                             if (sub != m_textureMap.end()) {
-                                m_currentEffectEngineRef->materialSphereMap.setTexture(material, sub->second);
+                                m_currentEffectEngineRef->materialSphereMap.setTexture(sub->second, sub->second);
                             }
                         }
                         Textures::const_iterator main = m_textureMap.find(mainTexture);
                         if (main != m_textureMap.end()) {
-                            m_currentEffectEngineRef->materialTexture.setTexture(material, main->second);
+                            m_currentEffectEngineRef->materialTexture.setTexture(main->second, main->second);
                         }
                         textureIndex++;
                     }
@@ -600,14 +600,14 @@ void AssetRenderEngine::renderRecurse(const aiScene *scene, const aiNode *node, 
     pushAnnotationGroup("AssetRenderEngine#renderRecurse", m_applicationContextRef);
     const unsigned int nmeshes = node->mNumMeshes;
     EffectEngine::DrawPrimitiveCommand command;
+    bool hasTexture = false, hasSphereMap = false;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-        bool hasTexture = false, hasSphereMap = false;
         const char *target = hasShadowMap ? "object_ss" : "object";
-        setAssetMaterial(scene->mMaterials[mesh->mMaterialIndex], hasTexture, hasSphereMap);
-        IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false);
-        vsize nindices = *m_numIndices.find(mesh);
-        if (technique) {
+        const aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+        setAssetMaterial(material, hasTexture, hasSphereMap);
+        if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique(target, i, nmeshes, hasTexture, hasSphereMap, false)) {
+            vsize nindices = *m_numIndices.find(mesh);
             if (overridePass) {
                 technique->setOverridePass(overridePass);
             }
@@ -641,18 +641,16 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
 {
     pushAnnotationGroup("AssetRenderEngine#renderZPlotRecurse", m_applicationContextRef);
     const unsigned int nmeshes = node->mNumMeshes;
-    float opacity;
+    aiColor4D diffuseColor;
     EffectEngine::DrawPrimitiveCommand command;
     for (unsigned int i = 0; i < nmeshes; i++) {
         const struct aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         const struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-        material->Get(AI_MATKEY_OPACITY, opacity);
-        if (btFuzzyZero(opacity - 0.98f)) {
+        if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColor) == aiReturn_SUCCESS && btFuzzyZero(diffuseColor.a - 0.98f)) {
             continue;
         }
         bindVertexBundle(mesh);
-        IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false);
-        if (technique) {
+        if (IEffect::Technique *technique = m_currentEffectEngineRef->findTechnique("zplot", i, nmeshes, false, false, false)) {
             technique->setOverridePass(overridePass);
             vsize nindices = *m_numIndices.find(mesh);
             command.count = nindices;
@@ -674,30 +672,29 @@ void AssetRenderEngine::renderZPlotRecurse(const aiScene *scene, const aiNode *n
 void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTexture, bool &hasSphereMap)
 {
     int textureIndex = 0;
-    ITexture *textureRef = 0;
-    std::string mainTexture, subTexture;
+    ITexture *mainTextureRef = 0, *sphereTextureRef = 0;
+    std::string mainTexturePath, subTexturePath;
     aiString texturePath;
     hasTexture = false;
     hasSphereMap = false;
     if (material->GetTexture(aiTextureType_DIFFUSE, textureIndex, &texturePath) == aiReturn_SUCCESS) {
         bool isAdditive = false;
-        if (PrivateEffectEngine::splitTexturePath(texturePath.data, mainTexture, subTexture)) {
-            textureRef = m_textureMap[subTexture];
-            isAdditive = subTexture.find(".spa") != std::string::npos;
+        if (PrivateEffectEngine::splitTexturePath(texturePath.data, mainTexturePath, subTexturePath)) {
+            sphereTextureRef = m_textureMap[subTexturePath];
+            isAdditive = subTexturePath.find(".spa") != std::string::npos;
             m_currentEffectEngineRef->spadd.setValue(isAdditive);
             m_currentEffectEngineRef->useSpheremap.setValue(true);
-            hasSphereMap = true;
+            hasSphereMap = sphereTextureRef && sphereTextureRef->data();
         }
-        textureRef = m_textureMap[mainTexture];
-        if (textureRef && textureRef->data()) {
-            m_currentEffectEngineRef->useTexture.setValue(true);
+        mainTextureRef = m_textureMap[mainTexturePath];
+        if (mainTextureRef && mainTextureRef->data()) {
             hasTexture = true;
         }
     }
     m_currentEffectEngineRef->useTexture.setValue(hasTexture);
     m_currentEffectEngineRef->useSpheremap.setValue(hasSphereMap);
-    m_currentEffectEngineRef->materialTexture.updateParameter(material);
-    m_currentEffectEngineRef->materialSphereMap.updateParameter(material);
+    m_currentEffectEngineRef->materialTexture.updateParameter(mainTextureRef);
+    m_currentEffectEngineRef->materialSphereMap.updateParameter(sphereTextureRef);
     // * ambient = diffuse
     // * specular / 10
     // * emissive
