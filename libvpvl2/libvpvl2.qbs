@@ -92,7 +92,8 @@ Product {
         "../nvFX-src/" + libraryInstallDirectory + "/include",
         "../zlib-src/" + libraryInstallDirectory + "/include",
         "../AntTweakBar-src/include",
-        "../tbb-src/include"
+        "../tbb-src/include",
+        "../glsl-optimizer-src/src/glsl"
     ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x) }).concat(buildDirectory)
     readonly property var commonLibraryPaths: [
         "../bullet-src",
@@ -105,6 +106,7 @@ Product {
         "VPVL2_COORDINATE_OPENGL",
         "VPVL2_LINK_ASSIMP3",
         "VPVL2_LINK_NVFX",
+        "VPVL2_LINK_GLSLOPT",
         "VPVL2_ENABLE_EXTENSIONS_ARCHIVE",
         "VPVL2_ENABLE_EXTENSIONS_APPLICATIONCONTEXT",
         "VPVL2_ENABLE_EXTENSIONS_PROJECT",
@@ -215,6 +217,7 @@ Product {
         files: [ "src/engine/cl/*.cc" ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x) })
     }
     Depends { name: "cpp" }
+    Depends { name: "glslopt" }
     Depends {
         name: "AntTweakBar"
         condition: !qbs.targetOS.contains("ios")

@@ -41,6 +41,7 @@ Project {
     name: "MMDAI"
     references: [
         "AntTweakBar-src/AntTweakBar.qbs",
+        "glsl-optimizer-src/glslopt.qbs",
         "libgizmo-src/libgizmo.qbs",
         "libvpvl2/libvpvl2.qbs",
         "VPAPI/VPAPI.qbs",
