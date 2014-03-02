@@ -499,10 +499,12 @@ void PMXRenderEngine::update()
         }
         else {
             m_bundle->bind(VertexBundle::kVertexBuffer, vbo);
-            Array<Vector3> aabb;
             if (void *address = m_bundle->map(VertexBundle::kVertexBuffer, 0, m_dynamicBuffer->size())) {
                 m_dynamicBuffer->performTransform(address, m_sceneRef->cameraRef()->position());
+#if 0 // due to SEGV on several models
+                Array<Vector3> aabb;
                 m_dynamicBuffer->computeAabb(address, aabb);
+#endif
                 m_bundle->unmap(VertexBundle::kVertexBuffer, address);
             }
             m_bundle->unbind(VertexBundle::kVertexBuffer);
