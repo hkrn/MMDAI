@@ -623,6 +623,8 @@ struct FunctionResolver {
 };
 
 GLAPI void initializeOpenGLFunctions(const FunctionResolver *resolver);
+GLAPI void initialize();
+GLAPI void cleanup();
 
 #ifndef NVFX_GLEW_OS_WIN32
 static inline void DebugBreak() {}

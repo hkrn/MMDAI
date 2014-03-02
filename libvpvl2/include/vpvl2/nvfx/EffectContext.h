@@ -57,7 +57,8 @@ namespace nvfx
 class VPVL2_API EffectContext VPVL2_DECL_FINAL
 {
 public:
-    static bool initializeGLEW(const IApplicationContext::FunctionResolver *resolver);
+    static bool initialize(const IApplicationContext::FunctionResolver *resolver);
+    static void cleanup();
     static void enableIncludeCallback(const extensions::StringMap &includeBuffers, const extensions::StringList &includePaths);
     static void disableIncludeCallback();
     static void enableMessageCallback();

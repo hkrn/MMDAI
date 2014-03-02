@@ -1,5 +1,27 @@
 #include "GL/glew.h"
 
+#ifndef VPVL2_NO_CONFIG
+#include "vpvl2/config.h"
+#else
+#include <string>
+#include <vector>
+#define VPVL2_LINK_GLSLOPT
+#define VPVL2_LOG(level, message)
+#endif
+
+#ifdef VPVL2_LINK_GLSLOPT
+#include "glsl_optimizer.h"
+namespace {
+struct glslopt_ctx *g_context = 0;
+}
+#else
+namespace {
+void *g_context = 0;
+}
+#define glslopt_initialize(target) static_cast<void *>(0)
+#define glslopt_cleanup(ctx)
+#endif
+
 namespace nvFX {
 
 PFNGLACTIVETEXTUREPROC glActiveTexture = 0;
@@ -151,6 +173,56 @@ static inline GLenum __glGetError()
     return 0;
 }
 
+#ifdef VPVL2_LINK_GLSLOPT
+static GLenum GL_SHADER_TYPE = 0x8B4F;
+PFNGLSHADERSOURCEPROC __glShaderSourceProc = 0;
+static void __glShaderSource(GLuint shader, GLsizei count, const GLchar **string, const GLint * /* length */)
+{
+    GLint type = 0;
+    enum glslopt_shader_type opt;
+    std::vector<std::string> sources;
+    std::vector<const char *> ptrs;
+    std::vector<GLint> lengths;
+    glGetShaderiv(shader, GL_SHADER_TYPE, &type);
+    if (type == GL_VERTEX_SHADER) {
+        opt = kGlslOptShaderVertex;
+    }
+    else if (type == GL_FRAGMENT_SHADER)  {
+        opt = kGlslOptShaderFragment;
+    }
+    if (g_context && (type == GL_VERTEX_SHADER || type == GL_FRAGMENT_SHADER)) {
+        std::string sourceString;
+        for (int i = 0; i < count; i++) {
+            glslopt_shader *shader = glslopt_optimize(g_context, opt, string[0], 0);
+            if (glslopt_get_status(shader)) {
+                const char *source = glslopt_get_output(shader);
+                sourceString.assign(source);
+            }
+            else {
+                VPVL2_LOG(WARNING, glslopt_get_log(shader));
+                sourceString.assign(string[0]);
+            }
+            glslopt_shader_delete(shader);
+            sources.push_back(sourceString);
+            ptrs.push_back(sourceString.data());
+            lengths.push_back(sourceString.size());
+        }
+    }
+    else {
+        for (int i = 0; i < count; i++) {
+            const GLchar *source = string[i];
+            std::string sourceString(source);
+            sources.push_back(sourceString);
+            ptrs.push_back(sourceString.data());
+            lengths.push_back(sourceString.size());
+        }
+    }
+    if (sources.size() > 0) {
+        __glShaderSourceProc(shader, sources.size(), ptrs.data(), lengths.data());
+    }
+}
+#endif
+
 void initializeOpenGLFunctions(const FunctionResolver *resolver)
 {
     glActiveTexture = reinterpret_cast<PFNGLACTIVETEXTUREPROC>(resolver->resolve("glActiveTexture"));
@@ -205,7 +277,6 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glGenTextures = reinterpret_cast<PFNGLGENTEXTURESPROC>(resolver->resolve("glGenTextures"));
     glGetActiveUniform = reinterpret_cast<PFNGLGETACTIVEUNIFORMPROC>(resolver->resolve("glGetActiveUniform"));
     glGetAttribLocation = reinterpret_cast<PFNGLGETATTRIBLOCATIONPROC>(resolver->resolve("glGetAttribLocation"));
-    glGetError = reinterpret_cast<PFNGLGETERRORPROC>(__glGetError); // reinterpret_cast<PFNGLGETERRORPROC>(resolver->resolve("glGetError"));
     glGetInfoLogARB = reinterpret_cast<PFNGLGETINFOLOGARBPROC>(resolver->resolve("glGetInfoLogARB"));
     glGetIntegerv = reinterpret_cast<PFNGLGETINTEGERVPROC>(resolver->resolve("glGetIntegerv"));
     glGetProgramInfoLog = reinterpret_cast<PFNGLGETPROGRAMINFOLOGPROC>(resolver->resolve("glGetProgramInfoLog"));
@@ -226,7 +297,6 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glProgramParameteriARB = reinterpret_cast<PFNGLPROGRAMPARAMETERIPROC>(resolver->resolve("glProgramParameteriARB"));
     glRenderbufferStorage = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEPROC>(resolver->resolve("glRenderbufferStorage"));
     glRenderbufferStorageMultisample = reinterpret_cast<PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC>(resolver->resolve("glRenderbufferStorageMultisample"));
-    glShaderSource = reinterpret_cast<PFNGLSHADERSOURCEPROC>(resolver->resolve("glShaderSource"));
     glStencilFuncSeparate = reinterpret_cast<PFNGLSTENCILFUNCSEPARATEPROC>(resolver->resolve("glStencilFuncSeparate"));
     glStencilOpSeparate = reinterpret_cast<PFNGLSTENCILOPSEPARATEPROC>(resolver->resolve("glStencilOpSeparate"));
     glTexImage1D = reinterpret_cast<PFNGLTEXIMAGE1DPROC>(resolver->resolve("glTexImage1D"));
@@ -249,6 +319,14 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
     glUseProgram = reinterpret_cast<PFNGLUSEPROGRAMPROC>(resolver->resolve("glUseProgram"));
     glVertexAttribPointer = reinterpret_cast<PFNGLVERTEXATTRIBPOINTERPROC>(resolver->resolve("glVertexAttribPointer"));
     glViewport = reinterpret_cast<PFNGLVIEWPORTPROC>(resolver->resolve("glViewport"));
+
+    glGetError = reinterpret_cast<PFNGLGETERRORPROC>(__glGetError); // reinterpret_cast<PFNGLGETERRORPROC>(resolver->resolve("glGetError"));
+#ifdef VPVL2_LINK_GLSLOPT
+    glShaderSource = __glShaderSource;
+    __glShaderSourceProc = reinterpret_cast<PFNGLSHADERSOURCEPROC>(resolver->resolve("glShaderSource"));
+#else
+    glShaderSource = reinterpret_cast<PFNGLSHADERSOURCEPROC>(resolver->resolve("glShaderSource"));
+#endif
 
     int version = resolver->queryVersion();
     if (version < FunctionResolver::makeVersion(3, 0) && resolver->hasExtension("APPLE_vertex_array_object")) {
@@ -324,6 +402,16 @@ void initializeOpenGLFunctions(const FunctionResolver *resolver)
         glStencilFillPathNV = reinterpret_cast<PFNGLSTENCILFILLPATHNVPROC>(resolver->resolve("glStencilFillPathNV"));
         glStencilStrokePathNV = reinterpret_cast<PFNGLSTENCILSTROKEPATHNVPROC>(resolver->resolve("glStencilStrokePathNV"));
     }
+}
+
+void initialize()
+{
+    g_context = glslopt_initialize(kGlslTargetOpenGL);
+}
+
+void cleanup()
+{
+    glslopt_cleanup(g_context);
 }
 
 } /* namespace nvFX */

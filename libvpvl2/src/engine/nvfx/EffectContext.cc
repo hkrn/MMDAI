@@ -127,14 +127,23 @@ namespace VPVL2_VERSION_NS
 namespace nvfx
 {
 
-bool EffectContext::initializeGLEW(const IApplicationContext::FunctionResolver *resolver)
+bool EffectContext::initialize(const IApplicationContext::FunctionResolver *resolver)
 {
     if (!g_initialized) {
         FunctionResolverProxy proxy(resolver);
+        nvFX::initialize();
         nvFX::initializeOpenGLFunctions(&proxy);
         g_initialized = true;
     }
     return g_initialized;
+}
+
+void EffectContext::cleanup()
+{
+    if (g_initialized) {
+        nvFX::cleanup();
+        g_initialized = false;
+    }
 }
 
 void EffectContext::enableIncludeCallback(const StringMap &includeBuffers, const StringList &includePaths)

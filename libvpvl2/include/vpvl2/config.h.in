@@ -109,6 +109,9 @@
 /* Link libvpvl2 against AntTweakBar */
 #cmakedefine VPVL2_LINK_ATB
 
+/* Link libvpvl2 against GLSL Optimizer */
+#cmakedefine VPVL2_LINK_GLSLOPT
+
 /* Link libvpvl2 against FreeImage */
 #cmakedefine VPVL2_LINK_FREEIMAGE
 

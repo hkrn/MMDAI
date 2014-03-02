@@ -643,7 +643,7 @@ bool Scene::initialize(void *opaque)
         RegalSetErrorCallback(&Scene::PrivateContext::handleRegalErrorCallback);
 #ifdef VPVL2_LINK_NVFX
         const IApplicationContext::FunctionResolver *resolver = static_cast<const IApplicationContext::FunctionResolver *>(opaque);
-        nvfx::EffectContext::initializeGLEW(resolver);
+        nvfx::EffectContext::initialize(resolver);
 #else
         (void) opaque;
 #endif
@@ -679,6 +679,9 @@ void Scene::terminate()
 {
     if (g_initialized) {
         RegalDestroyContext(Scene::opaqueCurrentPlatformOpenGLContext());
+#ifdef VPVL2_LINK_NVFX
+        nvfx::EffectContext::cleanup();
+#endif
         g_initialized = false;
     }
 }

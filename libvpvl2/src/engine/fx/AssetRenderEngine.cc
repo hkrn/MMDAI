@@ -689,7 +689,7 @@ void AssetRenderEngine::setAssetMaterial(const aiMaterial *material, bool &hasTe
             hasSphereMap = true;
         }
         textureRef = m_textureMap[mainTexture];
-        if (textureRef > 0) {
+        if (textureRef && textureRef->data()) {
             m_currentEffectEngineRef->useTexture.setValue(true);
             hasTexture = true;
         }
