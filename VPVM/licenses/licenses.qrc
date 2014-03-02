@@ -8,6 +8,7 @@
         <file alias="GLEW">GLEW.txt</file>
         <file alias="GLM">GLM.txt</file>
         <file alias="glog">glog.txt</file>
+        <file alias="glslopt">glslopt.txt</file>
         <file alias="ICU">ICU.txt</file>
         <file alias="libav">libav.txt</file>
         <file alias="libgizmo">libgizmo.txt</file>

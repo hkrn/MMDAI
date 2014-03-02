@@ -70,6 +70,7 @@ ApplicationWindow {
         ListElement { name: "FontAwesome"; display: "Font Awesome"; license: "SIL OFL 1.1"; url: "https://github.com/fort-awesome/" }
         ListElement { name: "Sparkle"; display: "Sparkle"; license: "MIT"; url: "http://sparkle.andymatuschak.org" }
         ListElement { name: "WinSparkle"; display: "WinSparkle"; license: "MIT"; url: "https://www.winsparkle.org" }
+        ListElement { name: "glslopt"; display: "GLSL Optimizer"; license: "MIT"; url: "https://github.com/aras-p/glsloptimizer/" }
     }
     RowLayout {
         anchors.fill: parent
