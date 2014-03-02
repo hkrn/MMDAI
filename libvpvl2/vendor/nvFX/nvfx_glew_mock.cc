@@ -1,7 +1,8 @@
 #include "GL/glew.h"
 
 #ifndef VPVL2_NO_CONFIG
-#include "vpvl2/config.h"
+#include "vpvl2/Common.h"
+using namespace vpvl2::VPVL2_VERSION_NS;
 #else
 #include <string>
 #include <vector>
