@@ -136,7 +136,7 @@ static void appendShaderHeader(nvFX::IContainer *container, const IApplicationCo
             "#else\n"
             "#define vpvl2FXFMA(v, m, a) ((v) * (m) + (a))\n"
             "#endif\n"
-            "#define vpvl2FXSaturate(v, t) clamp((v), t(0), t(1))\n"
+            "#define vpvl2FXSaturate(v) clamp((v), 0, 1)\n"
             ;
     char appendingHeader[1024];
     int version = resolver->query(IApplicationContext::FunctionResolver::kQueryShaderVersion);
