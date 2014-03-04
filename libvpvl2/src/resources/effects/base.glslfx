@@ -235,7 +235,7 @@ void vpvl2FXTransformVertex(inout vec4 origin,
     normal            = vpvl2FXPerformNormalTransform(normal, position, boneIndices, boneWeights);
     vec3 ambientColor = vpvl2FXFMA(vpvl2_NS_materialAmbient, vpvl2_NS_lightAmbient, vpvl2_NS_materialEmissive);
     vec4 diffuseColor = vpvl2_NS_materialDiffuse * vec4(vpvl2_NS_lightDiffuse, 1.0);
-    vec3 lightDiffuse = vec3(dot(normal.xyz, -vpvl2_NS_lightDirection) * float(!use_toon));
+    vec3 lightDiffuse = vec3(vpvl2FXSaturate(dot(normal.xyz, -vpvl2_NS_lightDirection)) * float(!use_toon));
     vec3 colorRGB     = vpvl2FXFMA(lightDiffuse, diffuseColor.rgb, ambientColor);
     color             = vpvl2FXSaturate(vec4(colorRGB, diffuseColor.a));
     texcoord.zw       = mix(vpvl2FXFMA(vec2(dot(vpvl2_NS_lightDirection, -normal.xyz)), kHalf2, kOne2), vpvl2FXFMA(-normal.xy, kHalf2, kHalf2), float(use_spheremap));
