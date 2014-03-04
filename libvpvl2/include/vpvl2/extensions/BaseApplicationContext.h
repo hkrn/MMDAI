@@ -233,6 +233,7 @@ public:
     void setEffectModelRef(const IEffect *effectRef, IModel *model);
     void addModelFilePath(IModel *model, const std::string &path);
     std::string findEffectOwnerName(const IEffect *effect) const;
+    gl::FrameBufferObject *viewportFrameBufferObjectRef() const;
     gl::FrameBufferObject *createFrameBufferObject();
     void getEffectCompilerArguments(Array<IString *> &arguments) const;
     void addSharedTextureParameter(const char *name, const SharedTextureParameter &parameter);
@@ -256,8 +257,6 @@ public:
     void deleteEffectRef(IEffect *&effectRef);
     void deleteEffectRef(IModel *modelRef, const IString *directoryRef);
 
-    IModel *currentModelRef() const;
-    void setCurrentModelRef(IModel *value);
     int samplesMSAA() const;
     void setSamplesMSAA(int value);
     Scene *sceneRef() const;
@@ -318,7 +317,7 @@ protected:
     const StringMap *m_configRef;
     Scene *m_sceneRef;
     IEncoding *m_encodingRef;
-    IModel *m_currentModelRef;
+    gl::FrameBufferObject *m_viewportFBO;
     extensions::SimpleShadowMapSmartPtr m_shadowMap;
     gl::BaseSurface::Format m_renderColorFormat;
     glm::mat4 m_lightWorldMatrix;

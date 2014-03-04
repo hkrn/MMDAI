@@ -492,7 +492,6 @@ BaseApplicationContext::BaseApplicationContext(Scene *sceneRef, IEncoding *encod
       m_configRef(configRef),
       m_sceneRef(sceneRef),
       m_encodingRef(encodingRef),
-      m_currentModelRef(0),
       m_renderColorFormat(kGL_RGBA, kGL_RGBA8, kGL_UNSIGNED_BYTE, Texture2D::kGL_TEXTURE_2D),
       m_lightWorldMatrix(1),
       m_lightViewMatrix(1),
@@ -532,6 +531,8 @@ void BaseApplicationContext::initializeOpenGLContext(bool enableDebug)
         m_hasDepthClamp = true;
     }
     getIntegerv(kGL_MAX_SAMPLES, &m_samplesMSAA);
+    m_viewportFBO = new FrameBufferObject(resolver, BaseSurface::Format(kGL_RGBA, kGL_RGBA8, Texture2D::kGL_TEXTURE_2D, Texture2D::kGL_TEXTURE0), m_samplesMSAA);
+    m_viewportFBO->create(Vector3(1, 1, 1));
     TwInit(resolver->query(FunctionResolver::kQueryCoreProfile) != 0 ? TW_OPENGL_CORE : TW_OPENGL, 0);
     popAnnotationGroup(resolver);
     StringMap includeBuffers;
@@ -545,7 +546,6 @@ BaseApplicationContext::~BaseApplicationContext()
     m_configRef = 0;
     m_sceneRef = 0;
     m_encodingRef = 0;
-    m_currentModelRef = 0;
     m_samplesMSAA = 0;
 }
 
@@ -554,7 +554,6 @@ void BaseApplicationContext::release()
     pushAnnotationGroup("BaseApplicationContext#release", this);
     TwDeleteAllBars();
     releaseShadowMap();
-    m_currentModelRef = 0;
 #ifdef VPVl2_ENABLE_NVIDIA_CG
     m_offscreenTextures.releaseAll();
 #endif
@@ -1034,6 +1033,11 @@ std::string BaseApplicationContext::findEffectOwnerName(const IEffect *effect) c
         return *value;
     }
     return std::string();
+}
+
+FrameBufferObject *BaseApplicationContext::viewportFrameBufferObjectRef() const
+{
+    return m_viewportFBO;
 }
 
 FrameBufferObject *BaseApplicationContext::createFrameBufferObject()
@@ -1527,16 +1531,6 @@ void BaseApplicationContext::deleteEffectRef(IModel *modelRef, const IString *di
     deleteEffectRef(resolveEffectFilePath(modelRef, directoryRef));
 }
 
-IModel *BaseApplicationContext::currentModelRef() const
-{
-    return m_currentModelRef;
-}
-
-void BaseApplicationContext::setCurrentModelRef(IModel *value)
-{
-    m_currentModelRef = value;
-}
-
 int BaseApplicationContext::samplesMSAA() const
 {
     return m_samplesMSAA;
@@ -1607,6 +1601,7 @@ void BaseApplicationContext::setViewportRegion(const glm::ivec4 &viewport)
         m_aspectRatio = glm::max(width, height) / glm::min(width, height);
         m_viewportRegion = viewport;
         m_viewportRegionInvalidated = true;
+        m_viewportFBO->resize(Vector3(width, height, 1), 0);
         TwWindowSize(viewport.z, viewport.w);
         updateCameraMatrices();
     }
