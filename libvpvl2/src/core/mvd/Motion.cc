@@ -38,16 +38,23 @@
 #include "vpvl2/vpvl2.h"
 #include "vpvl2/internal/MotionHelper.h"
 
+#include "vpvl2/mvd/AssetKeyframe.h"
 #include "vpvl2/mvd/AssetSection.h"
+#include "vpvl2/mvd/BoneKeyframe.h"
 #include "vpvl2/mvd/BoneSection.h"
+#include "vpvl2/mvd/CameraKeyframe.h"
 #include "vpvl2/mvd/CameraSection.h"
+#include "vpvl2/mvd/EffectKeyframe.h"
 #include "vpvl2/mvd/EffectSection.h"
+#include "vpvl2/mvd/LightKeyframe.h"
 #include "vpvl2/mvd/LightSection.h"
 #include "vpvl2/mvd/ModelKeyframe.h"
 #include "vpvl2/mvd/ModelSection.h"
+#include "vpvl2/mvd/MorphKeyframe.h"
 #include "vpvl2/mvd/MorphSection.h"
 #include "vpvl2/mvd/Motion.h"
 #include "vpvl2/mvd/NameListSection.h"
+#include "vpvl2/mvd/ProjectKeyframe.h"
 #include "vpvl2/mvd/ProjectSection.h"
 
 namespace
@@ -656,6 +663,41 @@ bool Motion::isNullFrameEnabled() const
 
 void Motion::setNullFrameEnable(bool /* value */)
 {
+}
+
+IBoneKeyframe *Motion::createBoneKeyframe()
+{
+    return new BoneKeyframe(this);
+}
+
+ICameraKeyframe *Motion::createCameraKeyframe()
+{
+    return new CameraKeyframe(this);
+}
+
+IEffectKeyframe *Motion::createEffectKeyframe()
+{
+    return new EffectKeyframe(this);
+}
+
+ILightKeyframe *Motion::createLightKeyframe()
+{
+    return new LightKeyframe(this);
+}
+
+IModelKeyframe *Motion::createModelKeyframe()
+{
+    return new ModelKeyframe(m_context->modelSection);
+}
+
+IMorphKeyframe *Motion::createMorphKeyframe()
+{
+    return new MorphKeyframe(this);
+}
+
+IProjectKeyframe *Motion::createProjectKeyframe()
+{
+    return new ProjectKeyframe(this);
 }
 
 void Motion::addKeyframe(IKeyframe *value)

@@ -242,6 +242,79 @@ public:
     virtual bool isReachedTo(const IKeyframe::TimeIndex &timeIndex) const = 0;
 
     /**
+     * IBoneKeyframe (ボーンのキーフレーム) のインスタンスを返します.
+     *
+     * 引数に NULL を渡された場合必ず 0 を返します。
+     *
+     * @param motion
+     * @return IBoneKeyframe
+     */
+    virtual IBoneKeyframe *createBoneKeyframe() = 0;
+
+    /**
+     * ICameraKeyframe (カメラのキーフレーム) のインスタンスを返します.
+     *
+     * 引数に NULL を渡された場合必ず 0 を返します。
+     *
+     * @param motion
+     * @return ICameraKeyframe
+     */
+    virtual ICameraKeyframe *createCameraKeyframe() = 0;
+
+    /**
+     * IEffectKeyframe (エフェクトのキーフレーム) のインスタンスを返します.
+     *
+     * このメソッドは引数のインスタンスの IMotion::Type が kMVD の時のみインスタンスを返します。
+     * それ以外の IMotion のインスタンスまたは NULL を渡された場合必ず 0 を返します。
+     *
+     * @param motion
+     * @return ICameraKeyframe
+     */
+    virtual IEffectKeyframe *createEffectKeyframe() = 0;
+
+    /**
+     * ILightKeyframe (照明のキーフレーム) のインスタンスを返します.
+     *
+     * 引数に NULL を渡された場合必ず 0 を返します。
+     *
+     * @param motion
+     * @return ILightKeyframe
+     */
+    virtual ILightKeyframe *createLightKeyframe() = 0;
+
+    /**
+     * IModelKeyframe (モデルのキーフレーム) のインスタンスを返します.
+     *
+     * このメソッドは引数のインスタンスの IMotion::Type が kMVD の時のみインスタンスを返します。
+     * それ以外の IMotion のインスタンスまたは NULL を渡された場合必ず 0 を返します。
+     *
+     * @param motion
+     * @return ICameraKeyframe
+     */
+    virtual IModelKeyframe *createModelKeyframe() = 0;
+
+    /**
+     * IMorphKeyframe (モーフのキーフレーム) のインスタンスを返します.
+     *
+     * 引数に NULL を渡された場合必ず 0 を返します。
+     *
+     * @param motion
+     * @return IMorphKeyframe
+     */
+    virtual IMorphKeyframe *createMorphKeyframe() = 0;
+
+    /**
+     * IProjectKeyframe (プロジェクトのキーフレーム) のインスタンスを返します.
+     *
+     * このメソッドは引数のインスタンスの IMotion::Type が kMVD の時のみインスタンスを返します。
+     * それ以外の IMotion のインスタンスまたは NULL を渡された場合必ず 0 を返します。
+     *
+     * @param motion
+     * @return ICameraKeyframe
+     */
+    virtual IProjectKeyframe *createProjectKeyframe() = 0;
+
+    /**
      * キーフレームを追加します.
      *
      * キーフレームを追加したら必ず update を行う必要があります。そうしないと find* 系が正しい値を返さなくなってしまいます。

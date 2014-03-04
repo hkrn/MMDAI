@@ -129,20 +129,22 @@ public:
      *
      * 引数に NULL を渡された場合必ず 0 を返します。
      *
+     * @deprecated
      * @param motion
      * @return IBoneKeyframe
      */
-    IBoneKeyframe *createBoneKeyframe(const IMotion *motion) const;
+    IBoneKeyframe *createBoneKeyframe(IMotion *motion) const;
 
     /**
      * ICameraKeyframe (カメラのキーフレーム) のインスタンスを返します.
      *
      * 引数に NULL を渡された場合必ず 0 を返します。
      *
+     * @deprecated
      * @param motion
      * @return ICameraKeyframe
      */
-    ICameraKeyframe *createCameraKeyframe(const IMotion *motion) const;
+    ICameraKeyframe *createCameraKeyframe(IMotion *motion) const;
 
     /**
      * IEffectKeyframe (エフェクトのキーフレーム) のインスタンスを返します.
@@ -150,20 +152,22 @@ public:
      * このメソッドは引数のインスタンスの IMotion::Type が kMVD の時のみインスタンスを返します。
      * それ以外の IMotion のインスタンスまたは NULL を渡された場合必ず 0 を返します。
      *
+     * @deprecated
      * @param motion
-     * @return ICameraKeyframe
+     * @return IEffectKeyframe
      */
-    IEffectKeyframe *createEffectKeyframe(const IMotion *motion) const;
+    IEffectKeyframe *createEffectKeyframe(IMotion *motion) const;
 
     /**
      * ILightKeyframe (照明のキーフレーム) のインスタンスを返します.
      *
      * 引数に NULL を渡された場合必ず 0 を返します。
      *
+     * @deprecated
      * @param motion
      * @return ILightKeyframe
      */
-    ILightKeyframe *createLightKeyframe(const IMotion *motion) const;
+    ILightKeyframe *createLightKeyframe(IMotion *motion) const;
 
     /**
      * IModelKeyframe (モデルのキーフレーム) のインスタンスを返します.
@@ -171,20 +175,22 @@ public:
      * このメソッドは引数のインスタンスの IMotion::Type が kMVD の時のみインスタンスを返します。
      * それ以外の IMotion のインスタンスまたは NULL を渡された場合必ず 0 を返します。
      *
+     * @deprecated
      * @param motion
-     * @return ICameraKeyframe
+     * @return IModelKeyframe
      */
-    IModelKeyframe *createModelKeyframe(const IMotion *motion) const;
+    IModelKeyframe *createModelKeyframe(IMotion *motion) const;
 
     /**
      * IMorphKeyframe (モーフのキーフレーム) のインスタンスを返します.
      *
      * 引数に NULL を渡された場合必ず 0 を返します。
      *
+     * @deprecated
      * @param motion
      * @return IMorphKeyframe
      */
-    IMorphKeyframe *createMorphKeyframe(const IMotion *motion) const;
+    IMorphKeyframe *createMorphKeyframe(IMotion *motion) const;
 
     /**
      * IProjectKeyframe (プロジェクトのキーフレーム) のインスタンスを返します.
@@ -192,10 +198,11 @@ public:
      * このメソッドは引数のインスタンスの IMotion::Type が kMVD の時のみインスタンスを返します。
      * それ以外の IMotion のインスタンスまたは NULL を渡された場合必ず 0 を返します。
      *
+     * @deprecated
      * @param motion
-     * @return ICameraKeyframe
+     * @return IProjectKeyframe
      */
-    IProjectKeyframe *createProjectKeyframe(const IMotion *motion) const;
+    IProjectKeyframe *createProjectKeyframe(IMotion *motion) const;
 
     /**
      * IMotion のインスタンスを destType の型に変換して返します.

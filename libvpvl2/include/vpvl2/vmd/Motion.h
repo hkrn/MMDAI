@@ -113,6 +113,13 @@ public:
     bool isNullFrameEnabled() const;
     void setNullFrameEnable(bool value);
 
+    IBoneKeyframe *createBoneKeyframe();
+    ICameraKeyframe *createCameraKeyframe();
+    IEffectKeyframe *createEffectKeyframe();
+    ILightKeyframe *createLightKeyframe();
+    IModelKeyframe *createModelKeyframe();
+    IMorphKeyframe *createMorphKeyframe();
+    IProjectKeyframe *createProjectKeyframe();
     void addKeyframe(IKeyframe *value);
     int countKeyframes(IKeyframe::Type value) const;
     void getKeyframeRefs(const IKeyframe::TimeIndex &timeIndex,

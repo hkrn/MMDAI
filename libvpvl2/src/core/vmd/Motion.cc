@@ -522,6 +522,43 @@ void Motion::setNullFrameEnable(bool value)
     m_context->morphMotion.setNullFrameEnable(value);
 }
 
+IBoneKeyframe *Motion::createBoneKeyframe()
+{
+    return new BoneKeyframe(m_context->encodingRef);
+}
+
+ICameraKeyframe *Motion::createCameraKeyframe()
+{
+    return new CameraKeyframe();
+}
+
+IEffectKeyframe *Motion::createEffectKeyframe()
+{
+    VPVL2_LOG(WARNING, "Effect keyframe is not supported in VMD format");
+    return 0;
+}
+
+ILightKeyframe *Motion::createLightKeyframe()
+{
+    return new LightKeyframe();
+}
+
+IModelKeyframe *Motion::createModelKeyframe()
+{
+    return new ModelKeyframe(m_context->encodingRef);
+}
+
+IMorphKeyframe *Motion::createMorphKeyframe()
+{
+    return new MorphKeyframe(m_context->encodingRef);
+}
+
+IProjectKeyframe *Motion::createProjectKeyframe()
+{
+    VPVL2_LOG(WARNING, "Project keyframe is not supported in VMD format");
+    return 0;
+}
+
 void Motion::addKeyframe(IKeyframe *value)
 {
     if (!value || value->layerIndex() != 0) {
