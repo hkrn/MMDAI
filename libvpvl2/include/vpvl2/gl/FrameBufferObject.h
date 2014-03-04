@@ -170,6 +170,7 @@ public:
     static const GLenum kGL_COLOR_ATTACHMENT0 = 0x8CE0;
     static const GLenum kGL_DEPTH_ATTACHMENT = 0x8D00;
     static const GLenum kGL_STENCIL_ATTACHMENT = 0x8D20;
+    static const GLenum kGL_FRAMEBUFFER_COMPLETE = 0x8CD5;
 
     static GLenum detectDepthFormat(const IApplicationContext::FunctionResolver *resolver, GLenum internalColorFormat) {
         GLenum depthFormat = kGL_DEPTH24_STENCIL8;
@@ -277,8 +278,12 @@ public:
                 m_depthStencilBufferMSAA->resize(size);
             }
         }
+        else {
+            m_defaultRenderColorBuffer->resize(size);
+            m_defaultRenderDepthStencilBuffer->resize(size);
+        }
     }
-    void bindTexture(ITexture *textureRef, int index) {
+    void attachTexture(ITexture *textureRef, int index) {
         if (textureRef) {
             const BaseSurface::Format *format = reinterpret_cast<const BaseSurface::Format *>(textureRef->format());
             GLenum targetIndex = kGL_COLOR_ATTACHMENT0 + index;
@@ -291,23 +296,23 @@ public:
             m_targetIndex2TextureRefs.insert(targetIndex, textureRef);
         }
     }
-    void bindDepthStencilBuffer(BaseRenderBuffer *depthStencilBufferRef) {
+    void attachDepthStencilBuffer(BaseRenderBuffer *depthStencilBufferRef) {
         if (depthStencilBufferRef) {
             create(depthStencilBufferRef->size());
             bindFrameBuffer(m_variantFrameBuffer);
             depthStencilBufferRef->attach(kGL_DEPTH_ATTACHMENT);
             depthStencilBufferRef->attach(kGL_STENCIL_ATTACHMENT);
-            VPVL2_DVLOG(3, "glCheckFramebufferStatus: variant=" << checkFramebufferStatus(kGL_FRAMEBUFFER));
+            VPVL2_DVLOG(3, "glCheckFramebufferStatus: variant=" << checkFramebufferStatus(kGL_FRAMEBUFFER) - kGL_FRAMEBUFFER_COMPLETE);
             if (m_variantFrameBufferMSAA && m_depthStencilBufferMSAA) {
                 bindFrameBuffer(m_variantFrameBufferMSAA);
                 m_depthStencilBufferMSAA->attach(kGL_DEPTH_ATTACHMENT);
                 m_depthStencilBufferMSAA->attach(kGL_STENCIL_ATTACHMENT);
-                VPVL2_DVLOG(3, "glCheckFramebufferStatus: variantMSAA=" << checkFramebufferStatus(kGL_FRAMEBUFFER));
+                VPVL2_DVLOG(3, "glCheckFramebufferStatus: variantMSAA=" << checkFramebufferStatus(kGL_FRAMEBUFFER) - kGL_FRAMEBUFFER_COMPLETE);
             }
             m_depthStencilBufferRef = depthStencilBufferRef;
         }
     }
-    void unbindTexture(int index) {
+    void detachTexture(int index) {
         const GLenum targetIndex = kGL_COLOR_ATTACHMENT0 + index;
         if (const ITexture *const *textureRefPtr = m_targetIndex2TextureRefs.find(targetIndex)) {
             const ITexture *textureRef = *textureRefPtr;
@@ -321,7 +326,7 @@ public:
             m_targetIndex2TextureRefs.remove(targetIndex);
         }
     }
-    void unbindDepthStencilBuffer() {
+    void detachDepthStencilBuffer() {
         if (m_depthStencilBufferRef) {
             bindFrameBuffer(m_variantFrameBuffer);
             m_depthStencilBufferRef->detach(kGL_DEPTH_ATTACHMENT);
@@ -334,14 +339,17 @@ public:
             }
         }
     }
-    void unbind() {
+    void bindDefault() {
         bindFrameBuffer(m_defaultFrameBuffer);
+    }
+    void bindWindow() {
+        bindFrameBuffer(0);
     }
     void readMSAABuffer(int index) {
         if (m_renderColorBufferMSAARef && m_boundFrameBuffer && m_boundFrameBuffer != m_defaultFrameBuffer) {
             const GLenum targetIndex = kGL_COLOR_ATTACHMENT0 + index;
             const Vector3 &size = m_renderColorBufferMSAARef->size();
-            blit(size, size, m_variantFrameBufferMSAA, m_variantFrameBuffer, targetIndex);
+            blit(size, Vector4(0, 0, size.x(), size.y()), m_variantFrameBufferMSAA, m_variantFrameBuffer, targetIndex);
         }
     }
     void transferTo(const FrameBufferObject *destination) {
@@ -351,13 +359,12 @@ public:
             const GLuint readTarget = m_defaultFrameBuffer;
             const GLuint drawTarget = destination->m_variantFrameBufferMSAA ? destination->m_variantFrameBufferMSAA
                                                                             : destination->m_variantFrameBuffer;
-            blit(size, size, readTarget, drawTarget, kGL_COLOR_ATTACHMENT0);
+            blit(size, Vector4(0, 0, size.x(), size.y()), readTarget, drawTarget, kGL_COLOR_ATTACHMENT0);
         }
     }
-    void transferToWindow(const Vector3 &viewport) {
+    void transferToWindow(const Vector4 &viewport, GLuint drawTarget = 0) {
         const Vector3 &size = m_defaultRenderColorBuffer->size();
-        blit(size, viewport, m_defaultFrameBuffer, 0, kGL_COLOR_ATTACHMENT0);
-        m_boundFrameBuffer = 0;
+        blit(size, viewport, m_defaultFrameBuffer, drawTarget, kGL_COLOR_ATTACHMENT0);
     }
     GLuint variantFrameBuffer() const { return m_variantFrameBuffer; }
     GLuint variantFrameBufferMSAA() const { return m_variantFrameBufferMSAA; }
@@ -382,16 +389,15 @@ public:
     PFNGLREADBUFFERPROC readBuffer;
 
 private:
-    void blit(const Vector3 &readSize, const Vector3 &drawSize, GLuint readTarget, GLuint drawTarget, GLenum targetIndex) {
+    void blit(const Vector3 &readSize, const Vector4 &drawSize, GLuint readTarget, GLuint drawTarget, GLenum targetIndex) {
         bindFramebuffer(kGL_DRAW_FRAMEBUFFER, drawTarget);
         bindFramebuffer(kGL_READ_FRAMEBUFFER, readTarget);
         if (drawTarget > 0) {
             drawBuffers(1, &targetIndex);
         }
-        VPVL2_DVLOG(3, "glCheckFramebufferStatus: draw=" << checkFramebufferStatus(kGL_DRAW_FRAMEBUFFER) << " read=" << checkFramebufferStatus(kGL_READ_FRAMEBUFFER));
+        VPVL2_DVLOG(3, "glCheckFramebufferStatus: draw=" << checkFramebufferStatus(kGL_DRAW_FRAMEBUFFER) - kGL_FRAMEBUFFER_COMPLETE << " read=" << checkFramebufferStatus(kGL_READ_FRAMEBUFFER) - kGL_FRAMEBUFFER_COMPLETE);
         readBuffer(targetIndex);
-        blitFramebuffer(0, 0, GLint(readSize.x()), GLint(readSize.y()), 0, 0, GLint(drawSize.x()), GLint(drawSize.y()),
-                        kGL_COLOR_BUFFER_BIT | kGL_DEPTH_BUFFER_BIT | kGL_STENCIL_BUFFER_BIT, kGL_NEAREST);
+        blitFramebuffer(0, 0, GLint(readSize.x()), GLint(readSize.y()), GLint(drawSize.x()), GLint(drawSize.y()), GLint(drawSize.z()), GLint(drawSize.w()), kGL_COLOR_BUFFER_BIT | kGL_DEPTH_BUFFER_BIT | kGL_STENCIL_BUFFER_BIT, kGL_NEAREST);
     }
     void bindFrameBuffer(GLuint name) {
         if (m_boundFrameBuffer != name) {

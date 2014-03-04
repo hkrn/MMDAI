@@ -1727,7 +1727,7 @@ void EffectEngine::executeProcess(const IModel *model,
                 m_applicationContextRef->getViewport(viewport);
                 /* clearRenderColorTargetIndices must be called before transfering render buffer to the window */
                 m_effectRef->clearRenderColorTargetIndices();
-                m_frameBufferObjectRef->transferToWindow(viewport);
+                m_frameBufferObjectRef->transferToWindow(Vector4(0, 0, viewport.x(), viewport.y()));
             }
         }
     }
@@ -2015,7 +2015,7 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
         if (FrameBufferObject *fbo = textureRef->frameBufferObjectRef) {
             if (state.isRenderTargetBound) {
                 fbo->readMSAABuffer(index);
-                fbo->bindTexture(textureRef->textureRef, index);
+                fbo->attachTexture(textureRef->textureRef, index);
                 fbo->resize(viewport, index);
                 if (!m_effectRef->hasRenderColorTargetIndex(targetIndex)) {
                     m_effectRef->addRenderColorTargetIndex(targetIndex);
@@ -2023,8 +2023,8 @@ void EffectEngine::setRenderColorTargetFromScriptState(const ScriptState &state)
             }
             else {
                 fbo->readMSAABuffer(index);
-                fbo->unbindTexture(index);
-                fbo->unbind();
+                fbo->detachTexture(index);
+                fbo->bindDefault();
                 m_effectRef->removeRenderColorTargetIndex(index);
             }
         }
@@ -2039,11 +2039,11 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
     if (const RenderDepthStencilTargetSemantic::Buffer *bufferRef = state.renderDepthStencilBufferRef) {
         if (FrameBufferObject *fbo = bufferRef->frameBufferObjectRef) {
             if (state.isRenderTargetBound) {
-                fbo->bindDepthStencilBuffer(bufferRef->renderBufferRef);
+                fbo->attachDepthStencilBuffer(bufferRef->renderBufferRef);
             }
             else {
-                fbo->unbindDepthStencilBuffer();
-                fbo->unbind();
+                fbo->detachDepthStencilBuffer();
+                fbo->bindDefault();
             }
         }
     }
@@ -2057,7 +2057,7 @@ void EffectEngine::setRenderDepthStencilTargetFromScriptState(const ScriptState 
 void EffectEngine::setDefaultRenderTarget(const Vector3 &viewport)
 {
     m_frameBufferObjectRef->create(viewport);
-    m_frameBufferObjectRef->unbind();
+    m_frameBufferObjectRef->bindDefault();
     m_effectRef->clearRenderColorTargetIndices();
     m_effectRef->addRenderColorTargetIndex(FrameBufferObject::kGL_COLOR_ATTACHMENT0);
 }
