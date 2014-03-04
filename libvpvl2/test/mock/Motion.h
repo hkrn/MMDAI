@@ -31,6 +31,20 @@ class MockIMotion : public IMotion {
       IKeyframe::TimeIndex());
   MOCK_CONST_METHOD1(isReachedTo,
       bool(const IKeyframe::TimeIndex &timeIndex));
+  MOCK_METHOD0(createBoneKeyframe,
+      IBoneKeyframe*());
+  MOCK_METHOD0(createCameraKeyframe,
+      ICameraKeyframe*());
+  MOCK_METHOD0(createEffectKeyframe,
+      IEffectKeyframe*());
+  MOCK_METHOD0(createLightKeyframe,
+      ILightKeyframe*());
+  MOCK_METHOD0(createModelKeyframe,
+      IModelKeyframe*());
+  MOCK_METHOD0(createMorphKeyframe,
+      IMorphKeyframe*());
+  MOCK_METHOD0(createProjectKeyframe,
+      IProjectKeyframe*());
   MOCK_METHOD1(addKeyframe,
       void(IKeyframe *value));
   MOCK_CONST_METHOD1(countKeyframes,
