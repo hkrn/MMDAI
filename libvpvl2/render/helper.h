@@ -239,7 +239,6 @@ static void loadAllModels(const StringMap &settings,
                                                                     model.get(), ok));
                     sceneRef->addMotion(motion.release());
                 }
-                applicationContextRef->setCurrentModelRef(model.get());
                 model.release();
             }
         }
