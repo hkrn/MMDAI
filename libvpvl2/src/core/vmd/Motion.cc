@@ -117,7 +117,7 @@ struct Motion::PrivateContext {
             LightKeyframe *keyframe = new LightKeyframe();
             keyframe->setTimeIndex(0);
             keyframe->setColor(Vector3(0.6f, 0.6f, 0.6f));
-            keyframe->setDirection(Vector3(-1.0f, -0.5f, -1.0f));
+            keyframe->setDirection(Vector3(-0.5f, -1.0f, -0.5f));
             lightMotion.addKeyframe(keyframe);
         }
     }
