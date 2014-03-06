@@ -1805,7 +1805,7 @@ void EffectEngine::updateModelLightParameters(const Scene *scene, const IModel *
     const Vector3 &lc = light->color();
     Color lightColor(lc.x(), lc.y(), lc.z(), 1);
     if (model && model->type() == IModel::kAssetModel) {
-        const Vector3 &ac = Vector3(0.7f, 0.7f, 0.7f) - lightColor;
+        const Vector3 &ac = lc - Vector3(0.7f, 0.7f, 0.7f);
         ambient.setLightColor(Color(ac.x(), ac.y(), ac.z(), 1));
         diffuse.setLightColor(Color(1, 1, 1, 1));
         specular.setLightColor(lightColor);
