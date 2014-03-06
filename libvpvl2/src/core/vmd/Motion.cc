@@ -100,15 +100,38 @@ struct Motion::PrivateContext {
     }
     void parseCameraKeyframes(const Motion::DataInfo &info) {
         cameraMotion.read(info.cameraKeyframePtr, info.cameraKeyframeCount);
+        if (!cameraMotion.findKeyframe(0)) {
+            CameraKeyframe *keyframe = new CameraKeyframe();
+            keyframe->setTimeIndex(0);
+            keyframe->setAngle(kZeroV3);
+            keyframe->setDistance(50.0f);
+            keyframe->setFov(27.0f);
+            keyframe->setLookAt(Vector3(0.0f, 10.0f, 0.0f));
+            keyframe->setDefaultInterpolationParameter();
+            cameraMotion.addKeyframe(keyframe);
+        }
     }
     void parseLightKeyframes(const Motion::DataInfo &info) {
         lightMotion.read(info.lightKeyframePtr, info.lightKeyframeCount);
+        if (!lightMotion.findKeyframe(0)) {
+            LightKeyframe *keyframe = new LightKeyframe();
+            keyframe->setTimeIndex(0);
+            keyframe->setColor(Vector3(0.6f, 0.6f, 0.6f));
+            keyframe->setDirection(Vector3(-1.0f, -0.5f, -1.0f));
+            lightMotion.addKeyframe(keyframe);
+        }
     }
     void parseSelfShadowKeyframes(const Motion::DataInfo &info) {
         projectMotion.read(info.selfShadowKeyframePtr, info.selfShadowKeyframeCount);
     }
     void parseModelKeyframes(const Motion::DataInfo &info) {
         modelMotion.read(info.modelKeyframePtr, info.modelKeyframeCount);
+        if (!modelMotion.findKeyframe(0)) {
+            ModelKeyframe *keyframe = new ModelKeyframe(encodingRef);
+            keyframe->setTimeIndex(0);
+            keyframe->setVisible(true);
+            modelMotion.addKeyframe(keyframe);
+        }
     }
     void release() {
         /* retain model reference */

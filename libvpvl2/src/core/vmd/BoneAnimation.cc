@@ -122,27 +122,30 @@ void BoneAnimation::read(const uint8 *data, int size)
 
 void BoneAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
 {
-    if (!m_modelRef) {
-        return;
-    }
-    const int ncontexts = m_name2contexts.count();
-    for (int i = 0; i < ncontexts; i++) {
-        PrivateContext *keyframes = *m_name2contexts.value(i);
-        if (m_enableNullFrame && keyframes->isNull()) {
-            continue;
+    if (m_modelRef) {
+        const int ncontexts = m_name2contexts.count();
+        for (int i = 0; i < ncontexts; i++) {
+            PrivateContext *keyframes = *m_name2contexts.value(i);
+            if (m_enableNullFrame && keyframes->isNull()) {
+                continue;
+            }
+            calculateKeyframes(timeIndexAt, keyframes);
+            IBone *bone = keyframes->bone;
+            bone->setLocalTranslation(keyframes->position);
+            bone->setLocalOrientation(keyframes->rotation);
         }
-        calculateKeyframes(timeIndexAt, keyframes);
-        IBone *bone = keyframes->bone;
-        bone->setLocalTranslation(keyframes->position);
-        bone->setLocalOrientation(keyframes->rotation);
+        m_previousTimeIndex = m_currentTimeIndex;
+        m_currentTimeIndex = timeIndexAt;
     }
-    m_previousTimeIndex = m_currentTimeIndex;
-    m_currentTimeIndex = timeIndexAt;
+    else {
+        VPVL2_LOG(WARNING, "No model is assigned");
+    }
 }
 
 void BoneAnimation::setParentModelRef(IModel *model)
 {
     createPrivateContexts(model);
+    fillInitialKeyframes(model);
     m_modelRef = model;
 }
 
@@ -153,54 +156,82 @@ BoneKeyframe *BoneAnimation::findKeyframeAt(int i) const
 
 BoneKeyframe *BoneAnimation::findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const
 {
-    if (!name)
-        return 0;
-    const HashString &key = name->toHashString();
-    PrivateContext *const *ptr = m_name2contexts.find(key);
-    if (ptr) {
-        const PrivateContext *context = *ptr;
-        const Array<BoneKeyframe *> &keyframes = context->keyframes;
-        int index = findKeyframeIndex(timeIndex, keyframes);
-        return index != -1 ? keyframes[index] : 0;
+    if (name) {
+        const HashString &key = name->toHashString();
+        PrivateContext *const *ptr = m_name2contexts.find(key);
+        if (ptr) {
+            const PrivateContext *context = *ptr;
+            const Array<BoneKeyframe *> &keyframes = context->keyframes;
+            int index = findKeyframeIndex(timeIndex, keyframes);
+            return index != -1 ? keyframes[index] : 0;
+        }
+    }
+    else {
+        VPVL2_LOG(WARNING, "Null name is passed");
     }
     return 0;
 }
 
 void BoneAnimation::createPrivateContexts(IModel *model)
 {
-    if (!model) {
-        VPVL2_LOG(WARNING, "null model is passed");
-        return;
-    }
-    const int nkeyframes = m_keyframes.count();
-    m_name2contexts.releaseAll();
-    m_durationTimeIndex = 0;
-    // Build internal node to find by name, not frame index
-    for (int i = 0; i < nkeyframes; i++) {
-        BoneKeyframe *keyframe = reinterpret_cast<BoneKeyframe *>(m_keyframes.at(i));
-        const IString *name = keyframe->name();
-        const HashString &key = name->toHashString();
-        PrivateContext **ptr = m_name2contexts[key], *context;
-        if (ptr) {
-            context = *ptr;
-            context->keyframes.append(keyframe);
+    if (model) {
+        const int nkeyframes = m_keyframes.count();
+        m_name2contexts.releaseAll();
+        m_durationTimeIndex = 0;
+        // Build internal node to find by name, not frame index
+        for (int i = 0; i < nkeyframes; i++) {
+            BoneKeyframe *keyframe = reinterpret_cast<BoneKeyframe *>(m_keyframes.at(i));
+            const IString *name = keyframe->name();
+            const HashString &key = name->toHashString();
+            PrivateContext **ptr = m_name2contexts[key], *context;
+            if (ptr) {
+                context = *ptr;
+                context->keyframes.append(keyframe);
+            }
+            else if (IBone *bone = model->findBoneRef(name)) {
+                PrivateContext *context = m_name2contexts.insert(key, new PrivateContext());
+                context->keyframes.append(keyframe);
+                context->bone = bone;
+                context->lastIndex = 0;
+                context->position.setZero();
+                context->rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+            }
         }
-        else if (IBone *bone = model->findBoneRef(name)) {
-            PrivateContext *context = m_name2contexts.insert(key, new PrivateContext());
-            context->keyframes.append(keyframe);
-            context->bone = bone;
-            context->lastIndex = 0;
-            context->position.setZero();
-            context->rotation.setValue(0.0f, 0.0f, 0.0f, 1.0f);
+        // Sort frames from each internal nodes by frame index ascend
+        const int ncontexts = m_name2contexts.count();
+        for (int i = 0; i < ncontexts; i++) {
+            PrivateContext *context = *m_name2contexts.value(i);
+            Array<BoneKeyframe *> &keyframes = context->keyframes;
+            keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
+            btSetMax(m_durationTimeIndex, keyframes[keyframes.count() - 1]->timeIndex());
         }
     }
-    // Sort frames from each internal nodes by frame index ascend
-    const int ncontexts = m_name2contexts.count();
-    for (int i = 0; i < ncontexts; i++) {
-        PrivateContext *context = *m_name2contexts.value(i);
-        Array<BoneKeyframe *> &keyframes = context->keyframes;
-        keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
-        btSetMax(m_durationTimeIndex, keyframes[keyframes.count() - 1]->timeIndex());
+    else {
+        VPVL2_LOG(WARNING, "Null model is passed");
+    }
+}
+
+void BoneAnimation::fillInitialKeyframes(const IModel *model)
+{
+    if (model) {
+        Array<IBone *> bones;
+        model->getBoneRefs(bones);
+        const int nbones = bones.count();
+        for (int i = 0; i < nbones; i++) {
+            const IBone *bone = bones[i];
+            const IString *name = bone->name(IEncoding::kDefaultLanguage);
+            if (!findKeyframe(0, bone->name(IEncoding::kDefaultLanguage))) {
+                BoneKeyframe *keyframe = m_keyframes.append(new BoneKeyframe(m_encodingRef));
+                keyframe->setName(name);
+                keyframe->setTimeIndex(0);
+                keyframe->setLocalTranslation(kZeroV3);
+                keyframe->setLocalOrientation(Quaternion::getIdentity());
+                keyframe->setDefaultInterpolationParameter();
+            }
+        }
+    }
+    else {
+        VPVL2_LOG(WARNING, "Null model is passed");
     }
 }
 

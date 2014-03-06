@@ -92,63 +92,67 @@ void MorphAnimation::read(const uint8 *data, int size)
 
 void MorphAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
 {
-    if (!m_modelRef) {
-        return;
-    }
-    const int ncontexts = m_name2contexts.count();
-    for (int i = 0; i < ncontexts; i++) {
-        PrivateContext *context = *m_name2contexts.value(i);
-        if (m_enableNullFrame && context->isNull()) {
-            continue;
+    if (m_modelRef) {
+        const int ncontexts = m_name2contexts.count();
+        for (int i = 0; i < ncontexts; i++) {
+            PrivateContext *context = *m_name2contexts.value(i);
+            if (m_enableNullFrame && context->isNull()) {
+                continue;
+            }
+            calculateFrames(timeIndexAt, context);
+            IMorph *morph = context->morph;
+            morph->setWeight(context->weight);
         }
-        calculateFrames(timeIndexAt, context);
-        IMorph *morph = context->morph;
-        morph->setWeight(context->weight);
+        m_previousTimeIndex = m_currentTimeIndex;
+        m_currentTimeIndex = timeIndexAt;
     }
-    m_previousTimeIndex = m_currentTimeIndex;
-    m_currentTimeIndex = timeIndexAt;
+    else {
+        VPVL2_LOG(WARNING, "No model is assigned");
+    }
 }
 
 void MorphAnimation::setParentModelRef(IModel *model)
 {
     createPrivateContexts(model);
+    fillInitialKeyframes(model);
     m_modelRef = model;
 }
 
-void MorphAnimation::createPrivateContexts(IModel *model)
+void MorphAnimation::createPrivateContexts(const IModel *model)
 {
-    if (!model) {
-        VPVL2_LOG(WARNING, "null model is passed");
-        return;
-    }
-    const int nkeyframes = m_keyframes.count();
-    m_name2contexts.releaseAll();
-    m_durationTimeIndex = 0;
-    // Build internal node to find by name, not frame index
-    for (int i = 0; i < nkeyframes; i++) {
-        MorphKeyframe *keyframe = reinterpret_cast<MorphKeyframe *>(m_keyframes.at(i));
-        const IString *name = keyframe->name();
-        const HashString &key = name->toHashString();
-        PrivateContext **ptr = m_name2contexts[key], *context;
-        if (ptr) {
-            context = *ptr;
-            context->keyframes.append(keyframe);
+    if (model) {
+        const int nkeyframes = m_keyframes.count();
+        m_name2contexts.releaseAll();
+        m_durationTimeIndex = 0;
+        // Build internal node to find by name, not frame index
+        for (int i = 0; i < nkeyframes; i++) {
+            MorphKeyframe *keyframe = reinterpret_cast<MorphKeyframe *>(m_keyframes.at(i));
+            const IString *name = keyframe->name();
+            const HashString &key = name->toHashString();
+            PrivateContext **ptr = m_name2contexts[key], *context;
+            if (ptr) {
+                context = *ptr;
+                context->keyframes.append(keyframe);
+            }
+            else if (IMorph *morph = model->findMorphRef(name)) {
+                PrivateContext *context = m_name2contexts.insert(key, new PrivateContext());
+                context->keyframes.append(keyframe);
+                context->morph = morph;
+                context->lastIndex = 0;
+                context->weight = 0.0f;
+            }
         }
-        else if (IMorph *morph = model->findMorphRef(name)) {
-            PrivateContext *context = m_name2contexts.insert(key, new PrivateContext());
-            context->keyframes.append(keyframe);
-            context->morph = morph;
-            context->lastIndex = 0;
-            context->weight = 0.0f;
+        // Sort frames from each internal nodes by frame index ascend
+        const int ncontexts = m_name2contexts.count();
+        for (int i = 0; i < ncontexts; i++) {
+            PrivateContext *context = *m_name2contexts.value(i);
+            Array<MorphKeyframe *> &keyframes = context->keyframes;
+            keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
+            btSetMax(m_durationTimeIndex, keyframes[keyframes.count() - 1]->timeIndex());
         }
     }
-    // Sort frames from each internal nodes by frame index ascend
-    const int ncontexts = m_name2contexts.count();
-    for (int i = 0; i < ncontexts; i++) {
-        PrivateContext *context = *m_name2contexts.value(i);
-        Array<MorphKeyframe *> &keyframes = context->keyframes;
-        keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
-        btSetMax(m_durationTimeIndex, keyframes[keyframes.count() - 1]->timeIndex());
+    else {
+        VPVL2_LOG(WARNING, "Null model is passed");
     }
 }
 
@@ -169,18 +173,42 @@ MorphKeyframe *MorphAnimation::findKeyframeAt(int i) const
 
 MorphKeyframe *MorphAnimation::findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const
 {
-    if (!name) {
-        return 0;
+    if (name) {
+        const HashString &key = name->toHashString();
+        PrivateContext *const *ptr = m_name2contexts.find(key);
+        if (ptr) {
+            const PrivateContext *context = *ptr;
+            const Array<MorphKeyframe *> &keyframes = context->keyframes;
+            int index = findKeyframeIndex(timeIndex, keyframes);
+            return index != -1 ? keyframes[index] : 0;
+        }
     }
-    const HashString &key = name->toHashString();
-    PrivateContext *const *ptr = m_name2contexts.find(key);
-    if (ptr) {
-        const PrivateContext *context = *ptr;
-        const Array<MorphKeyframe *> &keyframes = context->keyframes;
-        int index = findKeyframeIndex(timeIndex, keyframes);
-        return index != -1 ? keyframes[index] : 0;
+    else {
+        VPVL2_LOG(WARNING, "Null name is passed");
     }
     return 0;
+}
+
+void MorphAnimation::fillInitialKeyframes(const IModel *model)
+{
+    if (model) {
+        Array<IMorph *> morphs;
+        model->getMorphRefs(morphs);
+        const int nmorphs = morphs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            const IMorph *morph = morphs[i];
+            const IString *name = morph->name(IEncoding::kDefaultLanguage);
+            if (!findKeyframe(0, morph->name(IEncoding::kDefaultLanguage))) {
+                MorphKeyframe *keyframe = m_keyframes.append(new MorphKeyframe(m_encodingRef));
+                keyframe->setName(name);
+                keyframe->setTimeIndex(0);
+                keyframe->setWeight(0);
+            }
+        }
+    }
+    else {
+        VPVL2_LOG(WARNING, "Null model is passed");
+    }
 }
 
 void MorphAnimation::calculateFrames(const IKeyframe::TimeIndex &timeIndexAt, PrivateContext *context)

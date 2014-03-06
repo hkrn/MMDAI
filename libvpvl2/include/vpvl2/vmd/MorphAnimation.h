@@ -85,7 +85,8 @@ public:
 
 private:
     struct PrivateContext;
-    void createPrivateContexts(IModel *model);
+    void createPrivateContexts(const IModel *model);
+    void fillInitialKeyframes(const IModel *model);
     void calculateFrames(const IKeyframe::TimeIndex &timeIndexAt, PrivateContext *context);
 
     IEncoding *m_encodingRef;

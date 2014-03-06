@@ -166,6 +166,7 @@ struct Motion::PrivateContext {
             const uint8 *ptr = sections[i];
             boneSection->read(ptr);
         }
+        boneSection->fillInitialKeyframes();
     }
     void parseCameraSections(const Motion::DataInfo &info) {
         const Array<uint8 *> &sections = info.cameraSectionPtrs;
@@ -216,6 +217,7 @@ struct Motion::PrivateContext {
             const uint8 *ptr = sections[i];
             morphSection->read(ptr);
         }
+        morphSection->fillInitialKeyframes();
     }
     void parseProjectSections(const Motion::DataInfo &info) {
         const Array<uint8 *> &sections = info.projectSectionPtrs;

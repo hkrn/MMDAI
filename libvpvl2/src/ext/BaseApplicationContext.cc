@@ -531,7 +531,7 @@ void BaseApplicationContext::initializeOpenGLContext(bool enableDebug)
         m_hasDepthClamp = true;
     }
     getIntegerv(kGL_MAX_SAMPLES, &m_samplesMSAA);
-    m_viewportFBO = new FrameBufferObject(resolver, BaseSurface::Format(kGL_RGBA, kGL_RGBA8, Texture2D::kGL_TEXTURE_2D, Texture2D::kGL_TEXTURE0), m_samplesMSAA);
+    m_viewportFBO = new FrameBufferObject(resolver, BaseSurface::Format(kGL_RGBA, kGL_RGB8, Texture2D::kGL_TEXTURE_2D, Texture2D::kGL_TEXTURE0), m_samplesMSAA);
     m_viewportFBO->create(Vector3(1, 1, 1));
     TwInit(resolver->query(FunctionResolver::kQueryCoreProfile) != 0 ? TW_OPENGL_CORE : TW_OPENGL, 0);
     popAnnotationGroup(resolver);

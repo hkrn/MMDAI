@@ -360,6 +360,28 @@ void MorphSection::setAllKeyframes(const Array<IKeyframe *> &value)
     }
 }
 
+void MorphSection::fillInitialKeyframes()
+{
+    if (const IModel *modelRef = m_context->modelRef) {
+        Array<IMorph *> morphRefs;
+        modelRef->getMorphRefs(morphRefs);
+        const int nmorphs = morphRefs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            const IMorph *morphRef = morphRefs[i];
+            const IString *name = morphRef->name(IEncoding::kDefaultLanguage);
+            if (!findKeyframe(0, name, 0)) {
+                MorphKeyframe *keyframe = new MorphKeyframe(m_motionRef);
+                keyframe->setName(name);
+                keyframe->setLayerIndex(0);
+                keyframe->setTimeIndex(0);
+                keyframe->setWeight(0);
+                keyframe->setDefaultInterpolationParameter();
+                addKeyframe(keyframe);
+            }
+        }
+    }
+}
+
 IKeyframe::LayerIndex MorphSection::countLayers(const IString * /* name */) const
 {
     return 1;

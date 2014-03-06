@@ -390,6 +390,29 @@ void BoneSection::setAllKeyframes(const Array<IKeyframe *> &value)
     }
 }
 
+void BoneSection::fillInitialKeyframes()
+{
+    if (const IModel *modelRef = m_context->modelRef) {
+        Array<IBone *> boneRefs;
+        modelRef->getBoneRefs(boneRefs);
+        const int nbones = boneRefs.count();
+        for (int i = 0; i < nbones; i++) {
+            const IBone *boneRef = boneRefs[i];
+            const IString *name = boneRef->name(IEncoding::kDefaultLanguage);
+            if (!findKeyframe(0, name, 0)) {
+                BoneKeyframe *keyframe = new BoneKeyframe(m_motionRef);
+                keyframe->setName(name);
+                keyframe->setLayerIndex(0);
+                keyframe->setTimeIndex(0);
+                keyframe->setLocalTranslation(kZeroV3);
+                keyframe->setLocalOrientation(Quaternion::getIdentity());
+                keyframe->setDefaultInterpolationParameter();
+                addKeyframe(keyframe);
+            }
+        }
+    }
+}
+
 IBoneKeyframe *BoneSection::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                          const IString *name,
                                          const IKeyframe::LayerIndex &layerIndex) const
