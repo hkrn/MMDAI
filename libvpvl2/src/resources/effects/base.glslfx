@@ -4,13 +4,6 @@ namespace vpvl2 {
 
 GLSLShader global performTransform {
 
-const mat4 kIdenticalMatrix = mat4(1.0);
-const int kBdef1 = 0;
-const int kBdef2 = 1;
-const int kBdef4 = 2;
-const int kSdef  = 3;
-const int kQdef  = 4;
-
 mat4 vpvl2FXCreateMatrix4FromQuaternion(const vec4 p, const vec4 q) {
     mat4 matrix;
     matrix[0] = vec4(
@@ -37,13 +30,17 @@ mat4 vpvl2FXCreateMatrix4FromQuaternion(const vec4 p, const vec4 q) {
 
 mat4 vpvl2FXGetBoneTransformMatrix(const float index) {
     float newIndex = index / float(BoneCountVPVL2);
-    mat4 matrix = kIdenticalMatrix;
     vec4 p = vpvl2FXGetTexturePixel2D(vpvl2_NS_boneTransformSampler, vec2(0.0,  newIndex));
     vec4 q = vpvl2FXGetTexturePixel2D(vpvl2_NS_boneTransformSampler, vec2(0.5,  newIndex));
     return vpvl2FXCreateMatrix4FromQuaternion(p, q);
 }
 
 vec4 vpvl2FXPerformSkinning(const vec3 origin3, const vec4 boneIndices, const vec4 boneWeights, const float base, const int type) {
+    const int kBdef1 = 0;
+    const int kBdef2 = 1;
+    const int kBdef4 = 2;
+    const int kSdef  = 3;
+    const int kQdef  = 4;
     vec4 origin   = vec4(origin3, base);
     bvec2 isBdef4 = bvec2(type == kBdef4, type == kQdef);
     bvec2 isBdef2 = bvec2(type == kBdef2, type == kSdef);
@@ -98,7 +95,8 @@ vec4 vpvl2FXPerformEdgeTransform(const vec4 origin, const vec4 normal, const vec
 GLSLShader global applyTexture {
 
 vec4 vpvl2FXApplyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1) {
-    vec4 newColor = mix(color, color * vpvl2FXGetTexturePixel2D(vpvl2_NS_mainTextureSampler, texcoord.xy), float(use_texture));
+    const vec4 kOne4   = vec4(1.0);
+    vec4 newColor = color * mix(kOne4, vpvl2FXGetTexturePixel2D(vpvl2_NS_mainTextureSampler, texcoord.xy), float(use_texture));
     if (use_spheremap) {
         if (spadd) {
             newColor.rgb += vpvl2FXGetTexturePixel2D(vpvl2_NS_sphereTextureSampler, texcoord.zw).rgb;
@@ -125,15 +123,13 @@ vec4 vpvl2FXApplyTexture(const vec4 color, const vec4 texcoord, const vec4 uva1)
 
 GLSLShader global applyToon {
 
-const vec4 kOne4 = vec4(1.0);
-const vec3 kWhiteColor = vec3(1.0);
-const vec2 kToonTexCoord = vec2(0.0, 1.0);
-
 vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
+    const vec4 kOne4 = vec4(1.0);
+    const vec2 kToonTexCoord = vec2(0.0, 1.0);
     vec4 toonColor = mix(kOne4, vpvl2FXGetTexturePixel2D(vpvl2_NS_toonTextureSampler, kToonTexCoord), float(use_toon));
     vec4 newColor  = color;
     float w        = vpvl2FXSaturate(vpvl2FXFMA(dot(normal, -vpvl2_NS_lightDirection), 16.0, 0.5));
-    newColor.rgb  *= vpvl2FXFMA(kWhiteColor - toonColor.rgb, vec3(w), toonColor.rgb);
+    newColor.rgb  *= vpvl2FXFMA(kOne4.xxx - toonColor.rgb, vec3(w), toonColor.rgb);
     return newColor;
 }
 
@@ -150,10 +146,9 @@ vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 no
 
 GLSLShader global getShadowFactor {
 
-const float kEpsilonBias = 0.00001;
-const vec2  kHalf2 = vec2(0.5, 0.5);
-
 float vpvl2FXGetShadowFactor(const vec4 position) {
+    const float kEpsilonBias = 0.00001;
+    const vec2  kHalf2 = vec2(0.5, 0.5);
     vec4 shadowPosition = position / position.w;
     vec2 shadowCoord = vpvl2FXFMA(shadowPosition.xy, kHalf2, kHalf2);
 #if 0 /* VSM */
@@ -173,12 +168,11 @@ float vpvl2FXGetShadowFactor(const vec4 position) {
 
 GLSLShader global applyToonSelfShadow {
 
-const vec4 kOne4 = vec4(1.0);
-const vec2 kToonTexCoord = vec2(0.0, 1.0);
-
 float vpvl2FXGetShadowFactor(const vec4 position);
 
 vec4 vpvl2FXApplyToon(const vec4 color, const vec4 shadowPosition, const vec3 normal) {
+    const vec4 kOne4 = vec4(1.0);
+    const vec2 kToonTexCoord = vec2(0.0, 1.0);
     vec4 toonColor   = mix(kOne4, vpvl2FXGetTexturePixel2D(vpvl2_NS_toonTextureSampler, kToonTexCoord), float(use_toon));
     vec3 shadowColor = color.rgb * toonColor.rgb;
     return vec4(vpvl2FXFMA(color.rgb - shadowColor, vec3(1.0 - vpvl2FXGetShadowFactor(shadowPosition)), shadowColor), color.a);
@@ -212,9 +206,6 @@ vec4 vpvl2FXApplyStandardLight(const vec4 color, const vec4 origin, const vec3 n
 
 GLSLShader global transformVertex {
 
-const vec2 kOne2  = vec2(1.0);
-const vec2 kHalf2 = vec2(0.5);
-
 vec4 vpvl2FXPerformPositionTransform(const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 vec4 vpvl2FXPerformNormalTransform(const vec4 normal, const vec4 position, const vec4 boneIndices, const vec4 boneWeights);
 
@@ -230,6 +221,8 @@ void vpvl2FXTransformVertex(inout vec4 origin,
                             const vec4 boneIndices,
                             const vec4 boneWeights)
 {
+    const vec2 kOne2  = vec2(1.0);
+    const vec2 kHalf2 = vec2(0.5);
     origin            = vpvl2FXPerformPositionTransform(origin, boneIndices, boneWeights);
     position          = vpvl2_NS_worldViewProjectionMatrix * origin;
     normal            = vpvl2FXPerformNormalTransform(normal, position, boneIndices, boneWeights);
@@ -378,9 +371,8 @@ void vpvl2FXTransformVertex(inout vec4 origin,
                             const vec4 boneIndices,
                             const vec4 boneWeights);
 
-const vec4 kBlack = vec4(vec3(0.0), 1.0);
-
 void main() {
+    const vec4 kBlack = vec4(vec3(0.0), 1.0);
     vec4 origin   = vpvl2_inPosition;
     vec4 position = origin;
     vec4 normal   = vpvl2_inNormal;
@@ -408,8 +400,6 @@ void main() {
 
 GLSLShader global passThroughFragment {
 
-const vec4 kZero4 = vec4(0.0);
-
 vec4 vpvl2FXTransformFragment(const vec4 origin,
                               const vec4 position,
                               const vec3 normal,
@@ -420,7 +410,8 @@ vec4 vpvl2FXTransformFragment(const vec4 origin,
                               const vec4 uva2,
                               const vec4 uva3,
                               const vec4 uva4)
-{                      
+{
+    const vec4 kZero4 = vec4(0.0);
     return kZero4;
 }
 

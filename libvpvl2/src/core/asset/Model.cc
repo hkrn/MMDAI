@@ -645,7 +645,7 @@ Model::~Model()
 bool Model::load(const uint8 *data, vsize size)
 {
 #if defined(VPVL2_LINK_ASSIMP) || defined(VPVL2_LINK_ASSIMP3)
-    int flags = aiProcessPreset_TargetRealtime_Fast | aiProcess_FlipUVs;
+    int flags = aiProcessPreset_TargetRealtime_Fast;
     m_importer.SetProgressHandler(new ProgressReporter(m_progressReporterRef));
     m_scene = m_importer.ReadFileFromMemory(data, size, flags, ".x");
     m_importer.SetProgressHandler(0);

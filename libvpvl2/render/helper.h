@@ -206,7 +206,7 @@ static void loadAllModels(const StringMap &settings,
         int indexOf = modelPath.lastIndexOf("/");
         icu4c::String dir(modelPath.tempSubString(0, indexOf));
         if (loadModel(modelPath, applicationContextRef, factoryRef, encodingRef, archive, model)) {
-            BaseApplicationContext::ModelContext modelContext(applicationContextRef, archive.get(), &dir);
+            BaseApplicationContext::ModelContext modelContext(applicationContextRef, archive.get(), &dir, model->type() == IModel::kAssetModel);
             IRenderEngineSmartPtr engine(sceneRef->createRenderEngine(applicationContextRef, model.get(), flags));
             IEffect *effectRef = 0;
             /*
@@ -250,7 +250,7 @@ static void loadAllModels(const StringMap &settings,
                     model.reset(factoryRef->newModel(IModel::kPMXModel));
                     model->setName(effectRef->name(), IEncoding::kDefaultLanguage);
                     IRenderEngineSmartPtr engine(sceneRef->createRenderEngine(applicationContextRef, model.get(), flags));
-                    BaseApplicationContext::ModelContext modelContext(applicationContextRef, 0, &dir);
+                    BaseApplicationContext::ModelContext modelContext(applicationContextRef, 0, &dir, model->type() == IModel::kAssetModel);
                     engine->setEffect(effectRef, IEffect::kAutoDetection, &modelContext);
                     applicationContextRef->createEffectParameterUIWidgets(effectRef);
                     sceneRef->addModel(model.release(), engine.release(), i);

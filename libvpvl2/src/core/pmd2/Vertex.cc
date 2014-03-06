@@ -372,7 +372,7 @@ void Vertex::setEdgeSize(const EdgeSizePrecision &value)
     m_context->edgeSize = value;
 }
 
-void Vertex::setWeight(int index, const WeightPrecision &weight)
+void Vertex::setWeight(int /* index */, const WeightPrecision &weight)
 {
     m_context->weight = weight;
 }

@@ -140,8 +140,6 @@ public:
 
     virtual ~IApplicationContext() {}
 
-    virtual ITexture *uploadTexture(const IString *name) = 0;
-
     virtual ITexture *uploadEffectTexture(const IString *name, const IEffect *effectRef) = 0;
 
     /**

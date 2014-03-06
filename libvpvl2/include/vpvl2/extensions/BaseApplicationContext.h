@@ -151,15 +151,16 @@ public:
     class VPVL2_API ModelContext {
     public:
         typedef std::map<std::string, ITexture *> TextureRefCacheMap;
-        ModelContext(BaseApplicationContext *applicationContextRef, Archive *archiveRef, const IString *directory);
+        ModelContext(BaseApplicationContext *applicationContextRef, Archive *archiveRef, const IString *directory, bool flipVertically);
         ~ModelContext();
         void addTextureCache(const std::string &path, ITexture *texturePtr);
         bool findTexture(const std::string &path, ITexture *&texturePtr) const;
-        ITexture *uploadTexture(const std::string &path, int flags);
-        ITexture *uploadTexture(const uint8 *data, vsize size, const std::string &key, int flags);
+        ITexture *createTextureFromFile(const std::string &path, int flags);
+        ITexture *createTextureFromMemory(const uint8 *data, vsize size, const std::string &key, int flags);
         void storeTexture(const std::string &key, int flags, ITexture *textureRef);
         void getTextureRefCaches(TextureRefCacheMap &value) const;
         int countTextures() const;
+        bool flipVertically() const;
         Archive *archiveRef() const;
         const IString *directoryRef() const;
     private:
@@ -168,6 +169,7 @@ public:
         BaseApplicationContext *m_applicationContextRef;
         TextureRefCacheMap m_textureRefCache;
         float m_maxAnisotropyValue;
+        bool m_flipVertically;
     };
 
     static bool initializeOnce(const char *argv0, const char *logdir, int vlog);
@@ -179,7 +181,7 @@ public:
     void initializeOpenGLContext(bool enableDebug);
     void release();
 
-    ITexture *uploadTexture(const IString *name);
+    ITexture *uploadTextureFromFile(const IString *path, bool flipVertically);
     ITexture *uploadEffectTexture(const IString *name, const IEffect *effectRef);
     ITexture *uploadModelTexture(const IString *name, int flags, void *userData);
     void getMatrix(float32 value[], const IModel *model, int flags) const;
@@ -271,8 +273,8 @@ public:
     void releaseShadowMap();
     void renderShadowMap();
 
-    ITexture *createTexture(const void *ptr, const gl::BaseSurface::Format &format, const Vector3 &size) const;
-    ITexture *createTexture(const uint8 *data, vsize size, bool mipmap);
+    ITexture *uploadTexture(const void *ptr, const gl::BaseSurface::Format &format, const Vector3 &size) const;
+    ITexture *uploadTextureFromMemory(const uint8 *data, vsize size, bool flipVertically);
     void optimizeTexture(ITexture *texture);
 
 #ifdef VPVL2_ENABLE_NVIDIA_CG

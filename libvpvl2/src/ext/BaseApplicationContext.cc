@@ -349,11 +349,12 @@ namespace extensions
 {
 using namespace gl;
 
-BaseApplicationContext::ModelContext::ModelContext(BaseApplicationContext *applicationContextRef, extensions::Archive *archiveRef, const IString *directory)
+BaseApplicationContext::ModelContext::ModelContext(BaseApplicationContext *applicationContextRef, extensions::Archive *archiveRef, const IString *directory, bool flipVertically)
     : m_directoryRef(directory),
       m_archiveRef(archiveRef),
       m_applicationContextRef(applicationContextRef),
-      m_maxAnisotropyValue(0)
+      m_maxAnisotropyValue(0),
+      m_flipVertically(flipVertically)
 {
     IApplicationContext::FunctionResolver *resolver = applicationContextRef->sharedFunctionResolverInstance();
     if (resolver->hasExtension("EXT_texture_filter_anisotropic")) {
@@ -414,6 +415,11 @@ int BaseApplicationContext::ModelContext::countTextures() const
     return m_textureRefCache.size();
 }
 
+bool BaseApplicationContext::ModelContext::flipVertically() const
+{
+    return m_flipVertically;
+}
+
 void BaseApplicationContext::ModelContext::getTextureRefCaches(TextureRefCacheMap &value) const
 {
     for (TextureRefCacheMap::const_iterator it = m_textureRefCache.begin(); it != m_textureRefCache.end(); it++) {
@@ -431,7 +437,7 @@ const IString *BaseApplicationContext::ModelContext::directoryRef() const
     return m_directoryRef;
 }
 
-ITexture *BaseApplicationContext::ModelContext::uploadTexture(const std::string &path, int flags)
+ITexture *BaseApplicationContext::ModelContext::createTextureFromFile(const std::string &path, int flags)
 {
     VPVL2_DCHECK(!path.empty());
     ITexture *textureRef = 0;
@@ -440,13 +446,13 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const std::string 
     }
     else {
         IStringSmartPtr pathPtr(String::create(path));
-        textureRef = m_applicationContextRef->uploadTexture(pathPtr.get());
+        textureRef = m_applicationContextRef->uploadTextureFromFile(pathPtr.get(), m_flipVertically);
         storeTexture(path, flags, textureRef);
     }
     return textureRef;
 }
 
-ITexture *BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data, vsize size, const std::string &key, int flags)
+ITexture *BaseApplicationContext::ModelContext::createTextureFromMemory(const uint8 *data, vsize size, const std::string &key, int flags)
 {
     VPVL2_DCHECK(data && size > 0);
     ITexture *textureRef = 0;
@@ -454,7 +460,7 @@ ITexture *BaseApplicationContext::ModelContext::uploadTexture(const uint8 *data,
         VPVL2_VLOG(2, key << " is already cached, skipped.");
         return textureRef;
     }
-    textureRef = m_applicationContextRef->createTexture(data, size, internal::hasFlagBits(flags, IApplicationContext::kGenerateTextureMipmap));
+    textureRef = m_applicationContextRef->uploadTextureFromMemory(data, size, m_flipVertically);
     if (!textureRef) {
         VPVL2_LOG(WARNING, "Cannot load texture with key " << key << ": " << stbi_failure_reason());
         return 0;
@@ -570,17 +576,17 @@ void BaseApplicationContext::release()
     popAnnotationGroup(this);
 }
 
-ITexture *BaseApplicationContext::uploadTexture(const IString *name)
+ITexture *BaseApplicationContext::uploadTextureFromFile(const IString *path, bool flipVertically)
 {
     ITexture *texturePtr = 0;
-    MapBuffer buffer(this);
-    if (const String *s = static_cast<const String *>(name)) {
-        const std::string &path = s->toStdString();
+    if (const String *s = static_cast<const String *>(path)) {
+        const std::string &pathString = s->toStdString();
         /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
-        if (mapFile(path, &buffer)) {
-            texturePtr = createTexture(buffer.address, buffer.size, true);
+        MapBuffer buffer(this);
+        if (mapFile(pathString, &buffer)) {
+            texturePtr = uploadTextureFromMemory(buffer.address, buffer.size, flipVertically);
             if (!texturePtr) {
-                VPVL2_LOG(WARNING, "Cannot load texture from " << path << ": " << stbi_failure_reason());
+                VPVL2_LOG(WARNING, "Cannot load texture from " << pathString << ": " << stbi_failure_reason());
                 return 0;
             }
         }
@@ -595,7 +601,7 @@ ITexture *BaseApplicationContext::uploadEffectTexture(const IString *name, const
         if (extractFilePath(pathRef->toStdString(), dir, filename, baseName)) {
             const std::string &newName = static_cast<const String *>(name)->toStdString();
             IStringSmartPtr pathPtr(String::create(dir + "/" + newName));
-            return uploadTexture(pathPtr.get());
+            return uploadTextureFromFile(pathPtr.get(), true);
         }
     }
     return 0;
@@ -619,7 +625,7 @@ ITexture *BaseApplicationContext::uploadModelTexture(const IString *name, int fl
                 if (!context->findTexture(newToonPath, texturePtr)) {
                     /* uses default system texture loader */
                     VPVL2_VLOG(2, "Try loading a system default toon texture from archive: " << newToonPath);
-                    texturePtr = context->uploadTexture(newToonPath, flags);
+                    texturePtr = context->createTextureFromFile(newToonPath, flags);
                 }
             }
             else if (context->archiveRef()) {
@@ -658,7 +664,7 @@ ITexture *BaseApplicationContext::uploadSystemToonTexture(const std::string &nam
     MapBuffer buffer(this);
     const std::string &path = toonDirectory() + "/" + name;
     /* open a (system) toon texture from library resource */
-    return mapFile(path, &buffer) ? context->uploadTexture(buffer.address, buffer.size, path, flags) : 0;
+    return mapFile(path, &buffer) ? context->createTextureFromMemory(buffer.address, buffer.size, path, flags) : 0;
 }
 
 ITexture *BaseApplicationContext::internalUploadTexture(const std::string &name, const std::string &path, int flags, ModelContext *context)
@@ -703,14 +709,14 @@ ITexture *BaseApplicationContext::uploadTextureOpaque(const uint8 *data, vsize s
 {
     /* fallback to default texture loader */
     VPVL2_VLOG(2, "Using default texture loader (stbi_image) instead of inherited class texture loader.");
-    return context->uploadTexture(data, size, key, flags);
+    return context->createTextureFromMemory(data, size, key, flags);
 }
 
 ITexture *BaseApplicationContext::uploadTextureOpaque(const std::string &path, int flags, ModelContext *context)
 {
     /* fallback to default texture loader */
     VPVL2_VLOG(2, "Using default texture loader (stbi_image) instead of inherited class texture loader.");
-    return context->uploadTexture(path, flags);
+    return context->createTextureFromFile(path, flags);
 }
 
 ITexture *BaseApplicationContext::handleNullTextureObject() const
@@ -1663,7 +1669,7 @@ void BaseApplicationContext::renderShadowMap()
     }
 }
 
-ITexture *BaseApplicationContext::createTexture(const void *ptr, const BaseSurface::Format &format, const Vector3 &size) const
+ITexture *BaseApplicationContext::uploadTexture(const void *ptr, const BaseSurface::Format &format, const Vector3 &size) const
 {
     VPVL2_DCHECK(ptr);
     FunctionResolver *resolver = sharedFunctionResolverInstance();
@@ -1680,7 +1686,7 @@ ITexture *BaseApplicationContext::createTexture(const void *ptr, const BaseSurfa
     return texture;
 }
 
-ITexture *BaseApplicationContext::createTexture(const uint8 *data, vsize size, bool mipmap)
+ITexture *BaseApplicationContext::uploadTextureFromMemory(const uint8 *data, vsize size, bool flipVertically)
 {
     VPVL2_DCHECK(data && size > 0);
     Vector3 textureSize;
@@ -1714,9 +1720,21 @@ ITexture *BaseApplicationContext::createTexture(const uint8 *data, vsize size, b
     FreeImage_CloseMemory(memory);
 #endif
     /* Loading major image format (BMP/JPG/PNG/TGA/DDS) texture with stb_image.c */
-    if (stbi_uc *ptr = stbi_load_from_memory(data, int(size), &x, &y, &ncomponents, 4)) {
+    const int rc = 4;
+    if (stbi_uc *ptr = stbi_load_from_memory(data, int(size), &x, &y, &ncomponents, rc)) {
         textureSize.setValue(Scalar(x), Scalar(y), 1);
-        texturePtr = createTexture(ptr, defaultTextureFormat(), textureSize);
+        if (flipVertically) {
+            for (int j = 0, height = y >> 1; j < height; ++j) {
+                stbi_uc *p1 = ptr + j * x * rc;
+                stbi_uc *p2 = ptr + (y - 1 - j) * x * rc;
+                for (int i = 0, width = x * rc; i < width; ++i) {
+                    stbi_uc t = p1[i];
+                    p1[i] = p2[i];
+                    p2[i] = t;
+                }
+            }
+        }
+        texturePtr = uploadTexture(ptr, defaultTextureFormat(), textureSize);
         stbi_image_free(ptr);
     }
     return texturePtr;

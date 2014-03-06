@@ -276,7 +276,7 @@ ITexture *ApplicationContext::uploadTextureOpaque(const uint8 *data, vsize size,
     image.loadFromData(data, size);
     ITexture *texturePtr = uploadTextureQt(image, key, flags, context);
     if (!texturePtr) {
-        texturePtr = context->uploadTexture(data, size, key, flags);
+        texturePtr = context->createTextureFromMemory(data, size, key, flags);
     }
     return texturePtr;
 }
@@ -287,7 +287,7 @@ ITexture *ApplicationContext::uploadTextureOpaque(const std::string &path, int f
     image.load(QString::fromStdString(path));
     ITexture *texturePtr = uploadTextureQt(image, path, flags, context);
     if (!texturePtr) {
-        texturePtr = context->uploadTexture(path, flags);
+        texturePtr = context->createTextureFromFile(path, flags);
     }
     return texturePtr;
 }
@@ -311,7 +311,8 @@ ITexture *ApplicationContext::uploadTextureQt(const QImage &image, const std::st
     ITexture *texturePtr = 0;
     if (!image.isNull()) {
         const Vector3 size(image.width(), image.height(), 1);
-        texturePtr = createTexture(image.convertToFormat(QImage::Format_ARGB32).rgbSwapped().constBits(), defaultTextureFormat(), size);
+        const QImage &normalizedImage = image.convertToFormat(QImage::Format_ARGB32).rgbSwapped();
+        texturePtr = uploadTexture((context->flipVertically() ? normalizedImage.mirrored() : normalizedImage).constBits(), defaultTextureFormat(), size);
         VPVL2_VLOG(2, "Created a texture: texture=" << texturePtr);
         context->storeTexture(key, flags, texturePtr);
     }
@@ -331,7 +332,7 @@ void ApplicationContext::uploadEnqueuedModelProxies(ProjectProxy *projectProxy, 
         ModelProxy *modelProxy = pair.first;
         const QFileInfo fileInfo(modelProxy->fileUrl().toLocalFile());
         const String dir(fileInfo.absoluteDir().absolutePath());
-        ModelContext context(this, 0, &dir);
+        ModelContext context(this, 0, &dir, modelProxy->data()->type() == IModel::kAssetModel);
         IModel *modelRef = modelProxy->data();
         IRenderEngineSmartPtr engine(projectRef->createRenderEngine(this, modelRef, Scene::kEffectCapable));
         engine->setUpdateOptions(IRenderEngine::kParallelUpdate);
@@ -370,7 +371,7 @@ void ApplicationContext::uploadEnqueuedEffects(ProjectProxy *projectProxy, QList
         const QFileInfo fileInfo(modelProxy->fileUrl().toLocalFile());
         if (IEffect *effectRef = createEffectRef(fileInfo.absoluteFilePath().toStdString())) {
             const String dir(fileInfo.absoluteDir().absolutePath());
-            ModelContext context(this, 0, &dir);
+            ModelContext context(this, 0, &dir, false);
             IModel *modelRef = modelProxy->data();
             IRenderEngineSmartPtr engine(projectRef->createRenderEngine(this, modelRef, Scene::kEffectCapable));
             engine->setEffect(effectRef, IEffect::kAutoDetection, &context);
