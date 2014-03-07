@@ -117,12 +117,20 @@ Tab {
                             }
                         }
                     }
-                    Button {
+                    RowLayout {
                         Layout.alignment: Qt.AlignCenter
-                        text: qsTr("Register")
-                        onClicked: {
-                            var camera = scene.camera
-                            camera.motion.addKeyframe(camera, timeline.timeIndex)
+                        Button {
+                            Layout.alignment: Qt.AlignCenter
+                            text: qsTr("Register")
+                            onClicked: {
+                                var camera = scene.camera
+                                camera.motion.addKeyframe(camera, timeline.timeIndex)
+                            }
+                        }
+                        Button {
+                            Layout.alignment: Qt.AlignCenter
+                            text: qsTr("Reset")
+                            onClicked: resetCameraAction.trigger()
                         }
                     }
                 }

@@ -63,6 +63,7 @@ Tab {
                     ColumnLayout {
                         Rectangle {
                             id: lightColorPreview
+                            color: scene.light.color
                             Layout.alignment: Qt.AlignCenter
                             width: 50
                             height: 50
@@ -107,12 +108,19 @@ Tab {
                     value: lightDirectionAxesSpinBox.value
                     when: lightDirectionAxesSpinBox.hovered
                 }
-                Button {
-                    Layout.alignment: Qt.AlignCenter
-                    text: qsTr("Register")
-                    onClicked: {
-                        var light = scene.light
-                        light.motion.addKeyframe(light, timeline.timeIndex)
+                ColumnLayout {
+                    Button {
+                        Layout.alignment: Qt.AlignCenter
+                        text: qsTr("Register")
+                        onClicked: {
+                            var light = scene.light
+                            light.motion.addKeyframe(light, timeline.timeIndex)
+                        }
+                    }
+                    Button {
+                        Layout.alignment: Qt.AlignCenter
+                        text: qsTr("Reset")
+                        onClicked: resetLightAction.trigger()
                     }
                 }
             }
