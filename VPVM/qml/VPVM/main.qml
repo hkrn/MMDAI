@@ -801,6 +801,20 @@ ApplicationWindow {
         onTriggered: scene.resetMorph(null)
     }
     Action {
+        id: deselectBoneAction
+        enabled: scene.hasBoneSelected
+        text: qsTr("Deselect current bone")
+        tooltip: qsTr("Deselected current bone and make it none")
+        onTriggered: scene.currentModel.selectBone(null)
+    }
+    Action {
+        id: deselectMorphAction
+        enabled: scene.hasMorphSelected
+        text: qsTr("Deselect current morph")
+        tooltip: qsTr("Deselected current morph and make it none")
+        onTriggered: scene.currentModel.firstTargetMorph = null
+    }
+    Action {
         id: detachTimelineAction
         text: qsTr("Detach Timeline")
         tooltip: qsTr("Detach left timeline panel. If you want to attach again, you should click the close button.")
@@ -1029,12 +1043,16 @@ ApplicationWindow {
                 }
                 MenuItem { action: resetBoneOrientationAction }
                 MenuItem { action: resetAllBonesAction }
+                MenuSeparator {}
+                MenuItem { action: deselectBoneAction }
             }
             Menu {
                 id: morphMenu
                 title: qsTr("Morph")
                 MenuItem { action: resetSelectedMorphAction }
                 MenuItem { action: resetAllMorphsAction }
+                MenuSeparator {}
+                MenuItem { action: deselectMorphAction }
             }
             MenuSeparator {}
             MenuItem { action: deleteModelAction }
