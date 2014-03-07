@@ -124,8 +124,6 @@ private:
     MotionProxy *m_motionRef;
     vpvl2::ICamera *m_cameraRef;
     QScopedPointer<CameraMotionTrack> m_track;
-    QVector3D m_lookAt;
-    QVector3D m_angle;
     QString m_name;
     qreal m_cameraTranslateRatio;
     int m_index;

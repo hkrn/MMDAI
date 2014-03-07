@@ -74,6 +74,11 @@ void LightRefObject::reset()
     emit lightDidReset();
 }
 
+void LightRefObject::refresh()
+{
+    emit lightDidReset();
+}
+
 void LightRefObject::release()
 {
     if (m_lightRef) {
@@ -95,14 +100,6 @@ void LightRefObject::assignLightRef(ILight *lightRef, MotionProxy *motionProxyRe
     m_lightRef = lightRef;
     emit motionChanged();
     refresh();
-}
-
-void LightRefObject::refresh()
-{
-    Q_ASSERT(m_lightRef);
-    m_color = Util::fromColorRGB(m_lightRef->color());
-    m_direction = Util::fromVector3(m_lightRef->direction());
-    emit lightDidReset();
 }
 
 ProjectProxy *LightRefObject::project() const
@@ -127,7 +124,7 @@ ILight *LightRefObject::data() const
 
 QColor LightRefObject::color() const
 {
-    return m_color;
+    return Util::fromColorRGB(m_lightRef->color());
 }
 
 void LightRefObject::setColor(const QColor &value)
@@ -135,22 +132,20 @@ void LightRefObject::setColor(const QColor &value)
     Q_ASSERT(m_lightRef);
     if (value != color()) {
         m_lightRef->setColor(Util::toColorRGB(value));
-        m_color = value;
         emit colorChanged();
     }
 }
 
 QVector3D LightRefObject::direction() const
 {
-    return m_direction;
+    return Util::fromVector3(m_lightRef->direction());
 }
 
 void LightRefObject::setDirection(const QVector3D &value)
 {
     Q_ASSERT(m_lightRef);
-    if (!qFuzzyCompare(value, direction())) {
+    if (!qFuzzyCompare(value, QVector3D()) && !qFuzzyCompare(value, direction())) {
         m_lightRef->setDirection(Util::toVector3(value));
-        m_direction = value;
         emit directionChanged();
     }
 }

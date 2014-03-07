@@ -109,8 +109,6 @@ private:
     MotionProxy *m_motionRef;
     vpvl2::ILight *m_lightRef;
     QScopedPointer<LightMotionTrack> m_track;
-    QColor m_color;
-    QVector3D m_direction;
     QString m_name;
     ShadowType m_shadowType;
     qreal m_shadowDistance;

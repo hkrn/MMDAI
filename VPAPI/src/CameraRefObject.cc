@@ -84,12 +84,12 @@ void CameraRefObject::translate(qreal x, qreal y)
     newDelta += cameraTransformMatrix[0] * x;
     newDelta += cameraTransformMatrix[1] * y;
     newDelta *= ratio;
-    setLookAt(m_lookAt + Util::fromVector3(newDelta));
+    setLookAt(lookAt() + Util::fromVector3(newDelta));
 }
 
 void CameraRefObject::rotate(qreal x, qreal y)
 {
-    setAngle(m_angle + QVector3D(y, x, 0));
+    setAngle(angle() + QVector3D(y, x, 0));
 }
 
 void CameraRefObject::zoom(qreal value)
@@ -143,9 +143,6 @@ void CameraRefObject::assignCameraRef(ICamera *cameraRef, MotionProxy *motionPro
 
 void CameraRefObject::refresh()
 {
-    Q_ASSERT(m_cameraRef);
-    m_lookAt = Util::fromVector3(m_cameraRef->lookAt());
-    m_angle = Util::fromVector3(m_cameraRef->angle());
     emit cameraDidReset();
 }
 
@@ -181,7 +178,8 @@ ICamera *CameraRefObject::data() const
 
 QVector3D CameraRefObject::lookAt() const
 {
-    return m_lookAt;
+    Q_ASSERT(m_cameraRef);
+    return Util::fromVector3(m_cameraRef->lookAt());
 }
 
 void CameraRefObject::setLookAt(const QVector3D &value)
@@ -189,14 +187,14 @@ void CameraRefObject::setLookAt(const QVector3D &value)
     Q_ASSERT(m_cameraRef);
     if (!qFuzzyCompare(value, lookAt())) {
         m_cameraRef->setLookAt(Util::toVector3(value));
-        m_lookAt = value;
         emit lookAtChanged();
     }
 }
 
 QVector3D CameraRefObject::angle() const
 {
-    return m_angle;
+    Q_ASSERT(m_cameraRef);
+    return Util::fromVector3(m_cameraRef->angle());
 }
 
 void CameraRefObject::setAngle(const QVector3D &value)
@@ -204,7 +202,6 @@ void CameraRefObject::setAngle(const QVector3D &value)
     Q_ASSERT(m_cameraRef);
     if (!qFuzzyCompare(value, angle())) {
         m_cameraRef->setAngle(Util::toVector3(value));
-        m_angle = value;
         emit angleChanged();
     }
 }
@@ -218,7 +215,7 @@ qreal CameraRefObject::distance() const
 void CameraRefObject::setDistance(const qreal &value)
 {
     Q_ASSERT(m_cameraRef);
-    if (!qFuzzyCompare(value, distance())) {
+    if (!qFuzzyIsNull(value) && !qFuzzyCompare(value, distance())) {
         m_cameraRef->setDistance(value);
         emit distanceChanged();
     }
@@ -233,7 +230,7 @@ qreal CameraRefObject::fov() const
 void CameraRefObject::setFov(const qreal &value)
 {
     Q_ASSERT(m_cameraRef);
-    if (!qFuzzyCompare(value, fov())) {
+    if (!qFuzzyIsNull(value) && !qFuzzyCompare(value, fov())) {
         m_cameraRef->setFov(value);
         emit fovChanged();
     }
