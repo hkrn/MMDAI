@@ -583,7 +583,7 @@ ApplicationWindow {
     }
     Action {
         id: showLabelsInEnglishAction
-        text: qsTr("Show Labels in English")
+        text: "Show Labels in English"
         checkable: true
         checked: false
         onCheckedChanged: scene.project.language = checked ? VPVM.Project.English : VPVM.Project.Japanese
@@ -804,25 +804,25 @@ ApplicationWindow {
         id: deselectBoneAction
         enabled: scene.hasBoneSelected
         text: qsTr("Deselect current bone")
-        tooltip: qsTr("Deselected current bone and make it none")
+        tooltip: qsTr("Deselected current bone and make it none.")
         onTriggered: scene.currentModel.selectBone(null)
     }
     Action {
         id: deselectMorphAction
         enabled: scene.hasMorphSelected
         text: qsTr("Deselect current morph")
-        tooltip: qsTr("Deselected current morph and make it none")
+        tooltip: qsTr("Deselected current morph and make it none.")
         onTriggered: scene.currentModel.firstTargetMorph = null
     }
     Action {
         id: detachTimelineAction
         text: qsTr("Detach Timeline")
-        tooltip: qsTr("Detach left timeline panel. If you want to attach again, you should click the close button.")
+        tooltip: qsTr("Detach left timeline panel (If you want to restore, you should click the close button).")
     }
     Action {
         id: toggleEnableFullSceneAction
         text: qsTr("Enable Full Scene Mode")
-        tooltip: qsTr("Expands Scene and Hides Timeline and Tabs.")
+        tooltip: qsTr("Expands Scene and Hides Timeline and Property Tabs (If you want to restore, you should click again).")
         checkable: true
         checked: scene.isFullView
         onToggled: {
@@ -833,7 +833,7 @@ ApplicationWindow {
     Action {
         id: toggleDetachTimelineAction
         text: qsTr("Toggle Attach/Detach Timeline")
-        tooltip: qsTr("Attach/Detach left timeline panel. If you want to attach again, you should click the close button.")
+        tooltip: qsTr("Attach/Detach left timeline panel (If you want to restore, you should click again).")
         checkable: true
         checked: scene.state === "detachedTimeline"
         onToggled: scene.state = checked ? "detachedTimeline" : "attachedTimeline"
@@ -865,7 +865,7 @@ ApplicationWindow {
     }
     Action {
         id: openAboutQtAction
-        text: qsTr("About Qt 5.2")
+        text: "About Qt 5.2"
         tooltip: qsTr("Show information dialog of Qt.")
         onTriggered: VPVM.UIAuxHelper.openAboutQt()
     }
