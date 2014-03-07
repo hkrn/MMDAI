@@ -968,11 +968,6 @@ IMotion *Motion::clone() const
     return motion;
 }
 
-ModelKeyframe *Motion::createModelKeyframe() const
-{
-    return new mvd::ModelKeyframe(m_context->modelSection);
-}
-
 const IString *Motion::name() const
 {
     return m_context->name;

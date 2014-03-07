@@ -229,8 +229,6 @@ public:
     void setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type);
     IMotion *clone() const;
 
-    ModelKeyframe *createModelKeyframe() const;
-
     const IString *name() const;
     Scene *parentSceneRef() const;
     IModel *parentModelRef() const;
