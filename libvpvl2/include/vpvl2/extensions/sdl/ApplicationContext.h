@@ -145,14 +145,14 @@ public:
         return false;
     }
     ITexture *uploadTextureOpaque(const uint8 *data, vsize size, const std::string &key, int flags, ModelContext *context) {
-        ITexture *texturePtr = context->uploadTexture(data, size, key, flags);
+        ITexture *texturePtr = context->createTextureFromMemory(data, size, key, flags);
         if (texturePtr) {
             // optimizeTexture(texturePtr);
         }
         return texturePtr;
     }
     ITexture *uploadTextureOpaque(const std::string &key, int flags, ModelContext *context) {
-        ITexture *texturePtr = context->uploadTexture(key, flags);
+        ITexture *texturePtr = context->createTextureFromFile(key, flags);
         if (texturePtr) {
             // optimizeTexture(texturePtr);
         }
