@@ -76,7 +76,7 @@ public:
                       Array<IKeyframe *> &keyframes) const;
     void getAllKeyframes(Array<IKeyframe *> &keyframes) const;
     void setAllKeyframes(const Array<IKeyframe *> &value);
-    void fillInitialKeyframes();
+    void createFirstKeyframeUnlessFound();
     IKeyframe::LayerIndex countLayers(const IString *name) const;
     IMorphKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex,
                                  const IString *name,

@@ -1604,6 +1604,7 @@ struct XMLProject::PrivateContext {
                     }
                 }
                 motionRefs.insert(std::make_pair(uuid, currentMotion));
+                currentMotion->createFirstKeyframesUnlessFound();
                 sceneRef->addMotion(currentMotion);
             }
             else {

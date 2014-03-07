@@ -74,6 +74,7 @@ public:
 
     void read(const uint8 *data, int size);
     void seek(const IKeyframe::TimeIndex &timeIndexAt);
+    void createFirstKeyframeUnlessFound();
     void reset();
     void setParentModelRef(IModel *model);
     BoneKeyframe *findKeyframeAt(int i) const;
@@ -94,7 +95,6 @@ private:
                             int at,
                             IKeyframe::SmoothPrecision &value);
     void createPrivateContexts(IModel *model);
-    void fillInitialKeyframes(const IModel *model);
     void calculateKeyframes(const IKeyframe::TimeIndex &timeIndexAt, PrivateContext *context);
 
     IEncoding *m_encodingRef;

@@ -205,7 +205,6 @@ void BoneSection::read(const uint8 *data)
         BoneKeyframe *keyframePtr = trackPtr->keyframes.append(new BoneKeyframe(m_motionRef));
         keyframePtr->read(ptr);
         keyframePtr->setName(name);
-        setDuration(keyframePtr);
         m_context->allKeyframeRefs.append(keyframePtr);
         ptr += sizeOfKeyframe;
     }
@@ -315,13 +314,7 @@ IKeyframe::LayerIndex BoneSection::countLayers(const IString *name) const
 
 void BoneSection::update()
 {
-    IKeyframe::TimeIndex durationTimeIndex = 0;
-    const int nkeyframes = m_context->allKeyframeRefs.count();
-    for (int i = 0; i < nkeyframes; i++) {
-        IKeyframe *keyframe = m_context->allKeyframeRefs[i];
-        btSetMax(durationTimeIndex, keyframe->timeIndex());
-    }
-    m_durationTimeIndex = durationTimeIndex;
+    updateKeyframes(m_context->allKeyframeRefs);
 }
 
 void BoneSection::addKeyframe(IKeyframe *keyframe)
@@ -331,14 +324,12 @@ void BoneSection::addKeyframe(IKeyframe *keyframe)
     if (track) {
         trackPtr = *track;
         trackPtr->keyframes.append(keyframe);
-        setDuration(keyframe);
         m_context->allKeyframeRefs.append(keyframe);
     }
     else if (m_context->modelRef) {
         trackPtr = m_context->name2tracks.insert(key, new BoneAnimationTrack());
         trackPtr->boneRef = m_context->modelRef->findBoneRef(keyframe->name());
         trackPtr->keyframes.append(keyframe);
-        setDuration(keyframe);
         m_context->allKeyframeRefs.append(keyframe);
         m_context->name2tracks.insert(key, trackPtr);
         m_context->track2names.insert(trackPtr, key);
@@ -384,13 +375,12 @@ void BoneSection::setAllKeyframes(const Array<IKeyframe *> &value)
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = value[i];
         if (keyframe && keyframe->type() == IKeyframe::kBoneKeyframe) {
-            setDuration(keyframe);
             m_context->allKeyframeRefs.append(keyframe);
         }
     }
 }
 
-void BoneSection::fillInitialKeyframes()
+void BoneSection::createFirstKeyframeUnlessFound()
 {
     if (const IModel *modelRef = m_context->modelRef) {
         Array<IBone *> boneRefs;
@@ -399,7 +389,7 @@ void BoneSection::fillInitialKeyframes()
         for (int i = 0; i < nbones; i++) {
             const IBone *boneRef = boneRefs[i];
             const IString *name = boneRef->name(IEncoding::kDefaultLanguage);
-            if (!findKeyframe(0, name, 0)) {
+            if (name && name->size() > 0 && !findKeyframe(0, name, 0)) {
                 BoneKeyframe *keyframe = new BoneKeyframe(m_motionRef);
                 keyframe->setName(name);
                 keyframe->setLayerIndex(0);
@@ -410,6 +400,7 @@ void BoneSection::fillInitialKeyframes()
                 addKeyframe(keyframe);
             }
         }
+        update();
     }
 }
 

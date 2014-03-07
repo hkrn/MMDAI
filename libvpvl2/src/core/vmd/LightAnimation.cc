@@ -98,6 +98,17 @@ void LightAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     m_currentTimeIndex = timeIndexAt;
 }
 
+void LightAnimation::createFirstKeyframeUnlessFound()
+{
+    if (!findKeyframe(0)) {
+        LightKeyframe *keyframe = m_keyframes.append(new LightKeyframe());
+        keyframe->setTimeIndex(0);
+        keyframe->setColor(Vector3(0.6f, 0.6f, 0.6f));
+        keyframe->setDirection(Vector3(-0.5f, -1.0f, -0.5f));
+        update();
+    }
+}
+
 void LightAnimation::update()
 {
     int nkeyframes = m_keyframes.count();

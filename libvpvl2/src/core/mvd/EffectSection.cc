@@ -36,7 +36,7 @@
 */
 
 #include "vpvl2/vpvl2.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/MotionHelper.h"
 
 #include "vpvl2/mvd/EffectKeyframe.h"
 #include "vpvl2/mvd/EffectSection.h"
@@ -135,19 +135,12 @@ vsize EffectSection::countKeyframes() const
 
 void EffectSection::update()
 {
-    IKeyframe::TimeIndex durationTimeIndex = 0;
-    const int nkeyframes = m_context->keyframes.count();
-    for (int i = 0; i < nkeyframes; i++) {
-        IKeyframe *keyframe = m_context->keyframes[i];
-        btSetMax(durationTimeIndex, keyframe->timeIndex());
-    }
-    m_durationTimeIndex = durationTimeIndex;
+    updateKeyframes(m_context->keyframes);
 }
 
 void EffectSection::addKeyframe(IKeyframe *keyframe)
 {
     m_context->keyframes.append(keyframe);
-    setDuration(keyframe);
 }
 
 void EffectSection::removeKeyframe(IKeyframe *keyframe)
@@ -182,6 +175,22 @@ void EffectSection::setAllKeyframes(const Array<IKeyframe *> &value)
         if (keyframe && keyframe->type() == IKeyframe::kEffectKeyframe) {
             addKeyframe(keyframe);
         }
+    }
+}
+
+void EffectSection::createFirstKeyframeUnlessFound()
+{
+    if (!findKeyframe(0, 0, 0)) {
+        EffectKeyframe *keyframe = m_context->keyframes.append(new EffectKeyframe(m_motionRef));
+        keyframe->setAddBlendEnable(false);
+        keyframe->setLayerIndex(0);
+        keyframe->setName(0);
+        keyframe->setOpacity(1.0);
+        keyframe->setScaleFactor(1.0);
+        keyframe->setShadowEnable(true);
+        keyframe->setTimeIndex(0);
+        keyframe->setVisible(true);
+        update();
     }
 }
 

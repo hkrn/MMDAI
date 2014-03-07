@@ -100,38 +100,15 @@ struct Motion::PrivateContext {
     }
     void parseCameraKeyframes(const Motion::DataInfo &info) {
         cameraMotion.read(info.cameraKeyframePtr, info.cameraKeyframeCount);
-        if (!cameraMotion.findKeyframe(0)) {
-            CameraKeyframe *keyframe = new CameraKeyframe();
-            keyframe->setTimeIndex(0);
-            keyframe->setAngle(kZeroV3);
-            keyframe->setDistance(50.0f);
-            keyframe->setFov(27.0f);
-            keyframe->setLookAt(Vector3(0.0f, 10.0f, 0.0f));
-            keyframe->setDefaultInterpolationParameter();
-            cameraMotion.addKeyframe(keyframe);
-        }
     }
     void parseLightKeyframes(const Motion::DataInfo &info) {
         lightMotion.read(info.lightKeyframePtr, info.lightKeyframeCount);
-        if (!lightMotion.findKeyframe(0)) {
-            LightKeyframe *keyframe = new LightKeyframe();
-            keyframe->setTimeIndex(0);
-            keyframe->setColor(Vector3(0.6f, 0.6f, 0.6f));
-            keyframe->setDirection(Vector3(-0.5f, -1.0f, -0.5f));
-            lightMotion.addKeyframe(keyframe);
-        }
     }
     void parseSelfShadowKeyframes(const Motion::DataInfo &info) {
         projectMotion.read(info.selfShadowKeyframePtr, info.selfShadowKeyframeCount);
     }
     void parseModelKeyframes(const Motion::DataInfo &info) {
         modelMotion.read(info.modelKeyframePtr, info.modelKeyframeCount);
-        if (!modelMotion.findKeyframe(0)) {
-            ModelKeyframe *keyframe = new ModelKeyframe(encodingRef);
-            keyframe->setTimeIndex(0);
-            keyframe->setVisible(true);
-            modelMotion.addKeyframe(keyframe);
-        }
     }
     void release() {
         /* retain model reference */
@@ -156,7 +133,7 @@ struct Motion::PrivateContext {
     ModelAnimation modelMotion;
     ProjectAnimation projectMotion;
     Hash<HashInt, BaseAnimation *> type2animationRefs;
-    Error error;
+    Motion::Error error;
     bool active;
 };
 
@@ -321,6 +298,7 @@ bool Motion::load(const uint8 *data, vsize size)
         m_context->parseLightKeyframes(info);
         m_context->parseSelfShadowKeyframes(info);
         m_context->parseModelKeyframes(info);
+        createFirstKeyframesUnlessFound();
         return true;
     }
     return false;
@@ -388,7 +366,7 @@ vsize Motion::estimateSize() const
             + m_context->morphMotion.countKeyframes() * MorphKeyframe::strideSize()
             + m_context->cameraMotion.countKeyframes() * CameraKeyframe::strideSize()
             + m_context->lightMotion.countKeyframes() * LightKeyframe::strideSize()
-            + m_context->projectMotion.countKeyframes() * ProjectKeyframe::strideSize()
+            // + m_context->projectMotion.countKeyframes() * ProjectKeyframe::strideSize()
             + m_context->modelMotion.estimateSize();
 }
 
@@ -874,6 +852,16 @@ void Motion::setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type ty
         animation->setAllKeyframes(value, type);
         update(type);
     }
+}
+
+void Motion::createFirstKeyframesUnlessFound()
+{
+    m_context->boneMotion.createFirstKeyframeUnlessFound();
+    m_context->cameraMotion.createFirstKeyframeUnlessFound();
+    m_context->lightMotion.createFirstKeyframeUnlessFound();
+    // m_context->modelMotion.createFirstKeyframeUnlessFound();
+    m_context->morphMotion.createFirstKeyframeUnlessFound();
+    // m_context->projectMotion.createFirstKeyframeUnlessFound();
 }
 
 const IString *Motion::name() const

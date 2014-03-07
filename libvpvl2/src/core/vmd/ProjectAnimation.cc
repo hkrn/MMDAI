@@ -92,6 +92,14 @@ void ProjectAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     m_currentTimeIndex = timeIndexAt;
 }
 
+void ProjectAnimation::createFirstKeyframeUnlessFound()
+{
+    if (!findKeyframe(0)) {
+        m_keyframes.append(new ProjectKeyframe());
+        update();
+    }
+}
+
 void ProjectAnimation::update()
 {
     int nkeyframes = m_keyframes.count();

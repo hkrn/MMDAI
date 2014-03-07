@@ -212,7 +212,6 @@ void ModelSection::read(const uint8 *data)
     for (int i = 0; i < nkeyframes; i++) {
         ModelKeyframe *keyframe = m_context->keyframes.append(new ModelKeyframe(this));
         keyframe->read(ptr);
-        setDuration(keyframe);
         ptr += sizeOfKeyframe;
     }
 }
@@ -282,19 +281,12 @@ vsize ModelSection::countKeyframes() const
 
 void ModelSection::update()
 {
-    IKeyframe::TimeIndex durationTimeIndex = 0;
-    const int nkeyframes = m_context->keyframes.count();
-    for (int i = 0; i < nkeyframes; i++) {
-        IKeyframe *keyframe = m_context->keyframes[i];
-        btSetMax(durationTimeIndex, keyframe->timeIndex());
-    }
-    m_durationTimeIndex = durationTimeIndex;
+    updateKeyframes(m_context->keyframes);
 }
 
 void ModelSection::addKeyframe(IKeyframe *keyframe)
 {
     m_context->keyframes.append(keyframe);
-    setDuration(keyframe);
 }
 
 void ModelSection::removeKeyframe(IKeyframe *keyframe)
@@ -332,6 +324,23 @@ void ModelSection::setAllKeyframes(const Array<IKeyframe *> &value)
         if (keyframe && keyframe->type() == IKeyframe::kModelKeyframe) {
             addKeyframe(keyframe);
         }
+    }
+}
+
+void ModelSection::createFirstKeyframeUnlessFound()
+{
+    if (!findKeyframe(0, 0)) {
+        ModelKeyframe *keyframe = m_context->keyframes.append(new ModelKeyframe(this));
+        keyframe->setAddBlendEnable(true);
+        keyframe->setEdgeColor(kZeroC);
+        keyframe->setEdgeWidth(1.0);
+        keyframe->setLayerIndex(0);
+        keyframe->setPhysicsEnable(true);
+        keyframe->setPhysicsStillMode(0);
+        keyframe->setShadowEnable(true);
+        keyframe->setTimeIndex(0);
+        keyframe->setVisible(true);
+        update();
     }
 }
 

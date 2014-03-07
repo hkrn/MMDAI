@@ -85,9 +85,31 @@ void ModelAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     }
 }
 
+void ModelAnimation::createFirstKeyframeUnlessFound()
+{
+    if (!findKeyframe(0)) {
+        ModelKeyframe *keyframe = m_keyframes.append(new ModelKeyframe(m_encodingRef));
+        keyframe->setTimeIndex(0);
+        keyframe->setVisible(true);
+        m_keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
+    }
+}
+
 void ModelAnimation::setParentModelRef(IModel *model)
 {
     m_modelRef = model;
+}
+
+void ModelAnimation::update()
+{
+    int nkeyframes = m_keyframes.count();
+    if (nkeyframes > 0) {
+        m_keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
+        m_durationTimeIndex = m_keyframes[m_keyframes.count() - 1]->timeIndex();
+    }
+    else {
+        m_durationTimeIndex = 0;
+    }
 }
 
 vsize ModelAnimation::estimateSize() const

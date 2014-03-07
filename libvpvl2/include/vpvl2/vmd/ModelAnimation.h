@@ -62,8 +62,10 @@ public:
 
     void read(const uint8 *data, int size);
     void seek(const IKeyframe::TimeIndex &timeIndexAt);
+    void createFirstKeyframeUnlessFound();
     void setParentModelRef(IModel *model);
     void reset();
+    void update();
     vsize estimateSize() const;
     ModelKeyframe *findKeyframeAt(int i) const;
     ModelKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;

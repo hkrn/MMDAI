@@ -188,7 +188,6 @@ void MorphSection::read(const uint8 *data)
         MorphKeyframe *keyframePtr = trackPtr->keyframes.append(new MorphKeyframe(m_motionRef));
         keyframePtr->read(ptr);
         keyframePtr->setName(name);
-        BaseSection::setDuration(keyframePtr);
         m_context->allKeyframeRefs.append(keyframePtr);
         ptr += sizeOfKeyframe;
     }
@@ -286,13 +285,7 @@ vsize MorphSection::countKeyframes() const
 
 void MorphSection::update()
 {
-    IKeyframe::TimeIndex durationTimeIndex = 0;
-    const int nkeyframes = m_context->allKeyframeRefs.count();
-    for (int i = 0; i < nkeyframes; i++) {
-        IKeyframe *keyframe = m_context->allKeyframeRefs[i];
-        btSetMax(durationTimeIndex, keyframe->timeIndex());
-    }
-    m_durationTimeIndex = durationTimeIndex;
+    updateKeyframes(m_context->allKeyframeRefs);
 }
 
 void MorphSection::addKeyframe(IKeyframe *keyframe)
@@ -302,14 +295,12 @@ void MorphSection::addKeyframe(IKeyframe *keyframe)
     if (track) {
         trackPtr = *track;
         trackPtr->keyframes.append(keyframe);
-        BaseSection::setDuration(keyframe);
         m_context->allKeyframeRefs.append(keyframe);
     }
     else if (m_context->modelRef) {
         trackPtr = m_context->name2tracks.insert(key, new MorphAnimationTrack());
         trackPtr->morphRef = m_context->modelRef->findMorphRef(keyframe->name());
         trackPtr->keyframes.append(keyframe);
-        BaseSection::setDuration(keyframe);
         m_context->allKeyframeRefs.append(keyframe);
         m_context->track2names.insert(trackPtr, key);
     }
@@ -354,13 +345,12 @@ void MorphSection::setAllKeyframes(const Array<IKeyframe *> &value)
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = value[i];
         if (keyframe && keyframe->type() == IKeyframe::kMorphKeyframe) {
-            BaseSection::setDuration(keyframe);
             m_context->allKeyframeRefs.append(keyframe);
         }
     }
 }
 
-void MorphSection::fillInitialKeyframes()
+void MorphSection::createFirstKeyframeUnlessFound()
 {
     if (const IModel *modelRef = m_context->modelRef) {
         Array<IMorph *> morphRefs;
@@ -369,7 +359,7 @@ void MorphSection::fillInitialKeyframes()
         for (int i = 0; i < nmorphs; i++) {
             const IMorph *morphRef = morphRefs[i];
             const IString *name = morphRef->name(IEncoding::kDefaultLanguage);
-            if (!findKeyframe(0, name, 0)) {
+            if (name && name->size() > 0 && !findKeyframe(0, name, 0)) {
                 MorphKeyframe *keyframe = new MorphKeyframe(m_motionRef);
                 keyframe->setName(name);
                 keyframe->setLayerIndex(0);
@@ -379,6 +369,7 @@ void MorphSection::fillInitialKeyframes()
                 addKeyframe(keyframe);
             }
         }
+        update();
     }
 }
 

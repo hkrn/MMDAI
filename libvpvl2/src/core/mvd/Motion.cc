@@ -166,7 +166,6 @@ struct Motion::PrivateContext {
             const uint8 *ptr = sections[i];
             boneSection->read(ptr);
         }
-        boneSection->fillInitialKeyframes();
     }
     void parseCameraSections(const Motion::DataInfo &info) {
         const Array<uint8 *> &sections = info.cameraSectionPtrs;
@@ -217,7 +216,6 @@ struct Motion::PrivateContext {
             const uint8 *ptr = sections[i];
             morphSection->read(ptr);
         }
-        morphSection->fillInitialKeyframes();
     }
     void parseProjectSections(const Motion::DataInfo &info) {
         const Array<uint8 *> &sections = info.projectSectionPtrs;
@@ -489,6 +487,7 @@ bool Motion::load(const uint8 *data, vsize size)
         m_context->parseMorphSections(info);
         m_context->parseProjectSections(info);
         m_context->info.copy(info);
+        createFirstKeyframesUnlessFound();
         return true;
     }
     return false;
@@ -952,6 +951,17 @@ void Motion::setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type ty
         BaseSection *section = *sectionPtr;
         section->setAllKeyframes(value);
     }
+}
+
+void Motion::createFirstKeyframesUnlessFound()
+{
+    m_context->boneSection->createFirstKeyframeUnlessFound();
+    m_context->cameraSection->createFirstKeyframeUnlessFound();
+    m_context->effectSection->createFirstKeyframeUnlessFound();
+    m_context->lightSection->createFirstKeyframeUnlessFound();
+    m_context->modelSection->createFirstKeyframeUnlessFound();
+    m_context->morphSection->createFirstKeyframeUnlessFound();
+    m_context->projectSection->createFirstKeyframeUnlessFound();
 }
 
 IMotion *Motion::clone() const

@@ -124,19 +124,12 @@ vsize ProjectSection::countKeyframes() const
 
 void ProjectSection::update()
 {
-    IKeyframe::TimeIndex durationTimeIndex = 0;
-    const int nkeyframes = m_context->keyframes.count();
-    for (int i = 0; i < nkeyframes; i++) {
-        IKeyframe *keyframe = m_context->keyframes[i];
-        btSetMax(durationTimeIndex, keyframe->timeIndex());
-    }
-    m_durationTimeIndex = durationTimeIndex;
+    updateKeyframes(m_context->keyframes);
 }
 
 void ProjectSection::addKeyframe(IKeyframe *keyframe)
 {
     m_context->keyframes.append(keyframe);
-    setDuration(keyframe);
 }
 
 void ProjectSection::removeKeyframe(IKeyframe *keyframe)
@@ -171,6 +164,21 @@ void ProjectSection::setAllKeyframes(const Array<IKeyframe *> &value)
         if (keyframe && keyframe->type() == IKeyframe::kProjectKeyframe) {
             addKeyframe(keyframe);
         }
+    }
+}
+
+void ProjectSection::createFirstKeyframeUnlessFound()
+{
+    if (!findKeyframe(0, 0)) {
+        ProjectKeyframe *keyframe = m_context->keyframes.append(new ProjectKeyframe(m_motionRef));
+        keyframe->setGravityDirection(Vector3(0, -9.8, 0));
+        keyframe->setGravityFactor(1.0);
+        keyframe->setLayerIndex(0);
+        keyframe->setShadowDepth(0);
+        keyframe->setShadowDistance(0);
+        keyframe->setShadowMode(0);
+        keyframe->setTimeIndex(0);
+        update();
     }
 }
 

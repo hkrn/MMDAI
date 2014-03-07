@@ -178,6 +178,20 @@ void CameraAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     m_currentTimeIndex = timeIndexAt;
 }
 
+void CameraAnimation::createFirstKeyframeUnlessFound()
+{
+    if (!findKeyframe(0)) {
+        CameraKeyframe *keyframe = m_keyframes.append(new CameraKeyframe());
+        keyframe->setTimeIndex(0);
+        keyframe->setAngle(kZeroV3);
+        keyframe->setDistance(50.0f);
+        keyframe->setFov(27.0f);
+        keyframe->setLookAt(Vector3(0.0f, 10.0f, 0.0f));
+        keyframe->setDefaultInterpolationParameter();
+        update();
+    }
+}
+
 void CameraAnimation::update()
 {
     int nkeyframes = m_keyframes.count();

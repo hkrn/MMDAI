@@ -72,7 +72,7 @@ public:
         const QString &s = m_codec->toUnicode(value.c_str());
         return new String(UnicodeString::fromUTF8(s.toStdString()));
     }
-    bool loadModel(const XMLProject::UUID &uuid, const StringMap & /* settings */, IModel::Type type, IModel *&model, IRenderEngine *&engine, int &priority) {
+    bool loadModel(const XMLProject::UUID & /* uuid */, const StringMap & /* settings */, IModel::Type type, IModel *&model, IRenderEngine *&engine, int &priority) {
         model = m_factory.newModel(type);
         MockIRenderEngine *enginePtr = new MockIRenderEngine();
         engine = enginePtr;
@@ -112,9 +112,18 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
 {
     const String bar("bar"), baz("baz");
     QuadWord q;
+    int index = 0;
+#if 1
     ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kBoneKeyframe));
+#else
+    ASSERT_EQ(3, motion->countKeyframes(IKeyframe::kBoneKeyframe));
     {
-        const IBoneKeyframe *keyframe = motion->findBoneKeyframeRefAt(0);
+        const IBoneKeyframe *keyframe = motion->findBoneKeyframeRefAt(index++);
+        ASSERT_EQ(IKeyframe::TimeIndex(0), keyframe->timeIndex());
+    }
+#endif
+    {
+        const IBoneKeyframe *keyframe = motion->findBoneKeyframeRefAt(index++);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
         ASSERT_TRUE(keyframe->name()->equals(&bar));
         ASSERT_TRUE(CompareVector(Vector3(1, 2, -3), keyframe->localTranslation()));
@@ -127,7 +136,7 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
         }
     }
     {
-        const IBoneKeyframe *keyframe = motion->findBoneKeyframeRefAt(1);
+        const IBoneKeyframe *keyframe = motion->findBoneKeyframeRefAt(index++);
         ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
         ASSERT_EQ(IKeyframe::LayerIndex(hasLayer ? 1 : 0), keyframe->layerIndex());
         ASSERT_TRUE(keyframe->name()->equals(&baz));
@@ -145,15 +154,24 @@ static void TestBoneMotion(const IMotion *motion, bool hasLayer)
 static void TestMorphMotion(const IMotion *motion)
 {
     String bar("bar"), baz("baz");
-    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kMorphKeyframe));
+    int index = 0;
+#if 1
+    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kBoneKeyframe));
+#else
+    ASSERT_EQ(3, motion->countKeyframes(IKeyframe::kMorphKeyframe));
     {
-        const IMorphKeyframe *keyframe = motion->findMorphKeyframeRefAt(0);
+        const IMorphKeyframe *keyframe = motion->findMorphKeyframeRefAt(index++);
+        ASSERT_EQ(IKeyframe::TimeIndex(0), keyframe->timeIndex());
+    }
+#endif
+    {
+        const IMorphKeyframe *keyframe = motion->findMorphKeyframeRefAt(index++);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
         ASSERT_TRUE(keyframe->name()->equals(&bar));
         ASSERT_FLOAT_EQ(IMorph::WeightPrecision(0), keyframe->weight());
     }
     {
-        const IMorphKeyframe *keyframe = motion->findMorphKeyframeRefAt(1);
+        const IMorphKeyframe *keyframe = motion->findMorphKeyframeRefAt(index++);
         ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
         ASSERT_TRUE(keyframe->name()->equals(&baz));
         ASSERT_FLOAT_EQ(IMorph::WeightPrecision(1), keyframe->weight());
@@ -163,9 +181,13 @@ static void TestMorphMotion(const IMotion *motion)
 static void TestCameraMotion(const IMotion *motion, bool hasLayer)
 {
     QuadWord q;
-    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kCameraKeyframe));
+    ASSERT_EQ(3, motion->countKeyframes(IKeyframe::kCameraKeyframe));
     {
         const ICameraKeyframe *keyframe = motion->findCameraKeyframeRefAt(0);
+        ASSERT_EQ(IKeyframe::TimeIndex(0), keyframe->timeIndex());
+    }
+    {
+        const ICameraKeyframe *keyframe = motion->findCameraKeyframeRefAt(1);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
         ASSERT_TRUE(CompareVector(Vector3(1, 2, -3), keyframe->lookAt()));
         const Vector3 &angle1 = keyframe->angle();
@@ -190,7 +212,7 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
         }
     }
     {
-        const ICameraKeyframe *keyframe = motion->findCameraKeyframeRefAt(1);
+        const ICameraKeyframe *keyframe = motion->findCameraKeyframeRefAt(2);
         ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
         ASSERT_EQ(IKeyframe::LayerIndex(hasLayer ? 1 : 0), keyframe->layerIndex());
         ASSERT_EQ(Vector3(3, 1, -2), keyframe->lookAt());
@@ -219,15 +241,19 @@ static void TestCameraMotion(const IMotion *motion, bool hasLayer)
 
 static void TestLightMotion(const IMotion *motion)
 {
-    ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kLightKeyframe));
+    ASSERT_EQ(3, motion->countKeyframes(IKeyframe::kLightKeyframe));
     {
         const ILightKeyframe *keyframe = motion->findLightKeyframeRefAt(0);
+        ASSERT_EQ(IKeyframe::TimeIndex(0), keyframe->timeIndex());
+    }
+    {
+        const ILightKeyframe *keyframe = motion->findLightKeyframeRefAt(1);
         ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
         ASSERT_TRUE(CompareVector(Vector3(1, 2, 3), keyframe->color()));
         ASSERT_TRUE(CompareVector(Vector3(1, 2, 3), keyframe->direction()));
     }
     {
-        const ILightKeyframe *keyframe = motion->findLightKeyframeRefAt(1);
+        const ILightKeyframe *keyframe = motion->findLightKeyframeRefAt(2);
         ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
         ASSERT_TRUE(CompareVector(Vector3(3, 1, 2), keyframe->color()));
         ASSERT_TRUE(CompareVector(Vector3(3, 1, 2), keyframe->direction()));
@@ -237,9 +263,13 @@ static void TestLightMotion(const IMotion *motion)
 static void TestEffectMotion(const IMotion *motion)
 {
     if (motion->type() == IMotion::kMVDFormat) {
-        ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kEffectKeyframe));
+        ASSERT_EQ(3, motion->countKeyframes(IKeyframe::kEffectKeyframe));
         {
             const IEffectKeyframe *keyframe = motion->findEffectKeyframeRefAt(0);
+            ASSERT_EQ(IKeyframe::TimeIndex(0), keyframe->timeIndex());
+        }
+        {
+            const IEffectKeyframe *keyframe = motion->findEffectKeyframeRefAt(1);
             ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
             ASSERT_EQ(true, keyframe->isVisible());
             ASSERT_EQ(false, keyframe->isAddBlendEnabled());
@@ -248,7 +278,7 @@ static void TestEffectMotion(const IMotion *motion)
             ASSERT_FLOAT_EQ(0.24f, keyframe->opacity());
         }
         {
-            const IEffectKeyframe *keyframe = motion->findEffectKeyframeRefAt(1);
+            const IEffectKeyframe *keyframe = motion->findEffectKeyframeRefAt(2);
             ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
             ASSERT_EQ(false, keyframe->isVisible());
             ASSERT_EQ(true, keyframe->isAddBlendEnabled());
@@ -265,9 +295,13 @@ static void TestEffectMotion(const IMotion *motion)
 static void TestModelMotion(const IMotion *motion)
 {
     if (motion->type() == IMotion::kMVDFormat) {
-        ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kModelKeyframe));
+        ASSERT_EQ(3, motion->countKeyframes(IKeyframe::kModelKeyframe));
         {
             const IModelKeyframe *keyframe = motion->findModelKeyframeRefAt(0);
+            ASSERT_EQ(IKeyframe::TimeIndex(0), keyframe->timeIndex());
+        }
+        {
+            const IModelKeyframe *keyframe = motion->findModelKeyframeRefAt(1);
             ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
             ASSERT_EQ(true, keyframe->isVisible());
             ASSERT_EQ(false, keyframe->isAddBlendEnabled());
@@ -277,7 +311,7 @@ static void TestModelMotion(const IMotion *motion)
             ASSERT_TRUE(CompareVector(Color(0.1, 0.2, 0.3, 0.4), keyframe->edgeColor()));
         }
         {
-            const IModelKeyframe *keyframe = motion->findModelKeyframeRefAt(1);
+            const IModelKeyframe *keyframe = motion->findModelKeyframeRefAt(2);
             ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
             ASSERT_EQ(false, keyframe->isVisible());
             ASSERT_EQ(true, keyframe->isAddBlendEnabled());
@@ -295,9 +329,13 @@ static void TestModelMotion(const IMotion *motion)
 static void TestProjectMotion(const IMotion *motion)
 {
     if (motion->type() == IMotion::kMVDFormat) {
-        ASSERT_EQ(2, motion->countKeyframes(IKeyframe::kProjectKeyframe));
+        ASSERT_EQ(3, motion->countKeyframes(IKeyframe::kProjectKeyframe));
         {
             const IProjectKeyframe *keyframe = motion->findProjectKeyframeRefAt(0);
+            ASSERT_EQ(IKeyframe::TimeIndex(0), keyframe->timeIndex());
+        }
+        {
+            const IProjectKeyframe *keyframe = motion->findProjectKeyframeRefAt(1);
             ASSERT_EQ(IKeyframe::TimeIndex(1), keyframe->timeIndex());
             ASSERT_FLOAT_EQ(9.8f, keyframe->gravityFactor());
             ASSERT_TRUE(CompareVector(Vector3(0.1, 0.2, 0.3), keyframe->gravityDirection()));
@@ -306,7 +344,7 @@ static void TestProjectMotion(const IMotion *motion)
             ASSERT_FLOAT_EQ(0.42f, keyframe->shadowDistance());
         }
         {
-            const IProjectKeyframe *keyframe = motion->findProjectKeyframeRefAt(1);
+            const IProjectKeyframe *keyframe = motion->findProjectKeyframeRefAt(2);
             ASSERT_EQ(IKeyframe::TimeIndex(2), keyframe->timeIndex());
             ASSERT_FLOAT_EQ(8.9f, keyframe->gravityFactor());
             ASSERT_TRUE(CompareVector(Vector3(0.3, 0.1, 0.2), keyframe->gravityDirection()));

@@ -531,6 +531,8 @@ public:
 
     virtual void setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type) = 0;
 
+    virtual void createFirstKeyframesUnlessFound() = 0;
+
     /**
      * モーションのコピーを作成します.
      *

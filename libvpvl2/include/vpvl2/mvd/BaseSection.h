@@ -40,7 +40,7 @@
 #define VPVL2_MVD_BASESECTION_H_
 
 #include "vpvl2/mvd/Motion.h"
-#include "vpvl2/internal/util.h"
+#include "vpvl2/internal/MotionHelper.h"
 
 namespace vpvl2
 {
@@ -108,6 +108,7 @@ public:
     virtual void getKeyframes(const IKeyframe::TimeIndex &timeIndex, const IKeyframe::LayerIndex &layerIndex, Array<IKeyframe *> &keyframes) const = 0;
     virtual void getAllKeyframes(Array<IKeyframe *> &value) const = 0;
     virtual void setAllKeyframes(const Array<IKeyframe *> &value) = 0;
+    virtual void createFirstKeyframeUnlessFound() = 0;
 
     IKeyframe::SmoothPrecision interpolateTimeIndex(const IKeyframe::TimeIndex &from, const IKeyframe::TimeIndex &to) const {
         return IKeyframe::SmoothPrecision(m_currentTimeIndex - from) / IKeyframe::SmoothPrecision(to - from);
@@ -123,8 +124,15 @@ public:
     IKeyframe::TimeIndex previousTimeIndex() const { return m_previousTimeIndex; }
 
 protected:
-    virtual void setDuration(const IKeyframe *keyframe) {
-        btSetMax(m_durationTimeIndex, keyframe->timeIndex());
+    void updateKeyframes(Array<IKeyframe *> &keyframeRefs) {
+        const int nkeyframes = keyframeRefs.count();
+        if (nkeyframes > 0) {
+            keyframeRefs.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
+            m_durationTimeIndex = keyframeRefs[nkeyframes - 1]->timeIndex();
+        }
+        else {
+            m_durationTimeIndex = 0;
+        }
     }
     void saveCurrentTimeIndex(const IKeyframe::TimeIndex &timeIndex) {
         m_previousTimeIndex = m_currentTimeIndex;

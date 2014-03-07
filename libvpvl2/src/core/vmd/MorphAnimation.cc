@@ -52,13 +52,13 @@ namespace vmd
 
 struct MorphAnimation::PrivateContext {
     IMorph *morph;
-    Array<MorphKeyframe *> keyframes;
+    Array<MorphKeyframe *> keyframeRefs;
     IMorph::WeightPrecision weight;
     int lastIndex;
 
     bool isNull() const {
-        if (keyframes.count() == 1) {
-            const MorphKeyframe *keyframe = keyframes[0];
+        if (keyframeRefs.count() == 1) {
+            const MorphKeyframe *keyframe = keyframeRefs[0];
             return keyframe->weight() == 0.0f;
         }
         return false;
@@ -111,10 +111,29 @@ void MorphAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     }
 }
 
+void MorphAnimation::createFirstKeyframeUnlessFound()
+{
+    if (m_modelRef) {
+        Array<IMorph *> morphs;
+        m_modelRef->getMorphRefs(morphs);
+        const int nmorphs = morphs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            const IMorph *morph = morphs[i];
+            const IString *name = morph->name(IEncoding::kDefaultLanguage);
+            if (name && name->size() > 0 && !findKeyframe(0, name)) {
+                MorphKeyframe *keyframe = m_keyframes.append(new MorphKeyframe(m_encodingRef));
+                keyframe->setName(name);
+                keyframe->setTimeIndex(0);
+                keyframe->setWeight(0);
+                m_keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
+            }
+        }
+    }
+}
+
 void MorphAnimation::setParentModelRef(IModel *model)
 {
     createPrivateContexts(model);
-    fillInitialKeyframes(model);
     m_modelRef = model;
 }
 
@@ -132,11 +151,11 @@ void MorphAnimation::createPrivateContexts(const IModel *model)
             PrivateContext **ptr = m_name2contexts[key], *context;
             if (ptr) {
                 context = *ptr;
-                context->keyframes.append(keyframe);
+                context->keyframeRefs.append(keyframe);
             }
             else if (IMorph *morph = model->findMorphRef(name)) {
                 PrivateContext *context = m_name2contexts.insert(key, new PrivateContext());
-                context->keyframes.append(keyframe);
+                context->keyframeRefs.append(keyframe);
                 context->morph = morph;
                 context->lastIndex = 0;
                 context->weight = 0.0f;
@@ -146,9 +165,9 @@ void MorphAnimation::createPrivateContexts(const IModel *model)
         const int ncontexts = m_name2contexts.count();
         for (int i = 0; i < ncontexts; i++) {
             PrivateContext *context = *m_name2contexts.value(i);
-            Array<MorphKeyframe *> &keyframes = context->keyframes;
-            keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
-            btSetMax(m_durationTimeIndex, keyframes[keyframes.count() - 1]->timeIndex());
+            Array<MorphKeyframe *> &keyframeRefs = context->keyframeRefs;
+            keyframeRefs.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
+            btSetMax(m_durationTimeIndex, keyframeRefs[keyframeRefs.count() - 1]->timeIndex());
         }
     }
     else {
@@ -178,9 +197,9 @@ MorphKeyframe *MorphAnimation::findKeyframe(const IKeyframe::TimeIndex &timeInde
         PrivateContext *const *ptr = m_name2contexts.find(key);
         if (ptr) {
             const PrivateContext *context = *ptr;
-            const Array<MorphKeyframe *> &keyframes = context->keyframes;
-            int index = findKeyframeIndex(timeIndex, keyframes);
-            return index != -1 ? keyframes[index] : 0;
+            const Array<MorphKeyframe *> &keyframeRefs = context->keyframeRefs;
+            int index = findKeyframeIndex(timeIndex, keyframeRefs);
+            return index != -1 ? keyframeRefs[index] : 0;
         }
     }
     else {
@@ -189,31 +208,9 @@ MorphKeyframe *MorphAnimation::findKeyframe(const IKeyframe::TimeIndex &timeInde
     return 0;
 }
 
-void MorphAnimation::fillInitialKeyframes(const IModel *model)
-{
-    if (model) {
-        Array<IMorph *> morphs;
-        model->getMorphRefs(morphs);
-        const int nmorphs = morphs.count();
-        for (int i = 0; i < nmorphs; i++) {
-            const IMorph *morph = morphs[i];
-            const IString *name = morph->name(IEncoding::kDefaultLanguage);
-            if (!findKeyframe(0, morph->name(IEncoding::kDefaultLanguage))) {
-                MorphKeyframe *keyframe = m_keyframes.append(new MorphKeyframe(m_encodingRef));
-                keyframe->setName(name);
-                keyframe->setTimeIndex(0);
-                keyframe->setWeight(0);
-            }
-        }
-    }
-    else {
-        VPVL2_LOG(WARNING, "Null model is passed");
-    }
-}
-
 void MorphAnimation::calculateFrames(const IKeyframe::TimeIndex &timeIndexAt, PrivateContext *context)
 {
-    const Array<MorphKeyframe *> &keyframes = context->keyframes;
+    const Array<MorphKeyframe *> &keyframes = context->keyframeRefs;
     int fromIndex, toIndex;
     internal::MotionHelper::findKeyframeIndices(timeIndexAt, m_currentTimeIndex, context->lastIndex, fromIndex, toIndex, keyframes);
     const MorphKeyframe *keyframeFrom = keyframes.at(fromIndex), *keyframeTo = keyframes.at(toIndex);

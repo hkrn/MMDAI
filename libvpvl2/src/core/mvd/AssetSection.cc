@@ -113,7 +113,8 @@ vsize AssetSection::countKeyframes() const
 
 void AssetSection::update()
 {
-    m_durationTimeIndex = 0;
+    Array<IKeyframe *> keyframeRefs;
+    updateKeyframes(keyframeRefs);
 }
 
 void AssetSection::addKeyframe(IKeyframe * /* keyframe */)
@@ -141,6 +142,10 @@ void AssetSection::getAllKeyframes(Array<IKeyframe *> & /* value */) const
 }
 
 void AssetSection::setAllKeyframes(const Array<IKeyframe *> & /* value */)
+{
+}
+
+void AssetSection::createFirstKeyframeUnlessFound()
 {
 }
 

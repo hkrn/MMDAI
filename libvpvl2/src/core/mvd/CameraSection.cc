@@ -206,7 +206,6 @@ void CameraSection::read(const uint8 *data)
     for (int i = 0; i < nkeyframes; i++) {
         IKeyframe *keyframe = m_context->keyframes.append(new CameraKeyframe(m_motionRef));
         keyframe->read(ptr);
-        setDuration(keyframe);
         ptr += sizeOfkeyframe;
     }
     m_context->keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
@@ -265,19 +264,12 @@ vsize CameraSection::countKeyframes() const
 
 void CameraSection::update()
 {
-    IKeyframe::TimeIndex durationTimeIndex = 0;
-    const int nkeyframes = m_context->keyframes.count();
-    for (int i = 0; i < nkeyframes; i++) {
-        IKeyframe *keyframe = m_context->keyframes[i];
-        btSetMax(durationTimeIndex, keyframe->timeIndex());
-    }
-    m_durationTimeIndex = durationTimeIndex;
+    updateKeyframes(m_context->keyframes);
 }
 
 void CameraSection::addKeyframe(IKeyframe *keyframe)
 {
     m_context->keyframes.append(keyframe);
-    setDuration(keyframe);
 }
 
 void CameraSection::removeKeyframe(IKeyframe *keyframe)
@@ -312,6 +304,22 @@ void CameraSection::setAllKeyframes(const Array<IKeyframe *> &value)
         if (keyframe && keyframe->type() == IKeyframe::kCameraKeyframe) {
             addKeyframe(keyframe);
         }
+    }
+}
+
+void CameraSection::createFirstKeyframeUnlessFound()
+{
+    if (!findKeyframe(0, 0)) {
+        CameraKeyframe *keyframe = m_context->keyframes.append(new CameraKeyframe(m_motionRef));
+        keyframe->setAngle(kZeroV3);
+        keyframe->setDistance(50);
+        keyframe->setFov(27);
+        keyframe->setLayerIndex(0);
+        keyframe->setLookAt(Vector3(0, 10, 0));
+        keyframe->setPerspective(true);
+        keyframe->setTimeIndex(0);
+        keyframe->setDefaultInterpolationParameter();
+        update();
     }
 }
 

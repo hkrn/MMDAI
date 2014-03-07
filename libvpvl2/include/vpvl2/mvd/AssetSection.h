@@ -74,6 +74,7 @@ public:
                       Array<IKeyframe *> &keyframes) const;
     void getAllKeyframes(Array<IKeyframe *> &value) const;
     void setAllKeyframes(const Array<IKeyframe *> &value);
+    void createFirstKeyframeUnlessFound();
 
 private:
     VPVL2_DISABLE_COPY_AND_ASSIGN(AssetSection)

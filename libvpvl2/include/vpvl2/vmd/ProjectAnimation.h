@@ -64,6 +64,7 @@ public:
 
     void read(const uint8 *data, int size);
     void seek(const IKeyframe::TimeIndex &timeIndexAt);
+    void createFirstKeyframeUnlessFound();
     void update();
     ProjectKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
     ProjectKeyframe *findKeyframeAt(int i) const;

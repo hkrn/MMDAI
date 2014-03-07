@@ -53,14 +53,14 @@ namespace vmd
 
 struct BoneAnimation::PrivateContext {
     IBone *bone;
-    Array<BoneKeyframe *> keyframes;
+    Array<BoneKeyframe *> keyframeRefs;
     Vector3 position;
     Quaternion rotation;
     int lastIndex;
 
     bool isNull() const {
-        if (keyframes.count() == 1) {
-            const IBoneKeyframe *keyframe = keyframes[0];
+        if (keyframeRefs.count() == 1) {
+            const IBoneKeyframe *keyframe = keyframeRefs[0];
             return keyframe->localTranslation() == kZeroV3 &&
                     keyframe->localOrientation() == Quaternion::getIdentity();
         }
@@ -142,10 +142,31 @@ void BoneAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     }
 }
 
+void BoneAnimation::createFirstKeyframeUnlessFound()
+{
+    if (m_modelRef) {
+        Array<IBone *> bones;
+        m_modelRef->getBoneRefs(bones);
+        const int nbones = bones.count();
+        for (int i = 0; i < nbones; i++) {
+            const IBone *bone = bones[i];
+            const IString *name = bone->name(IEncoding::kDefaultLanguage);
+            if (name && name->size() > 0 && !findKeyframe(0, name)) {
+                BoneKeyframe *keyframe = m_keyframes.append(new BoneKeyframe(m_encodingRef));
+                keyframe->setName(name);
+                keyframe->setTimeIndex(0);
+                keyframe->setLocalTranslation(kZeroV3);
+                keyframe->setLocalOrientation(Quaternion::getIdentity());
+                keyframe->setDefaultInterpolationParameter();
+                m_keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
+            }
+        }
+    }
+}
+
 void BoneAnimation::setParentModelRef(IModel *model)
 {
     createPrivateContexts(model);
-    fillInitialKeyframes(model);
     m_modelRef = model;
 }
 
@@ -161,9 +182,9 @@ BoneKeyframe *BoneAnimation::findKeyframe(const IKeyframe::TimeIndex &timeIndex,
         PrivateContext *const *ptr = m_name2contexts.find(key);
         if (ptr) {
             const PrivateContext *context = *ptr;
-            const Array<BoneKeyframe *> &keyframes = context->keyframes;
-            int index = findKeyframeIndex(timeIndex, keyframes);
-            return index != -1 ? keyframes[index] : 0;
+            const Array<BoneKeyframe *> &keyframeRefs = context->keyframeRefs;
+            int index = findKeyframeIndex(timeIndex, keyframeRefs);
+            return index != -1 ? keyframeRefs[index] : 0;
         }
     }
     else {
@@ -186,11 +207,11 @@ void BoneAnimation::createPrivateContexts(IModel *model)
             PrivateContext **ptr = m_name2contexts[key], *context;
             if (ptr) {
                 context = *ptr;
-                context->keyframes.append(keyframe);
+                context->keyframeRefs.append(keyframe);
             }
             else if (IBone *bone = model->findBoneRef(name)) {
                 PrivateContext *context = m_name2contexts.insert(key, new PrivateContext());
-                context->keyframes.append(keyframe);
+                context->keyframeRefs.append(keyframe);
                 context->bone = bone;
                 context->lastIndex = 0;
                 context->position.setZero();
@@ -201,33 +222,9 @@ void BoneAnimation::createPrivateContexts(IModel *model)
         const int ncontexts = m_name2contexts.count();
         for (int i = 0; i < ncontexts; i++) {
             PrivateContext *context = *m_name2contexts.value(i);
-            Array<BoneKeyframe *> &keyframes = context->keyframes;
-            keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
-            btSetMax(m_durationTimeIndex, keyframes[keyframes.count() - 1]->timeIndex());
-        }
-    }
-    else {
-        VPVL2_LOG(WARNING, "Null model is passed");
-    }
-}
-
-void BoneAnimation::fillInitialKeyframes(const IModel *model)
-{
-    if (model) {
-        Array<IBone *> bones;
-        model->getBoneRefs(bones);
-        const int nbones = bones.count();
-        for (int i = 0; i < nbones; i++) {
-            const IBone *bone = bones[i];
-            const IString *name = bone->name(IEncoding::kDefaultLanguage);
-            if (!findKeyframe(0, bone->name(IEncoding::kDefaultLanguage))) {
-                BoneKeyframe *keyframe = m_keyframes.append(new BoneKeyframe(m_encodingRef));
-                keyframe->setName(name);
-                keyframe->setTimeIndex(0);
-                keyframe->setLocalTranslation(kZeroV3);
-                keyframe->setLocalOrientation(Quaternion::getIdentity());
-                keyframe->setDefaultInterpolationParameter();
-            }
+            Array<BoneKeyframe *> &keyframeRefs = context->keyframeRefs;
+            keyframeRefs.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
+            btSetMax(m_durationTimeIndex, keyframeRefs[keyframeRefs.count() - 1]->timeIndex());
         }
     }
     else {
@@ -237,7 +234,7 @@ void BoneAnimation::fillInitialKeyframes(const IModel *model)
 
 void BoneAnimation::calculateKeyframes(const IKeyframe::TimeIndex &timeIndexAt, PrivateContext *context)
 {
-    Array<BoneKeyframe *> &keyframes = context->keyframes;
+    Array<BoneKeyframe *> &keyframes = context->keyframeRefs;
     int fromIndex, toIndex;
     internal::MotionHelper::findKeyframeIndices(timeIndexAt, m_currentTimeIndex, context->lastIndex, fromIndex, toIndex, keyframes);
     const BoneKeyframe *keyframeFrom = keyframes.at(fromIndex), *keyframeTo = keyframes.at(toIndex);

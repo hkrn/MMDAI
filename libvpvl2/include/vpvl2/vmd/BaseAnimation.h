@@ -70,6 +70,7 @@ public:
 
     virtual void read(const uint8 *data, int size) = 0;
     virtual void seek(const IKeyframe::TimeIndex &timeIndexAt) = 0;
+    virtual void createFirstKeyframeUnlessFound() = 0;
     void advance(const IKeyframe::TimeIndex &deltaTimeIndex);
     void rewind(const IKeyframe::TimeIndex &target, const IKeyframe::TimeIndex &deltaTimeIndex);
     void reset();

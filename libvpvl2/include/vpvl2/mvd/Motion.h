@@ -227,6 +227,7 @@ public:
     void update(IKeyframe::Type type);
     void getAllKeyframeRefs(Array<IKeyframe *> &value, IKeyframe::Type type);
     void setAllKeyframes(const Array<IKeyframe *> &value, IKeyframe::Type type);
+    void createFirstKeyframesUnlessFound();
     IMotion *clone() const;
 
     const IString *name() const;

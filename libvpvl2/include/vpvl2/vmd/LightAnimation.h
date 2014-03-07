@@ -71,6 +71,7 @@ public:
 
     void read(const uint8 *data, int size);
     void seek(const IKeyframe::TimeIndex &timeIndexAt);
+    void createFirstKeyframeUnlessFound();
     void update();
     LightKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex) const;
     LightKeyframe *findKeyframeAt(int i) const;

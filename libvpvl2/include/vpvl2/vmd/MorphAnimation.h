@@ -75,6 +75,7 @@ public:
 
     void read(const uint8 *data, int size);
     void seek(const IKeyframe::TimeIndex &timeIndexAt);
+    void createFirstKeyframeUnlessFound();
     void setParentModelRef(IModel *model);
     void reset();
     MorphKeyframe *findKeyframeAt(int i) const;
@@ -86,7 +87,6 @@ public:
 private:
     struct PrivateContext;
     void createPrivateContexts(const IModel *model);
-    void fillInitialKeyframes(const IModel *model);
     void calculateFrames(const IKeyframe::TimeIndex &timeIndexAt, PrivateContext *context);
 
     IEncoding *m_encodingRef;

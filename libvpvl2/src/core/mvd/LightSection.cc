@@ -154,7 +154,6 @@ void LightSection::read(const uint8 *data)
     for (int i = 0; i < nkeyframes; i++) {
         LightKeyframe *keyframe = m_context->keyframes.append(new LightKeyframe(m_motionRef));
         keyframe->read(ptr);
-        setDuration(keyframe);
         ptr += sizeOfKeyframe;
     }
     m_context->keyframes.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
@@ -181,19 +180,12 @@ vsize LightSection::countKeyframes() const
 
 void LightSection::update()
 {
-    IKeyframe::TimeIndex durationTimeIndex = 0;
-    const int nkeyframes = m_context->keyframes.count();
-    for (int i = 0; i < nkeyframes; i++) {
-        IKeyframe *keyframe = m_context->keyframes[i];
-        btSetMax(durationTimeIndex, keyframe->timeIndex());
-    }
-    m_durationTimeIndex = durationTimeIndex;
+    updateKeyframes(m_context->keyframes);
 }
 
 void LightSection::addKeyframe(IKeyframe *keyframe)
 {
     m_context->keyframes.append(keyframe);
-    setDuration(keyframe);
 }
 
 void LightSection::removeKeyframe(IKeyframe *keyframe)
@@ -228,6 +220,19 @@ void LightSection::setAllKeyframes(const Array<IKeyframe *> &value)
         if (keyframe && keyframe->type() == IKeyframe::kLightKeyframe) {
             addKeyframe(keyframe);
         }
+    }
+}
+
+void LightSection::createFirstKeyframeUnlessFound()
+{
+    if (!findKeyframe(0, 0)) {
+        LightKeyframe *keyframe = m_context->keyframes.append(new LightKeyframe(m_motionRef));
+        keyframe->setColor(Vector3(0.6, 0.6, 0.6));
+        keyframe->setDirection(Vector3(-0.5, -1.0, -0.5));
+        keyframe->setEnable(true);
+        keyframe->setLayerIndex(0);
+        keyframe->setTimeIndex(0);
+        update();
     }
 }
 
