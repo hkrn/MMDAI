@@ -137,9 +137,6 @@ void BoneAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
         m_previousTimeIndex = m_currentTimeIndex;
         m_currentTimeIndex = timeIndexAt;
     }
-    else {
-        VPVL2_LOG(WARNING, "No model is assigned");
-    }
 }
 
 void BoneAnimation::createFirstKeyframeUnlessFound()

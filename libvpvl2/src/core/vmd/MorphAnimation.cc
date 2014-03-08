@@ -106,9 +106,6 @@ void MorphAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
         m_previousTimeIndex = m_currentTimeIndex;
         m_currentTimeIndex = timeIndexAt;
     }
-    else {
-        VPVL2_LOG(WARNING, "No model is assigned");
-    }
 }
 
 void MorphAnimation::createFirstKeyframeUnlessFound()
@@ -169,9 +166,6 @@ void MorphAnimation::createPrivateContexts(const IModel *model)
             keyframeRefs.sort(internal::MotionHelper::KeyframeTimeIndexPredication());
             btSetMax(m_durationTimeIndex, keyframeRefs[keyframeRefs.count() - 1]->timeIndex());
         }
-    }
-    else {
-        VPVL2_LOG(WARNING, "Null model is passed");
     }
 }
 
