@@ -60,35 +60,30 @@ FocusScope {
     property int  __timeScrollBarHeight: 16
     property int  __timeScrollThumbWidth: 0
     property int  __timeScrollThumbMinimumWidth : 10
-    property int  __headerHeight: 30
+    property int  __timelineHeaderHeight: 30
     property real framesPerSecond : 30
     property real timeSeconds: 0
     property int  timeIndex: 0
-    property real durationSeconds: 600
+    property real maxDurationSeconds: 600
     property real __timeScrollThumbPos: 0
     property real __tracksScrollThumbPos: 0
     property real __timeScrollX: 0
     property real timeScaleFactor: 1.0
+    property real tracksScrollScaleFactor: 0.75
+    property real timelineBodyScrollScaleFactor: 15.0
     property real maximumTimeScaleFactor: 1.0
     property real minimumTimeScaleFactor: 0.01
     property real __tracksScrollY: 0
-    property bool __draggingTime: false
-    property bool __draggingTimeline: false
-    property bool __draggingTracksScrollThumb: false
-    property bool __draggingTimeScrollThumb: false
-    property bool __draggingKeyframes: false
-    property bool __draggingTimeScale: false
     property var  __selectedKeyframes: []
     property var  __tracks: []
     property var  __target2tracks: ({})
-    property bool __cancelKeyClick: false
     property real __timeScrollThumbDragOffset: 0
     property real __tracksScrollThumbDragOffset: 0
     property alias backgroundImageSource : backgroundImage.source
 
     readonly property string fontPointSizeText: fontPointSize + "px"
     readonly property string iconPointSizeText: iconPointSize + "px"
-    readonly property int  durationTimeIndex: durationSeconds * framesPerSecond
+    readonly property int  maxDurationTimeIndex: maxDurationSeconds * framesPerSecond
     readonly property real __trackWidth: 200 * timeScaleFactor
     readonly property bool hasSelectedKeyframes: __selectedKeyframes.length > 0
 
@@ -102,15 +97,16 @@ FocusScope {
     signal timelineWillPause();
     signal timelineWillStop();
 
-    onDurationTimeIndexChanged: {
-        durationSeconds = durationTimeIndex / framesPerSecond
+    onMaxDurationTimeIndexChanged: {
+        maxDurationSeconds = maxDurationTimeIndex / framesPerSecond
         canvas.requestPaint()
     }
     onTimeIndexChanged: {
-        timeSeconds = timeIndex / framesPerSecond
+        var ts = timeIndex / framesPerSecond
+        timeSeconds = ts
         canvas.requestPaint()
     }
-    onDurationSecondsChanged: durationTimeIndex = durationSeconds * framesPerSecond
+    onMaxDurationSecondsChanged: maxDurationTimeIndex = maxDurationSeconds * framesPerSecond
     onTimeSecondsChanged: timeIndex = timeSeconds * framesPerSecond
 
     function sortTrackKeyframes(keyframes) {
@@ -270,7 +266,7 @@ FocusScope {
         return __target2tracks[target] || null;
     }
     function timeSecondsToX(time) {
-        var animationEnd = durationSeconds, timelineTrackLabelWidth = __trackLabelWidth,
+        var animationEnd = maxDurationSeconds, timelineTrackLabelWidth = __trackLabelWidth,
                 visibleTime = timeline.xToTimeSeconds(canvas.width - timelineTrackLabelWidth - __tracksScrollBarWidth) - timeline.xToTimeSeconds(20); // 50 to get some additional space
         if (visibleTime < animationEnd) {
             time -= (animationEnd - visibleTime) * __timeScrollX;
@@ -278,7 +274,7 @@ FocusScope {
         return timelineTrackLabelWidth + time * __trackWidth + 10;
     }
     function xToTimeSeconds(x) {
-        var animationEnd = durationSeconds, timelineTrackLabelWidth = __trackLabelWidth,
+        var animationEnd = maxDurationSeconds, timelineTrackLabelWidth = __trackLabelWidth,
                 visibleTime = (canvas.width - timelineTrackLabelWidth - __tracksScrollBarWidth - 20) / __trackWidth,
                 timeShift = Math.max(0, (animationEnd - visibleTime) * __timeScrollX);
         return (x - timelineTrackLabelWidth - 10) / __trackWidth + timeShift;
@@ -298,8 +294,8 @@ FocusScope {
     }
     function getTrackAt(mouseY) {
         var visibleTracks = getVisibleTracks(),
-                scrollY = __tracksScrollY * (visibleTracks.length * __trackLabelHeight - canvas.height + __headerHeight),
-                clickedTrackNumber = Math.floor((mouseY - __headerHeight + scrollY) / __trackLabelHeight);
+                scrollY = __tracksScrollY * (visibleTracks.length * __trackLabelHeight - canvas.height + __timelineHeaderHeight),
+                clickedTrackNumber = Math.floor((mouseY - __timelineHeaderHeight + scrollY) / __trackLabelHeight);
         if (clickedTrackNumber >= 0 && clickedTrackNumber >= visibleTracks.length) {
             return null;
         }
@@ -518,16 +514,6 @@ FocusScope {
         property rect selectRegion : Qt.rect(0, 0, 0, 0)
         property int previousX: 0
         property int previousY: 0
-        function scrollTracks(y) {
-            __tracksScrollThumbPos = Math.max(0, y - __headerHeight - __tracksScrollThumbDragOffset);
-            updateScrollTracks()
-        }
-        function scrollTracksOffsetDelta(offset) {
-            var visibleTracks = getVisibleTracks()
-            var value = offset / (visibleTracks.length * __trackLabelHeight)
-            __tracksScrollThumbPos = Math.max(__tracksScrollThumbPos + offset, 0)
-            updateScrollTracks()
-        }
         function updateScrollTracks() {
             if (__tracksScrollThumbPos + __tracksScrollThumbHeight > __tracksScrollBarHeight) {
                 __tracksScrollThumbPos = Math.max(0, __tracksScrollBarHeight - __tracksScrollThumbHeight);
@@ -539,18 +525,6 @@ FocusScope {
                 __tracksScrollY = 0;
             }
             requestPaint()
-        }
-        function scrollTimeSeconds(x) {
-            __timeScrollThumbPos = Math.max(0, x - __trackLabelWidth - __timeScrollThumbDragOffset);
-            updateScrollTime()
-        }
-        function scrollTimeIndexOffsetDelta(value) {
-            scrollTimeSecondsOffsetDelta(value / framesPerSecond)
-        }
-        function scrollTimeSecondsOffsetDelta(value) {
-            var delta = value / timeSecondsToX(durationSeconds)
-            __timeScrollThumbPos = Math.max(__timeScrollThumbPos + delta, 0)
-            updateScrollTime()
         }
         function updateScrollTime() {
             if (__timeScrollThumbPos + __timeScrollThumbWidth > __timeScrollBarWidth) {
@@ -564,78 +538,96 @@ FocusScope {
             }
             requestPaint()
         }
+        function scrollTracks(y) {
+            __tracksScrollThumbPos = Math.max(0, y - __timelineHeaderHeight - __tracksScrollThumbDragOffset);
+            updateScrollTracks()
+        }
+        function scrollTracksOffsetDelta(offset) {
+            var visibleTracks = getVisibleTracks()
+            var value = offset / (visibleTracks.length * __trackLabelHeight)
+            __tracksScrollThumbPos = Math.max(__tracksScrollThumbPos + offset, 0)
+            updateScrollTracks()
+        }
+        function scrollTimeSeconds(x) {
+            __timeScrollThumbPos = Math.max(0, x - __trackLabelWidth - __timeScrollThumbDragOffset);
+            updateScrollTime()
+        }
+        function scrollTimeCoordinate(value) {
+            __timeScrollThumbPos = Math.max(__timeScrollThumbPos + value, 0)
+            updateScrollTime()
+        }
+        function scrollTimeSecondsOffset(value) {
+            var offset = timeSecondsToX(value) / timeSecondsToX(maxDurationSeconds)
+            scrollTimeCoordinate(offset)
+        }
+        function scrollTimeIndexOffset(value) {
+            scrollTimeSecondsOffset(value / framesPerSecond)
+        }
         MouseArea {
             anchors.fill: parent
             enabled: enableInputEvent
-            function handleMouseMove(x, y) {
-                if (__draggingTracksScrollThumb) {
-                    canvas.scrollTracks(y)
+            function dragTracksScrollThumb(event) {
+                canvas.scrollTracks(event.y)
+            }
+            function dragTimeScrollThumb(event) {
+                canvas.scrollTimeSeconds(event.x)
+            }
+            function dragTimelineHeader(event) {
+                var x = event.x, delta = 0, scaleFactor = timeScaleFactor / (1.0 / timeScaleFactor)
+                if (x > canvas.width - __tracksScrollBarWidth) {
+                    delta = x - (canvas.width - __tracksScrollBarWidth)
+                    canvas.scrollTimeCoordinate(delta * scaleFactor)
                 }
-                if (__draggingTimeScrollThumb) {
-                    canvas.scrollTimeSeconds(x)
+                else if (x < __trackLabelWidth) {
+                    delta = x - __trackLabelWidth
+                    canvas.scrollTimeCoordinate(delta * scaleFactor)
                 }
-                if (__draggingTime) {
+                else {
                     var timelineTimeSeconds = Math.max(timeline.xToTimeSeconds(x), 0)
-                    timeline.timeSeconds = timelineTimeSeconds;
-                    if (x > canvas.width - __tracksScrollBarWidth) {
-                        canvas.scrollTimeSecondsOffsetDelta(1)
-                    }
-                    else if (x < __trackLabelWidth) {
-                        canvas.scrollTimeSecondsOffsetDelta(-1)
-                    }
-                    else {
-                        canvas.requestPaint()
-                    }
-                }
-                if (__draggingTimeline) {
-                    canvas.scrollTimeSecondsOffsetDelta((x - canvas.previousX) * framesPerSecond * -10)
-                    canvas.scrollTracksOffsetDelta((y - canvas.previousY) * -1)
-                    canvas.requestPaint()
-                    canvas.previousX = x
-                    canvas.previousY = y
-                }
-                if (__draggingKeyframes) {
-                    var selectedKeyframes = __selectedKeyframes,
-                            numSelectedKeyframes = selectedKeyframes.length,
-                            minimumTimeIndex = 1.0 / timeline.framesPerSecond;
-                    for(var i = 0; i < numSelectedKeyframes; i++) {
-                        var draggedKeyframe = selectedKeyframes[i], parentTrack = draggedKeyframe.parentTrack;
-                        if (draggedKeyframe.time > 0 && !parentTrack.locked) {
-                            draggedKeyframe.time = Math.max(minimumTimeIndex, timeline.xToTimeSeconds(x));
-                        }
-                    }
-                    __cancelKeyClick = true;
-                    __timeScrollThumbPos = __timeScrollX * (__timeScrollBarWidth - __timeScrollThumbWidth);
-                }
-                if (__draggingTimeScale) {
-                    var timelineTrackLabelWidth = __trackLabelWidth;
-                    timeScaleFactor = Math.max(minimumTimeScaleFactor, Math.min(maximumTimeScaleFactor, (timelineTrackLabelWidth - x) / timelineTrackLabelWidth));
+                    timeline.timeSeconds = timelineTimeSeconds
                     canvas.requestPaint()
                 }
-                if (canvas.selectRegion != Qt.rect(0, 0, 0, 0)) {
-                    canvas.selectRegion.width = x - canvas.selectRegion.x
-                    canvas.selectRegion.height = y - canvas.selectRegion.y
-                    console.log(canvas.selectRegion)
-                }
             }
-            function scrollX(x) {
-                var timelineTrackLabelWidth = __trackLabelWidth,
-                        timeScrollThumbPos = __timeScrollThumbPos;
-                if (x >= timelineTrackLabelWidth + timeScrollThumbPos && x <= timelineTrackLabelWidth + timeScrollThumbPos + __timeScrollThumbWidth) {
-                    __timeScrollThumbDragOffset = x - timelineTrackLabelWidth - timeScrollThumbPos;
-                    __draggingTimeScrollThumb = true;
+            function dragTimelineBody(event) {
+                var x = event.x, y = event.y, delta = 0
+                if (event.modifiers & Qt.AltModifier) {
+                    delta = -(y - canvas.previousY) * tracksScrollScaleFactor
+                    canvas.scrollTracksOffsetDelta(delta)
                 }
+                else {
+                    delta = -(x - canvas.previousX) * (0.01 / timeScaleFactor)
+                    canvas.scrollTimeCoordinate(delta)
+                }
+                canvas.requestPaint()
+                canvas.previousX = x
+                canvas.previousY = y
             }
-            function scrollY(y) {
-                var timelineHeaderHeight = __headerHeight,
-                        timelineTracksScrollThumbPos = __tracksScrollThumbPos;
-                if (y >= timelineHeaderHeight + timelineTracksScrollThumbPos && y <= timelineHeaderHeight + timelineTracksScrollThumbPos + __tracksScrollThumbHeight) {
-                    __tracksScrollThumbDragOffset = y - timelineHeaderHeight - timelineTracksScrollThumbPos;
-                    __draggingTracksScrollThumb = true;
+            function dragKeyframes(event) {
+                var x = event.x,
+                        y = event.y,
+                        selectedKeyframes = __selectedKeyframes,
+                        numSelectedKeyframes = selectedKeyframes.length,
+                        minimumTimeIndex = 1.0 / timeline.framesPerSecond;
+                for(var i = 0; i < numSelectedKeyframes; i++) {
+                    var draggedKeyframe = selectedKeyframes[i], parentTrack = draggedKeyframe.parentTrack;
+                    if (draggedKeyframe.time > 0 && !parentTrack.locked) {
+                        draggedKeyframe.time = Math.max(minimumTimeIndex, timeline.xToTimeSeconds(x));
+                    }
                 }
+                __timeScrollThumbPos = __timeScrollX * (__timeScrollBarWidth - __timeScrollThumbWidth);
+            }
+            function dragTimeScale(event) {
+                var x = event.x, y = event.y, timelineTrackLabelWidth = __trackLabelWidth;
+                timeScaleFactor = Math.max(minimumTimeScaleFactor, Math.min(maximumTimeScaleFactor, (timelineTrackLabelWidth - x) / timelineTrackLabelWidth));
+                canvas.requestPaint()
+            }
+            function dragSelectRegion(event) {
+                var x = event.x, y = event.y
+                canvas.selectRegion.width = x - canvas.selectRegion.x
+                canvas.selectRegion.height = y - canvas.selectRegion.y
             }
             onClicked: {
-                var x = mouse.x, y = mouse.y, headerHeight = __headerHeight;
+                var x = mouse.x, y = mouse.y, headerHeight = __timelineHeaderHeight;
                 if (x < __trackLabelWidth && y > headerHeight) {
                     var propertyTrack = getPropertyTrackAt(y)
                     if (propertyTrack) {
@@ -643,9 +635,6 @@ FocusScope {
                         resetSelectedTrack(opaque)
                         opaqueObjectDidSelect(opaque);
                     }
-                }
-                if (__selectedKeyframes.length > 0 && !__cancelKeyClick) {
-                    // timeline.showKeyEditDialog(event.pageX, event.pageY);
                 }
             }
             onDoubleClicked: {
@@ -658,7 +647,7 @@ FocusScope {
                     }
                 }
                 else if (x > __trackLabelWidth) {
-                    var headerHeight = __headerHeight;
+                    var headerHeight = __timelineHeaderHeight;
                     if (y < headerHeight) {
                         // timeline
                         var timeStr = prompt("Enter time") || "00:00:00";
@@ -687,62 +676,69 @@ FocusScope {
                 var isCtrl = (mouse.modifiers & Qt.ControlModifier) === Qt.ControlModifier;
                 timeline.selectKeyframesAt(x, y, isCtrl);
                 if (__selectedKeyframes.length > 0) {
-                    __draggingKeyframes = true;
                     var timeIndex = xToTimeSeconds(x) * framesPerSecond
                     draggingKeyframesDidBegin(timeIndex)
                 }
-                __draggingKeyframes = true
+                positionChanged.connect(dragKeyframes)
             }
             onPressed: {
                 var x = mouse.x, y = mouse.y,
                         timelineTrackLabelWidth = __trackLabelWidth,
                         timeScrollHeight = __timeScrollBarHeight;
-                if (x > canvas.width - __tracksScrollBarWidth && y > __headerHeight) {
+                if (x > canvas.width - __tracksScrollBarWidth && y > __timelineHeaderHeight) {
                     // tracks scroll
-                    scrollY(y);
+                    var timelineHeaderHeight = __timelineHeaderHeight,
+                            timelineTracksScrollThumbPos = __tracksScrollThumbPos;
+                    if (y >= timelineHeaderHeight + timelineTracksScrollThumbPos && y <= timelineHeaderHeight + timelineTracksScrollThumbPos + __tracksScrollThumbHeight) {
+                        __tracksScrollThumbDragOffset = y - timelineHeaderHeight - timelineTracksScrollThumbPos;
+                        positionChanged.connect(dragTracksScrollThumb)
+                    }
                 }
                 else if (x > timelineTrackLabelWidth) {
                     if (y > canvas.height - timeScrollHeight) {
-                        // time scroll
-                        scrollX(x);
+                        // timeline scroll
+                        var timeScrollThumbPos = __timeScrollThumbPos;
+                        if (x >= timelineTrackLabelWidth + timeScrollThumbPos && x <= timelineTrackLabelWidth + timeScrollThumbPos + __timeScrollThumbWidth) {
+                            __timeScrollThumbDragOffset = x - timelineTrackLabelWidth - timeScrollThumbPos;
+                            positionChanged.connect(dragTimeScrollThumb)
+                        }
                     }
-                    else if (y < __headerHeight) {
-                        // timeline
-                        __draggingTime = true;
-                        handleMouseMove(x, y);
+                    else if (y < __timelineHeaderHeight) {
+                        // timeline header
+                        dragTimelineHeader(mouse)
+                        positionChanged.connect(dragTimelineHeader)
                     }
-                    else if (y > __headerHeight && y < canvas.height - timeScrollHeight) {
+                    else if (x > __trackWidth && y > __timelineHeaderHeight && y < canvas.height - timeScrollHeight) {
                         // timeline
                         canvas.previousX = x
                         canvas.previousY = y
-                        __draggingTimeline = true
-                        __cancelKeyClick = false
+                        positionChanged.connect(dragTimelineBody)
                     }
                     else {
                         // begin dragging region
                         canvas.selectRegion = Qt.rect(x, y, 1, 1)
+                        positionChanged.connect(dragSelectRegion)
                     }
                 }
                 else if (x < timelineTrackLabelWidth && y > canvas.height - timeScrollHeight) {
                     // time scale
                     timeScaleFactor = Math.max(minimumTimeScaleFactor, Math.min(maximumTimeScaleFactor, (timelineTrackLabelWidth - x) / timelineTrackLabelWidth));
-                    __draggingTimeScale = true;
-                    // timeline.save();
+                    positionChanged.connect(dragTimeScale)
                 }
                 forceActiveFocus()
             }
-            onPositionChanged: handleMouseMove(mouse.x, mouse.y)
             onReleased: {
-                if (__draggingKeyframes) {
-                    __draggingKeyframes = false;
+                if (__selectedKeyframes.length > 0) {
                     var timeIndex = Math.max(xToTimeSeconds(mouse.x) * framesPerSecond, 0)
                     draggingKeyframesDidCommit(__selectedKeyframes, timeIndex)
                 }
-                __draggingTracksScrollThumb = false;
-                __draggingTime = false;
-                __draggingTimeline = false
-                __draggingTimeScale = false;
-                __draggingTimeScrollThumb = false;
+                positionChanged.disconnect(dragKeyframes)
+                positionChanged.disconnect(dragSelectRegion)
+                positionChanged.disconnect(dragTracksScrollThumb)
+                positionChanged.disconnect(dragTimelineBody)
+                positionChanged.disconnect(dragTimelineHeader)
+                positionChanged.disconnect(dragTimeScale)
+                positionChanged.disconnect(dragTimeScrollThumb)
                 canvas.selectRegion = Qt.rect(0, 0, 0, 0)
                 canvas.requestPaint();
             }
@@ -750,8 +746,8 @@ FocusScope {
                 var delta = wheel.pixelDelta,
                         deltaX = delta.x, deltaY = delta.y,
                         isOSX = Qt.platform.os === "osx"
-                if (deltaX !== 0) {
-                    canvas.scrollTimeSecondsOffsetDelta(deltaX * (isOSX ? -1 : 1))
+                if (wheel.modifiers & Qt.AltModifier && deltaX !== 0) {
+                    canvas.scrollTimeSecondsOffset(deltaX * (isOSX ? -1 : 1))
                 }
                 else if (deltaY !== 0) {
                     canvas.scrollTracksOffsetDelta(deltaY * (isOSX ? -1 : 1))
@@ -786,11 +782,10 @@ FocusScope {
                 delta = (event.modifiers & Qt.ShiftModifier) ? 5 : 1
             }
             if (delta !== 0) {
-                timeSeconds = Math.min(Math.max((timeIndex + delta) / framesPerSecond, 0), durationSeconds)
-                scrollTimeIndexOffsetDelta(delta)
+                timeSeconds = Math.min(Math.max((timeIndex + delta) / framesPerSecond, 0), maxDurationSeconds)
+                scrollTimeIndexOffset(delta)
             }
         }
-
         function drawTrack(ctx, track, y, visibleTime) {
             var xshift = 5,
                     canvasWidth = canvas.width,
@@ -850,7 +845,7 @@ FocusScope {
             // if it's property track then draw animations
             if (trackType === "property") {
                 // memoize
-                var animationEnd = durationSeconds,
+                var animationEnd = maxDurationSeconds,
                         trackWidth = __trackWidth,
                         timeScrollX = __timeScrollX,
                         timeShift = Math.max(0, (animationEnd - visibleTime) * timeScrollX),
@@ -926,10 +921,10 @@ FocusScope {
         onPaint: {
             var ctx = getContext("2d"), canvasWidth = canvas.width, canvasHeight = canvas.height,
                     timelineTrackLabelWidth = __trackLabelWidth,
-                    timelineHeaderHeight = __headerHeight;
+                    timelineHeaderHeight = __timelineHeaderHeight;
 
             __timeScrollBarWidth = canvasWidth - timelineTrackLabelWidth - __tracksScrollBarWidth;
-            var animationEnd = durationSeconds;
+            var animationEnd = maxDurationSeconds;
             var visibleTime = timeline.xToTimeSeconds(canvasWidth - timelineTrackLabelWidth - __tracksScrollBarWidth) - timeline.xToTimeSeconds(0); //100 to get some space after lask key
             var timeScrollRatio = Math.max(0, Math.min(visibleTime/animationEnd, 1));
             __timeScrollThumbWidth = Math.max(timeScrollRatio * __timeScrollBarWidth, __timeScrollThumbMinimumWidth);

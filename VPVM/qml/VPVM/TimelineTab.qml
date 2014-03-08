@@ -55,7 +55,7 @@ Tab {
                     id: estimatedDurationInIndex
                     minimumValue: 900
                     maximumValue: Math.pow(2, 31)
-                    value: timeline.durationTimeIndex
+                    value: timeline.maxDurationTimeIndex
                 }
                 Binding {
                     target: timeline
@@ -83,15 +83,15 @@ Tab {
                         return result
                     }
                     inputMethodHints: Qt.ImhDate
-                    text: format(timeline.durationSeconds)
+                    text: format(timeline.maxDurationSeconds)
                     validator: RegExpValidator { regExp: /^[0-9][0-9]:[0-5][0-9]:[0-5][0-9]$/ }
-                    onAccepted: timeline.durationSeconds = toSeconds(text)
+                    onAccepted: timeline.maxDurationSeconds = toSeconds(text)
                 }
                 Label { text: qsTr("Current Position") }
                 SpinBox {
                     id: currentPositionInIndex
                     minimumValue: 0
-                    maximumValue: timeline.durationTimeIndex
+                    maximumValue: timeline.maxDurationTimeIndex
                     value: timeline.timeIndex
                 }
                 Binding {
