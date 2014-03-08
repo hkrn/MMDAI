@@ -11,8 +11,6 @@ group: navigation
 VPVM {{ site.data.VPVM.version }}
 -------------
 
-開発版の公開版です。近いうちに MMDAI2 0.30.0 をこれにリプレースする予定です
-
  - [ふつうのマニュアルっぽいものは今のところ github 上にあります]({{ site.data.VPVM.github }}/wiki/VPVM)
    - [タグの VPVM で VPVM の使い方逆引きマニュアルを参照する事ができます](tags.html)
  - MMDAI2 0.30.0 とは使い方と UI が大きく異なるので注意
@@ -37,32 +35,26 @@ VPVM {{ site.data.VPVM.version }}
 MMDAI2 0.30.0
 -------------
 
-安定版と呼ばれるものです。
+旧版と呼ばれるものです。[MMDAI2 0.28.2 から 0.30.0 のバイナリは全て box.com](https://www.box.com/s/pgg34l2lhau3r0xm12u8) に、それ以前の過去分のバイナリは [hkrn.minus.com](http://hkrn.minus.com) にあります。開発停止。
 
-###  [OSX 版をダウンロード（bowlroll に移動します）]({{ site.data.VPVM.bowlroll }}/up/dl2185)
+ -  [OSX 版をダウンロード（box.com に移動します）](https://app.box.com/s/qnpigraeiq234ym5f2jz)
+ -  [Linux 64bit 版をダウンロード（box.com に移動します）](https://app.box.com/s/bp3jcdnvb8j7cdvgrdzv)
+ -  [Linux 32bit 版をダウンロード（box.com に移動します）](https://app.box.com/s/996wg5yred14n21g4tz4)
 
- - 10\.6 以上が必要です
- - Intel 版のみ、PPC 版はありません
-
-### [Linux 64bit 版をダウンロード（bowlroll に移動します）]({{ site.data.VPVM.bowlroll }}/up/dl6204)
-### [Linux 32bit 版をダウンロード（bowlroll に移動します）]({{ site.data.VPVM.bowlroll }}/up/dl2210)
-
- - Linux 版は Ubuntu Linux 12.04.x 上でビルドされています
- - どちらを使えばわからないときはまず 64bit 版で動かしてみて、動作しない場合は 32bit 版で動かしてください
+Linux 版は Ubuntu Linux 12.04.x 上でビルドされています。どちらを使えばわからないときはまず 64bit 版で動かしてみて、動作しない場合は 32bit 版で動かしてください
 
 ### Effect (CgFX)
 
-MMDAI2 に移植した MMDAI2 専用のエフェクトです。
+MMDAI2 に移植した MMDAI2 専用のエフェクトです。MMDAI2 0.30.0 の開発停止に伴いこちらも開発停止。
 
- - [エフェクト詰め合わせをダウンロード（bowlroll に移動します）]({{ site.data.VPVM.bowlroll }}/up/dl8216)
-
-過去のバージョンである 0.28.2 は [box.com](https://www.box.com/s/pgg34l2lhau3r0xm12u8) に、それ以前の過去分のバイナリは [hkrn.minus.com (box.com に移行予定)](http://hkrn.minus.com) にあります。
+ - [エフェクト詰め合わせをダウンロード（box.com に移動します）](https://app.box.com/s/76wzzvhxt1fwli3km8hd)
 
 MMDAI 3.1.0
 -----------
 
-無印版と呼ばれるもの。MMDAgent から派生したもの。今は開発停止中。
+無印版と呼ばれるもの。MMDAgent から派生したもの。開発停止。
 
- - [MacOSX Intel 32/64bit](https://app.box.com/files/0/f/1212725651/1/f_10828301269)
- - [Ubuntu Linux 12.04 32bit](https://app.box.com/files/0/f/1212725651/1/f_10828080313)
+ - [MMDAI のバイナリ](https://app.box.com/s/a5w05gvvt884o4jwed6s)
+   - [MacOSX Intel 32/64bit](https://app.box.com/s/26kyn33kv5uzynkt3p2v)
+   - [Ubuntu Linux 12.04 32bit](https://app.box.com/s/26z2zb2qccynyzj91k3y)
 
