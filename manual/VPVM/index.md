@@ -9,6 +9,8 @@ group: navigation
 VPVM {{ site.data.VPVM.version }} のページ
 ---------------------------------------------
 
+[取扱説明書的なページ](https://github.com/hkrn/MMDAI/wiki/VPVM) は github 上にあります。
+
 <ul>
   {% assign pages_list = site.tags.VPVM %}
   {% include JB/pages_list %}
