@@ -106,7 +106,6 @@ FocusScope {
         timeSeconds = ts
         canvas.requestPaint()
     }
-    onMaxDurationSecondsChanged: maxDurationTimeIndex = maxDurationSeconds * framesPerSecond
     onTimeSecondsChanged: timeIndex = timeSeconds * framesPerSecond
 
     function sortTrackKeyframes(keyframes) {

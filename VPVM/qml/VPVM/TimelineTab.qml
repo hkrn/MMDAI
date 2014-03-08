@@ -52,19 +52,14 @@ Tab {
                 columns: 2
                 Label { text: qsTr("Estimated Duration") }
                 SpinBox {
-                    id: estimatedDurationInIndex
+                    id: maxDurationTimeIndexSpinBox
                     minimumValue: 900
                     maximumValue: Math.pow(2, 31)
                     value: timeline.maxDurationTimeIndex
-                }
-                Binding {
-                    target: timeline
-                    property: "durationTimeIndex"
-                    value: estimatedDurationInIndex.value
-                    when: estimatedDurationInIndex.hovered
+                    onEditingFinished: timeline.maxDurationSeconds = value / timeline.framesPerSecond
                 }
                 TextField {
-                    id: estimatedDurationInSeconds
+                    id: maxDurationSecondsTextField
                     function padding(value) {
                         return value < 10 ? ("0%1".arg(value)) : value
                     }
@@ -102,10 +97,10 @@ Tab {
                 }
                 TextField {
                     id: currentPositionInSeconds
-                    inputMethodHints: estimatedDurationInSeconds.inputMethodHints
-                    text: estimatedDurationInSeconds.format(timeline.timeSeconds)
-                    validator: estimatedDurationInSeconds.validator
-                    onAccepted: timeline.timeSeconds = estimatedDurationInSeconds.toSeconds(text)
+                    inputMethodHints: maxDurationSecondsTextField.inputMethodHints
+                    text: maxDurationSecondsTextField.format(timeline.timeSeconds)
+                    validator: maxDurationSecondsTextField.validator
+                    onAccepted: timeline.timeSeconds = maxDurationSecondsTextField.toSeconds(text)
                 }
                 Label { text: qsTr("Scale Factor") }
                 SpinBox {
@@ -133,16 +128,16 @@ Tab {
                 states: [
                     State {
                         name: "timeIndex"
-                        PropertyChanges { target: estimatedDurationInSeconds; visible: false }
+                        PropertyChanges { target: maxDurationSecondsTextField; visible: false }
                         PropertyChanges { target: currentPositionInSeconds; visible: false }
-                        PropertyChanges { target: estimatedDurationInIndex; visible: true }
+                        PropertyChanges { target: maxDurationTimeIndexSpinBox; visible: true }
                         PropertyChanges { target: currentPositionInIndex; visible: true }
                     },
                     State {
                         name: "timeSeconds"
-                        PropertyChanges { target: estimatedDurationInSeconds; visible: true }
+                        PropertyChanges { target: maxDurationSecondsTextField; visible: true }
                         PropertyChanges { target: currentPositionInSeconds; visible: true }
-                        PropertyChanges { target: estimatedDurationInIndex; visible: false }
+                        PropertyChanges { target: maxDurationTimeIndexSpinBox; visible: false }
                         PropertyChanges { target: currentPositionInIndex; visible: false }
                     }
                 ]
@@ -157,14 +152,14 @@ Tab {
                 SpinBox {
                     id: selectRangeFrom
                     minimumValue: 0
-                    maximumValue: estimatedDurationInIndex.maximumValue
+                    maximumValue: maxDurationTimeIndexSpinBox.maximumValue
                     value: 0
                 }
                 Label { text: qsTr("To") }
                 SpinBox {
                     id: selectRangeTo
                     minimumValue: selectRangeFrom.value
-                    maximumValue: estimatedDurationInIndex.maximumValue
+                    maximumValue: maxDurationTimeIndexSpinBox.maximumValue
                     value: scene.project.durationTimeIndex
                     function __handleDurationTimeIndexChanged() {
                         value = scene.project.durationTimeIndex
@@ -215,7 +210,7 @@ Tab {
                 SpinBox {
                     id: playRangeFrom
                     minimumValue: 0
-                    maximumValue: estimatedDurationInIndex.maximumValue
+                    maximumValue: maxDurationTimeIndexSpinBox.maximumValue
                     value: 0
                     onValueChanged: rangedPlaying.updateRange()
                 }
@@ -223,7 +218,7 @@ Tab {
                 SpinBox {
                     id: playRangeTo
                     minimumValue: playRangeFrom.value
-                    maximumValue: estimatedDurationInIndex.maximumValue
+                    maximumValue: maxDurationTimeIndexSpinBox.maximumValue
                     onValueChanged: rangedPlaying.updateRange()
                     function __handleDurationTimeIndexChanged() {
                         var durationTimeIndex = scene.project.durationTimeIndex
