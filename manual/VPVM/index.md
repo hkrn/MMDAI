@@ -6,7 +6,15 @@ group: navigation
 ---
 {% include JB/setup %}
 
-VPVM a.k.a MMDAI2 のページ
+VPVM {{ site.data.VPVM.version }} のページ
+---------------------------------------------
+
+<ul>
+  {% assign pages_list = site.tags.VPVM %}
+  {% include JB/pages_list %}
+</ul>
+
+MMDAI2 0.30.0 のページ
 --------------------------
 
 <ul>
