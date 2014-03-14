@@ -32,6 +32,10 @@ VPVM {{ site.data.VPVM.version }}
  - 32bit 版のみ。64bit 上でも動くことは動く
  - 現時点での実装上の制約として動画出力が出来ません
 
+### [エフェクト詰め合わせ](http://www8092ui.sakura.ne.jp/projects/VPVM/effects/VPVM-effect-package.zip)
+
+VPVM 専用のエフェクト詰め合わせです。中身と説明はダウンロードして解凍して readme/README.html を参照して下さい
+
 MMDAI2 0.30.0
 -------------
 
