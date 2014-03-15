@@ -91,6 +91,7 @@ class RenderTarget : public QQuickItem
     Q_PROPERTY(bool dirty READ isDirty WRITE setDirty NOTIFY dirtyChanged FINAL)
     Q_PROPERTY(bool grabbingGizmo READ grabbingGizmo NOTIFY grabbingGizmoChanged FINAL)
     Q_PROPERTY(bool enableSnapGizmo READ isSnapGizmoEnabled WRITE setSnapGizmoEnabled NOTIFY enableSnapGizmoChanged FINAL)
+    Q_PROPERTY(bool fullSceneView READ isFullSceneView WRITE setFullSceneView NOTIFY fullSceneViewChanged FINAL)
     Q_PROPERTY(qreal currentTimeIndex READ currentTimeIndex WRITE setCurrentTimeIndex NOTIFY currentTimeIndexChanged FINAL)
     Q_PROPERTY(qreal lastTimeIndex READ lastTimeIndex WRITE setLastTimeIndex NOTIFY lastTimeIndexChanged FINAL)
     Q_PROPERTY(qreal currentFPS READ currentFPS NOTIFY currentFPSChanged FINAL)
@@ -150,6 +151,8 @@ public:
     void setDirty(bool value);
     bool isSnapGizmoEnabled() const;
     void setSnapGizmoEnabled(bool value);
+    bool isFullSceneView() const;
+    void setFullSceneView(bool value);
     bool grabbingGizmo() const;
     QRect viewport() const;
     void setViewport(const QRect &value);
@@ -189,6 +192,7 @@ signals:
     void dirtyChanged();
     void grabbingGizmoChanged();
     void enableSnapGizmoChanged();
+    void fullSceneViewChanged();
     void snapGizmoStepSizeChanged();
     void snapOrientationGizmoStepSizeChanged();
     void viewportChanged();
@@ -314,6 +318,7 @@ private:
     QVector3D m_snapStepSize;
     VisibleGizmoMasks m_visibleGizmoMasks;
     bool m_grabbingGizmo;
+    bool m_fullSceneView;
     bool m_playing;
     bool m_dirty;
 };

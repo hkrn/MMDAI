@@ -824,9 +824,9 @@ ApplicationWindow {
         text: qsTr("Enable Full Scene Mode")
         tooltip: qsTr("Expands Scene and Hides Timeline and Property Tabs (If you want to restore, you should click again).")
         checkable: true
-        checked: scene.isFullView
+        checked: scene.fullSceneView
         onToggled: {
-            scene.isFullView = checked
+            scene.fullSceneView = checked
             propertyPanel.visible = !checked /* manually set visible of propertyPanel */
         }
     }
@@ -842,7 +842,7 @@ ApplicationWindow {
         id: toggleVisiblePropertyPanelAction
         text: qsTr("Toggle Visible of Property Panel")
         tooltip: qsTr("Toggle visible of bottom property panel.")
-        enabled: !scene.isFullView
+        enabled: !scene.fullSceneView
         checkable: true
         checked: enabled && propertyPanel.visible
         onToggled: {
@@ -893,7 +893,7 @@ ApplicationWindow {
     SystemPalette { id: systemPalette }
     color: systemPalette.window
     statusBar: StatusBar {
-        visible: !scene.isFullView
+        visible: !scene.fullSceneView
         Label {
             id: statusBarLabel
             Layout.fillWidth: true
@@ -930,12 +930,12 @@ ApplicationWindow {
                 visible: applicationShareableServiceNames.length > 0
                 Instantiator {
                     model: applicationShareableServiceNames
+                    onObjectAdded: shareMenu.insertItem(index, object)
+                    onObjectRemoved: shareMenu.removeItem(object)
                     MenuItem {
                         text: applicationShareableServiceNames[index]
                         onTriggered: scene.share(text)
                     }
-                    onObjectAdded: shareMenu.insertItem(index, object)
-                    onObjectRemoved: shareMenu.removeItem(object)
                 }
             }
             MenuSeparator { visible: exitApplicationMenuItem.visible }
@@ -1019,8 +1019,39 @@ ApplicationWindow {
             id: modelMenu
             title: isOSX ? qsTr("Model") : qsTr("&Model")
             Menu {
+                id: selectModelMenu
+                title: qsTr("Select")
+                enabled: scene.project.availableModels.length > 0
+                Instantiator {
+                    model: scene.project.availableModels
+                    MenuItem {
+                        text: scene.project.availableModels[index].name
+                        onTriggered: scene.currentModel = scene.project.availableModels[index]
+                    }
+                    onObjectAdded: selectModelMenu.insertItem(index, object)
+                    onObjectRemoved: selectModelMenu.removeItem(object)
+                }
+            }
+            MenuSeparator {}
+            Menu {
                 id: boneMenu
                 title: qsTr("Bone")
+                Menu {
+                    id: selectBoneMenu
+                    title: qsTr("Select")
+                    enabled: scene.currentModel
+                    Instantiator {
+                        model: scene.currentModel ? scene.currentModel.allBones : []
+                        onObjectAdded: selectBoneMenu.insertItem(index, object)
+                        onObjectRemoved: selectBoneMenu.removeItem(object)
+                        MenuItem {
+                            text: scene.currentModel.allBones[index].name
+                            onTriggered: scene.currentModel.selectBone(scene.currentModel.allBones[index])
+                        }
+                    }
+                }
+                MenuItem { action: deselectBoneAction }
+                MenuSeparator {}
                 Menu {
                     title: qsTr("Edit Mode")
                     MenuItem { action: setSelectModeAction }
@@ -1043,16 +1074,28 @@ ApplicationWindow {
                 }
                 MenuItem { action: resetBoneOrientationAction }
                 MenuItem { action: resetAllBonesAction }
-                MenuSeparator {}
-                MenuItem { action: deselectBoneAction }
             }
             Menu {
                 id: morphMenu
                 title: qsTr("Morph")
+                Menu {
+                    id: selectMorphMenu
+                    title: qsTr("Select")
+                    enabled: scene.currentModel
+                    Instantiator {
+                        model: scene.currentModel ? scene.currentModel.allMorphs : []
+                        onObjectAdded: selectMorphMenu.insertItem(index, object)
+                        onObjectRemoved: selectMorphMenu.removeItem(object)
+                        MenuItem {
+                            text: scene.currentModel.allMorphs[index].name
+                            onTriggered: scene.currentModel.firstTargetMorph = scene.currentModel.allMorphs[index]
+                        }
+                    }
+                }
+                MenuItem { action: deselectMorphAction }
+                MenuSeparator {}
                 MenuItem { action: resetSelectedMorphAction }
                 MenuItem { action: resetAllMorphsAction }
-                MenuSeparator {}
-                MenuItem { action: deselectMorphAction }
             }
             MenuSeparator {}
             MenuItem { action: deleteModelAction }
@@ -1088,7 +1131,7 @@ ApplicationWindow {
                 id: timelineContainer
                 width: 400
                 Layout.minimumWidth: 300
-                visible: !scene.isFullView
+                visible: !scene.fullSceneView
                 Rectangle {
                     id: timelineView
                     property bool initialized: false
@@ -1343,7 +1386,7 @@ ApplicationWindow {
                         name: "attachedTimeline"
                         StateChangeScript { script: timelineWindow.close() }
                         ParentChange { target: timelineView; parent: timelineContainer }
-                        PropertyChanges { target: timelineContainer; visible: !scene.isFullView }
+                        PropertyChanges { target: timelineContainer; visible: !scene.fullSceneView }
                         StateChangeScript { script: timeline.refresh() }
                     },
                     State {
@@ -1387,7 +1430,7 @@ ApplicationWindow {
             height: 220
             color: systemPalette.window
             enabled: scene.isHUDAvailable
-            visible: !scene.isFullView
+            visible: !scene.fullSceneView
             TabView {
                 id: sceneTabView
                 readonly property int modelTabIndex : 0

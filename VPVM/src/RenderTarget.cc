@@ -325,6 +325,7 @@ RenderTarget::RenderTarget(QQuickItem *parent)
       m_snapStepSize(5, 5, 5),
       m_visibleGizmoMasks(AxisX | AxisY | AxisZ | AxisScreen),
       m_grabbingGizmo(false),
+      m_fullSceneView(false),
       m_playing(false),
       m_dirty(false)
 {
@@ -594,6 +595,19 @@ void RenderTarget::setSnapGizmoEnabled(bool value)
     if (translationGizmoRef->IsUsingSnap() != value) {
         translationGizmoRef->UseSnap(value);
         emit enableSnapGizmoChanged();
+    }
+}
+
+bool RenderTarget::isFullSceneView() const
+{
+    return m_fullSceneView;
+}
+
+void RenderTarget::setFullSceneView(bool value)
+{
+    if (isFullSceneView() != value) {
+        m_fullSceneView = value;
+        emit fullSceneViewChanged();
     }
 }
 
@@ -1667,7 +1681,7 @@ void RenderTarget::drawCurrentGizmo()
 
 void RenderTarget::drawEffectParameterUIWidgets()
 {
-    if (!m_playing) {
+    if (!m_playing && m_fullSceneView) {
         Q_ASSERT(m_applicationContext);
         Q_ASSERT(window());
         Q_ASSERT(window()->thread() == thread());

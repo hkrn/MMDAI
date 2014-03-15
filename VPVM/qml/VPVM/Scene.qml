@@ -62,9 +62,9 @@ Item {
     property alias snapGizmoStepSize : renderTarget.snapGizmoStepSize
     property alias shadowMapSize : renderTarget.shadowMapSize
     property alias editMode : renderTarget.editMode
+    property alias fullSceneView : renderTarget.fullSceneView
     property int baseFontPointSize : 16
     property int baseIconPointSize : 48
-    property bool isFullView: false
     property bool isHUDAvailable : true
     property real offsetX : 0
     property real offsetY : 0
@@ -592,7 +592,7 @@ Item {
         anchors { left: renderTarget.left; bottom: renderTarget.bottom; margins: scene.__cornerMarginSize }
         FPSCountPanel { id: fpsCountPanel; fontPointSize: baseFontPointSize }
         Row {
-            visible: isHUDAvailable && !isFullView
+            visible: isHUDAvailable && !fullSceneView
             Text {
                 id: toggleTimeline
                 font { family: transformHandleSet.fontFamilyName; pointSize: baseIconPointSize }
