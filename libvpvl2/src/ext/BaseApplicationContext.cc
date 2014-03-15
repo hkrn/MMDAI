@@ -174,8 +174,17 @@ static const gl::GLenum kGL_DEPTH_CLAMP = 0x864F;
 class EffectParameterUIBuilder {
 public:
     static TwBar *createBar(IEffect *effectRef) {
-        std::string effectName(reinterpret_cast<const char *>(effectRef->name()->toByteArray()));
-        TwBar *bar = TwNewBar(effectName.c_str());
+        TwBar *bar = 0;
+        std::string effectName;
+        if (const IString *name = effectRef->name()) {
+            const char *cstr = reinterpret_cast<const char *>(name->toByteArray());
+            effectName.assign(cstr);
+            bar = TwNewBar(cstr);
+        }
+        else {
+            effectName.assign("(null)");
+            bar = TwNewBar(effectName.c_str());
+        }
         TwSetParam(bar, 0, "valueswidth", TW_PARAM_CSTRING, 1, "fit");
         TwAddVarCB(bar, "Enabled", TW_TYPE_BOOLCPP, setEnableEffect, getEnableEffect, effectRef, ("help='Toggle Enable/Disable Effect of " + effectName + "'").c_str());
         return bar;
