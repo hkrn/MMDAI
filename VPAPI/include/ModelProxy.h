@@ -337,12 +337,10 @@ private slots:
     void resetLanguage();
 
 private:
-    void initializeBones(const vpvl2::Array<vpvl2::ILabel *> &labelRefs);
-    void initializeMorphs(const vpvl2::Array<vpvl2::ILabel *> &labelRefs, const vpvl2::IModel *model);
+    void initializeAllBones(const vpvl2::Array<vpvl2::ILabel *> &labelRefs);
+    void initializeAllMorphs(const vpvl2::Array<vpvl2::ILabel *> &labelRefs);
     void initializeAllVertices();
     void initializeAllMaterials();
-    void initializeAllBones();
-    void initializeAllMorphs();
     void initializeAllRigidBodies();
     void initializeAllJoints();
     void initializeAllIKConstraints();

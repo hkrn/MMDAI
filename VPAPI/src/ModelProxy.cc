@@ -166,17 +166,16 @@ void ModelProxy::initialize(bool all)
     Q_ASSERT(m_model);
     Array<ILabel *> labelRefs;
     m_model->getLabelRefs(labelRefs);
-    initializeBones(labelRefs);
-    initializeMorphs(labelRefs, m_model.data());
+    initializeAllBones(labelRefs);
+    initializeAllMorphs(labelRefs);
     qSort(m_allLabels.begin(), m_allLabels.end(), Util::LessThan());
     if (all) {
-        initializeAllBones();
         initializeAllJoints();
         initializeAllMaterials();
-        initializeAllMorphs();
         initializeAllRigidBodies();
         initializeAllVertices();
     }
+    setDirty(false);
 }
 
 void ModelProxy::addBindingModel(ModelProxy *value)
@@ -1359,9 +1358,22 @@ void ModelProxy::resetLanguage()
     emit languageChanged();
 }
 
-void ModelProxy::initializeBones(const Array<ILabel *> &labelRefs)
+void ModelProxy::initializeAllBones(const Array<ILabel *> &labelRefs)
 {
     if (m_allBones.isEmpty()) {
+        Array<IBone *> bones;
+        m_model->getBoneRefs(bones);
+        const int nbones = bones.count();
+        for (int i = 0; i < nbones; i++) {
+            IBone *boneRef = bones[i];
+            const QUuid uuid = QUuid::createUuid();
+            BoneRefObject *boneObject = new BoneRefObject(this, 0, boneRef, uuid);
+            m_allBones.append(boneObject);
+            m_bone2Refs.insert(boneRef, boneObject);
+            m_name2BoneRefs.insert(boneObject->name(), boneObject);
+            m_uuid2BoneRefs.insert(uuid, boneObject);
+        }
+        qSort(m_allBones.begin(), m_allBones.end(), Util::LessThan());
         const int nlabels = labelRefs.count();
         for (int i = 0; i < nlabels; i++) {
             ILabel *labelRef = labelRefs[i];
@@ -1370,15 +1382,10 @@ void ModelProxy::initializeBones(const Array<ILabel *> &labelRefs)
                 LabelRefObject *labelObject = new LabelRefObject(this, labelRef);
                 for (int j = 0; j < nobjects; j++) {
                     IBone *boneRef = labelRef->boneRef(j);
-                    const QUuid uuid = QUuid::createUuid();
-                    BoneRefObject *boneObject = new BoneRefObject(this, labelObject, boneRef, uuid);
+                    BoneRefObject *boneObject = m_bone2Refs.value(boneRef);
                     if (boneRef->isInteractive()) {
                         labelObject->addBone(boneObject);
                     }
-                    m_allBones.append(boneObject);
-                    m_bone2Refs.insert(boneRef, boneObject);
-                    m_name2BoneRefs.insert(boneObject->name(), boneObject);
-                    m_uuid2BoneRefs.insert(uuid, boneObject);
                 }
                 m_allLabels.append(labelObject);
             }
@@ -1386,9 +1393,31 @@ void ModelProxy::initializeBones(const Array<ILabel *> &labelRefs)
     }
 }
 
-void ModelProxy::initializeMorphs(const Array<ILabel *> &labelRefs, const IModel *model)
+void ModelProxy::initializeAllMorphs(const Array<ILabel *> &labelRefs)
 {
     if (m_allMorphs.isEmpty()) {
+        const IEncoding *encodingRef = m_parentProjectRef->encodingInstanceRef();
+        const IString *opacityMorphName = encodingRef->stringConstant(IEncoding::kOpacityMorphAsset);
+        Array<IMorph *> morphs;
+        m_model->getMorphRefs(morphs);
+        const int nmorphs = morphs.count();
+        for (int i = 0; i < nmorphs; i++) {
+            IMorph *morphRef = morphs[i];
+            if (morphRef->category() == IMorph::kBase) {
+                continue;
+            }
+            const QUuid uuid = QUuid::createUuid();
+            MorphRefObject *morphObject = new MorphRefObject(this, 0, morphRef, uuid);
+            morphObject->initialize();
+            m_allMorphs.append(morphObject);
+            m_morph2Refs.insert(morphRef, morphObject);
+            m_name2MorphRefs.insert(morphObject->name(), morphObject);
+            m_uuid2MorphRefs.insert(uuid, morphObject);
+            if (m_model->type() == IModel::kAssetModel && morphRef->name(IEncoding::kDefaultLanguage)->equals(opacityMorphName)) {
+                morphRef->setWeight(1);
+            }
+        }
+        qSort(m_allMorphs.begin(), m_allMorphs.end(), Util::LessThan());
         const int nlabels = labelRefs.count();
         for (int i = 0; i < nlabels; i++) {
             ILabel *labelRef = labelRefs[i];
@@ -1397,34 +1426,11 @@ void ModelProxy::initializeMorphs(const Array<ILabel *> &labelRefs, const IModel
                 LabelRefObject *labelObject = new LabelRefObject(this, labelRef);
                 for (int j = 0; j < nobjects; j++) {
                     IMorph *morphRef = labelRef->morphRef(j);
-                    const QUuid uuid = QUuid::createUuid();
-                    MorphRefObject *morphObject = new MorphRefObject(this, labelObject, morphRef, uuid);
-                    labelObject->addMorph(morphObject);
-                    m_allMorphs.append(morphObject);
-                    m_morph2Refs.insert(morphRef, morphObject);
-                    m_name2MorphRefs.insert(morphObject->name(), morphObject);
-                    m_uuid2MorphRefs.insert(uuid, morphObject);
+                    if (MorphRefObject *morphObject = m_morph2Refs.value(morphRef)) {
+                        labelObject->addMorph(morphObject);
+                    }
                 }
                 m_allLabels.append(labelObject);
-            }
-        }
-    }
-    if (model->type() == IModel::kAssetModel) {
-        const IEncoding *encodingRef = m_parentProjectRef->encodingInstanceRef();
-        const IString *opacityMorphName = encodingRef->stringConstant(IEncoding::kOpacityMorphAsset);
-        Array<IMorph *> morphRefs;
-        model->getMorphRefs(morphRefs);
-        const int nmorphs = morphRefs.count();
-        for (int i = 0; i < nmorphs; i++) {
-            IMorph *morphRef = morphRefs[i];
-            const QUuid uuid = QUuid::createUuid();
-            MorphRefObject *morphObject = new MorphRefObject(this, 0, morphRef, uuid);
-            m_allMorphs.append(morphObject);
-            m_morph2Refs.insert(morphRef, morphObject);
-            m_name2MorphRefs.insert(morphObject->name(), morphObject);
-            m_uuid2MorphRefs.insert(uuid, morphObject);
-            if (morphRef->name(IEncoding::kDefaultLanguage)->equals(opacityMorphName)) {
-                morphRef->setWeight(1);
             }
         }
     }
@@ -1464,51 +1470,6 @@ void ModelProxy::initializeAllMaterials()
         }
         qSort(m_allMaterials.begin(), m_allMaterials.end(), Util::LessThan());
     }
-}
-
-void ModelProxy::initializeAllBones()
-{
-    Array<IBone *> bones;
-    m_model->getBoneRefs(bones);
-    const int nbones = bones.count();
-    for (int i = 0; i < nbones; i++) {
-        IBone *boneRef = bones[i];
-        if (!m_bone2Refs.contains(boneRef)) {
-            const QUuid uuid = QUuid::createUuid();
-            BoneRefObject *boneObject = new BoneRefObject(this, 0, boneRef, uuid);
-            m_allBones.append(boneObject);
-            m_bone2Refs.insert(boneRef, boneObject);
-            m_name2BoneRefs.insert(boneObject->name(), boneObject);
-            m_uuid2BoneRefs.insert(uuid, boneObject);
-        }
-    }
-    qSort(m_allBones.begin(), m_allBones.end(), Util::LessThan());
-}
-
-void ModelProxy::initializeAllMorphs()
-{
-    Array<IMorph *> morphs;
-    m_model->getMorphRefs(morphs);
-    const int nmorphs = morphs.count();
-    for (int i = 0; i < nmorphs; i++) {
-        IMorph *morphRef = morphs[i];
-        if (morphRef->category() == IMorph::kBase) {
-            continue;
-        }
-        if (MorphRefObject *morphObject = m_morph2Refs.value(morphRef)) {
-            morphObject->initialize();
-        }
-        else {
-            const QUuid uuid = QUuid::createUuid();
-            morphObject = new MorphRefObject(this, 0, morphRef, uuid);
-            morphObject->initialize();
-            m_allMorphs.append(morphObject);
-            m_morph2Refs.insert(morphRef, morphObject);
-            m_name2MorphRefs.insert(morphObject->name(), morphObject);
-            m_uuid2MorphRefs.insert(uuid, morphObject);
-        }
-    }
-    qSort(m_allMorphs.begin(), m_allMorphs.end(), Util::LessThan());
 }
 
 void ModelProxy::initializeAllRigidBodies()
