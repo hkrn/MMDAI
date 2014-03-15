@@ -190,17 +190,18 @@ FocusScope {
         }
     }
     function __assignModelMotion(labels, motion) {
-        console.assert(labels && motion)
-        for (var i in labels) {
-            var label = labels[i], bones = label.bones, morphs = label.morphs
-            if (bones.length > 0) {
-                __assignBoneTracks(bones, motion)
+        if (labels && motion) {
+            for (var i in labels) {
+                var label = labels[i], bones = label.bones, morphs = label.morphs
+                if (bones.length > 0) {
+                    __assignBoneTracks(bones, motion)
+                }
+                else if (morphs.length > 0) {
+                    __assignMorphTracks(morphs, motion)
+                }
             }
-            else if (morphs.length > 0) {
-                __assignMorphTracks(morphs, motion)
-            }
+            canvas.requestPaint()
         }
-        canvas.requestPaint();
     }
     function assignModel(model) {
         console.assert(model)
