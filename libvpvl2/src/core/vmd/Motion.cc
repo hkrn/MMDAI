@@ -408,7 +408,7 @@ void Motion::seekTimeIndex(const IKeyframe::TimeIndex &timeIndex)
 
 void Motion::seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
 {
-    if (m_context->cameraMotion.countKeyframes() > 0) {
+    if (m_context->cameraMotion.countKeyframes() > 1) {
         m_context->cameraMotion.seek(timeIndex);
         ICamera *camera = scene->cameraRef();
         camera->setLookAt(m_context->cameraMotion.position());
@@ -416,13 +416,13 @@ void Motion::seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *sc
         camera->setFov(m_context->cameraMotion.fovy());
         camera->setDistance(m_context->cameraMotion.distance());
     }
-    if (m_context->lightMotion.countKeyframes() > 0) {
+    if (m_context->lightMotion.countKeyframes() > 1) {
         m_context->lightMotion.seek(timeIndex);
         ILight *light = scene->lightRef();
         light->setColor(m_context->lightMotion.color());
         light->setDirection(m_context->lightMotion.direction());
     }
-    if (m_context->projectMotion.countKeyframes() > 0) {
+    if (m_context->projectMotion.countKeyframes() > 1) {
         m_context->projectMotion.seek(timeIndex);
         if (IShadowMap *shadowMap = scene->shadowMapRef()) {
             shadowMap->setDistance(m_context->projectMotion.shadowDistance());
