@@ -80,6 +80,8 @@ static void handleIncludeCallback(const char *incName, FILE *&fp, const char *&b
                 break;
             }
         }
+        fp = 0;
+        buf = "";
     }
 }
 
