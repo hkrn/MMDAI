@@ -47,6 +47,13 @@ ApplicationWindow {
     id: applicationWindow
     readonly property bool isOSX: Qt.platform.os === "osx"
     readonly property int applicationLayoutAnchorMargin : 10
+    readonly property var morphCategoryModel: [
+        { "text": qsTr("None"), "value": VPVM.Morph.Unknown },
+        { "text": qsTr("Eye"), "value": VPVM.Morph.Eye },
+        { "text": qsTr("Lip"), "value": VPVM.Morph.Lip },
+        { "text": qsTr("Eyeblow"), "value": VPVM.Morph.Eyeblow },
+        { "text": qsTr("Other"), "value": VPVM.Morph.Other }
+    ]
     minimumWidth: 960
     minimumHeight: 620
     title: "%1 - %2".arg(Qt.application.name).arg(scene.project.title)
@@ -1023,13 +1030,14 @@ ApplicationWindow {
                 title: qsTr("Select")
                 enabled: scene.project.availableModels.length > 0
                 Instantiator {
+                    active: selectModelMenu.enabled
                     model: scene.project.availableModels
+                    onObjectAdded: selectModelMenu.insertItem(index, object)
+                    onObjectRemoved: selectModelMenu.removeItem(object)
                     MenuItem {
                         text: scene.project.availableModels[index].name
                         onTriggered: scene.currentModel = scene.project.availableModels[index]
                     }
-                    onObjectAdded: selectModelMenu.insertItem(index, object)
-                    onObjectRemoved: selectModelMenu.removeItem(object)
                 }
             }
             MenuSeparator {}
@@ -1041,12 +1049,26 @@ ApplicationWindow {
                     title: qsTr("Select")
                     enabled: scene.currentModel
                     Instantiator {
-                        model: scene.currentModel ? scene.currentModel.allBones : []
+                        active: selectBoneMenu.enabled
+                        model: active ? scene.currentModel.allLabels : []
                         onObjectAdded: selectBoneMenu.insertItem(index, object)
                         onObjectRemoved: selectBoneMenu.removeItem(object)
-                        MenuItem {
-                            text: scene.currentModel.allBones[index].name
-                            onTriggered: scene.currentModel.selectBone(scene.currentModel.allBones[index])
+                        Menu {
+                            id: selectBoneByCategoryMenu
+                            property var label: scene.currentModel.allLabels[index]
+                            property var bones: label ? label.bones : []
+                            title: label ? label.name : ""
+                            visible: bones.length > 0
+                            Instantiator {
+                                model: selectBoneByCategoryMenu.bones
+                                onObjectAdded: selectBoneByCategoryMenu.insertItem(index, object)
+                                onObjectRemoved: selectBoneByCategoryMenu.removeItem(object)
+                                MenuItem {
+                                    readonly property var bone: scene.currentModel.allBones[index]
+                                    text: bone.name
+                                    onTriggered: scene.currentModel.selectBone(bone)
+                                }
+                            }
                         }
                     }
                 }
@@ -1083,12 +1105,26 @@ ApplicationWindow {
                     title: qsTr("Select")
                     enabled: scene.currentModel
                     Instantiator {
-                        model: scene.currentModel ? scene.currentModel.allMorphs : []
+                        active: selectModelMenu.enabled
+                        model: active ? morphCategoryModel : []
                         onObjectAdded: selectMorphMenu.insertItem(index, object)
                         onObjectRemoved: selectMorphMenu.removeItem(object)
-                        MenuItem {
-                            text: scene.currentModel.allMorphs[index].name
-                            onTriggered: scene.currentModel.firstTargetMorph = scene.currentModel.allMorphs[index]
+                        Menu {
+                            id: selectMorphByCategoryMenu
+                            readonly property var category: morphCategoryModel[index]
+                            readonly property var morphs: scene.currentModel.findMorphsByCategory(category.value)
+                            title: category.text
+                            visible: morphs.length > 0
+                            Instantiator {
+                                model: selectMorphByCategoryMenu.morphs
+                                onObjectAdded: selectMorphByCategoryMenu.insertItem(index, object)
+                                onObjectRemoved: selectMorphByCategoryMenu.removeItem(object)
+                                MenuItem {
+                                    readonly property var morph: selectMorphByCategoryMenu.morphs[index]
+                                    text: morph.name
+                                    onTriggered: scene.currentModel.firstTargetMorph = morph
+                                }
+                            }
                         }
                     }
                 }

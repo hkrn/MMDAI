@@ -492,13 +492,7 @@ Tab {
                                     }
                                 }
                                 Component.onCompleted: scene.uploadingModelDidSucceed.connect(__handleUploadingModel)
-                                model: [
-                                    { "text": qsTr("None"), "value": VPVM.Morph.Unknown },
-                                    { "text": qsTr("Eye"), "value": VPVM.Morph.Eye },
-                                    { "text": qsTr("Lip"), "value": VPVM.Morph.Lip },
-                                    { "text": qsTr("Eyeblow"), "value": VPVM.Morph.Eyeblow },
-                                    { "text": qsTr("Other"), "value": VPVM.Morph.Other }
-                                ]
+                                model: morphCategoryModel
                                 onCurrentIndexChanged: {
                                     var currentModel = scene.currentModel
                                     if (currentModel) {
