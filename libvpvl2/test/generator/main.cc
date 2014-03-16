@@ -4,9 +4,19 @@
 
 #include <stdio.h>
 
+/* libvsq */
+#include "FileInputStream.hpp"
+#include "VSQFileReader.hpp"
+
+#include <QDebug>
+#include <QFile>
+#include <QXmlStreamReader>
+
 using namespace vpvl2;
 using namespace vpvl2::extensions;
 using namespace vpvl2::extensions::icu4c;
+
+using namespace VSQ_NS;
 
 namespace {
 
@@ -352,10 +362,451 @@ void CreateModel(IModel *model, const char *filename)
         vsize written = 0;
         if (FILE *fp = fopen(filename, "wb")) {
             model->save(buffer.data(), written);
-            fprintf(stderr, "%ld:%ld\n", model->estimateSize(), written);
+            fprintf(stderr, "%d:%d\n", int(model->estimateSize()), int(written));
             fwrite(buffer.data(), written, 1, fp);
             fclose(fp);
         }
+    }
+}
+
+void CreateModelFromCSV(IModel *model, const std::string &input, const std::string &output)
+{
+    QFile csv(QString::fromStdString(input));
+    if (csv.open(QFile::ReadOnly)) {
+        QHash<QString, ILabel *> labelRefs;
+        QHash<QString, IRigidBody *> bodyRefs;
+        QScopedPointer<IString> s;
+        QScopedPointer<IVertex> vertex;
+        QScopedPointer<IMaterial> material;
+        QScopedPointer<IBone> bone;
+        QScopedPointer<IMorph> morph;
+        QScopedPointer<ILabel> label;
+        QScopedPointer<IRigidBody> body;
+        QScopedPointer<IJoint> joint;
+        Array<int> indices;
+        QTextStream stream(&csv);
+        stream.setCodec("Shift_JIS");
+        while (!stream.atEnd()) {
+            const QString &line = stream.readLine().trimmed();
+            if (!line.startsWith(";")) {
+                const QStringList &items = line.split(",");
+                const int nitems = items.size();
+                if (nitems > 0) {
+                    const QString &type = items.first();
+                    int index = 1;
+                    if (type == "Header" && nitems == 4) {
+                        model->setVersion(items.at(index++).toFloat());
+                        model->setEncodingType(static_cast<IString::Codec>(items.at(index++).toInt()));
+                        model->setMaxUVCount(items.at(index++).toInt());
+                    }
+                    else if (type == "ModelInfo" && nitems == 5) {
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        model->setName(s.data(), IEncoding::kJapanese);
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        model->setName(s.data(), IEncoding::kEnglish);
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        model->setComment(s.data(), IEncoding::kJapanese);
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        model->setComment(s.data(), IEncoding::kEnglish);
+                    }
+                    else if (type == "Vertex" && nitems == 45) {
+                        vertex.reset(model->createVertex());
+                        vertex->setOrigin(Vector3(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        vertex->setNormal(Vector3(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        vertex->setEdgeSize(items.at(index++).toFloat());
+                        vertex->setTextureCoord(Vector3(items.at(index++).toFloat(), items.at(index++).toFloat(), 0));
+                        vertex->setOriginUV(1, Vector4(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        vertex->setOriginUV(2, Vector4(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        vertex->setOriginUV(3, Vector4(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        vertex->setOriginUV(4, Vector4(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        vertex->setType(static_cast<IVertex::Type>(items.at(index++).toInt()));
+                        vertex->setSdefC(Vector3(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        vertex->setSdefR0(Vector3(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        vertex->setSdefR1(Vector3(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        model->addVertex(vertex.take());
+                    }
+                    else if (type == "Material" && nitems == 31) {
+                        material.reset(model->createMaterial());
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        material->setName(s.data(), IEncoding::kJapanese);
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        material->setName(s.data(), IEncoding::kEnglish);
+                        material->setDiffuse(Color(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        material->setSpecular(Color(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), 1));
+                        material->setShininess(items.at(index++).toFloat());
+                        material->setAmbient(Color(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), 1));
+                        material->setCullingDisabled(items.at(index++).toInt() != 0);
+                        material->setCastingShadowEnabled(items.at(index++).toInt() != 0);
+                        material->setShadowMapEnabled(items.at(index++).toInt() != 0);
+                        material->setCastingShadowMapEnabled(items.at(index++).toInt() != 0);
+                        material->setVertexColorEnabled(items.at(index++).toInt() != 0);
+                        material->setEdgeEnabled(items.at(index++).toInt() != 0);
+                        material->setEdgeSize(items.at(index++).toFloat());
+                        material->setEdgeColor(Color(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        material->setMainTexture(s.data());
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        material->setSphereTexture(s.data());
+                        material->setSphereTextureRenderMode(static_cast<IMaterial::SphereTextureRenderMode>(items.at(index++).toInt()));
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        material->setToonTexture(s.data());
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        material->setUserDataArea(s.data());
+                        model->addMaterial(material.take());
+                    }
+                    else if (type == "Face" && nitems == 6) {
+                        index = 3;
+                        indices.append(items.at(index++).toInt());
+                        indices.append(items.at(index++).toInt());
+                        indices.append(items.at(index++).toInt());
+                    }
+                    else if (type == "Bone" && nitems == 40) {
+                        bone.reset(model->createBone());
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        bone->setName(s.data(), IEncoding::kJapanese);
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        bone->setName(s.data(), IEncoding::kEnglish);
+                        model->addBone(bone.take());
+                    }
+                    else if (type == "IKLink" && nitems == 10) {
+                    }
+                    else if (type == "Morph" && nitems == 5) {
+                        morph.reset(model->createMorph());
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        morph->setName(s.data(), IEncoding::kJapanese);
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        morph->setName(s.data(), IEncoding::kEnglish);
+                        morph->setCategory(static_cast<IMorph::Category>(items.at(index++).toInt()));
+                        morph->setType(static_cast<IMorph::Type>(items.at(index++).toInt()));
+                        model->addMorph(morph.take());
+                    }
+                    else if (type == "VertexMorph" && nitems == 6) {
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        if (IMorph *morph = model->findMorphRef(s.data())) {
+                            QScopedPointer<IMorph::Vertex> v(new IMorph::Vertex);
+                            v->index = items.at(index++).toInt();
+                            v->position.setValue(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat());
+                            morph->addVertexMorph(v.take());
+                        }
+                    }
+                    else if (type == "MaterialMorph" && nitems == 32) {
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        if (IMorph *morph = model->findMorphRef(s.data())) {
+                            QScopedPointer<IMorph::Material> v(new IMorph::Material);
+                            v->operation = items.at(index++).toInt();
+                            v->diffuse.setValue(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat());
+                            v->specular.setValue(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat());
+                            v->shininess = items.at(index++).toFloat();
+                            v->ambient.setValue(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat());
+                            v->edgeSize = items.at(index++).toFloat();
+                            v->edgeColor.setValue(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat());
+                            v->textureWeight.setValue(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat());
+                            v->sphereTextureWeight.setValue(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat());
+                            v->toonTextureWeight.setValue(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat());
+                            morph->addMaterialMorph(v.take());
+                        }
+                    }
+                    else if (type == "Node" && nitems == 3) {
+                        label.reset(model->createLabel());
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        label->setName(s.data(), IEncoding::kJapanese);
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        label->setName(s.data(), IEncoding::kEnglish);
+                        labelRefs.insert(items.at(1), label.data());
+                        model->addLabel(label.take());
+                    }
+                    else if (type == "NodeItem" && nitems == 4) {
+                        if (ILabel *labelRef = labelRefs.value(items.at(index++))) {
+                            int type = items.at(index++).toInt();
+                            s.reset(String::create(items.at(index++).toStdString()));
+                            if (type == 0) {
+                                labelRef->addBoneRef(model->findBoneRef(s.data()));
+                            }
+                            else if (type == 1) {
+                                labelRef->addMorphRef(model->findMorphRef(s.data()));
+                            }
+                        }
+                    }
+                    else if (type == "Body" && nitems == 22) {
+                        body.reset(model->createRigidBody());
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        body->setName(s.data(), IEncoding::kJapanese);
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        body->setName(s.data(), IEncoding::kEnglish);
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        body->setBoneRef(model->findBoneRef(s.data()));
+                        body->setObjectType(static_cast<IRigidBody::ObjectType>(items.at(index++).toInt()));
+                        body->setCollisionGroupID(items.at(index++).toInt());
+                        const QStringList bitflags = items.at(index++).split(QRegExp("\\s+"), QString::SkipEmptyParts);
+                        int flags = 0;
+                        foreach (const QString &item, bitflags) {
+                            int value = item.toInt();
+                            if (value >= 0 && value < 16) {
+                                flags |= (1 << value);
+                            }
+                        }
+                        body->setCollisionMask(flags);
+                        body->setShapeType(static_cast<IRigidBody::ShapeType>(items.at(index++).toInt()));
+                        body->setSize(Vector3(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        body->setPosition(Vector3(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        body->setRotation(Vector3(btRadians(items.at(index++).toFloat()), btRadians(items.at(index++).toFloat()), btRadians(items.at(index++).toFloat())));
+                        body->setMass(items.at(index++).toFloat());
+                        body->setLinearDamping(items.at(index++).toFloat());
+                        body->setAngularDamping(items.at(index++).toFloat());
+                        body->setRestitution(items.at(index++).toFloat());
+                        body->setFriction(items.at(index++).toFloat());
+                        bodyRefs.insert(items.at(1), body.data());
+                        model->addRigidBody(body.take());
+                    }
+                    else if (type == "Joint" && nitems == 30) {
+                        joint.reset(model->createJoint());
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        joint->setName(s.data(), IEncoding::kJapanese);
+                        s.reset(String::create(items.at(index++).toStdString()));
+                        joint->setName(s.data(), IEncoding::kEnglish);
+                        joint->setRigidBody1Ref(bodyRefs.value(items.at(index++)));
+                        joint->setRigidBody2Ref(bodyRefs.value(items.at(index++)));
+                        joint->setType(static_cast<IJoint::Type>(items.at(index++).toInt()));
+                        joint->setPosition(Vector3(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        joint->setRotation(Vector3(btRadians(items.at(index++).toFloat()), btRadians(items.at(index++).toFloat()), btRadians(items.at(index++).toFloat())));
+                        joint->setPositionLowerLimit(Vector3(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        joint->setPositionUpperLimit(Vector3(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        joint->setRotationLowerLimit(Vector3(btRadians(items.at(index++).toFloat()), btRadians(items.at(index++).toFloat()), btRadians(items.at(index++).toFloat())));
+                        joint->setRotationUpperLimit(Vector3(btRadians(items.at(index++).toFloat()), btRadians(items.at(index++).toFloat()), btRadians(items.at(index++).toFloat())));
+                        joint->setPositionStiffness(Vector3(items.at(index++).toFloat(), items.at(index++).toFloat(), items.at(index++).toFloat()));
+                        joint->setRotationStiffness(Vector3(btRadians(items.at(index++).toFloat()), btRadians(items.at(index++).toFloat()), btRadians(items.at(index++).toFloat())));
+                        model->addJoint(joint.take());
+                    }
+                    else if (type == "SoftBody" && nitems == 40) {
+                    }
+                }
+            }
+            else {
+                qDebug() << line << line.split(",").size();
+            }
+        }
+        std::vector<uint8> buffer;
+        int size = int(model->estimateSize());
+        buffer.resize(size);
+        vsize written = 0;
+        QFile pmd(QString::fromStdString(output));
+        if (pmd.open(QFile::WriteOnly)) {
+            model->save(buffer.data(), written);
+            fprintf(stderr, "%d:%d\n", size, int(written));
+            pmd.write(reinterpret_cast<const char *>(buffer.data()), written);
+            pmd.close();
+        }
+    }
+}
+
+void AddPhoneticSymbolKeyframe(const IKeyframe::TimeIndex &timeIndex,
+                               const IKeyframe::TimeIndex &length,
+                               const std::string &lyric,
+                               IMotion *motion)
+{
+    std::auto_ptr<IMorphKeyframe> keyframe;
+    if (length > 0 && !lyric.empty()) {
+        Scalar strength = 1.0;
+        String s(UnicodeString::fromUTF8(lyric));
+        keyframe.reset(motion->createMorphKeyframe());
+        keyframe->setName(&s);
+        keyframe->setTimeIndex(timeIndex - 2);
+        keyframe->setWeight(0.0);
+        motion->addKeyframe(keyframe.release());
+        keyframe.reset(motion->createMorphKeyframe());
+        keyframe->setName(&s);
+        keyframe->setTimeIndex(timeIndex);
+        keyframe->setWeight(strength);
+        motion->addKeyframe(keyframe.release());
+        keyframe.reset(motion->createMorphKeyframe());
+        keyframe->setName(&s);
+        keyframe->setTimeIndex(btMax(timeIndex + length - 1, IKeyframe::TimeIndex(1)));
+        keyframe->setWeight(strength);
+        motion->addKeyframe(keyframe.release());
+        keyframe.reset(motion->createMorphKeyframe());
+        keyframe->setName(&s);
+        keyframe->setTimeIndex(timeIndex + length + 1);
+        keyframe->setWeight(0.0);
+        motion->addKeyframe(keyframe.release());
+    }
+}
+
+double CreateMotionFromVSQ(IMotion *motion, const std::string &input, const std::string &output)
+{
+    Sequence sequence;
+    FileInputStream stream(input);
+    VSQFileReader reader;
+    try {
+        reader.read(sequence, &stream, "Shift_JIS");
+    } catch (const std::exception &e) {
+        VPVL2_LOG(WARNING, "exception: " << e.what());
+        return 0;
+    }
+
+    const Track *masterTrack = sequence.track(0);
+    const Event::List *events = masterTrack->events();
+    const TempoList &tempo = sequence.tempoList;
+    const int nevents = events->size(), preferredFPS = Scene::defaultFPS();
+    static const char kPhoneticSymbolA[] = { 0xe3, 0x81, 0x82, 0x0 };
+    static const char kPhoneticSymbolE[] = { 0xe3, 0x81, 0x88, 0x0 };
+    static const char kPhoneticSymbolI[] = { 0xe3, 0x81, 0x84, 0x0 };
+    static const char kPhoneticSymbolO[] = { 0xe3, 0x81, 0x8a, 0x0 };
+    static const char kPhoneticSymbolU[] = { 0xe3, 0x81, 0x86, 0x0 };
+    static const char kPhoneticSymbolN[] = { 0xe3, 0x82, 0x93, 0x0 };
+    std::string previous;
+    for (int i = 0; i < nevents; i++) {
+        const Event *event = events->get(i);
+        const Handle &handle = event->lyricHandle;
+        const tick_t tick = event->clock;
+        const double seconds = tempo.getSecFromClock(tick);
+        const int timeIndex = int(seconds * preferredFPS);
+        const int length = std::max(int(tempo.getSecFromClock(event->getLength()) * preferredFPS), 1);
+        if (handle.getHandleType() == HandleType::LYRIC) {
+            const int nlyrics = handle.getLyricCount();
+            for (int j = 0; j < nlyrics; j++) {
+                const Lyric &lyric = handle.getLyricAt(j);
+                const std::string &symbol = lyric.getPhoneticSymbol();
+                if (symbol.find_first_of("a") != std::string::npos) {
+                    AddPhoneticSymbolKeyframe(timeIndex, length, kPhoneticSymbolA, motion);
+                    previous.assign(kPhoneticSymbolA);
+                }
+                else if (symbol.find_first_of("e") != std::string::npos) {
+                    AddPhoneticSymbolKeyframe(timeIndex, length, kPhoneticSymbolE, motion);
+                    previous.assign(kPhoneticSymbolE);
+                }
+                else if (symbol.find_first_of("i") != std::string::npos) {
+                    AddPhoneticSymbolKeyframe(timeIndex, length, kPhoneticSymbolI, motion);
+                    previous.assign(kPhoneticSymbolI);
+                }
+                else if (symbol.find_first_of("o") != std::string::npos) {
+                    AddPhoneticSymbolKeyframe(timeIndex, length, kPhoneticSymbolO, motion);
+                    previous.assign(kPhoneticSymbolO);
+                }
+                else if (symbol.find_first_of("u") != std::string::npos || symbol.find_first_of("M") != std::string::npos) {
+                    AddPhoneticSymbolKeyframe(timeIndex, length, kPhoneticSymbolU, motion);
+                    previous.assign(kPhoneticSymbolU);
+                }
+                else if (symbol.find_first_of("mnN") != std::string::npos) {
+                    AddPhoneticSymbolKeyframe(timeIndex, length, kPhoneticSymbolN, motion);
+                    previous.assign(kPhoneticSymbolN);
+                }
+                else {
+                    //VPVL2_VLOG(1, "[X] frameIndex=" << timeIndex << " value=" << lyric.getPhoneticSymbol() << " phrase=" << lyric.phrase);
+                    continue;
+                }
+                VPVL2_VLOG(1, "[O] tick=" << tick << " seconds=" << seconds << " frameIndex=" << timeIndex << " length=" << length << " value=" << lyric.getPhoneticSymbol() << " phrase=" << lyric.phrase);
+            }
+        }
+    }
+
+    const BPList *list = masterTrack->curve("OPE");
+    const int nlists = list->size();
+    for (int i = 0; i < nlists; i++) {
+        int value = list->getValue(i);
+        int frameIndex = int(tempo.getSecFromClock(list->getKeyClock(i)) * preferredFPS);
+        VPVL2_VLOG(1, "frameIndex=" << frameIndex << " value=" << value);
+    }
+
+    std::vector<uint8> buffer;
+    int size = int(motion->estimateSize());
+    buffer.resize(size);
+    vsize written = 0;
+    if (FILE *fp = fopen(output.c_str(), "wb")) {
+        motion->save(buffer.data());
+        fprintf(stderr, "%d:%d:%d\n", size, int(written), motion->countKeyframes(IKeyframe::kMorphKeyframe));
+        fwrite(buffer.data(), size, 1, fp);
+        fclose(fp);
+    }
+
+    return tempo.getSecFromClock(events->get(events->size() - 1)->clock);
+}
+
+double CreateMotionFromVSQX(IMotion *motion, const std::string &input, const std::string &output)
+{
+    QFile vsqx(QString::fromStdString(input));
+    if (vsqx.open(QFile::ReadOnly)) {
+        QXmlStreamReader reader(&vsqx);
+        int ntokens = 0;
+        QHash<QString, bool> states;
+        while (!reader.atEnd()) {
+            QXmlStreamReader::TokenType type = reader.readNext();
+            if (type == QXmlStreamReader::StartElement) {
+                states.insert(reader.name().toString(), true);
+            }
+            else if (type == QXmlStreamReader::EndElement) {
+                states.insert(reader.name().toString(), false);
+            }
+            else if (type == QXmlStreamReader::Characters) {
+                if (states.value("masterTrack") && states.value("tempo")) {
+                    if (states.value("bpm")) {
+                        qDebug() << "tempo.bpm:" << reader.text().toInt();
+                    }
+                    if (states.value("posTick")) {
+                        qDebug() << "tempo.posTick:" << reader.text().toInt();
+                    }
+                }
+                else if (states.value("vsTrack") && states.value("note")) {
+                    if (states.value("lyric")) {
+                        qDebug() << "note.lyric:" << reader.text();
+                    }
+                    if (states.value("phnms")) {
+                        qDebug() << "note.phnms:" << reader.text();
+                    }
+                    if (states.value("posTick")) {
+                        qDebug() << "note.posTick:" << reader.text().toInt();
+                        qDebug() << "note.posTick2:" << (reader.text().toInt() * 14200 * 1e-4 / 480.0);
+                    }
+                    if (states.value("durTick")) {
+                        qDebug() << "note.durTick:" << reader.text().toInt();
+                    }
+                }
+                ntokens++;
+            }
+        }
+        if (reader.hasError()) {
+            qWarning() << reader.errorString();
+        }
+        qDebug() << ntokens;
+    }
+
+    std::vector<uint8> buffer;
+    int size = int(motion->estimateSize());
+    buffer.resize(size);
+    vsize written = 0;
+    QFile vmd(QString::fromStdString(output));
+    if (vmd.open(QFile::WriteOnly)) {
+        motion->save(buffer.data());
+        fprintf(stderr, "%d:%d:%d\n", size, int(written), motion->countKeyframes(IKeyframe::kMorphKeyframe));
+        vmd.write(reinterpret_cast<const char *>(buffer.data()), size);
+        vmd.close();
+    }
+
+    return 0;
+}
+
+void CreateCameraMotion(IMotion *motion, double seconds, const std::string &output)
+{
+    std::vector<uint8> buffer;
+    std::auto_ptr<ICameraKeyframe> keyframe(motion->createCameraKeyframe());
+    Vector3 lookAt(0, 13, 0);
+    keyframe->setFov(27);
+    keyframe->setDistance(10);
+    keyframe->setLookAt(lookAt);
+    motion->addKeyframe(keyframe.release());
+    keyframe.reset(motion->createCameraKeyframe());
+    keyframe->setFov(27);
+    keyframe->setDistance(10);
+    keyframe->setLookAt(lookAt);
+    keyframe->setTimeIndex(btMax(seconds, double(1)) * Scene::defaultFPS());
+    motion->addKeyframe(keyframe.release());
+    int size = int(motion->estimateSize());
+    buffer.resize(size);
+    vsize written = 0;
+    if (FILE *fp = fopen(output.c_str(), "wb")) {
+        motion->save(buffer.data());
+        fprintf(stderr, "%d:%d:%d\n", size, int(written), motion->countKeyframes(IKeyframe::kCameraKeyframe));
+        fwrite(buffer.data(), size, 1, fp);
+        fclose(fp);
     }
 }
 
@@ -367,11 +818,29 @@ int main(int /* argc */, char *argv[])
     Encoding::Dictionary dictionary;
     Encoding encoding(&dictionary);
     Factory factory(&encoding);
-    IModel *pmd = factory.newModel(IModel::kPMDModel);
-    CreateModel(pmd, "output.pmd");
-    delete pmd;
-    IModel *pmx = factory.newModel(IModel::kPMXModel);
-    CreateModel(pmx, "output.pmx");
-    delete pmx;
+    {
+        std::auto_ptr<IModel> pmd(factory.newModel(IModel::kPMDModel));
+        CreateModel(pmd.get(), "output.pmd");
+    }
+    {
+        std::auto_ptr<IModel> pmx(factory.newModel(IModel::kPMXModel));
+        CreateModel(pmx.get(), "output.pmx");
+    }
+    {
+        std::auto_ptr<IModel> pmx(factory.newModel(IModel::kPMXModel));
+        CreateModelFromCSV(pmx.get(), "input.csv", "output.pmx");
+    }
+    if (false) {
+        std::auto_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDFormat, 0));
+        double seconds = CreateMotionFromVSQ(vmd.get(), "input.vsq", "output_vsq_motion.vmd");
+        vmd.reset(factory.newMotion(IMotion::kVMDFormat, 0));
+        CreateCameraMotion(vmd.get(), seconds, "output_vsq_camera.vmd");
+    }
+    if (false) {
+        std::auto_ptr<IMotion> vmd(factory.newMotion(IMotion::kVMDFormat, 0));
+        double seconds = CreateMotionFromVSQX(vmd.get(), "input.vsqx", "output_vsqx_motion.vmd");
+        vmd.reset(factory.newMotion(IMotion::kVMDFormat, 0));
+        CreateCameraMotion(vmd.get(), seconds, "output_vsqx_camera.vmd");
+    }
     return 0;
 }
