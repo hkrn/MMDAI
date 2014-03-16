@@ -103,9 +103,6 @@ public:
     void seekSceneSeconds(const float64 &seconds, Scene *scene);
     void seekTimeIndex(const IKeyframe::TimeIndex &timeIndex);
     void seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *scene);
-    void advance(const IKeyframe::TimeIndex &deltaTimeIndex);
-    void advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene);
-    void reload();
     void reset();
     float64 durationSeconds() const;
     IKeyframe::TimeIndex durationTimeIndex() const;

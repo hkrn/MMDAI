@@ -430,48 +430,6 @@ void Motion::seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *sc
     }
 }
 
-void Motion::advance(const IKeyframe::TimeIndex &deltaTimeIndex)
-{
-    if (deltaTimeIndex == 0) {
-        m_context->boneMotion.advance(deltaTimeIndex);
-        m_context->morphMotion.advance(deltaTimeIndex);
-    }
-    else if (m_context->active) {
-        // The motion is active and continue to advance
-        m_context->boneMotion.advance(deltaTimeIndex);
-        m_context->morphMotion.advance(deltaTimeIndex);
-        if (isReachedTo(durationTimeIndex())) {
-            m_context->active = false;
-        }
-    }
-}
-
-void Motion::advanceScene(const IKeyframe::TimeIndex &deltaTimeIndex, Scene *scene)
-{
-    if (m_context->cameraMotion.countKeyframes() > 0) {
-        m_context->cameraMotion.advance(deltaTimeIndex);
-        ICamera *camera = scene->cameraRef();
-        camera->setLookAt(m_context->cameraMotion.position());
-        camera->setAngle(m_context->cameraMotion.angle());
-        camera->setFov(m_context->cameraMotion.fovy());
-        camera->setDistance(m_context->cameraMotion.distance());
-    }
-    if (m_context->lightMotion.countKeyframes() > 0) {
-        m_context->lightMotion.advance(deltaTimeIndex);
-        ILight *light = scene->lightRef();
-        light->setColor(m_context->lightMotion.color());
-        light->setDirection(m_context->lightMotion.direction());
-    }
-}
-
-void Motion::reload()
-{
-    /* rebuild internal keyframe nodes */
-    m_context->boneMotion.setParentModelRef(m_context->parentModelRef);
-    m_context->morphMotion.setParentModelRef(m_context->parentModelRef);
-    reset();
-}
-
 void Motion::reset()
 {
     m_context->boneMotion.seek(0.0f);
