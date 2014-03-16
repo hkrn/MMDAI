@@ -242,6 +242,7 @@ public slots:
     Q_INVOKABLE void ray(qreal x, qreal y, int width, int height);
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
+    Q_INVOKABLE QString toTimeString(qreal value) const;
     void internalAddModel(ModelProxy *value, bool selected, bool isProject);
     void internalDeleteModel(ModelProxy *value, bool emitSignal = true);
     void internalCreateAsync();

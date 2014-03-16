@@ -529,6 +529,14 @@ void ProjectProxy::redo()
     }
 }
 
+QString ProjectProxy::toTimeString(qreal value) const
+{
+    static const QString kMSFormat("mm:ss"), kHMSFormat("HH:mm:ss");
+    int msecs = (value / Scene::defaultFPS()) * 1000;
+    const QDateTime &t = QDateTime::fromMSecsSinceEpoch(msecs, Qt::UTC);
+    return t.toString(t.time().hour() > 0 ? kHMSFormat : kMSFormat);
+}
+
 void ProjectProxy::internalAddModel(ModelProxy *value, bool selected, bool isProject)
 {
     Q_ASSERT(value);

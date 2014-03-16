@@ -568,7 +568,10 @@ Item {
         anchors { top: renderTarget.top; left: renderTarget.left; margins: scene.__cornerMarginSize }
         font { family: applicationPreference.fontFamily; pointSize: baseFontPointSize }
         color: infoPanel.textColor
-        text: qsTr("Playing %1 of %2 frames").arg(Math.floor(renderTarget.currentTimeIndex)).arg(projectDocument.durationTimeIndex)
+        text: qsTr("Playing %1 of %2 frames (%3)")
+            .arg(Math.floor(renderTarget.currentTimeIndex))
+            .arg(projectDocument.durationTimeIndex)
+            .arg(projectDocument.toTimeString(Math.floor(renderTarget.currentTimeIndex)))
         visible: scene.playing
     }
     Text {
