@@ -526,60 +526,76 @@ Tab {
                                 }
                             }
                         }
-                        RowLayout {
-                            Slider {
-                                id: morphSlider
-                                enabled: scene.hasMorphSelected
-                                minimumValue: 0
-                                maximumValue: 1.0
-                                tickmarksEnabled: true
-                                function updateKeyframe() {
-                                    var motion = scene.currentMotion
-                                    if (!hovered && motion) {
-                                        var morph = scene.currentModel.firstTargetMorph
-                                        var timeIndex = timeline.timeIndex
-                                        motion.updateKeyframe(morph, timeIndex)
+                        ColumnLayout {
+                            RowLayout {
+                                Slider {
+                                    id: morphSlider
+                                    enabled: scene.hasMorphSelected
+                                    minimumValue: 0
+                                    maximumValue: 1.0
+                                    tickmarksEnabled: true
+                                    function updateKeyframe() {
+                                        var motion = scene.currentMotion
+                                        if (!hovered && motion) {
+                                            var morph = scene.currentModel.firstTargetMorph
+                                            var timeIndex = timeline.timeIndex
+                                            motion.updateKeyframe(morph, timeIndex)
+                                        }
+                                    }
+                                    onPressedChanged: if (!pressed) updateKeyframe()
+                                    Binding on value {
+                                        value: morphSpinBox.value
+                                        when: morphSpinBox.hovered
                                     }
                                 }
-                                onPressedChanged: if (!pressed) updateKeyframe()
-                                Binding on value {
-                                    value: morphSpinBox.value
-                                    when: morphSpinBox.hovered
-                                }
-                            }
-                            Binding {
-                                target: scene.hasMorphSelected ? scene.currentModel.firstTargetMorph : null
-                                property: "weight"
-                                value: morphSlider.value
-                                when: morphSlider.pressed
-                            }
-                            SpinBox {
-                                id: morphSpinBox
-                                enabled: scene.hasMorphSelected
-                                minimumValue: morphSlider.minimumValue
-                                maximumValue: morphSlider.maximumValue
-                                decimals: 3
-                                stepSize: 0.01
-                                onEditingFinished: morphSlider.updateKeyframe()
-                                Binding on value {
+                                Binding {
+                                    target: scene.hasMorphSelected ? scene.currentModel.firstTargetMorph : null
+                                    property: "weight"
                                     value: morphSlider.value
                                     when: morphSlider.pressed
                                 }
-                            }
-                            Binding {
-                                target: scene.hasMorphSelected ? scene.currentModel.firstTargetMorph : null
-                                property: "weight"
-                                value: morphSpinBox.value
-                                when: morphSpinBox.hovered
-                            }
-                            function __handleUndoDidPerform() {
-                                if (scene.hasMorphSelected) {
-                                    morphSpinBox.value = morphSlider.value = scene.currentModel.firstTargetMorph.weight
+                                SpinBox {
+                                    id: morphSpinBox
+                                    enabled: scene.hasMorphSelected
+                                    minimumValue: morphSlider.minimumValue
+                                    maximumValue: morphSlider.maximumValue
+                                    decimals: 3
+                                    stepSize: 0.01
+                                    onEditingFinished: morphSlider.updateKeyframe()
+                                    Binding on value {
+                                        value: morphSlider.value
+                                        when: morphSlider.pressed
+                                    }
+                                }
+                                Binding {
+                                    target: scene.hasMorphSelected ? scene.currentModel.firstTargetMorph : null
+                                    property: "weight"
+                                    value: morphSpinBox.value
+                                    when: morphSpinBox.hovered
+                                }
+                                function __handleUndoDidPerform() {
+                                    if (scene.hasMorphSelected) {
+                                        morphSpinBox.value = morphSlider.value = scene.currentModel.firstTargetMorph.weight
+                                    }
+                                }
+                                function __handleCurrentTimeIndexChanged() {
+                                    if (scene.hasMorphSelected) {
+                                        var keyframe = scene.currentMotion.resolveKeyframeAt(scene.project.currentTimeIndex, scene.currentModel.firstTargetMorph)
+                                        morphSpinBox.value = morphSlider.value = keyframe ? keyframe.weight : 0
+                                        morphKeyframeRegisteredCheckbox.checked = keyframe ? true : false
+                                    }
+                                }
+                                Component.onCompleted: {
+                                    scene.project.onUndoDidPerform.connect(__handleUndoDidPerform)
+                                    scene.project.onRedoDidPerform.connect(__handleUndoDidPerform)
+                                    scene.project.currentTimeIndexChanged.connect(__handleCurrentTimeIndexChanged)
                                 }
                             }
-                            Component.onCompleted: {
-                                scene.project.onUndoDidPerform.connect(__handleUndoDidPerform)
-                                scene.project.onRedoDidPerform.connect(__handleUndoDidPerform)
+                            CheckBox {
+                                id: morphKeyframeRegisteredCheckbox
+                                checked: false
+                                enabled: false
+                                text: qsTr("Is Keyframe Registered?")
                             }
                         }
                     }
