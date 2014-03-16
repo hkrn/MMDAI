@@ -6,7 +6,8 @@ title: MMDAI Project Portal2
 
 ## INFO
 
-> - [VPVM {{ site.data.VPVM.version }} リリース ({{ site.data.VPVM.release.date }})]({{ site.data.VPVM.blog }}/blomaga/{{ site.data.VPVM.release.article }})
+> - [VPVM {{ site.data.VPVM.version }} 配布開始 ({{ site.data.VPVM.release.date }})]({{ site.data.VPVM.blog }}/blomaga/{{ site.data.VPVM.release.article }})
+> - [VPVM エフェクト詰め合わせ配布開始 ({{ site.data.VPVM.effect.date }})]({{ site.data.VPVM.blog }}/blomaga/{{ site.data.VPVM.effect.article }})
 > - [MMDAI2 0.30.0 リリース (2013/6/8)]({{ site.data.VPVM.bowlroll }}/up/sc?tab=MMDAI2)
 
 ここは MMDAI Project Portal2（の建設地）です。上のタブからでも移動出来ます。
