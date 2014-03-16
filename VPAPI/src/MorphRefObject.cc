@@ -739,10 +739,10 @@ void ChildImpulseMorphRefObject::setLocal(bool value)
     }
 }
 
-MorphRefObject::MorphRefObject(ModelProxy *modelRef, LabelRefObject *labelRef, IMorph *morphRef, const QUuid &uuid)
-    : QObject(labelRef),
+MorphRefObject::MorphRefObject(ModelProxy *modelRef, IMorph *morphRef, const QUuid &uuid)
+    : QObject(modelRef),
       m_parentModelRef(modelRef),
-      m_parentLabelRef(labelRef),
+      m_parentLabelRef(0),
       m_morphRef(morphRef),
       m_uuid(uuid),
       m_originWeight(0),
@@ -864,6 +864,14 @@ ModelProxy *MorphRefObject::parentModel() const
 LabelRefObject *MorphRefObject::parentLabel() const
 {
     return m_parentLabelRef;
+}
+
+void MorphRefObject::setParentLabel(LabelRefObject *value)
+{
+    if (parentLabel() != value) {
+        m_parentLabelRef = value;
+        emit parentLabelChanged();
+    }
 }
 
 QQmlListProperty<ChildGroupMorphRefObject>MorphRefObject::groups()

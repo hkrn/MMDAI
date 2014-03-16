@@ -47,10 +47,10 @@
 using namespace vpvl2;
 using namespace vpvl2::extensions::qt;
 
-BoneRefObject::BoneRefObject(ModelProxy *modelRef, LabelRefObject *labelRef, IBone *boneRef, const QUuid &uuid)
-    : QObject(labelRef),
+BoneRefObject::BoneRefObject(ModelProxy *modelRef, IBone *boneRef, const QUuid &uuid)
+    : QObject(modelRef),
       m_parentModelRef(modelRef),
-      m_parentLabelRef(labelRef),
+      m_parentLabelRef(0),
       m_boneRef(boneRef),
       m_uuid(uuid),
       m_dirty(false)
@@ -127,6 +127,14 @@ BoneRefObject *BoneRefObject::parentBone() const
 LabelRefObject *BoneRefObject::parentLabel() const
 {
     return m_parentLabelRef;
+}
+
+void BoneRefObject::setParentLabel(LabelRefObject *value)
+{
+    if (parentLabel() != value) {
+        m_parentLabelRef = value;
+        emit parentLabelChanged();
+    }
 }
 
 QUuid BoneRefObject::uuid() const

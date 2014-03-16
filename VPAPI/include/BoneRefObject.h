@@ -60,7 +60,7 @@ class BoneRefObject : public QObject
     Q_OBJECT
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
     Q_PROPERTY(BoneRefObject *parentBone READ parentBone CONSTANT FINAL)
-    Q_PROPERTY(LabelRefObject *parentLabel READ parentLabel CONSTANT FINAL)
+    Q_PROPERTY(LabelRefObject *parentLabel READ parentLabel NOTIFY parentLabelChanged FINAL)
     Q_PROPERTY(QUuid uuid READ uuid CONSTANT FINAL)
     Q_PROPERTY(BoneRefObject *destinationOriginBone READ destinationOriginBone WRITE setDestinationOriginBone NOTIFY destinationOriginBoneChanged FINAL)
     Q_PROPERTY(BoneRefObject *parentInherentBone READ parentInherentBone WRITE setParentInherentBone NOTIFY parentInherentBoneChanged FINAL)
@@ -87,7 +87,7 @@ class BoneRefObject : public QObject
     Q_PROPERTY(bool dirty READ isDirty NOTIFY dirtyChanged FINAL)
 
 public:
-    BoneRefObject(ModelProxy *modelRef, LabelRefObject *labelRef, vpvl2::IBone *boneRef, const QUuid &uuid);
+    BoneRefObject(ModelProxy *modelRef, vpvl2::IBone *boneRef, const QUuid &uuid);
     ~BoneRefObject();
 
     void setOriginLocalTranslation(const QVector3D &value);
@@ -98,6 +98,7 @@ public:
     ModelProxy *parentModel() const;
     BoneRefObject *parentBone() const;
     LabelRefObject *parentLabel() const;
+    void setParentLabel(LabelRefObject *value);
     QUuid uuid() const;
     QString name() const;
     BoneRefObject *destinationOriginBone() const;
@@ -157,6 +158,7 @@ public slots:
     Q_INVOKABLE void sync();
 
 signals:
+    void parentLabelChanged();
     void destinationOriginBoneChanged();
     void parentInherentBoneChanged();
     void nameChanged();

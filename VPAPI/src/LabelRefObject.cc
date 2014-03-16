@@ -71,6 +71,7 @@ void LabelRefObject::addBone(BoneRefObject *bone)
     if (!m_bones.contains(bone)) {
         m_bones.append(bone);
         m_labelRef->addBoneRef(bone->data());
+        bone->setParentLabel(this);
         setDirty(true);
         emit bonesChanged();
     }
@@ -82,6 +83,7 @@ void LabelRefObject::addMorph(MorphRefObject *morph)
     if (!m_morphs.contains(morph)) {
         m_morphs.append(morph);
         m_labelRef->addMorphRef(morph->data());
+        morph->setParentLabel(this);
         setDirty(true);
         emit morphsChanged();
     }

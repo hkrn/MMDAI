@@ -336,7 +336,7 @@ class MorphRefObject : public QObject
     Q_ENUMS(Category)
     Q_ENUMS(Type)
     Q_PROPERTY(ModelProxy *parentModel READ parentModel CONSTANT FINAL)
-    Q_PROPERTY(LabelRefObject *parentLabel READ parentLabel CONSTANT FINAL)
+    Q_PROPERTY(LabelRefObject *parentLabel READ parentLabel NOTIFY parentLabelChanged FINAL)
     Q_PROPERTY(QQmlListProperty<ChildGroupMorphRefObject> groups READ groups NOTIFY groupsChanged FINAL)
     Q_PROPERTY(QQmlListProperty<ChildVertexMorphRefObject> vertices READ vertices NOTIFY verticesChanged FINAL)
     Q_PROPERTY(QQmlListProperty<ChildBoneMorphRefObject> bones READ bones NOTIFY bonesChanged FINAL)
@@ -375,7 +375,7 @@ public:
         Impulse  = vpvl2::IMorph::kImpulseMorph
     };
 
-    MorphRefObject(ModelProxy *modelRef, LabelRefObject *labelRef, vpvl2::IMorph *morphRef, const QUuid &uuid);
+    MorphRefObject(ModelProxy *modelRef, vpvl2::IMorph *morphRef, const QUuid &uuid);
     ~MorphRefObject();
 
     void initialize();
@@ -385,6 +385,7 @@ public:
     vpvl2::IMorph *data() const;
     ModelProxy *parentModel() const;
     LabelRefObject *parentLabel() const;
+    void setParentLabel(LabelRefObject *value);
     QQmlListProperty<ChildGroupMorphRefObject> groups();
     QQmlListProperty<ChildVertexMorphRefObject> vertices();
     QQmlListProperty<ChildBoneMorphRefObject> bones();
@@ -410,6 +411,7 @@ public slots:
     Q_INVOKABLE void sync();
 
 signals:
+    void parentLabelChanged();
     void groupsChanged();
     void verticesChanged();
     void bonesChanged();

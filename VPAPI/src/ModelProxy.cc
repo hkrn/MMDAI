@@ -613,7 +613,7 @@ BoneRefObject *ModelProxy::createBone()
 {
     Q_ASSERT(m_model);
     QScopedPointer<IBone> bone(m_model->createBone());
-    QScopedPointer<BoneRefObject> boneRef(new BoneRefObject(this, 0, bone.data(), QUuid::createUuid()));
+    QScopedPointer<BoneRefObject> boneRef(new BoneRefObject(this, bone.data(), QUuid::createUuid()));
     m_allBones.append(boneRef.data());
     m_uuid2BoneRefs.insert(boneRef->uuid(), boneRef.data());
     m_bone2Refs.insert(bone.data(), boneRef.data());
@@ -626,7 +626,7 @@ MorphRefObject *ModelProxy::createMorph()
 {
     Q_ASSERT(m_model);
     QScopedPointer<IMorph> morph(m_model->createMorph());
-    QScopedPointer<MorphRefObject> morphRef(new MorphRefObject(this, 0, morph.data(), QUuid::createUuid()));
+    QScopedPointer<MorphRefObject> morphRef(new MorphRefObject(this, morph.data(), QUuid::createUuid()));
     m_allMorphs.append(morphRef.data());
     m_uuid2MorphRefs.insert(morphRef->uuid(), morphRef.data());
     m_morph2Refs.insert(morph.data(), morphRef.data());
@@ -1367,7 +1367,7 @@ void ModelProxy::initializeAllBones(const Array<ILabel *> &labelRefs)
         for (int i = 0; i < nbones; i++) {
             IBone *boneRef = bones[i];
             const QUuid uuid = QUuid::createUuid();
-            BoneRefObject *boneObject = new BoneRefObject(this, 0, boneRef, uuid);
+            BoneRefObject *boneObject = new BoneRefObject(this, boneRef, uuid);
             m_allBones.append(boneObject);
             m_bone2Refs.insert(boneRef, boneObject);
             m_name2BoneRefs.insert(boneObject->name(), boneObject);
@@ -1407,7 +1407,7 @@ void ModelProxy::initializeAllMorphs(const Array<ILabel *> &labelRefs)
                 continue;
             }
             const QUuid uuid = QUuid::createUuid();
-            MorphRefObject *morphObject = new MorphRefObject(this, 0, morphRef, uuid);
+            MorphRefObject *morphObject = new MorphRefObject(this, morphRef, uuid);
             morphObject->initialize();
             m_allMorphs.append(morphObject);
             m_morph2Refs.insert(morphRef, morphObject);
