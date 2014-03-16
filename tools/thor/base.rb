@@ -97,7 +97,9 @@ module Mmdai
 
       def has_env_vars?(candidates, default_value = false)
         candidates.each do |key| 
-          if ENV.key? key then return true end
+          if ENV.key? key then
+            return /\A(?:1|true)\z/.match(ENV[key]) ? true : false
+          end
         end
         return default_value
       end
