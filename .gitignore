@@ -60,6 +60,7 @@ VPMM*.json
 VPVM*.png
 VPVM.desktop
 VPVM*.json
+vsq-*
 Win32
 WinSparkle-*
 zlib-*
