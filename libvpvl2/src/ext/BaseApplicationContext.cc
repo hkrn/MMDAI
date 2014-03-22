@@ -1270,7 +1270,8 @@ void BaseApplicationContext::renderOffscreen()
     int actualProceededTechniques = 0;
     for (int i = 0; i < ntechniques; i++) {
         IEffect::Technique *technique = m_offscreenTechniques[i];
-        if (technique->parentEffectRef()->isEnabled()) {
+        IEffect *effectRef = technique->parentEffectRef();
+        if (effectRef && effectRef->isEnabled()) {
             technique->getPasses(passes);
             const int npasses = passes.count();
             for (int j = 0; j < npasses; j++) {
