@@ -77,13 +77,16 @@ struct DefaultIKJoint : vpvl2::IBone::IKJoint {
     }
     static Scalar clampAngle2(const Scalar &value, const Scalar &lower, const Scalar &upper, bool ikt) {
         Scalar v = value;
+        (void) ikt;
         if (v < lower) {
-            const Scalar &tf = 2 * lower - v;
-            v = (tf <= upper && ikt) ? tf : lower;
+            // const Scalar &tf = 2 * lower - v;
+            // v = (tf <= upper && ikt) ? tf : lower;
+            v = lower;
         }
         if (v > upper) {
-            const Scalar &tf = 2 * lower - v;
-            v = (tf <= lower && ikt) ? tf : upper;
+            // const Scalar &tf = 2 * lower - v;
+            // v = (tf >= lower && ikt) ? tf : upper;
+            v = upper;
         }
         return v;
     }
@@ -195,28 +198,35 @@ struct DefaultIKJoint : vpvl2::IBone::IKJoint {
         clampAngle(m_lowerLimit.z(), m_upperLimit.z(), z3, z1);
         jointRotation.setEulerZYX(z1, y1, x1);
 #else
+        //
+        // extraction order in 2.1 and 2.4 and 2.5 from
+        // http://www.geometrictools.com/Documentation/EulerAngles.pdf
+        //
         static const Scalar &kEulerAngleLimit = btRadians(90), &kEulerAngleLimit2 = btRadians(88);
         Scalar x, y, z;
         Quaternion rx, ry, rz, result;
         Matrix3x3 matrix(jointRotation);
+        // ZXY
         if (m_lowerLimit.x() > -kEulerAngleLimit && m_upperLimit.x() < kEulerAngleLimit) {
-            x = btClamped(btAsin(matrix[2][1]), -kEulerAngleLimit2, kEulerAngleLimit);
-            y = btAtan2(matrix[2][0], matrix[2][2]);
-            z = btAtan2(matrix[0][1], matrix[1][1]);
+            z = btClamped(btAsin(matrix[2][1]), -kEulerAngleLimit2, kEulerAngleLimit2);
+            x = btAtan2(-matrix[0][1], matrix[1][1]);
+            y = btAtan2(-matrix[2][0], matrix[2][2]);
             setRotation(x, y, z, m_lowerLimit, m_upperLimit, performConstrain, rx, ry, rz);
             result = ry * rx * rz;
         }
+        // XYZ
         else if (m_lowerLimit.y() > -kEulerAngleLimit && m_upperLimit.y() < kEulerAngleLimit) {
-            x = btClamped(btAsin(matrix[0][2]), -kEulerAngleLimit2, kEulerAngleLimit);
-            y = btAtan2(matrix[1][2], matrix[2][2]);
-            z = btAtan2(matrix[0][1], matrix[0][0]);
+            y = btClamped(btAsin(matrix[0][2]), -kEulerAngleLimit2, kEulerAngleLimit2);
+            x = btAtan2(-matrix[1][2], matrix[2][2]);
+            z = btAtan2(-matrix[0][1], matrix[0][0]);
             setRotation(x, y, z, m_lowerLimit, m_upperLimit, performConstrain, rx, ry, rz);
             result = rz * ry * rx;
         }
+        // YZX
         else {
-            x = btClamped(btAsin(matrix[1][0]), -kEulerAngleLimit2, kEulerAngleLimit);
-            y = btAtan2(matrix[1][2], matrix[1][1]);
-            z = btAtan2(matrix[2][0], matrix[0][0]);
+            z = btClamped(btAsin(matrix[1][0]), -kEulerAngleLimit2, kEulerAngleLimit2);
+            y = btAtan2(-matrix[2][0], matrix[0][0]);
+            x = btAtan2(-matrix[1][2], matrix[1][1]);
             setRotation(x, y, z, m_lowerLimit, m_upperLimit, performConstrain, rx, ry, rz);
             result = rx * rz * ry;
         }
