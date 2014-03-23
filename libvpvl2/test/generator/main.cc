@@ -3,14 +3,14 @@
 #include <vpvl2/extensions/icu4c/Encoding.h>
 
 #include <stdio.h>
+#include <set>
 
 /* libvsq */
 #include "FileInputStream.hpp"
 #include "VSQFileReader.hpp"
 
+#include <QtCore>
 #include <QtMath>
-#include <QDebug>
-#include <QFile>
 #include <QXmlStreamReader>
 
 using namespace vpvl2;
@@ -673,36 +673,56 @@ void CreateModelFromCSV(IModel *model, const std::string &input, const std::stri
     }
 }
 
-void AddPhoneticSymbolKeyframe(const IKeyframe::TimeIndex &timeIndex,
-                               const IKeyframe::TimeIndex &length,
+void AddPhoneticSymbolKeyframe(const IKeyframe::TimeIndex &startTimeIndex,
+                               const IKeyframe::TimeIndex &endTimeIndex,
                                const std::string &lyric,
-                               int opening,
+                               IMorph::WeightPrecision weight,
                                IMotion *motion)
 {
     std::auto_ptr<IMorphKeyframe> keyframe;
-    if (length > 0 && !lyric.empty()) {
-        Scalar strength = opening / Scalar(127.0);
+    if (endTimeIndex > 0 && !lyric.empty()) {
+        IKeyframe::TimeIndex offset = 3;
         String s(UnicodeString::fromUTF8(lyric));
         keyframe.reset(motion->createMorphKeyframe());
         keyframe->setName(&s);
-        keyframe->setTimeIndex(timeIndex - 2);
+        keyframe->setTimeIndex(startTimeIndex - offset);
         keyframe->setWeight(0.0);
         motion->addKeyframe(keyframe.release());
         keyframe.reset(motion->createMorphKeyframe());
         keyframe->setName(&s);
-        keyframe->setTimeIndex(timeIndex);
-        keyframe->setWeight(strength);
+        keyframe->setTimeIndex(startTimeIndex);
+        keyframe->setWeight(weight);
         motion->addKeyframe(keyframe.release());
-        keyframe.reset(motion->createMorphKeyframe());
-        keyframe->setName(&s);
-        keyframe->setTimeIndex(btMax(timeIndex + length - 1, IKeyframe::TimeIndex(1)));
-        keyframe->setWeight(strength);
-        motion->addKeyframe(keyframe.release());
-        keyframe.reset(motion->createMorphKeyframe());
-        keyframe->setName(&s);
-        keyframe->setTimeIndex(timeIndex + length + 1);
-        keyframe->setWeight(0.0);
-        motion->addKeyframe(keyframe.release());
+        const IKeyframe::TimeIndex &peak = std::max(endTimeIndex - offset, IKeyframe::TimeIndex(startTimeIndex));
+        if (peak > startTimeIndex) {
+            keyframe.reset(motion->createMorphKeyframe());
+            keyframe->setName(&s);
+            keyframe->setTimeIndex(peak);
+            keyframe->setWeight(weight);
+            motion->addKeyframe(keyframe.release());
+            keyframe.reset(motion->createMorphKeyframe());
+            keyframe->setName(&s);
+            keyframe->setTimeIndex(endTimeIndex);
+            keyframe->setWeight(0.0);
+            motion->addKeyframe(keyframe.release());
+            qDebug()  << "keyframe:"
+                      << (startTimeIndex - offset)
+                      << startTimeIndex
+                      << peak
+                      << endTimeIndex;
+        }
+        else {
+            keyframe.reset(motion->createMorphKeyframe());
+            keyframe->setName(&s);
+            keyframe->setTimeIndex(endTimeIndex + offset);
+            keyframe->setWeight(0.0);
+            motion->addKeyframe(keyframe.release());
+            qDebug()  << "keyframe0:"
+                      << (startTimeIndex - offset)
+                      << startTimeIndex
+                      << endTimeIndex
+                      << (endTimeIndex + offset);
+        }
     }
 }
 
@@ -726,62 +746,81 @@ double CreateMotionFromVSQ(IMotion *motion, const std::string &input, const std:
     }
 
     const Track *masterTrack = sequence.track(0);
-    const Event::List *events = masterTrack->events();
     const TempoList &tempo = sequence.tempoList;
-    const int nevents = events->size(), preferredFPS = Scene::defaultFPS();
+    const int preferredFPS = Scene::defaultFPS();
+    std::set<IKeyframe::TimeIndex> zeroDynamics;
+    if (const BPList *list = masterTrack->curve("DYN")) {
+        const int nlists = list->size();
+        for (int i = 0; i < nlists; i++) {
+            int value = list->getValue(i);
+            if (value == 0) {
+                const tick_t clock(list->getKeyClock(i) - sequence.getPreMeasureClocks());
+                const IKeyframe::TimeIndex frameIndex(tempo.getSecFromClock(clock) * preferredFPS);
+                zeroDynamics.insert(frameIndex);
+            }
+        }
+    }
+    if (const BPList *list = masterTrack->curve("OPE")) {
+        const int nlists = list->size();
+        for (int i = 0; i < nlists; i++) {
+            tick_t clock = list->getKeyClock(i) - sequence.getPreMeasureClocks();
+            int value = list->getValue(i);
+            int frameIndex = int(tempo.getSecFromClock(clock) * preferredFPS);
+            VPVL2_VLOG(1, "clock=" << clock << " frameIndex=" << frameIndex << " value=" << value);
+        }
+    }
+
+    const Event::List *events = masterTrack->events();
+    const int nevents = events->size();
     std::string previous;
     for (int i = 0; i < nevents; i++) {
         const Event *event = events->get(i);
         const Handle &handle = event->lyricHandle;
         const tick_t tick = event->clock - sequence.getPreMeasureClocks();
         const double seconds = tempo.getSecFromClock(tick);
-        const IKeyframe::TimeIndex timeIndex = IKeyframe::TimeIndex(seconds * preferredFPS),
-                length = std::max(IKeyframe::TimeIndex(tempo.getSecFromClock(event->getLength()) * preferredFPS), IKeyframe::TimeIndex(1));
+        const IKeyframe::TimeIndex startTimeIndex = IKeyframe::TimeIndex(seconds * preferredFPS),
+                noteLength = std::max(IKeyframe::TimeIndex(tempo.getSecFromClock(event->getLength()) * preferredFPS), IKeyframe::TimeIndex(1));
         if (handle.getHandleType() == HandleType::LYRIC) {
             const int nlyrics = handle.getLyricCount();
-            qDebug() << tick << event->getLength();
             for (int j = 0; j < nlyrics; j++) {
                 const Lyric &lyric = handle.getLyricAt(j);
                 const std::string &symbol = lyric.getPhoneticSymbol();
+                const IMorph::WeightPrecision &dynamics = 1.0;
+                IKeyframe::TimeIndex endTimeIndex = startTimeIndex + noteLength;
+                if (std::lower_bound(zeroDynamics.begin(), zeroDynamics.end(), startTimeIndex) != std::lower_bound(zeroDynamics.begin(), zeroDynamics.end(), endTimeIndex)) {
+                    endTimeIndex = std::min(endTimeIndex, *std::lower_bound(zeroDynamics.begin(), zeroDynamics.end(), startTimeIndex));
+                }
                 if (symbol.find_first_of("a") != std::string::npos) {
-                    AddPhoneticSymbolKeyframe(timeIndex, length, kPhoneticSymbolA, 127, motion);
+                    AddPhoneticSymbolKeyframe(startTimeIndex, endTimeIndex, kPhoneticSymbolA, dynamics, motion);
                     previous.assign(kPhoneticSymbolA);
                 }
                 else if (symbol.find_first_of("e") != std::string::npos) {
-                    AddPhoneticSymbolKeyframe(timeIndex, length, kPhoneticSymbolE, 127, motion);
+                    AddPhoneticSymbolKeyframe(startTimeIndex, endTimeIndex, kPhoneticSymbolE, dynamics, motion);
                     previous.assign(kPhoneticSymbolE);
                 }
                 else if (symbol.find_first_of("i") != std::string::npos) {
-                    AddPhoneticSymbolKeyframe(timeIndex, length, kPhoneticSymbolI, 127, motion);
+                    AddPhoneticSymbolKeyframe(startTimeIndex, endTimeIndex, kPhoneticSymbolI, dynamics, motion);
                     previous.assign(kPhoneticSymbolI);
                 }
                 else if (symbol.find_first_of("o") != std::string::npos) {
-                    AddPhoneticSymbolKeyframe(timeIndex, length, kPhoneticSymbolO, 127, motion);
+                    AddPhoneticSymbolKeyframe(startTimeIndex, endTimeIndex, kPhoneticSymbolO, dynamics, motion);
                     previous.assign(kPhoneticSymbolO);
                 }
                 else if (symbol.find_first_of("u") != std::string::npos || symbol.find_first_of("M") != std::string::npos) {
-                    AddPhoneticSymbolKeyframe(timeIndex, length, kPhoneticSymbolU, 127, motion);
+                    AddPhoneticSymbolKeyframe(startTimeIndex, endTimeIndex, kPhoneticSymbolU, dynamics, motion);
                     previous.assign(kPhoneticSymbolU);
                 }
                 else if (symbol.find_first_of("mnN") != std::string::npos) {
-                    AddPhoneticSymbolKeyframe(timeIndex, length, kPhoneticSymbolN, 127, motion);
+                    AddPhoneticSymbolKeyframe(startTimeIndex, noteLength, kPhoneticSymbolN, dynamics, motion);
                     previous.assign(kPhoneticSymbolN);
                 }
                 else {
                     //VPVL2_VLOG(1, "[X] frameIndex=" << timeIndex << " value=" << lyric.getPhoneticSymbol() << " phrase=" << lyric.phrase);
                     continue;
                 }
-                VPVL2_VLOG(1, "[O] tick=" << tick << " seconds=" << seconds << " frameIndex=" << timeIndex << " length=" << length << " value=" << lyric.getPhoneticSymbol() << " phrase=" << lyric.phrase);
+                VPVL2_VLOG(1, "[O] tick=" << tick << " clock=" << event->getLength() << " dynamics=" << event->dynamics << " frameIndex=" << startTimeIndex << " length=" << noteLength << " value=" << lyric.getPhoneticSymbol() << " phrase=" << lyric.phrase);
             }
         }
-    }
-
-    const BPList *list = masterTrack->curve("OPE");
-    const int nlists = list->size();
-    for (int i = 0; i < nlists; i++) {
-        int value = list->getValue(i);
-        int frameIndex = int(tempo.getSecFromClock(list->getKeyClock(i)) * preferredFPS);
-        VPVL2_VLOG(1, "frameIndex=" << frameIndex << " value=" << value);
     }
 
     std::vector<uint8> buffer;
@@ -811,18 +850,23 @@ IKeyframe::TimeIndex toTimeIndexFromTick(quint64 value, int tempo, int measure, 
 double CreateMotionFromVSQX(IMotion *motion, const std::string &input, const std::string &output)
 {
     QFile vsqx(QString::fromStdString(input));
-    int duration = 0, tempo = 120, resolution = 480, measure = 4, denominator = 4;
-    typedef QPair<int, IKeyframe::TimeIndex> TempoTimeIndex;
-    typedef QMap<int, TempoTimeIndex> Tick2TempoTimeIndex;
+    quint64 duration = 0;
+    int tempo = 120, resolution = 480, measure = 4, denominator = 4;
+    typedef QPair<qint64, IKeyframe::TimeIndex> TempoTimeIndex;
+    typedef QMap<qint64, TempoTimeIndex> Tick2TempoTimeIndex;
     Tick2TempoTimeIndex ticks2Tempo;
     if (vsqx.open(QFile::ReadOnly)) {
         QXmlStreamReader reader(&vsqx);
-        QHash<QString, bool> states;
-        int ntokens = 0, trackIndex = 0, trackPosition = 0, notePosition = 0, noteLength = 0, depth = 0, opening = 127, premeasure = 0, premeasureDuration = 0;
-        const char *phoneticSymbol = 0;
+        QStack<QString> stack;
+        QList<IKeyframe::TimeIndex> zeroDynamics;
         typedef QPair<QString, const char *> PhoneticSymbol;
         QList<PhoneticSymbol> symbols;
-        bool openingAttribute = false;
+        IKeyframe::TimeIndex startTimeIndex = 0, noteLength = 0;
+        IMorph::WeightPrecision opening = 1.0;
+        qint64 trackPosition = 0, controlPosition = 0, premeasureDuration = 0;
+        const char *phoneticSymbol = 0;
+        int trackIndex = 0, premeasure = 0;
+        bool openingAttribute = false, dynamicsAttribute = false;
         symbols.append(PhoneticSymbol("a", kPhoneticSymbolA));
         symbols.append(PhoneticSymbol("e", kPhoneticSymbolE));
         symbols.append(PhoneticSymbol("i", kPhoneticSymbolI));
@@ -832,69 +876,72 @@ double CreateMotionFromVSQX(IMotion *motion, const std::string &input, const std
         while (!reader.atEnd()) {
             QXmlStreamReader::TokenType type = reader.readNext();
             if (type == QXmlStreamReader::StartElement) {
-                if (depth == 4 && trackIndex == 0 && states.value("vsTrack") && reader.name() == "attr") {
-                    openingAttribute = reader.attributes().value("id") == "opening";
+                if (trackIndex == 0 && reader.name() == "attr") {
+                    const QStringRef &id = reader.attributes().value("id");
+                    openingAttribute = id == "opening";
+                    dynamicsAttribute = id == "DYN";
                 }
-                states.insert(reader.name().toString(), true);
-                depth++;
+                stack.push(reader.name().toString());
             }
             else if (type == QXmlStreamReader::EndElement) {
-                if (depth == 3 && states.value("masterTrack") && states.value("tempo")) {
-                    QMap<int, TempoTimeIndex>::ConstIterator it = ticks2Tempo.lowerBound(notePosition);
-                    int lastTicks = it != ticks2Tempo.end() ? it.key() : 0;
+                if (reader.name() == "tempo") {
+                    QMap<qint64, TempoTimeIndex>::ConstIterator it = ticks2Tempo.lowerBound(startTimeIndex);
+                    qint64 lastTicks = it != ticks2Tempo.end() ? it.key() : 0;
                     const IKeyframe::TimeIndex &lastTimeIndex = it != ticks2Tempo.end() ? it.value().second : 0;
-                    const IKeyframe::TimeIndex &newTimeIndex = toTimeIndexFromTick(notePosition - lastTicks, tempo, measure, denominator, resolution) + lastTimeIndex;
-                    qDebug() << depth << notePosition << tempo << newTimeIndex;
-                    ticks2Tempo.insert(notePosition, TempoTimeIndex(tempo, newTimeIndex));
+                    const IKeyframe::TimeIndex &newTimeIndex = toTimeIndexFromTick(startTimeIndex - lastTicks, tempo, measure, denominator, resolution) + lastTimeIndex;
+                    qDebug() << stack.size() << startTimeIndex << tempo << newTimeIndex;
+                    ticks2Tempo.insert(startTimeIndex, TempoTimeIndex(tempo, newTimeIndex));
                 }
-                else if (depth == 4 && trackIndex == 0 && states.value("vsTrack")) {
-                    if (phoneticSymbol && reader.name() == "note") {
-                        AddPhoneticSymbolKeyframe(notePosition, noteLength, phoneticSymbol, opening, motion);
+                else if (phoneticSymbol && reader.name() == "note") {
+                    IKeyframe::TimeIndex endTimeIndex = startTimeIndex + noteLength;
+                    if (std::lower_bound(zeroDynamics.cbegin(), zeroDynamics.cend(), startTimeIndex) != std::lower_bound(zeroDynamics.cbegin(), zeroDynamics.cend(), endTimeIndex)) {
+                        endTimeIndex = std::min(endTimeIndex, *std::lower_bound(zeroDynamics.cbegin(), zeroDynamics.cend(), startTimeIndex));
                     }
+                    AddPhoneticSymbolKeyframe(startTimeIndex, endTimeIndex, phoneticSymbol, opening, motion);
                 }
                 openingAttribute = false;
-                states.insert(reader.name().toString(), false);
-                depth--;
+                dynamicsAttribute = false;
+                stack.pop();
             }
             else if (type == QXmlStreamReader::Characters) {
-                if (states.value("masterTrack")) {
-                    if (states.value("resolution")) {
+                if (stack.contains("masterTrack")) {
+                    if (stack.top() == "resolution") {
                         resolution = reader.text().toInt();
                         qDebug() << "track.resolution:" << resolution;
                     }
-                    else if (states.value("preMeasure")) {
+                    else if (stack.top() == "preMeasure") {
                         premeasure = reader.text().toInt();
                         qDebug() << "track.premeasure:" << premeasureDuration;
                     }
-                    else if (states.value("timeSig")) {
-                        if (states.value("nume")) {
+                    else if (stack.contains("timeSig")) {
+                        if (stack.top() == "nume") {
                             measure = qMax(reader.text().toInt(), 1);
                             premeasureDuration = premeasure * resolution * measure;
                             qDebug() << "measure:" << measure;
                         }
-                        if (states.value("denomi")) {
+                        else if (stack.top() == "denomi") {
                             denominator = qMax(reader.text().toInt(), 1);
                             qDebug() << "denominator:" << denominator;
                         }
                     }
-                    else if (states.value("tempo")) {
-                        if (states.value("bpm")) {
+                    else if (stack.contains("tempo")) {
+                        if (stack.top() == "bpm") {
                             tempo = reader.text().toInt();
                             qDebug() << "track.tempo.bpm:" << tempo;
                         }
-                        if (states.value("posTick")) {
-                            notePosition = reader.text().toInt();
-                            qDebug() << "track.tempo.posTick:" << notePosition;
+                        else if (stack.top() == "posTick") {
+                            startTimeIndex = reader.text().toLongLong();
+                            qDebug() << "track.tempo.posTick:" << startTimeIndex;
                         }
                     }
                 }
-                else if (states.value("vsTrack")) {
-                    if (trackIndex == 0 && states.value("musicalPart")) {
-                        if (states.value("note")) {
-                            if (states.value("lyric")) {
+                else if (stack.contains("vsTrack")) {
+                    if (trackIndex == 0 && stack.contains("musicalPart")) {
+                        if (stack.contains("note")) {
+                            if (stack.top() == "lyric") {
                                 qDebug() << "note.lyric:" << reader.text();
                             }
-                            else if (states.value("phnms")) {
+                            else if (stack.top() == "phnms") {
                                 qDebug() << "note.phnms:" << reader.text();
                                 const QStringRef &symbol = reader.text();
                                 phoneticSymbol = 0;
@@ -910,36 +957,47 @@ double CreateMotionFromVSQX(IMotion *motion, const std::string &input, const std
                                     }
                                 }
                             }
-                            else if (states.value("posTick")) {
-                                int ticks = (trackPosition - premeasureDuration) + reader.text().toInt();
-                                Tick2TempoTimeIndex::ConstIterator it = ticks2Tempo.size() > 1 ? ticks2Tempo.lowerBound(ticks) - 1 : ticks2Tempo.begin();
+                            else if (stack.top() == "posTick") {
+                                qint64 ticks = (trackPosition - premeasureDuration) + reader.text().toLongLong();
+                                Tick2TempoTimeIndex::ConstIterator it = ticks2Tempo.size() > 1 ? ticks2Tempo.lowerBound(ticks) - 1 : ticks2Tempo.constBegin();
                                 const TempoTimeIndex &t = it.value();
-                                notePosition = toTimeIndexFromTick(ticks - it.key(), t.first, measure, denominator, resolution) + t.second;
-                                qDebug() << "note.posTick:" << ticks << "=>" << notePosition;
+                                startTimeIndex = toTimeIndexFromTick(ticks - it.key(), t.first, measure, denominator, resolution) + t.second;
+                                qDebug() << "note.posTick:" << ticks << "=>" << startTimeIndex;
                             }
-                            else if (states.value("durTick")) {
-                                int ticks = reader.text().toInt();
+                            else if (stack.top() == "durTick") {
+                                qint64 ticks = reader.text().toLongLong();
                                 noteLength = toTimeIndexFromTick(ticks, tempo, measure, denominator, resolution);
                                 qDebug() << "note.durTick:" << ticks << "=>" << noteLength;
                             }
                         }
-                        else if (depth == 4 && states.value("posTick")) {
-                            trackPosition = reader.text().toInt();
+                        else if (stack.contains("mCtrl")) {
+                            if (stack.top() == "posTick") {
+                                controlPosition = reader.text().toLongLong();
+                            }
+                            else if (dynamicsAttribute && reader.text().toInt() == 0) {
+                                zeroDynamics.append(toTimeIndexFromTick(controlPosition, tempo, measure, denominator, resolution));
+                                zeroDynamics = zeroDynamics.toSet().toList();
+                                std::sort(zeroDynamics.begin(), zeroDynamics.end());
+                            }
+                        }
+                        else if (stack.contains("singer")) {
+                        }
+                        else if (stack.top() == "posTick") {
+                            trackPosition = reader.text().toLongLong();
                             qDebug() << "musicalPart.posTick:" << trackPosition << toTimeIndexFromTick(trackPosition, tempo, measure, denominator, resolution);
                         }
-                        else if (states.value("playTime")) {
-                            duration = trackPosition + reader.text().toInt();
+                        else if (stack.top() == "playTime") {
+                            duration = (trackPosition + reader.text().toLongLong()) - premeasureDuration;
                             qDebug() << "musicalPart.playTime:" << duration;
                         }
                         else if (openingAttribute) {
-                            opening = reader.text().toInt();
+                            opening = reader.text().toInt() / 127.0;
                         }
                     }
-                    else if (states.value("vsTrackNo")) {
+                    else if (stack.top() == "vsTrackNo") {
                         trackIndex = reader.text().toInt();
                     }
                 }
-                ntokens++;
             }
         }
         qDebug() << ticks2Tempo;
@@ -963,9 +1021,9 @@ double CreateMotionFromVSQX(IMotion *motion, const std::string &input, const std
     double durationSeconds = 0;
     if (!ticks2Tempo.isEmpty()) {
         const TempoTimeIndex &value = ticks2Tempo.last();
-        durationSeconds = toSecondsFromTick(duration, value.first, measure, denominator, resolution) + (value.second / float(Scene::defaultFPS()));
+        durationSeconds = toSecondsFromTick(duration, value.first, measure, denominator, resolution);
     }
-    qDebug() << "durationSeconds:" << durationSeconds;
+    qDebug() << "duration:" << duration << "durationSeconds:" << durationSeconds;
     return durationSeconds;
 }
 
@@ -981,14 +1039,15 @@ double CreateMotionFromUST(IMotion *motion, const std::string &input, const std:
         QRegExp sectionRegexp("\\[#(\\w+)\\]"), noteRegexp("\\d+");
         QString section;
         stream.setCodec("Shift_JIS");
-        int tempo = 120, notePosition = 0, noteLength = 0, preutterance = 127;
+        IKeyframe::TimeIndex notePosition = 0, noteLength = 0;
+        int tempo = 120, preutterance = 127;
         const char *phoneticSymbol = 0;
         while (!stream.atEnd()) {
             const QString &line = stream.readLine();
             if (sectionRegexp.exactMatch(line)) {
                 section = sectionRegexp.cap(1);
                 if (noteRegexp.exactMatch(section) && phoneticSymbol) {
-                    AddPhoneticSymbolKeyframe(notePosition, noteLength, phoneticSymbol, preutterance, motion);
+                    AddPhoneticSymbolKeyframe(notePosition, notePosition + noteLength, phoneticSymbol, 1.0, motion);
                 }
             }
             else {
@@ -1035,7 +1094,7 @@ double CreateMotionFromUST(IMotion *motion, const std::string &input, const std:
                     else if (pair.first() == "Length") {
                         int length = pair.at(1).toInt();
                         ticks += length;
-                        Tick2TempoTimeIndex::ConstIterator it = ticks2Tempo.size() > 1 ? ticks2Tempo.lowerBound(ticks) - 1 : ticks2Tempo.begin();
+                        Tick2TempoTimeIndex::ConstIterator it = ticks2Tempo.size() > 1 ? ticks2Tempo.lowerBound(ticks) - 1 : ticks2Tempo.constBegin();
                         const TempoTimeIndex &t = it.value();
                         notePosition = toTimeIndexFromTick(ticks - it.key(), t.first, 4, 4, 480) + t.second;
                         noteLength = toTimeIndexFromTick(length, t.first, 4, 4, 480);
