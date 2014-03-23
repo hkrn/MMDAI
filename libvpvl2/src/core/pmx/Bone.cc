@@ -41,6 +41,12 @@
 #include "vpvl2/pmx/Bone.h"
 #include "vpvl2/pmx/Label.h"
 
+#ifdef VPVL2_NEW_IK
+#define VPVL2_IK_COND(a, b) a
+#else
+#define VPVL2_IK_COND(a, b) b
+#endif
+
 namespace
 {
 
@@ -79,14 +85,12 @@ struct DefaultIKJoint : vpvl2::IBone::IKJoint {
         Scalar v = value;
         (void) ikt;
         if (v < lower) {
-            // const Scalar &tf = 2 * lower - v;
-            // v = (tf <= upper && ikt) ? tf : lower;
-            v = lower;
+            const Scalar &tf = 2 * lower - v;
+            v = (tf <= upper && ikt) ? tf : lower;
         }
         if (v > upper) {
-            // const Scalar &tf = 2 * lower - v;
-            // v = (tf >= lower && ikt) ? tf : upper;
-            v = upper;
+            const Scalar &tf = 2 * upper - v;
+            v = (tf >= lower && ikt) ? tf : upper;
         }
         return v;
     }
@@ -165,27 +169,26 @@ struct DefaultIKJoint : vpvl2::IBone::IKJoint {
         return true;
     }
     void constrainAxisAngle(const Scalar &angle, Quaternion &rotation) const {
-        //const Matrix3x3 &jointRotationMatrix = jointBoneTransform.getBasis();
         Vector3 localAxis = kUnitX;
         if (btFuzzyZero(m_lowerLimit.y()) && btFuzzyZero(m_upperLimit.y())
                 && btFuzzyZero(m_lowerLimit.z()) && btFuzzyZero(m_upperLimit.z())) {
-            const Scalar &axisX = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[0]) >= 0, 1.0f, -1.0f);
+            const Scalar &axisX = VPVL2_IK_COND(btSelect(localAxis.dot(Matrix3x3(rotation).getColumn(0)) >= 0, 1.0f, -1.0f), 1.0);
             localAxis.setValue(axisX, 0.0, 0.0);
         }
         else if (btFuzzyZero(m_lowerLimit.x()) && btFuzzyZero(m_upperLimit.x())
                  && btFuzzyZero(m_lowerLimit.z()) && btFuzzyZero(m_upperLimit.z())) {
-            const Scalar &axisY = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[1]) >= 0, 1.0f, -1.0f);
+            const Scalar &axisY = VPVL2_IK_COND(btSelect(localAxis.dot(Matrix3x3(rotation).getColumn(1)) >= 0, 1.0f, -1.0f), 1.0);
             localAxis.setValue(0.0, axisY, 0.0);
         }
         else if (btFuzzyZero(m_lowerLimit.x()) && btFuzzyZero(m_upperLimit.x())
                  && btFuzzyZero(m_lowerLimit.y()) && btFuzzyZero(m_upperLimit.y())) {
-            const Scalar &axisZ = 1.0f; //btSelect(localAxis.dot(jointRotationMatrix[2]) >= 0, 1.0f, -1.0f);
+            const Scalar &axisZ = VPVL2_IK_COND(btSelect(localAxis.dot(Matrix3x3(rotation).getColumn(2)) >= 0, 1.0f, -1.0f), 1.0);
             localAxis.setValue(0.0, 0.0, axisZ);
         }
         rotation.setRotation(localAxis, angle);
     }
     void constrainRotation(Quaternion &jointRotation, bool performConstrain) const {
-#if 1
+#ifndef VPVL2_NEW_IK
         (void) performConstrain;
         Scalar x1, y1, z1, x2, y2, z2, x3, y3, z3;
         Matrix3x3 matrix(jointRotation);
@@ -208,25 +211,25 @@ struct DefaultIKJoint : vpvl2::IBone::IKJoint {
         Matrix3x3 matrix(jointRotation);
         // ZXY
         if (m_lowerLimit.x() > -kEulerAngleLimit && m_upperLimit.x() < kEulerAngleLimit) {
-            z = btClamped(btAsin(matrix[2][1]), -kEulerAngleLimit2, kEulerAngleLimit2);
-            x = btAtan2(-matrix[0][1], matrix[1][1]);
-            y = btAtan2(-matrix[2][0], matrix[2][2]);
+            z = btClamped(btAsin(matrix[1][2]), -kEulerAngleLimit2, kEulerAngleLimit2);
+            x = btAtan2(-matrix[1][0], matrix[1][1]);
+            y = btAtan2(-matrix[0][2], matrix[2][2]);
             setRotation(x, y, z, m_lowerLimit, m_upperLimit, performConstrain, rx, ry, rz);
             result = ry * rx * rz;
         }
         // XYZ
         else if (m_lowerLimit.y() > -kEulerAngleLimit && m_upperLimit.y() < kEulerAngleLimit) {
-            y = btClamped(btAsin(matrix[0][2]), -kEulerAngleLimit2, kEulerAngleLimit2);
-            x = btAtan2(-matrix[1][2], matrix[2][2]);
-            z = btAtan2(-matrix[0][1], matrix[0][0]);
+            y = btClamped(btAsin(matrix[2][0]), -kEulerAngleLimit2, kEulerAngleLimit2);
+            x = btAtan2(-matrix[2][1], matrix[2][2]);
+            z = btAtan2(-matrix[1][0], matrix[0][0]);
             setRotation(x, y, z, m_lowerLimit, m_upperLimit, performConstrain, rx, ry, rz);
             result = rz * ry * rx;
         }
         // YZX
         else {
-            z = btClamped(btAsin(matrix[1][0]), -kEulerAngleLimit2, kEulerAngleLimit2);
-            y = btAtan2(-matrix[2][0], matrix[0][0]);
-            x = btAtan2(-matrix[1][2], matrix[1][1]);
+            z = btClamped(btAsin(matrix[0][1]), -kEulerAngleLimit2, kEulerAngleLimit2);
+            y = btAtan2(-matrix[0][2], matrix[0][0]);
+            x = btAtan2(-matrix[2][1], matrix[1][1]);
             setRotation(x, y, z, m_lowerLimit, m_upperLimit, performConstrain, rx, ry, rz);
             result = rx * rz * ry;
         }
@@ -916,7 +919,7 @@ void Bone::solveInverseKinematics()
             }
             Bone *jointBoneRef = joint->m_targetBoneRef;
             if (joint->hasAngleLimit() && performConstraint) {
-                if (i == 0) {
+                if (VPVL2_IK_COND(performConstraint, i == 0)) {
                     joint->constrainAxisAngle(angle, jointRotation);
                 }
                 else {
