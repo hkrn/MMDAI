@@ -40,6 +40,8 @@
 #include "CameraMotionTrack.h"
 #include "CameraRefObject.h"
 #include "Util.h"
+
+#include <QtCore>
 #include <vpvl2/vpvl2.h>
 
 using namespace vpvl2;
@@ -60,6 +62,16 @@ CameraKeyframeRefObject::~CameraKeyframeRefObject()
     }
     m_parentTrackRef = 0;
     m_keyframe = 0;
+}
+
+QJsonValue CameraKeyframeRefObject::toJson() const
+{
+    QJsonObject v = BaseKeyframeRefObject::toJson().toObject();
+    v.insert("lookAt", Util::toJson(lookAt()));
+    v.insert("angle", Util::toJson(angle()));
+    v.insert("fov", fov());
+    v.insert("distance", distance());
+    return v;
 }
 
 QVector4D CameraKeyframeRefObject::interpolationParameter(int type) const

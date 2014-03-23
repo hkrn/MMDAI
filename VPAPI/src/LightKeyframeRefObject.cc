@@ -40,6 +40,8 @@
 #include "LightMotionTrack.h"
 #include "LightRefObject.h"
 #include "Util.h"
+
+#include <QtCore>
 #include <vpvl2/vpvl2.h>
 
 using namespace vpvl2;
@@ -60,6 +62,14 @@ LightKeyframeRefObject::~LightKeyframeRefObject()
     }
     m_parentTrackRef = 0;
     m_keyframe = 0;
+}
+
+QJsonValue LightKeyframeRefObject::toJson() const
+{
+    QJsonObject v = BaseKeyframeRefObject::toJson().toObject();
+    v.insert("color", Util::toJson(color()));
+    v.insert("direction", Util::toJson(direction()));
+    return v;
 }
 
 BaseMotionTrack *LightKeyframeRefObject::parentTrack() const

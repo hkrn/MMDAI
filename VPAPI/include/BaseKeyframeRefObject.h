@@ -39,6 +39,7 @@
 #define BASEKEYFRAMEREFOBJECT_H
 
 #include <QObject>
+#include <QJsonValue>
 #include <QString>
 #include <vpvl2/IKeyframe.h>
 
@@ -61,6 +62,8 @@ class BaseKeyframeRefObject : public QObject
 public:
     explicit BaseKeyframeRefObject(MotionProxy *motionRef);
     ~BaseKeyframeRefObject();
+
+    Q_INVOKABLE virtual QJsonValue toJson() const;
 
     MotionProxy *parentMotion() const;
     qreal time() const;

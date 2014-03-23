@@ -58,6 +58,14 @@ BaseKeyframeRefObject::~BaseKeyframeRefObject()
     m_parentMotionRef = 0;
 }
 
+QJsonValue BaseKeyframeRefObject::toJson() const
+{
+    QJsonObject v;
+    v.insert("timeIndex", int(timeIndex()));
+    v.insert("layerIndex", layerIndex());
+    return v;
+}
+
 MotionProxy *BaseKeyframeRefObject::parentMotion() const
 {
     return m_parentMotionRef;

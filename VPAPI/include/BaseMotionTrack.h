@@ -40,6 +40,7 @@
 
 #include <QObject>
 #include <QHash>
+#include <QJsonValue>
 
 #include <vpvl2/IKeyframe.h>
 
@@ -61,6 +62,7 @@ public:
 
     Q_INVOKABLE BaseKeyframeRefObject *findKeyframeAt(int index) const;
     Q_INVOKABLE BaseKeyframeRefObject *findKeyframeByTimeIndex(const quint64 &timeIndex) const;
+    Q_INVOKABLE QJsonValue toJson() const;
 
     QList<BaseKeyframeRefObject *> keyframes() const;
     bool contains(BaseKeyframeRefObject *value) const;

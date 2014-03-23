@@ -981,21 +981,71 @@ void MotionProxy::selectKeyframes(const QList<BaseKeyframeRefObject *> &value)
 
 bool MotionProxy::save(const QUrl &fileUrl)
 {
+    bool result = false;
     if (fileUrl.isEmpty() || !fileUrl.isValid()) {
         /* do nothing if url is empty or invalid */
         VPVL2_VLOG(2, "fileUrl is empty or invalid: url=" << fileUrl.toString().toStdString());
-        return false;
     }
-    bool result = false;
-    QByteArray bytes;
-    bytes.resize(m_motion->estimateSize());
-    m_motion->save(reinterpret_cast<uint8_t *>(bytes.data()));
-    QSaveFile saveFile(fileUrl.toLocalFile());
-    if (saveFile.open(QFile::WriteOnly | QFile::Unbuffered)) {
-        saveFile.write(bytes);
-        result = saveFile.commit();
+    else if (fileUrl.fileName().endsWith(".json")) {
+        result = saveJson(fileUrl);
+    }
+    else {
+        QByteArray bytes;
+        bytes.resize(m_motion->estimateSize());
+        m_motion->save(reinterpret_cast<uint8_t *>(bytes.data()));
+        QSaveFile saveFile(fileUrl.toLocalFile());
+        if (saveFile.open(QFile::WriteOnly | QFile::Unbuffered)) {
+            saveFile.write(bytes);
+            result = saveFile.commit();
+        }
     }
     return result;
+}
+
+bool MotionProxy::saveJson(const QUrl &fileUrl) const
+{
+    QFile file(fileUrl.toLocalFile());
+    if (file.open(QFile::WriteOnly)) {
+        QJsonDocument document(toJson().toObject());
+        file.write(document.toJson());
+        file.close();
+        return true;
+    }
+    else {
+        qWarning() << file.errorString();
+        return false;
+    }
+}
+
+QJsonValue MotionProxy::toJson() const
+{
+    QJsonObject v, boneTracks, morphTracks;
+    v.insert("uuid", uuid().toString());
+    QHashIterator<QString, BoneMotionTrack *> it(m_boneMotionTrackBundle);
+    while (it.hasNext()) {
+        it.next();
+        boneTracks.insert(it.key(), it.value()->toJson());
+    }
+    v.insert("boneTracks", boneTracks);
+    QHashIterator<QString, MorphMotionTrack *> it2(m_morphMotionTrackBundle);
+    while (it2.hasNext()) {
+        it2.next();
+        morphTracks.insert(it2.key(), it2.value()->toJson());
+    }
+    v.insert("morphTracks", morphTracks);
+    if (m_cameraMotionTrackRef) {
+        v.insert("cameraTrack", m_cameraMotionTrackRef->toJson());
+    }
+    if (m_lightMotionTrackRef) {
+        v.insert("lightTrack", m_lightMotionTrackRef->toJson());
+    }
+    if (ModelProxy *parentModelRef = parentModel()) {
+        QJsonObject m;
+        m.insert("name", parentModelRef->name());
+        m.insert("uuid", parentModelRef->uuid().toString());
+        v.insert("parentModel", m);
+    }
+    return v;
 }
 
 qreal MotionProxy::differenceTimeIndex(qreal value) const

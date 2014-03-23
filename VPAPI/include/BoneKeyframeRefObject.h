@@ -65,6 +65,7 @@ public:
     BoneKeyframeRefObject(BoneMotionTrack *trackRef, vpvl2::IBoneKeyframe *data);
     ~BoneKeyframeRefObject();
 
+    Q_INVOKABLE QJsonValue toJson() const;
     Q_INVOKABLE QVector4D interpolationParameter(int type) const;
     Q_INVOKABLE void setInterpolationParameter(int type, const QVector4D &value);
 

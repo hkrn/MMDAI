@@ -61,6 +61,8 @@ public:
     MorphKeyframeRefObject(MorphMotionTrack *trackRef, vpvl2::IMorphKeyframe *data);
     ~MorphKeyframeRefObject();
 
+    Q_INVOKABLE QJsonValue toJson() const;
+
     BaseMotionTrack *parentTrack() const;
     MorphRefObject *parentMorph() const;
     QObject *opaque() const;

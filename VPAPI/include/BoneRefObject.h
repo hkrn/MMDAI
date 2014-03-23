@@ -92,7 +92,7 @@ public:
 
     void setOriginLocalTranslation(const QVector3D &value);
     void setOriginLocalOrientation(const QQuaternion &value);
-    QJsonValue toJson() const;
+    Q_INVOKABLE QJsonValue toJson() const;
 
     vpvl2::IBone *data() const;
     ModelProxy *parentModel() const;

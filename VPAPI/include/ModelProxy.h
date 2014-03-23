@@ -162,13 +162,13 @@ public:
 
     Q_INVOKABLE bool save(const QUrl &fileUrl);
     Q_INVOKABLE bool saveJson(const QUrl &fileUrl) const;
+    Q_INVOKABLE QJsonValue toJson() const;
 
     void initialize(bool all);
     void addBindingModel(ModelProxy *value);
     void removeBindingModel(ModelProxy *value);
     void releaseBindings();
     void renameObject(QObject *object, const QString &newName);
-    QJsonValue toJson() const;
 
     vpvl2::IModel *data() const;
     ProjectProxy *parentProject() const;

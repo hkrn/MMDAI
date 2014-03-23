@@ -126,24 +126,31 @@ ModelProxy::~ModelProxy()
 
 bool ModelProxy::save(const QUrl &fileUrl)
 {
-    QFile file(fileUrl.toLocalFile());
-    if (file.open(QFile::WriteOnly)) {
-        QByteArray bytes;
-        vsize written = 0;
-        const IString::Codec &codec = m_model->encodingType();
-        m_model->setEncodingType(IString::kUTF8);
-        bytes.resize(m_model->estimateSize());
-        m_model->save(reinterpret_cast<uint8 *>(bytes.data()), written);
-        Q_ASSERT(m_model->estimateSize() == written);
-        file.write(bytes.constData(), written);
-        file.close();
-        m_model->setEncodingType(codec);
-        return true;
+    bool result = false;
+    if (fileUrl.fileName().endsWith(".json")) {
+        result = saveJson(fileUrl);
     }
     else {
-        qWarning() << file.errorString();
-        return false;
+        QFile file(fileUrl.toLocalFile());
+        if (file.open(QFile::WriteOnly)) {
+            QByteArray bytes;
+            vsize written = 0;
+            const IString::Codec &codec = m_model->encodingType();
+            m_model->setEncodingType(IString::kUTF8);
+            bytes.resize(m_model->estimateSize());
+            m_model->save(reinterpret_cast<uint8 *>(bytes.data()), written);
+            Q_ASSERT(m_model->estimateSize() == written);
+            file.write(bytes.constData(), written);
+            file.close();
+            m_model->setEncodingType(codec);
+            result = true;
+        }
+        else {
+            qWarning() << file.errorString();
+            result = false;
+        }
     }
+    return result;
 }
 
 bool ModelProxy::saveJson(const QUrl &fileUrl) const
@@ -159,6 +166,56 @@ bool ModelProxy::saveJson(const QUrl &fileUrl) const
         qWarning() << file.errorString();
         return false;
     }
+}
+
+QJsonValue ModelProxy::toJson() const
+{
+    QJsonObject v;
+    v.insert("uuid", uuid().toString());
+    v.insert("name", name());
+    v.insert("comment", comment());
+    v.insert("version", version());
+    v.insert("visible", isVisible());
+    v.insert("scaleFactor", scaleFactor());
+    v.insert("opacity", opacity());
+    v.insert("translation", Util::toJson(translation()));
+    v.insert("orientation", Util::toJson(orientation()));
+    QJsonArray vertices;
+    foreach (VertexRefObject *vertex, m_allVertices) {
+        vertices.append(vertex->toJson());
+    }
+    v.insert("vertices", vertices);
+    QJsonArray materials;
+    foreach (MaterialRefObject *material, m_allMaterials) {
+        materials.append(material->toJson());
+    }
+    v.insert("materials", materials);
+    QJsonArray bones;
+    foreach (BoneRefObject *bone, m_allBones) {
+        bones.append(bone->toJson());
+    }
+    v.insert("bones", bones);
+    QJsonArray labels;
+    foreach (LabelRefObject *label, m_allLabels) {
+        labels.append(label->toJson());
+    }
+    v.insert("labels", labels);
+    QJsonArray morphs;
+    foreach (MorphRefObject *morph, m_allMorphs) {
+        morphs.append(morph->toJson());
+    }
+    v.insert("morphs", morphs);
+    QJsonArray rigidBodies;
+    foreach (RigidBodyRefObject *body, m_allRigidBodies) {
+        rigidBodies.append(body->toJson());
+    }
+    v.insert("rigidBodies", rigidBodies);
+    QJsonArray joints;
+    foreach (JointRefObject *joint, m_allJoints) {
+        joints.append(joint->toJson());
+    }
+    v.insert("joints", joints);
+    return v;
 }
 
 void ModelProxy::initialize(bool all)
@@ -226,56 +283,6 @@ void ModelProxy::renameObject(QObject *object, const QString &newName)
         m_name2JointRefs.remove(bone->name());
         m_name2JointRefs.insert(newName, joint);
     }
-}
-
-QJsonValue ModelProxy::toJson() const
-{
-    QJsonObject v;
-    v.insert("uuid", uuid().toString());
-    v.insert("name", name());
-    v.insert("comment", comment());
-    v.insert("version", version());
-    v.insert("visible", isVisible());
-    v.insert("scaleFactor", scaleFactor());
-    v.insert("opacity", opacity());
-    v.insert("translation", Util::toJson(translation()));
-    v.insert("orientation", Util::toJson(orientation()));
-    QJsonArray vertices;
-    foreach (VertexRefObject *vertex, m_allVertices) {
-        vertices.append(vertex->toJson());
-    }
-    v.insert("vertices", vertices);
-    QJsonArray materials;
-    foreach (MaterialRefObject *material, m_allMaterials) {
-        materials.append(material->toJson());
-    }
-    v.insert("materials", materials);
-    QJsonArray bones;
-    foreach (BoneRefObject *bone, m_allBones) {
-        bones.append(bone->toJson());
-    }
-    v.insert("bones", bones);
-    QJsonArray labels;
-    foreach (LabelRefObject *label, m_allLabels) {
-        labels.append(label->toJson());
-    }
-    v.insert("labels", labels);
-    QJsonArray morphs;
-    foreach (MorphRefObject *morph, m_allMorphs) {
-        morphs.append(morph->toJson());
-    }
-    v.insert("morphs", morphs);
-    QJsonArray rigidBodies;
-    foreach (RigidBodyRefObject *body, m_allRigidBodies) {
-        rigidBodies.append(body->toJson());
-    }
-    v.insert("rigidBodies", rigidBodies);
-    QJsonArray joints;
-    foreach (JointRefObject *joint, m_allJoints) {
-        joints.append(joint->toJson());
-    }
-    v.insert("joints", joints);
-    return v;
 }
 
 void ModelProxy::selectOpaqueObject(QObject *value)

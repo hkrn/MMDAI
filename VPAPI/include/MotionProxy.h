@@ -38,6 +38,7 @@
 #ifndef MOTIONPROXY_H
 #define MOTIONPROXY_H
 
+#include <QJsonValue>
 #include <QObject>
 #include <QQmlListProperty>
 #include <QSet>
@@ -113,6 +114,9 @@ public:
     void selectKeyframes(const QList<BaseKeyframeRefObject *> &value);
 
     Q_INVOKABLE bool save(const QUrl &fileUrl);
+    Q_INVOKABLE bool saveJson(const QUrl &fileUrl) const;
+    Q_INVOKABLE QJsonValue toJson() const;
+
     Q_INVOKABLE qreal differenceTimeIndex(qreal value) const;
     Q_INVOKABLE qreal differenceDuration(qreal value) const;
     Q_INVOKABLE BoneMotionTrack *findBoneMotionTrack(const BoneRefObject *value) const;

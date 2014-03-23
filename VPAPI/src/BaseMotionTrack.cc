@@ -74,6 +74,15 @@ BaseKeyframeRefObject *BaseMotionTrack::findKeyframeByTimeIndex(const quint64 &t
     return m_timeIndex2RefObjects.value(timeIndex);
 }
 
+QJsonValue BaseMotionTrack::toJson() const
+{
+    QJsonArray v;
+    foreach (BaseKeyframeRefObject *item, m_keyframes) {
+        v.append(item->toJson());
+    }
+    return v;
+}
+
 QList<BaseKeyframeRefObject *> BaseMotionTrack::keyframes() const
 {
     return m_keyframes;

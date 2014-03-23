@@ -62,6 +62,8 @@ public:
     LightKeyframeRefObject(LightMotionTrack *trackRef, vpvl2::ILightKeyframe *data);
     ~LightKeyframeRefObject();
 
+    Q_INVOKABLE QJsonValue toJson() const;
+
     BaseMotionTrack *parentTrack() const;
     LightRefObject *parentLight() const;
     QObject *opaque() const;

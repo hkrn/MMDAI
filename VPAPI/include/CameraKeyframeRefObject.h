@@ -65,6 +65,7 @@ public:
     CameraKeyframeRefObject(CameraMotionTrack *trackRef, ICameraKeyframe *data);
     ~CameraKeyframeRefObject();
 
+    Q_INVOKABLE QJsonValue toJson() const;
     Q_INVOKABLE QVector4D interpolationParameter(int type) const;
     Q_INVOKABLE void setInterpolationParameter(int type, const QVector4D &value);
 

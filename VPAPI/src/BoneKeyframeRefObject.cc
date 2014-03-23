@@ -68,6 +68,14 @@ BoneKeyframeRefObject::~BoneKeyframeRefObject()
     m_keyframe = 0;
 }
 
+QJsonValue BoneKeyframeRefObject::toJson() const
+{
+    QJsonObject v = BaseKeyframeRefObject::toJson().toObject();
+    v.insert("localTranslation", Util::toJson(localTranslation()));
+    v.insert("localOrientation", Util::toJson(localOrientation()));
+    return v;
+}
+
 QVector4D BoneKeyframeRefObject::interpolationParameter(int type) const
 {
     Q_ASSERT(m_keyframe);

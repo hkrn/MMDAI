@@ -42,6 +42,7 @@
 #include "MotionProxy.h"
 #include "Util.h"
 
+#include <QtCore>
 #include <vpvl2/vpvl2.h>
 #include <vpvl2/extensions/qt/String.h>
 
@@ -63,6 +64,13 @@ MorphKeyframeRefObject::~MorphKeyframeRefObject()
         delete m_keyframe;
     }
     m_keyframe = 0;
+}
+
+QJsonValue MorphKeyframeRefObject::toJson() const
+{
+    QJsonObject v = BaseKeyframeRefObject::toJson().toObject();
+    v.insert("weight", weight());
+    return v;
 }
 
 BaseMotionTrack *MorphKeyframeRefObject::parentTrack() const
