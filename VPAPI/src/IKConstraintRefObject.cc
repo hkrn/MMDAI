@@ -214,7 +214,10 @@ QUuid IKConstraintRefObject::uuid() const
 
 QString IKConstraintRefObject::name() const
 {
-    return m_uuid.toString();
+    Q_ASSERT(m_parentModelRef);
+    Q_ASSERT(m_constraintRef);
+    BoneRefObject *bone = m_parentModelRef->resolveBoneRef(m_constraintRef->effectorBoneRef());
+    return bone ? bone->name() : QString();
 }
 
 int IKConstraintRefObject::index() const
