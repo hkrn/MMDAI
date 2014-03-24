@@ -48,11 +48,14 @@ Item {
     readonly property alias light  : projectDocument.light
     readonly property alias importer : modelImporter
     readonly property alias viewport : renderTarget.viewport
+    property alias currentModel : projectDocument.currentModel
     property real offsetX: 0
     property real offsetY: 0
     property string lastStateAtSuspend: "pause"
     property var __keycode2closures : ({})
+
     signal notificationDidPost(string message)
+    signal morphDidSelect(var morph)
 
     Component.onCompleted: {
         __keycode2closures[Qt.Key_Plus] = function(event) { camera.zoom(-1) }
@@ -129,6 +132,16 @@ Item {
     VPMM.RenderTarget {
         id: renderTarget
         readonly property rect defaultViewportSetting: Qt.rect(scene.x + offsetX, scene.y + offsetY, scene.width, scene.height)
+        function __handleMorphWeightChanged() {
+            renderTarget.render()
+        }
+        function __handleMorphDidSelect(morph) {
+            if (morph) {
+                morph.weightChanged.connect(__handleMorphWeightChanged)
+                morph.sync()
+            }
+            morphDidSelect(morph)
+        }
         Layout.fillHeight: true
         project: projectDocument
         viewport: defaultViewportSetting
@@ -138,6 +151,9 @@ Item {
             if (initialized && applicationBootstrapOption.hasJson) {
                 renderTarget.loadJson(applicationBootstrapOption.json)
             }
+        }
+        onUploadingModelDidSucceed: {
+            model.morphDidSelect.connect(__handleMorphDidSelect)
         }
         Timer {
             id: standbyRenderTimer

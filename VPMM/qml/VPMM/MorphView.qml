@@ -43,6 +43,7 @@ import com.github.mmdai.VPMM 1.0 as VPMM
 Item {
     id: morphView
     property var targetObject
+    onTargetObjectChanged: scene.currentModel.firstTargetMorph = targetObject
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 12
@@ -167,12 +168,15 @@ Item {
             anchors.margins: 10
             color: systemPalette.window
             visible: false
-            VPMM.Vector3 { id: childVertexMorphPosition; value: item ? item.position : Qt.vector3d(0, 0, 0) }
+            VPMM.Vector3 {
+                id: childVertexMorphPosition
+                value: childVertexMorphView.item ? childVertexMorphView.item.position : Qt.vector3d(0, 0, 0)
+            }
             Binding {
-                target: item
+                target: childVertexMorphView.item ? childVertexMorphView.item : null
                 property: "position"
                 value: childVertexMorphPosition.value
-                when: childVertexMorphPositionXSpinBox.hovered || childVertexMorphPositionYSpinBox.hovered || childVertexMorphPositionZSpinBox.hovered
+                when: (childVertexMorphPositionXSpinBox.hovered || childVertexMorphPositionYSpinBox.hovered || childVertexMorphPositionZSpinBox.hovered)
             }
             ColumnLayout {
                 Layout.alignment: Qt.AlignCenter
@@ -217,6 +221,41 @@ Item {
                 }
             }
         }
+        RowLayout {
+            Text { text: qsTr("Weight") }
+            Slider {
+                id: morphWeightSlider
+                Layout.fillWidth: true
+                minimumValue: 0.0
+                maximumValue: 1.0
+                Binding on value {
+                    value: morphWeightSpinBox.value
+                    when: morphWeightSpinBox.hovered
+                }
+            }
+            Binding {
+                target: targetObject
+                property: "weight"
+                value: morphWeightSlider.value
+                when: morphWeightSlider.pressed
+            }
+            SpinBox {
+                id: morphWeightSpinBox
+                minimumValue: morphWeightSlider.minimumValue
+                maximumValue: morphWeightSlider.maximumValue
+                decimals: 3
+                stepSize: 0.01
+                Binding on value {
+                    value: morphWeightSlider.value
+                    when: morphWeightSlider.pressed
+                }
+            }
+            Binding {
+                target: targetObject
+                property: "weight"
+                value: morphWeightSpinBox.value
+                when: morphWeightSpinBox.hovered
+            }
+        }
     }
 }
-

@@ -130,7 +130,7 @@ ApplicationWindow {
     Action {
         id: loadModelAction
         text: qsTr("Load Model")
-        enabled: !scene.project.currentModel
+        enabled: !scene.currentModel
         tooltip: qsTr("Load a model from file. The loaded model will make current.")
         onTriggered: loadModelDialog.open()
     }
@@ -143,12 +143,12 @@ ApplicationWindow {
     Action {
         id: importModelAction
         text: qsTr("Import Model")
-        enabled: !scene.project.currentModel
+        enabled: !scene.currentModel
         onTriggered: importModelDialog.open()
     }
     SaveDialog {
         id: saveModelDialog
-        nameFilters: loadModelDialog.nameFilters
+        nameFilters: loadModelDialog.nameFilters.concat([ qsTr("JSON Format (*.json)") ])
         title: qsTr("Save Model")
         suffix: "pmx"
     }
@@ -157,15 +157,15 @@ ApplicationWindow {
         text: qsTr("Save Model")
         tooltip: qsTr("Save the current model to the file.")
         shortcut: "Ctrl+S"
-        enabled: scene.project.currentModel
-        onTriggered: scene.project.currentModel.save(saveModelDialog.getPath())
+        enabled: scene.currentModel
+        onTriggered: scene.currentModel.save(saveModelDialog.getPath())
     }
     Action {
         id: saveModelAsAction
         text: qsTr("Save Model As")
         tooltip: qsTr("Save the current model to the specified file.")
         shortcut: "Ctrl+Shift+S"
-        enabled: scene.project.currentModel
+        enabled: scene.currentModel
         function save(fileUrl) {
             var fileUrlString = fileUrl.toString(),
                     indexOf = fileUrlString.lastIndexOf("/"),
@@ -173,28 +173,15 @@ ApplicationWindow {
             if (fileUrlString !== "") {
                 progressWindow.text = qsTr("Saving Model %1").arg(name)
                 progressWindow.show()
-                scene.project.currentModel.save(fileUrl)
+                scene.currentModel.save(fileUrl)
                 progressWindow.hide()
             }
         }
         onTriggered: save(saveModelDialog.getPathAs())
     }
-    SaveDialog {
-        id: saveJsonDialog
-        title: qsTr("Save Model As Json")
-        suffix: "json"
-    }
-    Action {
-        id: saveJsonAction
-        text: qsTr("Save Model As Json")
-        tooltip: qsTr("Save the current model to the json file.")
-        shortcut: "Ctrl+Alt+S"
-        enabled: scene.project.currentModel
-        onTriggered: scene.project.currentModel.saveJson(saveJsonDialog.getPath())
-    }
     Action {
         id: copyAction
-        enabled: scene.project.currentModel
+        enabled: scene.currentModel
         text: qsTr("&Copy")
         tooltip: qsTr("Copy current selected items.")
         shortcut: "Ctrl+C"
@@ -202,7 +189,7 @@ ApplicationWindow {
     }
     Action {
         id: pasteAction
-        enabled: scene.project.currentModel
+        enabled: scene.currentModel
         text: qsTr("&Paste")
         tooltip: qsTr("Paste copied items.")
         shortcut: "Ctrl+V"
@@ -210,7 +197,7 @@ ApplicationWindow {
     }
     Action {
         id: cutAction
-        enabled: scene.project.currentModel
+        enabled: scene.currentModel
         text: qsTr("Cu&t")
         tooltip: qsTr("Cut current selected items.")
         shortcut: "Ctrl+X"
@@ -236,12 +223,12 @@ ApplicationWindow {
         id: deleteModelAction
         text: qsTr("Delete Current Model")
         tooltip: qsTr("Delete current model. this will delete model and the bound motions, cannot be undone.")
-        enabled: scene.project.currentModel
+        enabled: scene.currentModel
         onTriggered: {
             while (stackView.depth > 1) {
                 stackView.pop(null)
             }
-            scene.project.deleteModel(scene.project.currentModel)
+            scene.project.deleteModel(scene.currentModel)
         }
     }
     Action {
@@ -302,8 +289,6 @@ ApplicationWindow {
             MenuSeparator {}
             MenuItem { action: saveModelAction }
             MenuItem { action: saveModelAsAction }
-            MenuSeparator {}
-            MenuItem { action: saveJsonAction }
             MenuSeparator { visible: exitApplicationMenuItem.visible }
             MenuItem {
                 id: exitApplicationMenuItem
@@ -357,7 +342,7 @@ ApplicationWindow {
         }
         function __handleCurrentModelChanged() {
             clear()
-            var model = scene.project.currentModel
+            var model = scene.currentModel
             if (model) {
                 var vertices = model.allVertices
                 for (var i in vertices) {
@@ -366,7 +351,7 @@ ApplicationWindow {
                 }
             }
         }
-        Component.onCompleted: scene.project.currentModelChanged.connect(__handleCurrentModelChanged)
+        Component.onCompleted: scene.currentModelChanged.connect(__handleCurrentModelChanged)
     }
     ListModel {
         id: materialsModel
@@ -383,7 +368,7 @@ ApplicationWindow {
         }
         function __handleCurrentModelChanged() {
             clear()
-            var model = scene.project.currentModel
+            var model = scene.currentModel
             if (model) {
                 var materials = model.allMaterials
                 append({ "item": null, "text": qsTr("None") })
@@ -393,7 +378,7 @@ ApplicationWindow {
                 }
             }
         }
-        Component.onCompleted: scene.project.currentModelChanged.connect(__handleCurrentModelChanged)
+        Component.onCompleted: scene.currentModelChanged.connect(__handleCurrentModelChanged)
     }
     ListModel {
         id: bonesModel
@@ -410,7 +395,7 @@ ApplicationWindow {
         }
         function __handleCurrentModelChanged() {
             clear()
-            var model = scene.project.currentModel
+            var model = scene.currentModel
             if (model) {
                 var bones = model.allBones
                 append({ "item": null, "text": qsTr("None") })
@@ -420,7 +405,7 @@ ApplicationWindow {
                 }
             }
         }
-        Component.onCompleted: scene.project.currentModelChanged.connect(__handleCurrentModelChanged)
+        Component.onCompleted: scene.currentModelChanged.connect(__handleCurrentModelChanged)
     }
     ListModel {
         id: labelsModel
@@ -437,7 +422,7 @@ ApplicationWindow {
         }
         function __handleCurrentModelChanged() {
             clear()
-            var model = scene.project.currentModel
+            var model = scene.currentModel
             if (model) {
                 var labels = model.allLabels
                 append({ "item": null, "text": qsTr("None") })
@@ -448,7 +433,7 @@ ApplicationWindow {
             }
         }
         Component.onCompleted: {
-            scene.project.currentModelChanged.connect(__handleCurrentModelChanged)
+            scene.currentModelChanged.connect(__handleCurrentModelChanged)
         }
     }
     ListModel {
@@ -466,7 +451,7 @@ ApplicationWindow {
         }
         function __handleCurrentModelChanged() {
             clear()
-            var model = scene.project.currentModel
+            var model = scene.currentModel
             if (model) {
                 var morphs = model.allMorphs
                 append({ "item": null, "text": qsTr("None") })
@@ -476,7 +461,7 @@ ApplicationWindow {
                 }
             }
         }
-        Component.onCompleted: scene.project.currentModelChanged.connect(__handleCurrentModelChanged)
+        Component.onCompleted: scene.currentModelChanged.connect(__handleCurrentModelChanged)
     }
     ListModel {
         id: ikModel
@@ -493,7 +478,7 @@ ApplicationWindow {
         }
         function __handleCurrentModelChanged() {
             clear()
-            var model = scene.project.currentModel
+            var model = scene.currentModel
             if (model) {
                 var constraints = model.allIKConstraints
                 append({ "item": null, "text": qsTr("None") })
@@ -503,7 +488,7 @@ ApplicationWindow {
                 }
             }
         }
-        Component.onCompleted: scene.project.currentModelChanged.connect(__handleCurrentModelChanged)
+        Component.onCompleted: scene.currentModelChanged.connect(__handleCurrentModelChanged)
     }
     ListModel {
         id: rigidBodiesModel
@@ -520,7 +505,7 @@ ApplicationWindow {
         }
         function __handleCurrentModelChanged() {
             clear()
-            var model = scene.project.currentModel
+            var model = scene.currentModel
             if (model) {
                 var bodies = model.allRigidBodies
                 append({ "item": null, "text": qsTr("None") })
@@ -530,7 +515,7 @@ ApplicationWindow {
                 }
             }
         }
-        Component.onCompleted: scene.project.currentModelChanged.connect(__handleCurrentModelChanged)
+        Component.onCompleted: scene.currentModelChanged.connect(__handleCurrentModelChanged)
     }
     ListModel {
         id: jointsModel
@@ -548,7 +533,7 @@ ApplicationWindow {
         }
         function __handleCurrentModelChanged() {
             clear()
-            var model = scene.project.currentModel
+            var model = scene.currentModel
             if (model) {
                 var joints = model.allJoints
                 append({ "item": null, "text": qsTr("None") })
@@ -558,16 +543,16 @@ ApplicationWindow {
                 }
             }
         }
-        Component.onCompleted: scene.project.currentModelChanged.connect(__handleCurrentModelChanged)
+        Component.onCompleted: scene.currentModelChanged.connect(__handleCurrentModelChanged)
     }
     ListModel {
         id: softBodiesModel
         function __handleCurrentModelChanged() {
-            var model = scene.project.currentModel
+            var model = scene.currentModel
             if (model) {
             }
         }
-        Component.onCompleted: scene.project.currentModelChanged.connect(__handleCurrentModelChanged)
+        Component.onCompleted: scene.currentModelChanged.connect(__handleCurrentModelChanged)
     }
 
     ListModel {
@@ -661,7 +646,7 @@ ApplicationWindow {
                 StackView {
                     id: stackView
                     function __handleCurrentModelChange() {
-                        if (!scene.project.currentModel && depth > 1) {
+                        if (!scene.currentModel && depth > 1) {
                             pop(null)
                         }
                     }
@@ -717,7 +702,7 @@ ApplicationWindow {
                             }
                         }
                     }
-                    Component.onCompleted: scene.project.currentModelChanged.connect(__handleCurrentModelChange)
+                    Component.onCompleted: scene.currentModelChanged.connect(__handleCurrentModelChange)
                 }
             }
         }
@@ -733,7 +718,7 @@ ApplicationWindow {
             Rectangle {
                 id: propertyPanel
                 visible: true
-                enabled: scene.project.currentModel
+                enabled: scene.currentModel
                 Layout.minimumHeight: 240
                 Layout.maximumHeight: 400
                 height: 240
@@ -756,10 +741,10 @@ ApplicationWindow {
                                 { "text": "PMX 2.0", "value": VPMM.Model.PMX_2_0 },
                                 { "text": "PMX 2.1", "value": VPMM.Model.PMX_2_1 }
                             ]
-                            currentIndex: scene.project.currentModel ? indexOf(scene.project.currentModel.version) : 0
+                            currentIndex: scene.currentModel ? indexOf(scene.currentModel.version) : 0
                         }
                         Binding {
-                            target: scene.project.currentModel
+                            target: scene.currentModel
                             property: "version"
                             value: modelVersionComboBox.model[modelVersionComboBox.currentIndex].value
                             when: modelVersionComboBox.hovered
@@ -778,10 +763,10 @@ ApplicationWindow {
                                 { "text": "UTF-8", "value": VPMM.Model.UTF8 },
                                 { "text": "UTF-16", "value": VPMM.Model.UTF16 }
                             ]
-                            currentIndex: scene.project.currentModel ? indexOf(scene.project.currentModel.encodingType) : 0
+                            currentIndex: scene.currentModel ? indexOf(scene.currentModel.encodingType) : 0
                         }
                         Binding {
-                            target: scene.project.currentModel
+                            target: scene.currentModel
                             property: "encodingType"
                             value: modelEncodingTypeComboBox.model[modelEncodingTypeComboBox.currentIndex].value
                             when: modelEncodingTypeComboBox.hovered
@@ -793,10 +778,10 @@ ApplicationWindow {
                             id: modelUVASpinBox
                             minimumValue: 0
                             maximumValue: 4
-                            value: scene.project.currentModel ? scene.project.currentModel.maxUVCount : 0
+                            value: scene.currentModel ? scene.currentModel.maxUVCount : 0
                         }
                         Binding {
-                            target: scene.project.currentModel
+                            target: scene.currentModel
                             property: "uavCount"
                             value: modelUVASpinBox.value
                             when: modelUVASpinBox.hovered
@@ -805,11 +790,11 @@ ApplicationWindow {
                     TextField {
                         Layout.fillWidth: true
                         placeholderText: qsTr("Input Model Name Here")
-                        text: scene.project.currentModel ? scene.project.currentModel.name : ""
+                        text: scene.currentModel ? scene.currentModel.name : ""
                     }
                     TextArea {
                         Layout.fillWidth: true
-                        text: scene.project.currentModel ? scene.project.currentModel.comment : ""
+                        text: scene.currentModel ? scene.currentModel.comment : ""
                     }
                     Item {
                         Layout.fillWidth: true
