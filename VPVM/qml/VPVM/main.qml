@@ -395,7 +395,7 @@ ApplicationWindow {
     }
     SaveDialog {
         id: saveMotionDialog
-        nameFilters: setModelMotionDialog.nameFilters
+        nameFilters: setModelMotionDialog.nameFilters.concat([ qsTr("JSON Format (*.json)") ])
         title: qsTr("Save Model Motion")
         suffix: "vmd"
     }
