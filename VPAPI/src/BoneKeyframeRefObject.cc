@@ -70,9 +70,14 @@ BoneKeyframeRefObject::~BoneKeyframeRefObject()
 
 QJsonValue BoneKeyframeRefObject::toJson() const
 {
-    QJsonObject v = BaseKeyframeRefObject::toJson().toObject();
+    QJsonObject v = BaseKeyframeRefObject::toJson().toObject(), i;
     v.insert("localTranslation", Util::toJson(localTranslation()));
     v.insert("localOrientation", Util::toJson(localOrientation()));
+    addInterpolationParameterToJson("translationX", IBoneKeyframe::kBonePositionX, i);
+    addInterpolationParameterToJson("translationY", IBoneKeyframe::kBonePositionX, i);
+    addInterpolationParameterToJson("translationZ", IBoneKeyframe::kBonePositionX, i);
+    addInterpolationParameterToJson("orientation", IBoneKeyframe::kBonePositionX, i);
+    v.insert("interpolation", i);
     return v;
 }
 
@@ -181,4 +186,15 @@ void BoneKeyframeRefObject::setLocalEulerOrientation(const QVector3D &value)
 IBoneKeyframe *BoneKeyframeRefObject::data() const
 {
     return m_keyframe;
+}
+
+void BoneKeyframeRefObject::addInterpolationParameterToJson(const QString &key, int type, QJsonObject &v) const
+{
+    const QVector4D &v2 = interpolationParameter(type);
+    QJsonObject i;
+    i.insert("x1", v2.x());
+    i.insert("y1", v2.y());
+    i.insert("x2", v2.z());
+    i.insert("y2", v2.w());
+    v.insert(key, i);
 }

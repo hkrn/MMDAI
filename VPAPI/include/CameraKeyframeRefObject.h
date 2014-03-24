@@ -95,6 +95,8 @@ signals:
     void fovChanged();
 
 private:
+    void addInterpolationParameterToJson(const QString &key, int type, QJsonObject &v) const;
+
     CameraMotionTrack *m_parentTrackRef;
     ICameraKeyframe *m_keyframe;
 };

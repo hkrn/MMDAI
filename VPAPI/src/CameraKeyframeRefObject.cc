@@ -66,11 +66,18 @@ CameraKeyframeRefObject::~CameraKeyframeRefObject()
 
 QJsonValue CameraKeyframeRefObject::toJson() const
 {
-    QJsonObject v = BaseKeyframeRefObject::toJson().toObject();
+    QJsonObject v = BaseKeyframeRefObject::toJson().toObject(), i;
     v.insert("lookAt", Util::toJson(lookAt()));
     v.insert("angle", Util::toJson(angle()));
     v.insert("fov", fov());
     v.insert("distance", distance());
+    addInterpolationParameterToJson("lookAtX", ICameraKeyframe::kCameraLookAtX, i);
+    addInterpolationParameterToJson("lookAtY", ICameraKeyframe::kCameraLookAtY, i);
+    addInterpolationParameterToJson("lookAtZ", ICameraKeyframe::kCameraLookAtZ, i);
+    addInterpolationParameterToJson("angle", ICameraKeyframe::kCameraAngle, i);
+    addInterpolationParameterToJson("fov", ICameraKeyframe::kCameraFov, i);
+    addInterpolationParameterToJson("distance", ICameraKeyframe::kCameraDistance, i);
+    v.insert("interpolation", i);
     return v;
 }
 
@@ -183,4 +190,15 @@ ICameraKeyframe *CameraKeyframeRefObject::data() const
 IKeyframe *CameraKeyframeRefObject::baseKeyframeData() const
 {
     return data();
+}
+
+void CameraKeyframeRefObject::addInterpolationParameterToJson(const QString &key, int type, QJsonObject &v) const
+{
+    const QVector4D &v2 = interpolationParameter(type);
+    QJsonObject i;
+    i.insert("x1", v2.x());
+    i.insert("y1", v2.y());
+    i.insert("x2", v2.z());
+    i.insert("y2", v2.w());
+    v.insert(key, i);
 }

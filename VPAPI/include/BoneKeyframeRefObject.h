@@ -91,6 +91,8 @@ signals:
     void localRotationChanged();
 
 private:
+    void addInterpolationParameterToJson(const QString &key, int type, QJsonObject &v) const;
+
     BoneMotionTrack *m_parentTrackRef;
     vpvl2::IBoneKeyframe *m_keyframe;
 };
