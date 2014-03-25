@@ -47,6 +47,7 @@ Project {
         "VPAPI/VPAPI.qbs",
         "VPVM/VPVM.qbs",
         "VPMM/VPMM.qbs",
-        "VPAPI/test/test.qbs"
+        "VPAPI/test/test.qbs",
+        "tools/query/query.qbs"
     ]
 }
