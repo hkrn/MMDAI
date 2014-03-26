@@ -112,6 +112,7 @@ namespace pmx
 struct Morph::PrivateContext {
     PrivateContext(Model *modelRef)
         : parentModelRef(modelRef),
+          parentMorphRef(0),
           parentLabelRef(0),
           namePtr(0),
           englishNamePtr(0),
@@ -120,7 +121,6 @@ struct Morph::PrivateContext {
           category(kBase),
           type(kUnknownMorph),
           index(-1),
-          hasParent(false),
           dirty(false)
     {
     }
@@ -135,13 +135,13 @@ struct Morph::PrivateContext {
         internal::deleteObject(namePtr);
         internal::deleteObject(englishNamePtr);
         parentModelRef = 0;
+        parentMorphRef = 0;
         parentLabelRef = 0;
         weight = 0;
         internalWeight = 0;
         category = kBase;
         type = kUnknownMorph;
         index = -1;
-        hasParent = false;
         dirty = false;
     }
 
@@ -175,9 +175,9 @@ struct Morph::PrivateContext {
                     return false;
                 }
                 else {
-                    Morph *morph = morphs[groupIndex];
-                    group->morph = morph;
-                    morph->m_context->hasParent = true;
+                    Morph *m = morphs[groupIndex];
+                    group->morph = m;
+                    m->m_context->parentMorphRef = morph;
                 }
             }
         }
@@ -291,7 +291,7 @@ struct Morph::PrivateContext {
             internal::getData(ptr, morph);
             internal::setPosition(morph.position, bone->position);
             VPVL2_VLOG(3, "PMXBoneMorph: position=" << bone->position.x() << "," << bone->position.y() << "," << bone->position.z());
-            internal::setRotation(morph.rotation, bone->rotation);
+            internal::setRotation2(morph.rotation, bone->rotation);
             VPVL2_VLOG(3, "PMXBoneMorph: rotation=" << bone->rotation.x() << "," << bone->rotation.y() << "," << bone->rotation.z());
             bone->index = boneIndex;
             ptr += sizeof(morph);
@@ -407,7 +407,7 @@ struct Morph::PrivateContext {
         for (int i = 0; i < nbones; i++) {
             const Morph::Bone *bone = bones[i];
             internal::getPosition(bone->position, morph.position);
-            internal::getRotation(bone->rotation, morph.rotation);
+            internal::getRotation2(bone->rotation, morph.rotation);
             internal::writeSignedIndex(bone->index, boneIndexSize, ptr);
             internal::writeBytes(&morph, sizeof(morph), ptr);
         }
@@ -496,6 +496,7 @@ struct Morph::PrivateContext {
     PointerArray<Flip> flips;
     PointerArray<Impulse> impulses;
     Model *parentModelRef;
+    Morph *parentMorphRef;
     Label *parentLabelRef;
     IString *namePtr;
     IString *englishNamePtr;
@@ -504,7 +505,6 @@ struct Morph::PrivateContext {
     IMorph::Category category;
     IMorph::Type type;
     int index;
-    bool hasParent;
     bool dirty;
 };
 
@@ -852,9 +852,9 @@ void Morph::setWeight(const IMorph::WeightPrecision &value)
 void Morph::update()
 {
     Type type = m_context->type;
-    if (type == kVertexMorph) {
-        /* force updating vertex morph because vertices alway will be reset by IModel#performUpdate */
-        updateVertexMorphs(m_context->weight);
+    if (type == kVertexMorph && !m_context->parentMorphRef) {
+        /* force updating vertex morph except in group morph because vertices alway will be reset by IModel#performUpdate */
+        updateVertexMorphs(m_context->internalWeight);
     }
     else if (type == kGroupMorph) {
         /* force updating group morph to update morph children correctly even weight is not changed (not dirty) */
@@ -878,10 +878,13 @@ void Morph::update()
         case kImpulseMorph:
             updateImpluseMorphs(m_context->internalWeight);
             break;
+        case kVertexMorph:
+            /* only vertex morphs in group morph */
+            updateVertexMorphs(m_context->internalWeight);
+            break;
         case kFlipMorph:
             break; /* do nothing */
         case kGroupMorph:
-        case kVertexMorph:
         default:
             VPVL2_CHECK(0); /* should not be reached here */
             break;
@@ -1060,7 +1063,7 @@ int Morph::index() const
 
 bool Morph::hasParent() const
 {
-    return m_context->hasParent;
+    return m_context->parentMorphRef != 0;
 }
 
 const Array<Morph::Bone *> &Morph::bones() const
