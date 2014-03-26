@@ -274,10 +274,10 @@ struct Bone::PrivateContext {
           destinationOriginBoneRef(0),
           namePtr(0),
           englishNamePtr(0),
-          localRotation(Quaternion::getIdentity()),
-          localInherentRotation(Quaternion::getIdentity()),
-          localMorphRotation(Quaternion::getIdentity()),
-          jointRotation(Quaternion::getIdentity()),
+          localOrientation(Quaternion::getIdentity()),
+          localInherentOrientation(Quaternion::getIdentity()),
+          localMorphOrientation(Quaternion::getIdentity()),
+          jointOrientation(Quaternion::getIdentity()),
           worldTransform(Transform::getIdentity()),
           localTransform(Transform::getIdentity()),
           origin(kZeroV3),
@@ -369,7 +369,7 @@ struct Bone::PrivateContext {
     }
 
     void updateWorldTransform() {
-        updateWorldTransform(localTranslation, localRotation);
+        updateWorldTransform(localTranslation, localOrientation);
     }
     void updateWorldTransform(const Vector3 &translation, const Quaternion &rotation) {
         worldTransform.setRotation(rotation);
@@ -388,10 +388,10 @@ struct Bone::PrivateContext {
     Bone *destinationOriginBoneRef;
     IString *namePtr;
     IString *englishNamePtr;
-    Quaternion localRotation;
-    Quaternion localInherentRotation;
-    Quaternion localMorphRotation;
-    Quaternion jointRotation;
+    Quaternion localOrientation;
+    Quaternion localInherentOrientation;
+    Quaternion localMorphOrientation;
+    Quaternion jointOrientation;
     Transform worldTransform;
     Transform localTransform;
     Vector3 origin;
@@ -838,7 +838,7 @@ void Bone::mergeMorph(const Morph::Bone *morph, const IMorph::WeightPrecision &w
 {
     const Scalar &w = Scalar(weight);
     m_context->localMorphTranslation = morph->position * w;
-    m_context->localMorphRotation = Quaternion::getIdentity().slerp(morph->rotation, w);
+    m_context->localMorphOrientation = Quaternion::getIdentity().slerp(morph->rotation, w);
 }
 
 void Bone::getLocalTransform(Transform &output) const
@@ -853,46 +853,46 @@ void Bone::getLocalTransform(const Transform &worldTransform, Transform &output)
 
 void Bone::performTransform()
 {
-    Quaternion rotation(Quaternion::getIdentity());
+    Quaternion orientation(Quaternion::getIdentity());
     if (isInherentOrientationEnabled()) {
         Bone *parentBoneRef = m_context->parentInherentBoneRef;
         if (parentBoneRef) {
             if (parentBoneRef->isInherentOrientationEnabled()) {
-                rotation *= parentBoneRef->m_context->localInherentRotation;
+                orientation *= parentBoneRef->m_context->localInherentOrientation;
             }
             else {
-                rotation *= parentBoneRef->localOrientation() * parentBoneRef->m_context->localMorphRotation;
+                orientation *= parentBoneRef->localOrientation() * parentBoneRef->m_context->localMorphOrientation;
             }
         }
         if (!btFuzzyZero(m_context->coefficient - 1.0f)) {
-            rotation = Quaternion::getIdentity().slerp(rotation, m_context->coefficient);
+            orientation = Quaternion::getIdentity().slerp(orientation, m_context->coefficient);
         }
         if (parentBoneRef && parentBoneRef->hasInverseKinematics()) {
-            rotation *= parentBoneRef->m_context->jointRotation;
+            orientation *= parentBoneRef->m_context->jointOrientation;
         }
-        m_context->localInherentRotation = rotation * m_context->localRotation * m_context->localMorphRotation;
-        m_context->localInherentRotation.normalize();
+        m_context->localInherentOrientation = orientation * m_context->localOrientation * m_context->localMorphOrientation;
+        m_context->localInherentOrientation.normalize();
     }
-    rotation *= m_context->localRotation * m_context->localMorphRotation * m_context->jointRotation;
-    rotation.normalize();
-    Vector3 position(kZeroV3);
+    orientation *= m_context->localOrientation * m_context->localMorphOrientation * m_context->jointOrientation;
+    orientation.normalize();
+    Vector3 translation(kZeroV3);
     if (isInherentTranslationEnabled()) {
         Bone *parentBone = m_context->parentInherentBoneRef;
         if (parentBone) {
             if (parentBone->isInherentTranslationEnabled()) {
-                position += parentBone->m_context->localInherentTranslation;
+                translation += parentBone->m_context->localInherentTranslation;
             }
             else {
-                position += parentBone->localTranslation() + parentBone->m_context->localMorphTranslation;
+                translation += parentBone->localTranslation() + parentBone->m_context->localMorphTranslation;
             }
         }
         if (!btFuzzyZero(m_context->coefficient - 1.0f)) {
-            position *= m_context->coefficient;
+            translation *= m_context->coefficient;
         }
-        m_context->localInherentTranslation = position;
+        m_context->localInherentTranslation = translation;
     }
-    position += m_context->localTranslation + m_context->localMorphTranslation;
-    m_context->updateWorldTransform(position, rotation);
+    translation += m_context->localTranslation + m_context->localMorphTranslation;
+    m_context->updateWorldTransform(translation, orientation);
 }
 
 void Bone::solveInverseKinematics()
@@ -934,7 +934,7 @@ void Bone::solveInverseKinematics()
                 newJointLocalRotation = jointBoneRef->localOrientation() * jointRotation;
             }
             jointBoneRef->setLocalOrientation(newJointLocalRotation);
-            jointBoneRef->m_context->jointRotation = jointRotation;
+            jointBoneRef->m_context->jointOrientation = jointRotation;
             for (int k = j; k >= 0; k--) {
                 DefaultIKJoint *joint = constraints[k];
                 jointBoneRef = joint->m_targetBoneRef;
@@ -953,7 +953,7 @@ void Bone::updateLocalTransform()
 
 void Bone::resetIKLink()
 {
-    m_context->jointRotation = Quaternion::getIdentity();
+    m_context->jointOrientation = Quaternion::getIdentity();
 }
 
 Vector3 Bone::offset() const
@@ -989,7 +989,7 @@ void Bone::setLocalTranslation(const Vector3 &value)
 
 void Bone::setLocalOrientation(const Quaternion &value)
 {
-    m_context->localRotation = value;
+    m_context->localOrientation = value;
 }
 
 Label *Bone::internalParentLabelRef() const
@@ -1032,7 +1032,7 @@ const IString *Bone::name(IEncoding::LanguageType type) const
 
 Quaternion Bone::localOrientation() const
 {
-    return m_context->localRotation;
+    return m_context->localOrientation;
 }
 
 Vector3 Bone::origin() const
