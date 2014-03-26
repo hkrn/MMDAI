@@ -71,6 +71,12 @@ static void createTables()
     if (!query.exec(slurp(":queries/create_bones_table.sql"))) {
         qWarning() << query.lastError();
     }
+    if (!query.exec(slurp(":queries/create_ik_constraints_table.sql"))) {
+        qWarning() << query.lastError();
+    }
+    if (!query.exec(slurp(":queries/create_ik_joints_table.sql"))) {
+        qWarning() << query.lastError();
+    }
     if (!query.exec(slurp(":queries/create_materials_table.sql"))) {
         qWarning() << query.lastError();
     }
@@ -143,6 +149,7 @@ static void importBones(const IModel *model, int modelID)
         query.bindValue(":parent_bone", parent ? parent->index() : QVariant());
         const IBone *destination = bone->destinationOriginBoneRef();
         query.bindValue(":destination_bone", destination ? destination->index() : QVariant());
+        query.bindValue(":inherent_coefficient", bone->inherentCoefficient());
         query.bindValue(":is_movable", bone->isMovable());
         query.bindValue(":is_rotateable", bone->isRotateable());
         query.bindValue(":is_visible", bone->isVisible());
@@ -154,6 +161,49 @@ static void importBones(const IModel *model, int modelID)
         query.bindValue(":has_fixed_axes", bone->hasFixedAxes());
         if (!query.exec()) {
             qWarning() << query.lastError() << "at bone" << i << "on model" << modelID;
+        }
+    }
+}
+
+static void importIKConstraints(const IModel *model, int modelID)
+{
+    QSqlQuery constraintQuery, jointQuery;
+    constraintQuery.prepare(slurp(":queries/insert_ik_constraint_record.sql"));
+    jointQuery.prepare(slurp(":queries/insert_ik_joint_record.sql"));
+    Array<IBone::IKConstraint *> constraints;
+    Array<IBone::IKJoint *> joints;
+    model->getIKConstraintRefs(constraints);
+    const int nbones = constraints.count();
+    for (int i = 0; i < nbones; i++) {
+        const IBone::IKConstraint *constraint = constraints[i];
+        constraintQuery.bindValue(":parent_model", modelID);
+        constraintQuery.bindValue(":effector_bone", constraint->effectorBoneRef()->index());
+        if (const IBone *rootBone = constraint->rootBoneRef()) {
+            constraintQuery.bindValue(":root_bone", rootBone->index());
+        }
+        constraintQuery.bindValue(":angle_limit", constraint->angleLimit());
+        constraintQuery.bindValue(":num_iterations", constraint->numIterations());
+        if (!constraintQuery.exec()) {
+            qWarning() << constraintQuery.lastError() << "at constraint" << i << "on model" << modelID;
+        }
+        else {
+            int constraintID = constraintQuery.lastInsertId().toInt();
+            constraint->getJointRefs(joints);
+            const int njoints = joints.count();
+            for (int j = 0; j < njoints; j++) {
+                const IBone::IKJoint *joint = joints[j];
+                jointQuery.bindValue(":constraint", constraintID);
+                jointQuery.bindValue(":has_angle_limit", joint->hasAngleLimit());
+                jointQuery.bindValue(":upper_limit_x", joint->upperLimit().x());
+                jointQuery.bindValue(":upper_limit_y", joint->upperLimit().y());
+                jointQuery.bindValue(":upper_limit_z", joint->upperLimit().z());
+                jointQuery.bindValue(":lower_limit_x", joint->lowerLimit().x());
+                jointQuery.bindValue(":lower_limit_y", joint->lowerLimit().y());
+                jointQuery.bindValue(":lower_limit_z", joint->lowerLimit().z());
+                if (!jointQuery.exec()) {
+                    qWarning() << jointQuery.lastError() << "at joint" << j << "of constraint" << i << "on model" << modelID;
+                }
+            }
         }
     }
 }
@@ -322,6 +372,7 @@ int main(int argc, char *argv[])
                             if (modelID >= 0) {
                                 importVertices(model, modelID);
                                 importBones(model, modelID);
+                                importIKConstraints(model, modelID);
                                 importMaterials(model, modelID);
                                 importLabels(model, modelID);
                                 importMorphs(model, modelID);

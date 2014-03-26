@@ -6,6 +6,7 @@ create table mmq_bones (
   `name_en` text not null default "",
   `parent_bone_id` interger null,
   `destination_bone_id` integer null,
+  `inherent_coefficient` float not null,
   `is_movable` integer not null,
   `is_rotateable` integer not null,
   `is_visible` integer not null,

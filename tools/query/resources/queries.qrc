@@ -3,6 +3,8 @@
         <file>create_models_table.sql</file>
         <file>create_vertices_table.sql</file>
         <file>create_bones_table.sql</file>
+        <file>create_ik_constraints_table.sql</file>
+        <file>create_ik_joints_table.sql</file>
         <file>create_materials_table.sql</file>
         <file>create_labels_table.sql</file>
         <file>create_morphs_table.sql</file>
@@ -11,6 +13,8 @@
         <file>insert_model_record.sql</file>
         <file>insert_vertex_record.sql</file>
         <file>insert_bone_record.sql</file>
+        <file>insert_ik_constraint_record.sql</file>
+        <file>insert_ik_joint_record.sql</file>
         <file>insert_material_record.sql</file>
         <file>insert_label_record.sql</file>
         <file>insert_morph_record.sql</file>
