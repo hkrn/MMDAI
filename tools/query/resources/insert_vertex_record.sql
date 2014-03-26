@@ -1,6 +1,6 @@
 insert into mmq_vertices (
   `index`,
-  `parent_model`,
+  `parent_model_id`,
   `type`
 ) values (
   :index,

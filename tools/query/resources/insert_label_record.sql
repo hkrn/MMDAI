@@ -1,6 +1,6 @@
 insert into mmq_labels (
   `index`,
-  `parent_model`,
+  `parent_model_id`,
   `name_ja`,
   `name_en`,
   `is_special`

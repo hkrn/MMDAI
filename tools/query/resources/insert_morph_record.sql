@@ -1,6 +1,6 @@
 insert into mmq_morphs (
   `index`,
-  `parent_model`,
+  `parent_model_id`,
   `name_ja`,
   `name_en`,
   `category`,

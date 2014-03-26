@@ -6,6 +6,7 @@ insert into mmq_models (
   `name_en`,
   `comment_ja`,
   `comment_en`,
+  `filename`,
   `sha1`
 ) values (
   :version,
@@ -15,5 +16,6 @@ insert into mmq_models (
   :name_en,
   :comment_ja,
   :comment_en,
+  :filename,
   :sha1
 )

@@ -1,10 +1,10 @@
 insert into mmq_bones (
   `index`,
-  `parent_model`,
+  `parent_model_id`,
   `name_ja`,
   `name_en`,
-  `parent_bone`,
-  `destination_bone`,
+  `parent_bone_id`,
+  `destination_bone_id`,
   `is_movable`,
   `is_rotateable`,
   `is_visible`,

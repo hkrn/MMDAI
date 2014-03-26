@@ -1,10 +1,10 @@
 create table mmq_materials (
   `id` integer not null primary key autoincrement,
   `index` integer not null,
-  `parent_model` integer not null,
-  `name_ja` text not null,
-  `name_en` text not null,
-  `edge_size` float not null,
+  `parent_model_id` integer not null,
+  `name_ja` text not null default "",
+  `name_en` text not null default "",
+  `edge_size` real not null,
   `is_casting_shadow_enabled` integer not null,
   `is_casting_shadow_map_enabled` integer not null,
   `is_culling_disabled` integer not null,
@@ -15,5 +15,7 @@ create table mmq_materials (
   `main_texture_path` text null,
   `sphere_texture_path` text null,
   `toon_texture_path` text null,
-  `index_range_count` integer not null
+  `index_range_count` integer not null,
+  `user_data` text not null default "",
+  foreign key(parent_model_id) references mmq_models(id)
  );

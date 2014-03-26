@@ -1,6 +1,6 @@
 insert into mmq_materials (
   `index`,
-  `parent_model`,
+  `parent_model_id`,
   `name_ja`,
   `name_en`,
   `index_range_count`,
@@ -15,6 +15,7 @@ insert into mmq_materials (
   `main_texture_path`,
   `sphere_texture_path`,
   `toon_texture_path`,
+  `user_data`,
   `index_range_count`
 ) values (
   :index,
@@ -33,5 +34,6 @@ insert into mmq_materials (
   :main_texture_path,
   :sphere_texture_path,
   :toon_texture_path,
+  :user_data,
   :index_range_count
 )

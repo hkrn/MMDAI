@@ -53,12 +53,15 @@ static QString slurp(const QString &filename)
 
 static inline QString to_s(const IString *s)
 {
-    return s ? QString(reinterpret_cast<const char *>(s->toByteArray())) : QString();
+    return s ? QString(reinterpret_cast<const char *>(s->toByteArray())) : QStringLiteral("");
 }
 
 static void createTables()
 {
     QSqlQuery query;
+    if (!query.exec("pragma foreign_keys = on;")) {
+        qWarning() << query.lastError();
+    }
     if (!query.exec(slurp(":queries/create_models_table.sql"))) {
         qWarning() << query.lastError();
     }
@@ -85,7 +88,7 @@ static void createTables()
     }
 }
 
-static int addModel(const IModel *model, const QByteArray &sha1Hash)
+static int addModel(const IModel *model, const QString &filename, const QByteArray &sha1Hash)
 {
     QSqlQuery query;
     query.prepare(slurp(":queries/insert_model_record.sql"));
@@ -96,9 +99,11 @@ static int addModel(const IModel *model, const QByteArray &sha1Hash)
     query.bindValue(":name_en", to_s(model->name(IEncoding::kEnglish)));
     query.bindValue(":comment_ja", to_s(model->comment(IEncoding::kJapanese)));
     query.bindValue(":comment_en", to_s(model->comment(IEncoding::kEnglish)));
+    query.bindValue(":filename", filename);
     query.bindValue(":sha1", sha1Hash);
     if (!query.exec()) {
         qWarning() << query.lastError();
+        return -1;
     }
     return query.lastInsertId().toInt();
 }
@@ -116,7 +121,7 @@ static void importVertices(const IModel *model, int modelID)
         query.bindValue(":parent_model", modelID);
         query.bindValue(":type", int(vertex->type()));
         if (!query.exec()) {
-            qWarning() << query.lastError() << "at vertex" << i;
+            qWarning() << query.lastError() << "at vertex" << i << "on model" << modelID;
         }
     }
 }
@@ -148,7 +153,7 @@ static void importBones(const IModel *model, int modelID)
         query.bindValue(":has_local_axes", bone->hasLocalAxes());
         query.bindValue(":has_fixed_axes", bone->hasFixedAxes());
         if (!query.exec()) {
-            qWarning() << query.lastError() << "at bone" << i;
+            qWarning() << query.lastError() << "at bone" << i << "on model" << modelID;
         }
     }
 }
@@ -177,9 +182,10 @@ static void importMaterials(const IModel *model, int modelID)
         query.bindValue(":main_texture_path", to_s(material->mainTexture()));
         query.bindValue(":sphere_texture_path", to_s(material->sphereTexture()));
         query.bindValue(":toon_texture_path", to_s(material->toonTexture()));
+        query.bindValue(":user_data", to_s(material->userDataArea()));
         query.bindValue(":index_range_count", material->indexRange().count);
         if (!query.exec()) {
-            qWarning() << query.lastError() << "at material" << i;
+            qWarning() << query.lastError() << "at material" << i << "on model" << modelID;
         }
     }
 }
@@ -199,7 +205,7 @@ static void importLabels(const IModel *model, int modelID)
         query.bindValue(":name_en", to_s(label->name(IEncoding::kEnglish)));
         query.bindValue(":is_special", label->isSpecial());
         if (!query.exec()) {
-            qWarning() << query.lastError() << "at label" << i;
+            qWarning() << query.lastError() << "at label" << i << "on model" << modelID;
         }
     }
 }
@@ -220,7 +226,7 @@ static void importMorphs(const IModel *model, int modelID)
         query.bindValue(":category", int(morph->category()));
         query.bindValue(":type", int(morph->type()));
         if (!query.exec()) {
-            qWarning() << query.lastError() << "at morph" << i;
+            qWarning() << query.lastError() << "at morph" << i << "on model" << modelID;
         }
     }
 }
@@ -246,7 +252,7 @@ static void importRigidBodies(const IModel *model, int modelID)
         query.bindValue(":friction", body->friction());
         query.bindValue(":restitution", body->restitution());
         if (!query.exec()) {
-            qWarning() << query.lastError() << "at body" << i;
+            qWarning() << query.lastError() << "at body" << i << "on model" << modelID;
         }
     }
 }
@@ -266,8 +272,19 @@ static void importJoints(const IModel *model, int modelID)
         query.bindValue(":name_en", to_s(joint->name(IEncoding::kEnglish)));
         query.bindValue(":type", joint->type());
         if (!query.exec()) {
-            qWarning() << query.lastError() << "at joint" << i;
+            qWarning() << query.lastError() << "at joint" << i << "on model" << modelID;
         }
+    }
+}
+
+static void findFiles(const QString &basePath, QStringList &result)
+{
+    QDir dir(basePath);
+    foreach (const QString &f, dir.entryList(QStringList() << "*.pmd" << "*.pmx", QDir::Files)) {
+        result << dir.absoluteFilePath(f);
+    }
+    foreach (const QString &d, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        findFiles(dir.absoluteFilePath(d), result);
     }
 }
 
@@ -276,7 +293,8 @@ static void importJoints(const IModel *model, int modelID)
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    Encoding encoding(0);
+    Encoding::Dictionary dict;
+    Encoding encoding(&dict);
     Factory factory(&encoding);
 
     QFile filePath(QDir::home().absoluteFilePath("test.db"));
@@ -286,10 +304,12 @@ int main(int argc, char *argv[])
     if (db.open()) {
         QFileInfo finfo;
         createTables();
-        foreach (const QString &s, a.arguments()) {
+        QStringList files;
+        findFiles(a.arguments().at(1), files);
+        foreach (const QString &s, files) {
             finfo.setFile(s);
             if (finfo.exists()) {
-                if (finfo.suffix() == "pmx" || finfo.suffix() == "pmd") {
+                if (finfo.suffix() == "pmx") { // || finfo.suffix() == "pmd") {
                     QFile file(finfo.absoluteFilePath());
                     if (file.open(QFile::ReadOnly)) {
                         const QByteArray bytes = file.readAll();
@@ -298,19 +318,24 @@ int main(int argc, char *argv[])
                         IModel *model = factory.createModel(ptr, bytes.size(), ok);
                         if (ok) {
                             db.transaction();
-                            int modelID = addModel(model, QCryptographicHash::hash(bytes, QCryptographicHash::Sha1).toHex());
-                            importVertices(model, modelID);
-                            importBones(model, modelID);
-                            importMaterials(model, modelID);
-                            importLabels(model, modelID);
-                            importMorphs(model, modelID);
-                            importRigidBodies(model, modelID);
-                            importJoints(model, modelID);
-                            if (!db.commit()) {
-                                qWarning() << "Cannot commit database:" << db.lastError();
-                                if (!db.rollback()) {
-                                    qFatal("Cannot rollback database: %s", qPrintable(db.lastError().text()));
+                            int modelID = addModel(model, finfo.fileName(), QCryptographicHash::hash(bytes, QCryptographicHash::Sha1).toHex());
+                            if (modelID >= 0) {
+                                importVertices(model, modelID);
+                                importBones(model, modelID);
+                                importMaterials(model, modelID);
+                                importLabels(model, modelID);
+                                importMorphs(model, modelID);
+                                importRigidBodies(model, modelID);
+                                importJoints(model, modelID);
+                                if (!db.commit()) {
+                                    qWarning() << "Cannot commit database:" << db.lastError();
+                                    if (!db.rollback()) {
+                                        qFatal("Cannot rollback database: %s", qPrintable(db.lastError().text()));
+                                    }
                                 }
+                            }
+                            else if (!db.rollback()) {
+                                qFatal("Cannot rollback database: %s", qPrintable(db.lastError().text()));
                             }
                         }
                     }
