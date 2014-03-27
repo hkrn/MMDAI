@@ -371,8 +371,8 @@ struct Bone::PrivateContext {
     void updateWorldTransform() {
         updateWorldTransform(localTranslation, localOrientation);
     }
-    void updateWorldTransform(const Vector3 &translation, const Quaternion &rotation) {
-        worldTransform.setRotation(rotation);
+    void updateWorldTransform(const Vector3 &translation, const Quaternion &orientation) {
+        worldTransform.setRotation(orientation);
         worldTransform.setOrigin(offsetFromParent + translation);
         if (parentBoneRef) {
             worldTransform = parentBoneRef->worldTransform() * worldTransform;
@@ -837,8 +837,8 @@ vsize Bone::estimateSize(const Model::DataInfo &info) const
 void Bone::mergeMorph(const Morph::Bone *morph, const IMorph::WeightPrecision &weight)
 {
     const Scalar &w = Scalar(weight);
-    m_context->localMorphTranslation = morph->position * w;
-    m_context->localMorphOrientation = Quaternion::getIdentity().slerp(morph->rotation, w);
+    m_context->localMorphTranslation += morph->position * w;
+    m_context->localMorphOrientation *= Quaternion::getIdentity().slerp(morph->rotation, w);
 }
 
 void Bone::getLocalTransform(Transform &output) const
@@ -951,8 +951,10 @@ void Bone::updateLocalTransform()
     getLocalTransform(m_context->localTransform);
 }
 
-void Bone::resetIKLink()
+void Bone::reset()
 {
+    m_context->localMorphTranslation.setZero();
+    m_context->localMorphOrientation = Quaternion::getIdentity();
     m_context->jointOrientation = Quaternion::getIdentity();
 }
 

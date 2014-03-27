@@ -86,7 +86,7 @@ public:
     void write(uint8 *&data, const Model::DataInfo &info) const;
     vsize estimateSize(const Model::DataInfo &info) const;
     void mergeMorph(const Morph::Material *morph, const IMorph::WeightPrecision &weight);
-    void resetMorph();
+    void reset();
 
     IModel *parentModelRef() const;
     const IString *name(IEncoding::LanguageType type) const;

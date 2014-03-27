@@ -98,7 +98,7 @@ public:
     void performTransform();
     void solveInverseKinematics();
     void updateLocalTransform();
-    void resetIKLink();
+    void reset();
     Vector3 offset() const;
     Transform worldTransform() const;
     Transform localTransform() const;

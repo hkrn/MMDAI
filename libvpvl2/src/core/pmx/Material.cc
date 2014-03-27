@@ -82,14 +82,13 @@ struct RGB3 {
     }
     void calculate() {
         const Vector3 &mixed = base * mul + add;
-        result.setValue(mixed.x(), mixed.y(), mixed.z(), 1);
+        result.setValue(mixed.x(), mixed.y(), mixed.z(), 1.0);
     }
     void calculateMulWeight(const Vector3 &value, const Scalar &weight) {
-        static const Vector3 kOne3(1.0, 1.0, 1.0);
-        mul = kOne3 - (kOne3 - value) * weight;
+        mul *= Vector3(1, 1, 1).lerp(value, weight);
     }
     void calculateAddWeight(const Vector3 &value, const Scalar &weight) {
-        add = value * weight;
+        add += kZeroV3.lerp(value, weight);
     }
     void reset() {
         mul.setValue(1, 1, 1);
@@ -112,17 +111,17 @@ struct RGBA3 {
     }
     void calculate() {
         const Vector3 &mixed = base * mul + add;
-        const Scalar &alpha = base.w() * mul.w() + add.w();
-        result.setValue(mixed.x(), mixed.y(), mixed.z(), alpha);
+        result.setValue(mixed.x(), mixed.y(), mixed.z(), base.w() * mul.w() + add.w());
     }
-    void calculateMulWeight(const Vector3 &value, const Scalar &weight) {
-        static const Vector3 kOne3(1.0, 1.0, 1.0);
-        const Vector3 &v = kOne3 - (kOne3 - value) * weight;
-        mul.setValue(v.x(), v.y(), v.z(), 1.0f - (1.0f - value.w()) * weight);
+    void calculateMulWeight(const Vector4 &value, const Scalar &weight) {
+        const Vector3 &v = Vector3(1, 1, 1).lerp(value, weight);
+        mul *= v;
+        mul.setW(mul.w() + (value.w() - mul.w()) * weight);
     }
-    void calculateAddWeight(const Vector3 &value, const Scalar &weight) {
-        const Vector3 &v = value * weight;
-        add.setValue(v.x(), v.y(), v.z(), value.w() * weight);
+    void calculateAddWeight(const Vector4 &value, const Scalar &weight) {
+        const Vector3 &v = kZeroV3.lerp(value, weight);
+        add *= v;
+        add.setW(add.w() + (value.w() - add.w()) * weight);
     }
     void reset() {
         mul.setValue(1, 1, 1, 1);
@@ -468,32 +467,32 @@ vsize Material::estimateSize(const Model::DataInfo &info) const
 
 void Material::mergeMorph(const Morph::Material *morph, const IMorph::WeightPrecision &weight)
 {
-    Scalar w = Scalar(weight);
-    btClamp(w, 0.0f, 1.0f);
-    if (btFuzzyZero(w)) {
-        resetMorph();
-    }
-    else {
+    Scalar w = Scalar(btClamped(weight, IMorph::WeightPrecision(0.0f), IMorph::WeightPrecision(1.0f)));
+    if (!btFuzzyZero(w)) {
         switch (morph->operation) {
         case 0: { // modulate
+            const Scalar &shininess = m_context->shininess.y();
+            const IVertex::EdgeSizePrecision &edgeSize = m_context->edgeSize.y();
             m_context->ambient.calculateMulWeight(morph->ambient, w);
             m_context->diffuse.calculateMulWeight(morph->diffuse, w);
             m_context->specular.calculateMulWeight(morph->specular, w);
-            m_context->shininess.setY(1.0f - (1.0f - morph->shininess) * w);
+            m_context->shininess.setY(shininess * (shininess + (morph->shininess - shininess) * w));
             m_context->edgeColor.calculateMulWeight(morph->edgeColor, w);
-            m_context->edgeSize.setY(1.0f - Scalar(1.0f - morph->edgeSize) * w);
+            m_context->edgeSize.setY(edgeSize * (edgeSize + (morph->edgeSize - edgeSize) * w));
             m_context->mainTextureBlend.calculateMulWeight(morph->textureWeight, w);
             m_context->sphereTextureBlend.calculateMulWeight(morph->sphereTextureWeight, w);
             m_context->toonTextureBlend.calculateMulWeight(morph->toonTextureWeight, w);
             break;
         }
         case 1: { // add
+            const Scalar &shininess = m_context->shininess.z();
+            const IVertex::EdgeSizePrecision &edgeSize = m_context->edgeSize.z();
             m_context->ambient.calculateAddWeight(morph->ambient, w);
             m_context->diffuse.calculateAddWeight(morph->diffuse, w);
             m_context->specular.calculateAddWeight(morph->specular, w);
-            m_context->shininess.setZ(morph->shininess * w);
+            m_context->shininess.setZ(shininess + (shininess + (morph->shininess - shininess) * w));
             m_context->edgeColor.calculateAddWeight(morph->edgeColor, w);
-            m_context->edgeSize.setZ(Scalar(morph->edgeSize * w));
+            m_context->edgeSize.setZ(edgeSize + (edgeSize + (morph->edgeSize - edgeSize) * w));
             m_context->mainTextureBlend.calculateAddWeight(morph->textureWeight, w);
             m_context->sphereTextureBlend.calculateAddWeight(morph->sphereTextureWeight, w);
             m_context->toonTextureBlend.calculateAddWeight(morph->toonTextureWeight, w);
@@ -512,7 +511,7 @@ void Material::mergeMorph(const Morph::Material *morph, const IMorph::WeightPrec
     }
 }
 
-void Material::resetMorph()
+void Material::reset()
 {
     m_context->ambient.reset();
     m_context->diffuse.reset();

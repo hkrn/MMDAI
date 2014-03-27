@@ -1072,7 +1072,7 @@ void Model::resetMotionState(btDiscreteDynamicsWorld *worldRef)
         const int nbones = m_context->bonesBeforePhysics.count();
         for (int i = 0; i < nbones; i++) {
             Bone *bone = m_context->bonesBeforePhysics[i];
-            bone->resetIKLink();
+            bone->reset();
         }
         updateLocalTransform(m_context->bonesBeforePhysics);
         const int numRigidBodies = m_context->rigidBodies.count();
@@ -1097,7 +1097,12 @@ void Model::performUpdate()
     const int nbones = m_context->bones.count();
     for (int i = 0; i < nbones; i++) {
         Bone *bone = m_context->bones[i];
-        bone->resetIKLink();
+        bone->reset();
+    }
+    const int nmaterials = m_context->materials.count();
+    for (int i = 0; i < nmaterials; i++) {
+        Material *material = m_context->materials[i];
+        material->reset();
     }
     internal::ParallelResetVertexProcessor<pmx::Vertex> processor(&m_context->vertices);
     processor.execute();
