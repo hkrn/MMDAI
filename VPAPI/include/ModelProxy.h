@@ -338,7 +338,7 @@ private slots:
 
 private:
     void initializeAllBones(const vpvl2::Array<vpvl2::ILabel *> &labelRefs);
-    void initializeAllMorphs(const vpvl2::Array<vpvl2::ILabel *> &labelRefs);
+    void initializeAllMorphs(const vpvl2::Array<vpvl2::ILabel *> &labelRefs, bool all);
     void initializeAllVertices();
     void initializeAllMaterials();
     void initializeAllRigidBodies();

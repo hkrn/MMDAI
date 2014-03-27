@@ -224,7 +224,7 @@ void ModelProxy::initialize(bool all)
     Array<ILabel *> labelRefs;
     m_model->getLabelRefs(labelRefs);
     initializeAllBones(labelRefs);
-    initializeAllMorphs(labelRefs);
+    initializeAllMorphs(labelRefs, all);
     qSort(m_allLabels.begin(), m_allLabels.end(), Util::LessThan());
     if (all) {
         initializeAllJoints();
@@ -1400,7 +1400,7 @@ void ModelProxy::initializeAllBones(const Array<ILabel *> &labelRefs)
     }
 }
 
-void ModelProxy::initializeAllMorphs(const Array<ILabel *> &labelRefs)
+void ModelProxy::initializeAllMorphs(const Array<ILabel *> &labelRefs, bool all)
 {
     if (m_allMorphs.isEmpty()) {
         const IEncoding *encodingRef = m_parentProjectRef->encodingInstanceRef();
@@ -1410,7 +1410,7 @@ void ModelProxy::initializeAllMorphs(const Array<ILabel *> &labelRefs)
         const int nmorphs = morphs.count();
         for (int i = 0; i < nmorphs; i++) {
             IMorph *morphRef = morphs[i];
-            if (morphRef->category() == IMorph::kBase) {
+            if (!all && morphRef->category() == IMorph::kBase) {
                 continue;
             }
             const QUuid uuid = QUuid::createUuid();
