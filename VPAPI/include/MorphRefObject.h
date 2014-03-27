@@ -219,6 +219,7 @@ public:
     Q_INVOKABLE QJsonValue toJson() const;
 
     MorphRefObject *parentMorph() const;
+    QList<MaterialRefObject *> parentMaterials() const;
     QString name() const;
     int index() const;
     QColor ambient() const;

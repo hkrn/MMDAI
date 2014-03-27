@@ -382,12 +382,38 @@ QJsonValue ChildMaterialMorphRefObject::toJson() const
     v.insert("shininess", shininess());
     v.insert("edgeSize", edgeSize());
     v.insert("operation", operation());
+    QJsonArray a;
+    foreach (MaterialRefObject *item, parentMaterials()) {
+        QJsonObject i;
+        i.insert("uuid", item->uuid().toString());
+        i.insert("name", item->name());
+        a.append(i);
+    }
+    v.insert("parentMaterials", a);
     return v;
 }
 
 MorphRefObject *ChildMaterialMorphRefObject::parentMorph() const
 {
     return m_parentMorphRef;
+}
+
+QList<MaterialRefObject *> ChildMaterialMorphRefObject::parentMaterials() const
+{
+    Q_ASSERT(m_parentMorphRef);
+    Q_ASSERT(m_valueRef);
+    QList<MaterialRefObject *> parentMaterials;
+    if (const Array<IMaterial *> *materialRefs = m_valueRef->materials) {
+        const int nmaterials = materialRefs->count();
+        ModelProxy *parentModel = m_parentMorphRef->parentModel();
+        for (int i = 0; i < nmaterials; i++) {
+            const IMaterial *materialRef = materialRefs->at(i);
+            MaterialRefObject *parentMaterial = parentModel->resolveMaterialRef(materialRef);
+            Q_ASSERT(parentMaterial);
+            parentMaterials.append(parentMaterial);
+        }
+    }
+    return parentMaterials;
 }
 
 QString ChildMaterialMorphRefObject::name() const
