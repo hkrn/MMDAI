@@ -418,8 +418,20 @@ QList<MaterialRefObject *> ChildMaterialMorphRefObject::parentMaterials() const
 
 QString ChildMaterialMorphRefObject::name() const
 {
-    /* FIXME: implement this */
-    return QString();
+    QList<MaterialRefObject *> materials = parentMaterials();
+    QStringList names;
+    if (materials.isEmpty()) {
+        names << tr("(Empty)");
+    }
+    else if (materials.size() == m_parentMorphRef->parentModel()->allMaterialRefs().size()) {
+        names << tr("(All)");
+    }
+    else {
+        foreach (MaterialRefObject *item, materials) {
+            names << item->name();
+        }
+    }
+    return names.join("/");
 }
 
 int ChildMaterialMorphRefObject::index() const
