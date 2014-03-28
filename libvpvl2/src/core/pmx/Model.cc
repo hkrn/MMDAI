@@ -746,14 +746,19 @@ struct Model::PrivateContext {
             ptr += size;
             IMaterial::IndexRange range = material->indexRange();
             int offsetTo = offset + range.count;
-            range.start = nindices;
-            range.end = 0;
-            for (int j = offset; j < offsetTo; j++) {
-                const int index = indices.at(j);
-                IVertex *vertex = vertices[index];
-                vertex->setMaterialRef(material);
-                btSetMin(range.start, index);
-                btSetMax(range.end, index);
+            if (offset < offsetTo && offsetTo <= nindices) {
+                range.start = nindices;
+                range.end = 0;
+                for (int j = offset; j < offsetTo; j++) {
+                    const int index = indices.at(j);
+                    IVertex *vertex = vertices[index];
+                    vertex->setMaterialRef(material);
+                    btSetMin(range.start, index);
+                    btSetMax(range.end, index);
+                }
+            }
+            else {
+                range.count = 0;
             }
             material->setIndexRange(range);
             offset = offsetTo;
