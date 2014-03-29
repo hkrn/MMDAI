@@ -1,4 +1,4 @@
-insert into mmq_morphs (
+insert into `morphs` (
   `index`,
   `parent_model_id`,
   `name_ja`,

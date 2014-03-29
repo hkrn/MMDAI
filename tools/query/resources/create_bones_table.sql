@@ -1,9 +1,9 @@
-create table mmq_bones (
+create table `bones` (
   `id` integer not null primary key autoincrement,
-  `index` integer not null,
   `parent_model_id` integer not null,
-  `name_ja` text not null default "",
-  `name_en` text not null default "",
+  `index` integer not null,
+  `name_ja` text not null,
+  `name_en` text not null,
   `parent_bone_id` interger null,
   `destination_bone_id` integer null,
   `inherent_coefficient` float not null,
@@ -16,5 +16,5 @@ create table mmq_bones (
   `has_inverse_kinematics` integer not null,
   `has_local_axes` integer not null,
   `has_fixed_axes` integer not null,
-  foreign key(parent_model_id) references mmq_models(id)
+  foreign key (`parent_model_id`) references models(`id`)
  );

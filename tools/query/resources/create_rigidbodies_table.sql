@@ -1,9 +1,10 @@
-create table mmq_rigidbodies (
+create table rigidbodies (
   `id` integer not null primary key autoincrement,
-  `index` integer not null,
   `parent_model_id` integer not null,
-  `name_ja` text not null default "",
-  `name_en` text not null default "",
+  `parent_bone_id` integer null,
+  `index` integer not null,
+  `name_ja` text not null,
+  `name_en` text not null,
   `object_type` int not null,
   `shape_type` int not null,
   `mass` real not null,
@@ -11,5 +12,5 @@ create table mmq_rigidbodies (
   `angular_damping` real not null,
   `friction` real not null,
   `restitution` real not null,
-  foreign key(parent_model_id) references mmq_models(id)
+  foreign key (`parent_model_id`) references models(`id`)
  );

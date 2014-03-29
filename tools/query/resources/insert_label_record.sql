@@ -1,4 +1,4 @@
-insert into mmq_labels (
+insert into `labels` (
   `index`,
   `parent_model_id`,
   `name_ja`,

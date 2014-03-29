@@ -1,9 +1,11 @@
-create table mmq_joints (
+create table `joints` (
   `id` integer not null primary key autoincrement,
-  `index` integer not null,
   `parent_model_id` integer not null,
-  `name_ja` text not null default "",
-  `name_en` text not null default "",
+  `parent_rigid_body_a_id` integer null,
+  `parent_rigid_body_b_id` integer null,
+  `index` integer not null,
+  `name_ja` text not null,
+  `name_en` text not null,
   `type` int not null,
-  foreign key(parent_model_id) references mmq_models(id)
+  foreign key (`parent_model_id`) references models(`id`)
  );

@@ -1,4 +1,4 @@
-insert into mmq_materials (
+insert into `materials` (
   `index`,
   `parent_model_id`,
   `name_ja`,

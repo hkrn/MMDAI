@@ -1,4 +1,4 @@
-insert into mmq_ik_joints (
+insert into `ik_joints` (
   `parent_constraint_id`,
   `has_angle_limit`,
   `upper_limit_x`,

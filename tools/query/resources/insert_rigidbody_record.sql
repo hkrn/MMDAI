@@ -1,6 +1,7 @@
-insert into mmq_rigidbodies (
+insert into `rigidbodies` (
   `index`,
   `parent_model_id`,
+  `parent_bone_id`,
   `name_ja`,
   `name_en`,
   `object_type`,
@@ -13,6 +14,7 @@ insert into mmq_rigidbodies (
 ) values (
   :index,
   :parent_model,
+  :parent_bone,
   :name_ja,
   :name_en,
   :object_type,

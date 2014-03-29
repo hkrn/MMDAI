@@ -1,4 +1,4 @@
-insert into mmq_models (
+insert into `models` (
   `version`,
   `encoding`,
   `uv`,

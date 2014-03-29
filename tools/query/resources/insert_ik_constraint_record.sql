@@ -1,4 +1,4 @@
-insert into mmq_ik_constraints (
+insert into `ik_constraints` (
   `parent_model_id`,
   `effector_bone_id`,
   `root_bone_id`,

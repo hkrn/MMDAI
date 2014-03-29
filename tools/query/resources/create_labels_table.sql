@@ -1,9 +1,9 @@
-create table mmq_labels (
+create table `labels` (
   `id` integer not null primary key autoincrement,
-  `index` integer not null,
   `parent_model_id` integer not null,
-  `name_ja` text not null default "",
-  `name_en` text not null default "",
+  `index` integer not null,
+  `name_ja` text not null,
+  `name_en` text not null,
   `is_special` integer not null,
-  foreign key(parent_model_id) references mmq_models(id)
+  foreign key (`parent_model_id`) references models(`id`)
  );

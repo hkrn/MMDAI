@@ -1,4 +1,4 @@
-insert into mmq_bones (
+insert into `bones` (
   `index`,
   `parent_model_id`,
   `name_ja`,

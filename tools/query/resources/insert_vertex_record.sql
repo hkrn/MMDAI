@@ -1,4 +1,4 @@
-insert into mmq_vertices (
+insert into `vertices` (
   `index`,
   `parent_model_id`,
   `type`
