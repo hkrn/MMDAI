@@ -292,6 +292,7 @@ static void importRigidBodies(const IModel *model, int modelID)
         const IRigidBody *body = rigidBodies[i];
         query.bindValue(":index", body->index());
         query.bindValue(":parent_model", modelID);
+        query.bindValue(":parent_bone", body->boneRef() ? body->boneRef()->index() : QVariant());
         query.bindValue(":name_ja", to_s(body->name(IEncoding::kJapanese)));
         query.bindValue(":name_en", to_s(body->name(IEncoding::kEnglish)));
         query.bindValue(":object_type", body->objectType());
@@ -318,6 +319,8 @@ static void importJoints(const IModel *model, int modelID)
         const IJoint *joint = joints[i];
         query.bindValue(":index", joint->index());
         query.bindValue(":parent_model", modelID);
+        query.bindValue(":parent_rigid_body_a", joint->rigidBody1Ref() ? joint->rigidBody1Ref()->index() : QVariant());
+        query.bindValue(":parent_rigid_body_b", joint->rigidBody2Ref() ? joint->rigidBody2Ref()->index() : QVariant());
         query.bindValue(":name_ja", to_s(joint->name(IEncoding::kJapanese)));
         query.bindValue(":name_en", to_s(joint->name(IEncoding::kEnglish)));
         query.bindValue(":type", joint->type());
@@ -343,11 +346,25 @@ static void findFiles(const QString &basePath, QStringList &result)
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    a.setApplicationName("MikuMikuQuery");
+    a.setApplicationVersion("1.0");
+    a.setOrganizationName("MMDAI Project");
+    a.setOrganizationDomain("mmdai.github.com");
     Encoding::Dictionary dict;
     Encoding encoding(&dict);
     Factory factory(&encoding);
 
-    QFile filePath(QDir::home().absoluteFilePath("test.db"));
+    QCommandLineParser parser;
+    parser.setApplicationDescription("MikuMikuQuery");
+    parser.addHelpOption();
+    parser.addVersionOption();
+    QCommandLineOption databaseOption(QStringList() << "D" << "database", "Specify database to create tables.", "database");
+    parser.addOption(databaseOption);
+    QCommandLineOption pathOption(QStringList() << "p" << "path", "Specify path to find models/motions.", "path");
+    parser.addOption(pathOption);
+    parser.process(a);
+
+    QFile filePath(parser.value(databaseOption));
     filePath.remove();
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(filePath.fileName());
@@ -355,7 +372,7 @@ int main(int argc, char *argv[])
         QFileInfo finfo;
         createTables();
         QStringList files;
-        findFiles(a.arguments().at(1), files);
+        findFiles(parser.value(pathOption), files);
         foreach (const QString &s, files) {
             finfo.setFile(s);
             if (finfo.exists()) {
