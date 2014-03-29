@@ -10,6 +10,7 @@
         <file>create_morphs_table.sql</file>
         <file>create_rigidbodies_table.sql</file>
         <file>create_joints_table.sql</file>
+        <file>create_table_indices.sql</file>
         <file>insert_model_record.sql</file>
         <file>insert_vertex_record.sql</file>
         <file>insert_bone_record.sql</file>

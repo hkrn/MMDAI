@@ -3,5 +3,5 @@ create table `vertices` (
   `parent_model_id` integer not null,
   `index` integer not null,
   `type` integer not null,
-  foreign key (`parent_model_id`) references models(`id`)
+  foreign key (`parent_model_id`) references models(`id`) on update restrict on delete cascade
  );

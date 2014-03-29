@@ -16,5 +16,5 @@ create table `bones` (
   `has_inverse_kinematics` integer not null,
   `has_local_axes` integer not null,
   `has_fixed_axes` integer not null,
-  foreign key (`parent_model_id`) references models(`id`)
+  foreign key (`parent_model_id`) references models(`id`) on update restrict on delete cascade
  );

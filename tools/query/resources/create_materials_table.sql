@@ -17,5 +17,5 @@ create table `materials` (
   `toon_texture_path` text null,
   `index_range_count` integer not null,
   `user_data` text not null,
-  foreign key (`parent_model_id`) references models(`id`)
+  foreign key (`parent_model_id`) references models(`id`) on update restrict on delete cascade
  );

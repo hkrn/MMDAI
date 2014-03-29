@@ -12,5 +12,5 @@ create table rigidbodies (
   `angular_damping` real not null,
   `friction` real not null,
   `restitution` real not null,
-  foreign key (`parent_model_id`) references models(`id`)
+  foreign key (`parent_model_id`) references models(`id`) on update restrict on delete cascade
  );

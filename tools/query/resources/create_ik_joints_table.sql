@@ -8,5 +8,5 @@ create table `ik_joints` (
   `lower_limit_x` real not null,
   `lower_limit_y` real not null,
   `lower_limit_z` real not null,
-  foreign key (`parent_constraint_id`) references ik_constraints(`id`)
+  foreign key (`parent_constraint_id`) references ik_constraints(`id`) on update restrict on delete cascade
  );

@@ -92,6 +92,15 @@ static void createTables()
     if (!query.exec(slurp(":queries/create_joints_table.sql"))) {
         qWarning() << query.lastError();
     }
+    QFile file(":queries/create_table_indices.sql");
+    file.open(QFile::ReadOnly);
+    Q_ASSERT(file.isOpen());
+    QTextStream stream(&file);
+    while (!stream.atEnd()) {
+        if (!query.exec(stream.readLine().trimmed())) {
+            qWarning() << query.lastError();
+        }
+    }
 }
 
 static int addModel(const IModel *model, const QString &filename, const QByteArray &sha1Hash)
@@ -319,8 +328,8 @@ static void importJoints(const IModel *model, int modelID)
         const IJoint *joint = joints[i];
         query.bindValue(":index", joint->index());
         query.bindValue(":parent_model", modelID);
-        query.bindValue(":parent_rigid_body_a", joint->rigidBody1Ref() ? joint->rigidBody1Ref()->index() : QVariant());
-        query.bindValue(":parent_rigid_body_b", joint->rigidBody2Ref() ? joint->rigidBody2Ref()->index() : QVariant());
+        query.bindValue(":parent_rigidbody_a", joint->rigidBody1Ref() ? joint->rigidBody1Ref()->index() : QVariant());
+        query.bindValue(":parent_rigidbody_b", joint->rigidBody2Ref() ? joint->rigidBody2Ref()->index() : QVariant());
         query.bindValue(":name_ja", to_s(joint->name(IEncoding::kJapanese)));
         query.bindValue(":name_en", to_s(joint->name(IEncoding::kEnglish)));
         query.bindValue(":type", joint->type());
@@ -358,10 +367,24 @@ int main(int argc, char *argv[])
     parser.setApplicationDescription("MikuMikuQuery");
     parser.addHelpOption();
     parser.addVersionOption();
-    QCommandLineOption databaseOption(QStringList() << "D" << "database", "Specify database to create tables.", "database");
+    QCommandLineOption databaseOption(QStringList() << "D" << "database", "Specify database to create tables.", "path");
     parser.addOption(databaseOption);
     QCommandLineOption pathOption(QStringList() << "p" << "path", "Specify path to find models/motions.", "path");
     parser.addOption(pathOption);
+    QCommandLineOption disableVerticesOption("disable-vertices", "Disable recording vertices");
+    parser.addOption(disableVerticesOption);
+    QCommandLineOption disableBonesOption("disable-bones", "Disable recording bones");
+    parser.addOption(disableBonesOption);
+    QCommandLineOption disableMaterialsOption("disable-materials", "Disable recording materials");
+    parser.addOption(disableMaterialsOption);
+    QCommandLineOption disableLabelsOption("disable-labels", "Disable recording labels");
+    parser.addOption(disableLabelsOption);
+    QCommandLineOption disableMorphsOption("disable-morphs", "Disable recording morphs");
+    parser.addOption(disableMorphsOption);
+    QCommandLineOption disableRigidBodiesOption("disable-rigidbodies", "Disable recording rigid bodies");
+    parser.addOption(disableRigidBodiesOption);
+    QCommandLineOption disableJointsOption("disable-joints", "Disable recording joints");
+    parser.addOption(disableJointsOption);
     parser.process(a);
 
     QFile filePath(parser.value(databaseOption));
@@ -387,14 +410,28 @@ int main(int argc, char *argv[])
                             db.transaction();
                             int modelID = addModel(model, finfo.fileName(), QCryptographicHash::hash(bytes, QCryptographicHash::Sha1).toHex());
                             if (modelID >= 0) {
-                                importVertices(model, modelID);
-                                importBones(model, modelID);
-                                importIKConstraints(model, modelID);
-                                importMaterials(model, modelID);
-                                importLabels(model, modelID);
-                                importMorphs(model, modelID);
-                                importRigidBodies(model, modelID);
-                                importJoints(model, modelID);
+                                if (!parser.isSet(disableVerticesOption)) {
+                                    importVertices(model, modelID);
+                                }
+                                if (!parser.isSet(disableBonesOption)) {
+                                    importBones(model, modelID);
+                                    importIKConstraints(model, modelID);
+                                }
+                                if (!parser.isSet(disableMaterialsOption)) {
+                                    importMaterials(model, modelID);
+                                }
+                                if (!parser.isSet(disableLabelsOption)) {
+                                    importLabels(model, modelID);
+                                }
+                                if (!parser.isSet(disableMorphsOption)) {
+                                    importMorphs(model, modelID);
+                                }
+                                if (!parser.isSet(disableRigidBodiesOption)) {
+                                    importRigidBodies(model, modelID);
+                                }
+                                if (!parser.isSet(disableJointsOption)) {
+                                    importJoints(model, modelID);
+                                }
                                 if (!db.commit()) {
                                     qWarning() << "Cannot commit database:" << db.lastError();
                                     if (!db.rollback()) {

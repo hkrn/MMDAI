@@ -5,5 +5,5 @@ create table `labels` (
   `name_ja` text not null,
   `name_en` text not null,
   `is_special` integer not null,
-  foreign key (`parent_model_id`) references models(`id`)
+  foreign key (`parent_model_id`) references models(`id`) on update restrict on delete cascade
  );
