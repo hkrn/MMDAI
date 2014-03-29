@@ -52,51 +52,66 @@ inline std::ostream& operator <<(std::ostream &os, const QuadWord &value)
 
 AssertionResult CompareVector(const Vector3 &expected, const Vector3 &actual)
 {
-    if (!btEqual(expected.x() - actual.x(), kEpsilon))
-        return AssertionFailure() << "X is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.y() - actual.y(), kEpsilon))
-        return AssertionFailure() << "Y is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.z() - actual.z(), kEpsilon))
-        return AssertionFailure() << "Z is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.x() - actual.x(), kEpsilon)) {
+        return AssertionFailure() << "X is not equal: expected is " << expected.x() << " but actual is " << actual.x();
+    }
+    if (!btEqual(expected.y() - actual.y(), kEpsilon)) {
+        return AssertionFailure() << "Y is not equal: expected is " << expected.y() << " but actual is " << actual.y();
+    }
+    if (!btEqual(expected.z() - actual.z(), kEpsilon)) {
+        return AssertionFailure() << "Z is not equal: expected is " << expected.z() << " but actual is " << actual.z();
+    }
     return AssertionSuccess();
 }
 
 AssertionResult CompareVector(const Vector4 &expected, const Vector4 &actual)
 {
-    if (!btEqual(expected.x() - actual.x(), kEpsilon))
-        return AssertionFailure() << "X is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.y() - actual.y(), kEpsilon))
-        return AssertionFailure() << "Y is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.z() - actual.z(), kEpsilon))
-        return AssertionFailure() << "Z is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.w() - actual.w(), kEpsilon))
-        return AssertionFailure() << "W is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.x() - actual.x(), kEpsilon)) {
+        return AssertionFailure() << "X is not equal: expected is " << expected.x() << " but actual is " << actual.x();
+    }
+    if (!btEqual(expected.y() - actual.y(), kEpsilon)) {
+        return AssertionFailure() << "Y is not equal: expected is " << expected.y() << " but actual is " << actual.y();
+    }
+    if (!btEqual(expected.z() - actual.z(), kEpsilon)) {
+        return AssertionFailure() << "Z is not equal: expected is " << expected.z() << " but actual is " << actual.z();
+    }
+    if (!btEqual(expected.w() - actual.w(), kEpsilon)) {
+        return AssertionFailure() << "W is not equal: expected is " << expected.w() << " but actual is " << actual.w();
+    }
     return AssertionSuccess();
 }
 
 AssertionResult CompareVector(const Quaternion &expected, const Quaternion &actual)
 {
-    if (!btEqual(expected.x() - actual.x(), kEpsilon))
-        return AssertionFailure() << "X is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.y() - actual.y(), kEpsilon))
-        return AssertionFailure() << "Y is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.z() - actual.z(), kEpsilon))
-        return AssertionFailure() << "Z is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.w() - actual.w(), kEpsilon))
-        return AssertionFailure() << "W is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.x() - actual.x(), kEpsilon)) {
+        return AssertionFailure() << "X is not equal: expected is " << expected.x() << " but actual is " << actual.x();
+    }
+    if (!btEqual(expected.y() - actual.y(), kEpsilon)) {
+        return AssertionFailure() << "Y is not equal: expected is " << expected.y() << " but actual is " << actual.y();
+    }
+    if (!btEqual(expected.z() - actual.z(), kEpsilon)) {
+        return AssertionFailure() << "Z is not equal: expected is " << expected.z() << " but actual is " << actual.z();
+    }
+    if (!btEqual(expected.w() - actual.w(), kEpsilon)) {
+        return AssertionFailure() << "W is not equal: expected is " << expected.w() << " but actual is " << actual.w();
+    }
     return AssertionSuccess();
 }
 
-AssertionResult CompareVector(const QuadWord &actual, const QuadWord &expected)
+AssertionResult CompareVector(const QuadWord &expected, const QuadWord &actual)
 {
-    if (!btEqual(expected.x() - actual.x(), kEpsilon))
-        return AssertionFailure() << "X is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.y() - actual.y(), kEpsilon))
-        return AssertionFailure() << "Y is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.z() - actual.z(), kEpsilon))
-        return AssertionFailure() << "Z is not equal: expected is " << expected << " but actual is " << actual;
-    if (!btEqual(expected.w() - actual.w(), kEpsilon))
-        return AssertionFailure() << "W is not equal: expected is " << expected << " but actual is " << actual;
+    if (!btEqual(expected.x() - actual.x(), kEpsilon)) {
+        return AssertionFailure() << "X is not equal: expected is " << expected.x() << " but actual is " << actual.x();
+    }
+    if (!btEqual(expected.y() - actual.y(), kEpsilon)) {
+        return AssertionFailure() << "Y is not equal: expected is " << expected.y() << " but actual is " << actual.y();
+    }
+    if (!btEqual(expected.z() - actual.z(), kEpsilon)) {
+        return AssertionFailure() << "Z is not equal: expected is " << expected.z() << " but actual is " << actual.z();
+    }
+    if (!btEqual(expected.w() - actual.w(), kEpsilon)) {
+        return AssertionFailure() << "W is not equal: expected is " << expected.w() << " but actual is " << actual.w();
+    }
     return AssertionSuccess();
 }
 

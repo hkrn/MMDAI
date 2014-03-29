@@ -120,7 +120,7 @@ struct RGBA3 {
     }
     void calculateAddWeight(const Vector4 &value, const Scalar &weight) {
         const Vector3 &v = kZeroV3.lerp(value, weight);
-        add *= v;
+        add += v;
         add.setW(add.w() + (value.w() - add.w()) * weight);
     }
     void reset() {
@@ -476,9 +476,9 @@ void Material::mergeMorph(const Morph::Material *morph, const IMorph::WeightPrec
             m_context->ambient.calculateMulWeight(morph->ambient, w);
             m_context->diffuse.calculateMulWeight(morph->diffuse, w);
             m_context->specular.calculateMulWeight(morph->specular, w);
-            m_context->shininess.setY(shininess * (shininess + (morph->shininess - shininess) * w));
+            m_context->shininess.setY(shininess + (morph->shininess - shininess) * w);
             m_context->edgeColor.calculateMulWeight(morph->edgeColor, w);
-            m_context->edgeSize.setY(edgeSize * (edgeSize + (morph->edgeSize - edgeSize) * w));
+            m_context->edgeSize.setY(edgeSize + (morph->edgeSize - edgeSize) * w);
             m_context->mainTextureBlend.calculateMulWeight(morph->textureWeight, w);
             m_context->sphereTextureBlend.calculateMulWeight(morph->sphereTextureWeight, w);
             m_context->toonTextureBlend.calculateMulWeight(morph->toonTextureWeight, w);
@@ -490,9 +490,9 @@ void Material::mergeMorph(const Morph::Material *morph, const IMorph::WeightPrec
             m_context->ambient.calculateAddWeight(morph->ambient, w);
             m_context->diffuse.calculateAddWeight(morph->diffuse, w);
             m_context->specular.calculateAddWeight(morph->specular, w);
-            m_context->shininess.setZ(shininess + (shininess + (morph->shininess - shininess) * w));
+            m_context->shininess.setZ(shininess + (morph->shininess - shininess) * w);
             m_context->edgeColor.calculateAddWeight(morph->edgeColor, w);
-            m_context->edgeSize.setZ(edgeSize + (edgeSize + (morph->edgeSize - edgeSize) * w));
+            m_context->edgeSize.setZ(edgeSize + (morph->edgeSize - edgeSize) * w);
             m_context->mainTextureBlend.calculateAddWeight(morph->textureWeight, w);
             m_context->sphereTextureBlend.calculateAddWeight(morph->sphereTextureWeight, w);
             m_context->toonTextureBlend.calculateAddWeight(morph->toonTextureWeight, w);
