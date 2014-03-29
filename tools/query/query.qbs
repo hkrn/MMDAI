@@ -73,12 +73,19 @@ CppApplication {
         "../../icu4c-src",
         "../../zlib-src"
     ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x, libraryInstallDirectory, "lib") }))
-    cpp.dynamicLibraries: commonLibraries.concat([ "tbb", "z" ])
     files: [
         "src/*.cc",
         "include/*.h",
         "resources/*.qrc"
     ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
+    Properties {
+        condition: qbs.toolchain.contains("msvc")
+        cpp.dynamicLibraries: commonLibraries
+    }
+    Properties {
+        condition: !qbs.toolchain.contains("msvc")
+        cpp.dynamicLibraries: commonLibraries.concat([ "tbb", "z" ])
+    }
     Depends { name: "vpvl2" }
     Depends { name: "Qt"; submodules: [ "core", "sql" ] }
 }
