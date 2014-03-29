@@ -64,7 +64,7 @@ class ApplicationContext : public QObject, public vpvl2::extensions::BaseApplica
 
 public:
     typedef QPair<ModelProxy *, bool> ModelProxyPair;
-    static QOpenGLFramebufferObjectFormat framebufferObjectFormat(const QQuickWindow *win);
+    static QOpenGLFramebufferObjectFormat framebufferObjectFormat(int samples);
 
     ApplicationContext(const ProjectProxy *proxy, const vpvl2::extensions::StringMap *stringMap, bool isCoreProfile);
     ~ApplicationContext();

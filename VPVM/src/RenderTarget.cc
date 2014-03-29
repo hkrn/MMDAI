@@ -1070,7 +1070,8 @@ void RenderTarget::drawOffscreenForImage()
     if (m_exportLocation.isValid()) {
         connect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::writeExportedImage);
     }
-    QOpenGLFramebufferObject fbo(m_exportSize, ApplicationContext::framebufferObjectFormat(window()));
+    int samples = m_projectProxyRef->globalSetting("msaa.samples", QVariant(window()->format().samples())).toInt();
+    QOpenGLFramebufferObject fbo(m_exportSize, ApplicationContext::framebufferObjectFormat(samples));
     drawOffscreen(&fbo);
     m_exportImage = fbo.toImage();
     emit offscreenImageDidExport();

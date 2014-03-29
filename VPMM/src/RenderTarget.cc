@@ -968,7 +968,8 @@ void RenderTarget::drawOffscreenForImage()
     if (m_exportLocation.isValid()) {
         connect(window(), &QQuickWindow::frameSwapped, this, &RenderTarget::writeExportedImage);
     }
-    QOpenGLFramebufferObject fbo(m_exportSize, ApplicationContext::framebufferObjectFormat(window()));
+    int samples = m_projectProxyRef->globalSetting("msaa.samples", QVariant(window()->format().samples())).toInt();
+    QOpenGLFramebufferObject fbo(m_exportSize, ApplicationContext::framebufferObjectFormat(samples));
     drawOffscreen(&fbo);
     m_exportImage = fbo.toImage();
     emit offscreenImageDidExport();
@@ -1173,6 +1174,7 @@ void RenderTarget::performUploadingEnqueuedModels()
     gl::pushAnnotationGroup(Q_FUNC_INFO, m_applicationContext.data());
     QList<ApplicationContext::ModelProxyPair> succeededModelProxies, failedModelProxies;
     m_applicationContext->uploadEnqueuedModelProxies(m_projectProxyRef, succeededModelProxies, failedModelProxies);
+    /*
     if (!m_modelDrawer) {
         m_modelDrawer.reset(new SkeletonDrawer());
         connect(m_projectProxyRef, &ProjectProxy::currentTimeIndexChanged, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
@@ -1182,13 +1184,14 @@ void RenderTarget::performUploadingEnqueuedModels()
         m_modelDrawer->initialize();
         m_modelDrawer->setViewProjectionMatrix(Util::fromMatrix4(m_viewProjectionMatrix));
     }
+    */
     foreach (const ApplicationContext::ModelProxyPair &pair, succeededModelProxies) {
         ModelProxy *modelProxy = pair.first;
         VPVL2_VLOG(1, "The model " << modelProxy->uuid().toString().toStdString() << " a.k.a " << modelProxy->name().toStdString() << " is uploaded" << (pair.second ? " from the project." : "."));
         connect(modelProxy, &ModelProxy::transformDidCommit, this, &RenderTarget::updateGizmoAndRender);
         connect(modelProxy, &ModelProxy::transformDidDiscard, this, &RenderTarget::updateGizmoAndRender);
         connect(modelProxy, &ModelProxy::firstTargetBoneChanged, this, &RenderTarget::updateGizmoAndRender);
-        connect(modelProxy, &ModelProxy::firstTargetBoneChanged, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
+        // connect(modelProxy, &ModelProxy::firstTargetBoneChanged, m_modelDrawer.data(), &SkeletonDrawer::markDirty);
         connect(modelProxy, &ModelProxy::transformTypeChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::translationChanged, this, &RenderTarget::updateGizmo);
         connect(modelProxy, &ModelProxy::orientationChanged, this, &RenderTarget::updateGizmo);

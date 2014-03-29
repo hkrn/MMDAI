@@ -141,11 +141,11 @@ Q_GLOBAL_STATIC(Resolver, g_functionResolverInstance)
 
 }
 
-QOpenGLFramebufferObjectFormat ApplicationContext::framebufferObjectFormat(const QQuickWindow *win)
+QOpenGLFramebufferObjectFormat ApplicationContext::framebufferObjectFormat(int samples)
 {
     QOpenGLFramebufferObjectFormat format;
     format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-    format.setSamples(win->format().samples());
+    format.setSamples(samples);
     return format;
 }
 

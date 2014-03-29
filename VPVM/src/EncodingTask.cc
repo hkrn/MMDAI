@@ -39,6 +39,7 @@
 #include "EncodingTask.h"
 
 #include <QtCore>
+#include <QQuickWindow>
 #include <vpvl2/vpvl2.h>
 
 using namespace vpvl2;
@@ -110,7 +111,8 @@ void EncodingTask::reset()
 QOpenGLFramebufferObject *EncodingTask::generateFramebufferObject(QQuickWindow *win)
 {
     if (!m_fbo) {
-        m_fbo.reset(new QOpenGLFramebufferObject(m_size, ApplicationContext::framebufferObjectFormat(win)));
+        int samples = win->format().samples();
+        m_fbo.reset(new QOpenGLFramebufferObject(m_size, ApplicationContext::framebufferObjectFormat(samples)));
         Q_ASSERT(m_fbo->isValid());
     }
     return m_fbo.data();
