@@ -942,14 +942,14 @@ void Scene::seekTimeIndex(const IKeyframe::TimeIndex &timeIndex, int flags)
         Camera &camera = m_context->camera;
         IMotion *cameraMotion = camera.motion();
         if (cameraMotion) {
-            cameraMotion->seekSceneTimeIndex(timeIndex, this, flags);
+            cameraMotion->seekSceneTimeIndex(timeIndex, this, kUpdateCamera);
         }
     }
     if (internal::hasFlagBits(flags, kUpdateLight)) {
         Light &light = m_context->light;
         IMotion *lightMotion = light.motion();
         if (lightMotion) {
-            lightMotion->seekSceneTimeIndex(timeIndex, this, flags);
+            lightMotion->seekSceneTimeIndex(timeIndex, this, kUpdateLight);
         }
     }
     if (internal::hasFlagBits(flags, kUpdateModels)) {
