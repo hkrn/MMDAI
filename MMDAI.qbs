@@ -39,7 +39,7 @@ import qbs 1.0
 
 Project {
     name: "MMDAI"
-    references: [
+    property var commonReferences: [
         "AntTweakBar-src/AntTweakBar.qbs",
         "glsl-optimizer-src/glslopt.qbs",
         "libgizmo-src/libgizmo.qbs",
@@ -47,7 +47,14 @@ Project {
         "VPAPI/VPAPI.qbs",
         "VPVM/VPVM.qbs",
         "VPMM/VPMM.qbs",
-        "VPAPI/test/test.qbs",
-        "tools/query/query.qbs"
+        "VPAPI/test/test.qbs"
     ]
+    Properties {
+        condition: qbs.enableDebugCode
+        references: commonReferences.concat([ "tools/query/query.qbs" ])
+    }
+    Properties {
+        condition: !qbs.enableDebugCode
+        references: commonReferences
+    }
 }
