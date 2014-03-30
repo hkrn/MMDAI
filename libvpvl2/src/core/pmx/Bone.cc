@@ -105,8 +105,9 @@ struct DefaultIKJoint : vpvl2::IBone::IKJoint {
         rz.setRotation(kUnitZ, z2);
     }
 
-    DefaultIKJoint()
-        : m_targetBoneRef(0),
+    DefaultIKJoint(const Bone *parentBoneRef)
+        : m_parentBoneRef(parentBoneRef),
+          m_targetBoneRef(0),
           m_targetBoneIndex(-1),
           m_hasAngleLimit(false),
           m_lowerLimit(vpvl2::kZeroV3),
@@ -149,43 +150,56 @@ struct DefaultIKJoint : vpvl2::IBone::IKJoint {
         m_upperLimit = value;
     }
 
-    bool rotate(const Bone *effectorBoneRef, const Vector3 &rootBonePosition, const Scalar &angleLimit, Quaternion &rotation, Scalar &angle) const {
-        Bone *jointBoneRef = m_targetBoneRef;
-        const Vector3 &currentEffectorPosition = effectorBoneRef->worldTransform().getOrigin();
-        const Transform &jointBoneTransform = jointBoneRef->worldTransform();
+    bool calculateAxisAngle(const Vector3 &rootBonePosition, Vector3 &localAxis, Scalar &angle) const {
+        const Vector3 &currentEffectorPosition = m_parentBoneRef->effectorBoneRef()->worldTransform().getOrigin();
+        const Transform &jointBoneTransform = m_targetBoneRef->worldTransform();
         const Transform &inversedJointBoneTransform = jointBoneTransform.inverse();
         Vector3 localRootBonePosition = inversedJointBoneTransform * rootBonePosition;
         Vector3 localEffectorPosition = inversedJointBoneTransform * currentEffectorPosition;
         localRootBonePosition.normalize();
         localEffectorPosition.normalize();
+        localAxis = localEffectorPosition.cross(localRootBonePosition).safeNormalize();
         const Scalar &dot = localRootBonePosition.dot(localEffectorPosition);
-        if (btFuzzyZero(dot)) {
+        if (!btFuzzyZero(dot)) {
+            angle = btAcos(btClamped(dot, -1.0f, 1.0f));
+            return true;
+        }
+        else {
+            angle = 0;
             return false;
         }
-        const Vector3 &localAxis = localEffectorPosition.cross(localRootBonePosition).safeNormalize();
-        angle = btAcos(btClamped(dot, -1.0f, 1.0f));
-        btClamp(angle, -angleLimit, angleLimit);
-        rotation.setRotation(localAxis, angle);
-        return true;
     }
-    void constrainAxisAngle(const Scalar &angle, Quaternion &rotation) const {
-        Vector3 localAxis = kUnitX;
+    void transformLocalAxis(bool performConstraint, Vector3 &localAxis) const {
+#ifdef VPVL2_NEW_IK
+        if (hasAngleLimit() && performConstraint) {
+            const Matrix3x3 &matrix = m_targetBoneRef->worldTransform().getBasis();
+            constrainLocalAxis(matrix, localAxis);
+        }
+        else {
+            localAxis = m_targetBoneRef->localTransform() * localAxis;
+        }
+#else
+        (void) performConstraint;
+        (void) localAxis;
+#endif
+    }
+    void constrainLocalAxis(const Matrix3x3 &matrix, Vector3 &localAxis) const {
+        (void) matrix;
         if (btFuzzyZero(m_lowerLimit.y()) && btFuzzyZero(m_upperLimit.y())
                 && btFuzzyZero(m_lowerLimit.z()) && btFuzzyZero(m_upperLimit.z())) {
-            const Scalar &axisX = VPVL2_IK_COND(btSelect(localAxis.dot(Matrix3x3(rotation).getColumn(0)) >= 0, 1.0f, -1.0f), 1.0);
+            const Scalar &axisX = VPVL2_IK_COND(btSelect(localAxis.dot(matrix.getColumn(0)) >= 0, 1.0f, -1.0f), 1.0f);
             localAxis.setValue(axisX, 0.0, 0.0);
         }
         else if (btFuzzyZero(m_lowerLimit.x()) && btFuzzyZero(m_upperLimit.x())
                  && btFuzzyZero(m_lowerLimit.z()) && btFuzzyZero(m_upperLimit.z())) {
-            const Scalar &axisY = VPVL2_IK_COND(btSelect(localAxis.dot(Matrix3x3(rotation).getColumn(1)) >= 0, 1.0f, -1.0f), 1.0);
+            const Scalar &axisY = VPVL2_IK_COND(btSelect(localAxis.dot(matrix.getColumn(1)) >= 0, 1.0f, -1.0f), 1.0f);
             localAxis.setValue(0.0, axisY, 0.0);
         }
         else if (btFuzzyZero(m_lowerLimit.x()) && btFuzzyZero(m_upperLimit.x())
                  && btFuzzyZero(m_lowerLimit.y()) && btFuzzyZero(m_upperLimit.y())) {
-            const Scalar &axisZ = VPVL2_IK_COND(btSelect(localAxis.dot(Matrix3x3(rotation).getColumn(2)) >= 0, 1.0f, -1.0f), 1.0);
+            const Scalar &axisZ = VPVL2_IK_COND(btSelect(localAxis.dot(matrix.getColumn(2)) >= 0, 1.0f, -1.0f), 1.0f);
             localAxis.setValue(0.0, 0.0, axisZ);
         }
-        rotation.setRotation(localAxis, angle);
     }
     void constrainRotation(Quaternion &jointRotation, bool performConstrain) const {
 #ifndef VPVL2_NEW_IK
@@ -237,6 +251,7 @@ struct DefaultIKJoint : vpvl2::IBone::IKJoint {
 #endif
     }
 
+    const Bone *m_parentBoneRef;
     Bone *m_targetBoneRef;
     int m_targetBoneIndex;
     bool m_hasAngleLimit;
@@ -718,7 +733,7 @@ void Bone::read(const uint8 *data, const Model::DataInfo &info, vsize &size)
         int nlinks = iu.numConstraints;
         ptr += sizeof(iu);
         for (int i = 0; i < nlinks; i++) {
-            DefaultIKJoint *constraint = m_context->joints.append(new DefaultIKJoint());
+            DefaultIKJoint *constraint = m_context->joints.append(new DefaultIKJoint(this));
             constraint->m_targetBoneIndex = internal::readSignedIndex(ptr, boneIndexSize);
             constraint->m_hasAngleLimit = *reinterpret_cast<uint8 *>(ptr) == 1;
             VPVL2_VLOG(3, "PMXBone: boneIndex=" << constraint->m_targetBoneIndex << " hasRotationConstraint" << constraint->m_hasAngleLimit);
@@ -908,19 +923,23 @@ void Bone::solveInverseKinematics()
     Bone *effectorBoneRef = m_context->effectorBoneRef;
     const Quaternion originalTargetRotation = effectorBoneRef->localOrientation();
     Quaternion jointRotation(Quaternion::getIdentity()), newJointLocalRotation;
+    Vector3 localAxis(kZeroV3);
     Scalar angle = 0;
     for (int i = 0; i < numIterations; i++) {
         const bool performConstraint = i < numHalfOfIteration;
         for (int j = 0; j < nconstraints; j++) {
             const DefaultIKJoint *joint = constraints[j];
-            const Scalar &angleLimit = m_context->angleLimit * (j + 1) * 2;
-            if (!joint->rotate(effectorBoneRef, rootBonePosition, angleLimit, jointRotation, angle)) {
+            if (!joint->calculateAxisAngle(rootBonePosition, localAxis, angle)) {
                 break;
             }
+            joint->transformLocalAxis(performConstraint, localAxis);
+            const Scalar &angleLimit = m_context->angleLimit * (j + 1) * 2;
+            jointRotation.setRotation(localAxis, btClamped(angle, -angleLimit, angleLimit));
             Bone *jointBoneRef = joint->m_targetBoneRef;
             if (joint->hasAngleLimit() && performConstraint) {
                 if (VPVL2_IK_COND(performConstraint, i == 0)) {
-                    joint->constrainAxisAngle(angle, jointRotation);
+                    joint->constrainLocalAxis(Matrix3x3(jointRotation), localAxis);
+                    jointRotation.setRotation(localAxis, angle);
                 }
                 else {
                     joint->constrainRotation(jointRotation, performConstraint);
