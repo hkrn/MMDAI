@@ -78,10 +78,10 @@ struct Project::PrivateContext {
         ctx->version = int(strtol(argv[0], 0, 10));
         return 0;
     }
-    static void createTables(PrivateContext *ctx) {
+    static void createProjectTables(PrivateContext *ctx) {
         ctx->executeQuery(reinterpret_cast<const char *>(g_create_project_tables_sql), 0);
     }
-    static void dropTables(PrivateContext *ctx) {
+    static void dropProjectTables(PrivateContext *ctx) {
         ctx->executeQuery(reinterpret_cast<const char *>(g_drop_project_tables_sql), 0);
     }
 
@@ -115,7 +115,7 @@ struct Project::PrivateContext {
     }
     void upgrade(int versionTo) {
         static Migration migrations[] = {
-            { &PrivateContext::createTables, &PrivateContext::dropTables }
+            { &PrivateContext::createProjectTables, &PrivateContext::dropProjectTables }
         };
         const int destination = std::min(versionTo, int(sizeof(migrations) / sizeof(migrations[0])));
         beginTransaction();
@@ -127,7 +127,7 @@ struct Project::PrivateContext {
     }
     void downgrade(int versionTo) {
         static Migration migrations[] = {
-            { &PrivateContext::createTables, &PrivateContext::dropTables }
+            { &PrivateContext::createProjectTables, &PrivateContext::dropProjectTables }
         };
         const int destination = std::max(versionTo, 0);
         beginTransaction();
