@@ -44,6 +44,7 @@
 namespace {
 
 #include "queries/create_project_tables.h"
+#include "queries/drop_project_tables.h"
 
 }
 
@@ -57,6 +58,7 @@ namespace vpdb
 {
 
 struct Project::PrivateContext {
+    static const int kLatestSchemaVersion = 1;
     struct Migration {
         void (*upgrade)(PrivateContext *ctx);
         void (*downgrade)(PrivateContext *ctx);
@@ -76,11 +78,11 @@ struct Project::PrivateContext {
         ctx->version = int(strtol(argv[0], 0, 10));
         return 0;
     }
-
     static void createTables(PrivateContext *ctx) {
-        ctx->executeQuery("pragma auto_vacuum = 2;", 0);
         ctx->executeQuery(reinterpret_cast<const char *>(g_create_project_tables_sql), 0);
-        ctx->executeQuery("pragma user_version = 1;", 0);
+    }
+    static void dropTables(PrivateContext *ctx) {
+        ctx->executeQuery(reinterpret_cast<const char *>(g_drop_project_tables_sql), 0);
     }
 
     bool executeQuery(const char *query, sqlite3_callback callback) {
@@ -108,21 +110,30 @@ struct Project::PrivateContext {
         if (!executeQuery("pragma user_version;", &PrivateContext::handleVersion)) {
             return false;
         }
-        VPVL2_VLOG(1, "uuid=" << generateUUID());
-        VPVL2_VLOG(1, "uuid=" << generateUUID());
-        VPVL2_VLOG(1, "uuid=" << generateUUID());
-        upgrade(1);
+        upgrade(kLatestSchemaVersion);
         return true;
     }
     void upgrade(int versionTo) {
         static Migration migrations[] = {
-            { &PrivateContext::createTables, 0 }
+            { &PrivateContext::createTables, &PrivateContext::dropTables }
         };
         const int destination = std::min(versionTo, int(sizeof(migrations) / sizeof(migrations[0])));
         beginTransaction();
         for (int i = version; i < destination; i++) {
             const Migration &m = migrations[i];
             m.upgrade(this);
+        }
+        commitTransaction();
+    }
+    void downgrade(int versionTo) {
+        static Migration migrations[] = {
+            { &PrivateContext::createTables, &PrivateContext::dropTables }
+        };
+        const int destination = std::max(versionTo, 0);
+        beginTransaction();
+        for (int i = version - 1; i >= destination; i--) {
+            const Migration &m = migrations[i];
+            m.downgrade(this);
         }
         commitTransaction();
     }
@@ -148,9 +159,9 @@ bool Project::load(const char *filename)
     return m_context->open(filename);
 }
 
-bool Project::save(const char *filename)
+bool Project::save(const char * /* filename */)
 {
-    return m_context->open(filename);
+    return true;
 }
 
 void Project::clear()

@@ -1,3 +1,5 @@
+pragma auto_vacuum = 2;
+
 create table `project_preferences` (
   `id` integer not null primary key autoincrement,
   `name` varchar(255) not null unique on conflict fail,
@@ -59,13 +61,13 @@ create table `bone_keyframes` (
   `parent_track_id` integer not null,
   `parent_layer_id` integer not null,
   `time_index` integer not null,
-  `translation_x` float not null,
-  `translation_y` float not null,
-  `translation_z` float not null,
-  `orientation_x` float not null,
-  `orientation_y` float not null,
-  `orientation_z` float not null,
-  `orientation_w` float not null,
+  `translation_x` float not null default 0.0,
+  `translation_y` float not null default 0.0,
+  `translation_z` float not null default 0.0,
+  `orientation_x` float not null default 0.0,
+  `orientation_y` float not null default 0.0,
+  `orientation_z` float not null default 0.0,
+  `orientation_w` float not null default 1.0,
   foreign key (`parent_track_id`) references `bone_tracks` (`id`) on update restrict on delete cascade,
   foreign key (`parent_layer_id`) references `bone_layers` (`id`) on update restrict on delete cascade
 );
@@ -77,19 +79,13 @@ create table `bone_keyframe_interpolation_parameters` (
   `id` integer not null primary key autoincrement,
   `parent_keyframe_id` integer not null,
   `type` integer not null,
-  `x1` float not null,
-  `x2` float not null,
-  `y1` float not null,
-  `y2` float not null,
+  `x1` float not null default 0.15748031496062992,
+  `x2` float not null default 0.84251968503937,
+  `y1` float not null default 0.15748031496062992,
+  `y2` float not null default 0.84251968503937,
   foreign key (`parent_keyframe_id`) references `bone_keyframes` (`id`) on update restrict on delete cascade
 );
 create index `idx_bone_keyframe_interpolation_parameters_fk_parent_keyframe_id` on `bone_keyframe_interpolation_parameters` (`parent_keyframe_id`);
-
-create trigger `update_motion_duration_at_inserting_bone_keyframes` after insert on `bone_keyframes`
-  when motion.id = new.parent_motion_id and motion.duration < new.time_index
-  begin
-    update motion set duration = new.time_index where motion.id = new.parent_motion_id;
-  end;
 
 create table `camera_layers` (
   `id` integer not null primary key autoincrement,
@@ -105,14 +101,14 @@ create table `camera_keyframes` (
   `id` integer not null primary key autoincrement,
   `parent_layer_id` integer not null,
   `time_index` integer not null,
-  `position_x` float not null,
-  `position_y` float not null,
-  `position_z` float not null,
-  `angle_x` float not null,
-  `angle_y` float not null,
-  `angle_z` float not null,
-  `fov` float not null,
-  `distance` float not null,
+  `position_x` float not null default 0.0,
+  `position_y` float not null default 10.0,
+  `position_z` float not null default 0.0,
+  `angle_x` float not null default 0.0,
+  `angle_y` float not null default 0.0,
+  `angle_z` float not null default 0.0,
+  `fov` float not null default 27.0,
+  `distance` float not null default 50.0,
   foreign key (`parent_layer_id`) references `camera_layers` (`id`) on update restrict on delete cascade
 );
 create index `idx_camera_keyframes_time_index` on `camera_keyframes` (`time_index`);
@@ -122,19 +118,13 @@ create table `camera_keyframe_interpolation_parameters` (
   `id` integer not null primary key autoincrement,
   `parent_keyframe_id` integer not null,
   `type` integer not null,
-  `x1` float not null,
-  `x2` float not null,
-  `y1` float not null,
-  `y2` float not null,
+  `x1` float not null default 0.15748031496062992,
+  `x2` float not null default 0.84251968503937,
+  `y1` float not null default 0.15748031496062992,
+  `y2` float not null default 0.84251968503937,
   foreign key (`parent_keyframe_id`) references `camera_keyframes` (`id`) on update restrict on delete cascade
 );
 create index `idx_camera_keyframe_interpolation_parameters_fk_parent_keyframe_id` on `camera_keyframe_interpolation_parameters` (`parent_keyframe_id`);
-
-create trigger `update_motion_duration_at_inserting_camera_keyframes` after insert on `camera_keyframes`
-  when motion.id = new.parent_motion_id and motion.duration < new.time_index
-  begin
-    update motion set duration = new.time_index where motion.id = new.parent_motion_id;
-  end;
 
 create table `effect_tracks` (
   `id` integer not null primary key autoincrement,
@@ -162,11 +152,11 @@ create table `effect_keyframes` (
   `time_index` integer not null,
   `parent_model_id` integer null,
   `parent_bone_id` integer null,
-  `scale_factor` float not null,
-  `opacity` float not null,
-  `is_visible` integer not null,
-  `is_shadow_enabled` integer not null,
-  `is_add_blend_enabled` integer not null,
+  `scale_factor` float not null default 1.0,
+  `opacity` float not null default 1.0,
+  `is_visible` integer not null default 1,
+  `is_shadow_enabled` integer not null default 1,
+  `is_add_blend_enabled` integer not null default 1,
   foreign key (`parent_track_id`) references bone_tracks(`id`) on update restrict on delete cascade,
   foreign key (`parent_layer_id`) references bone_layers(`id`) on update restrict on delete cascade
 );
@@ -178,19 +168,13 @@ create table `effect_keyframe_interpolation_parameters` (
   `id` integer not null primary key autoincrement,
   `parent_keyframe_id` integer not null,
   `type` int not null,
-  `x1` float not null,
-  `x2` float not null,
-  `y1` float not null,
-  `y2` float not null,
+  `x1` float not null default 0.15748031496062992,
+  `x2` float not null default 0.84251968503937,
+  `y1` float not null default 0.15748031496062992,
+  `y2` float not null default 0.84251968503937,
   foreign key (`parent_keyframe_id`) references `effect_keyframes` (`id`) on update restrict on delete cascade
 );
 create index `idx_effect_keyframe_interpolation_parameters_fk_parent_keyframe_id` on `effect_keyframe_interpolation_parameters` (`parent_keyframe_id`);
-
-create trigger `update_motion_duration_at_inserting_effect_keyframes` after insert on `effect_keyframes`
-  when motion.id = new.parent_motion_id and motion.duration < new.time_index
-  begin
-    update motion set duration = new.time_index where motion.id = new.parent_motion_id;
-  end;
 
 create table `light_layers` (
   `id` integer not null primary key autoincrement,
@@ -206,12 +190,12 @@ create table `light_keyframes` (
   `id` integer not null primary key autoincrement,
   `parent_layer_id` integer not null,
   `time_index` integer not null,
-  `position_x` float not null,
-  `position_y` float not null,
-  `position_z` float not null,
-  `direction_x` float not null,
-  `direction_y` float not null,
-  `direction_z` float not null,
+  `color_r` float not null default 0.6,
+  `color_g` float not null default 0.6,
+  `color_b` float not null default 0.6,
+  `direction_x` float not null default -1.0,
+  `direction_y` float not null default 1.0,
+  `direction_z` float not null default -1.0,
   foreign key (`parent_layer_id`) references light_layers(`id`) on update restrict on delete cascade
 );
 create index `idx_light_keyframes_time_index` on `light_keyframes` (`time_index`);
@@ -221,19 +205,13 @@ create table `light_keyframe_interpolation_parameters` (
   `id` integer not null primary key autoincrement,
   `parent_keyframe_id` integer not null,
   `type` integer not null,
-  `x1` float not null,
-  `x2` float not null,
-  `y1` float not null,
-  `y2` float not null,
+  `x1` float not null default 0.15748031496062992,
+  `x2` float not null default 0.84251968503937,
+  `y1` float not null default 0.15748031496062992,
+  `y2` float not null default 0.84251968503937,
   foreign key (`parent_keyframe_id`) references `light_keyframes` (`id`) on update restrict on delete cascade
 );
 create index `idx_light_keyframe_interpolation_parameters_fk_parent_keyframe_id` on `light_keyframe_interpolation_parameters` (`parent_keyframe_id`);
-
-create trigger `update_motion_duration_at_inserting_light_keyframes` after insert on `light_keyframes`
-  when motion.id = new.parent_motion_id and motion.duration < new.time_index
-  begin
-    update motion set duration = new.time_index where motion.id = new.parent_motion_id;
-  end;
 
 create table `model_tracks` (
   `id` integer not null primary key autoincrement,
@@ -259,15 +237,15 @@ create table `model_keyframes` (
   `parent_track_id` integer not null,
   `parent_layer_id` integer not null,
   `time_index` integer not null,
-  `edge_width` float not null,
-  `edge_color_r` float not null,
-  `edge_color_g` float not null,
-  `edge_color_b` float not null,
-  `edge_color_a` float not null,
-  `is_visible` integer not null,
-  `is_shadow_enabled` integer not null,
-  `is_add_blend_enabled` integer not null,
-  `is_physics_enabled` integer not null,
+  `edge_width` float not null default 1.0,
+  `edge_color_r` float not null default 1.0,
+  `edge_color_g` float not null default 1.0,
+  `edge_color_b` float not null default 1.0,
+  `edge_color_a` float not null default 1.0,
+  `is_visible` integer not null default 1,
+  `is_shadow_enabled` integer not null default 1,
+  `is_add_blend_enabled` integer not null default 0,
+  `is_physics_enabled` integer not null default 1,
   foreign key (`parent_track_id`) references model_tracks(`id`) on update restrict on delete cascade,
   foreign key (`parent_layer_id`) references model_layers(`id`) on update restrict on delete cascade
 );
@@ -279,19 +257,21 @@ create table `model_keyframe_interpolation_parameters` (
   `id` integer not null primary key autoincrement,
   `parent_keyframe_id` integer not null,
   `type` int not null,
-  `x1` float not null,
-  `x2` float not null,
-  `y1` float not null,
-  `y2` float not null,
+  `x1` float not null default 0.15748031496062992,
+  `x2` float not null default 0.84251968503937,
+  `y1` float not null default 0.15748031496062992,
+  `y2` float not null default 0.84251968503937,
   foreign key (`parent_keyframe_id`) references `model_keyframes` (`id`) on update restrict on delete cascade
 );
 create index `idx_model_keyframe_interpolation_parameters_fk_parent_keyframe_id` on `model_keyframe_interpolation_parameters` (`parent_keyframe_id`);
 
-create trigger `update_motion_duration_at_inserting_model_keyframes` after insert on `model_keyframes`
-  when motion.id = new.parent_motion_id and motion.duration < new.time_index
-  begin
-    update motion set duration = new.time_index where motion.id = new.parent_motion_id;
-  end;
+create table `model_keyframe_ik_parameters` (
+  `id` integer not null primary key autoincrement,
+  `parent_bone_track_id` integer not null,
+  `is_enabled` integer not null default 1,
+  foreign key (`parent_bone_track_id`) references `bone_tracks` (`id`) on update restrict on delete cascade
+);
+create index `idx_model_keyframe_ik_parameters_fk_parent_bone_track_id` on `model_keyframe_ik_parameters` (`parent_bone_track_id`);
 
 create table `morph_tracks` (
   `id` integer not null primary key autoincrement,
@@ -317,7 +297,7 @@ create table `morph_keyframes` (
   `parent_track_id` integer not null,
   `parent_layer_id` integer not null,
   `time_index` integer not null,
-  `weight` float not null,
+  `weight` float not null default 0.0,
   foreign key (`parent_track_id`) references morph_tracks(`id`) on update restrict on delete cascade,
   foreign key (`parent_layer_id`) references morph_layers(`id`) on update restrict on delete cascade
 );
@@ -329,19 +309,13 @@ create table `morph_keyframe_interpolation_parameters` (
   `id` integer not null primary key autoincrement,
   `parent_keyframe_id` integer not null,
   `type` int not null,
-  `x1` float not null,
-  `x2` float not null,
-  `y1` float not null,
-  `y2` float not null,
+  `x1` float not null default 0.15748031496062992,
+  `x2` float not null default 0.84251968503937,
+  `y1` float not null default 0.15748031496062992,
+  `y2` float not null default 0.84251968503937,
   foreign key (`parent_keyframe_id`) references `morph_keyframes` (`id`) on update restrict on delete cascade
 );
 create index `idx_morph_keyframe_interpolation_parameters_fk_parent_keyframe_id` on `morph_keyframe_interpolation_parameters` (`parent_keyframe_id`);
-
-create trigger `update_motion_duration_at_inserting_morph_keyframes` after insert on `morph_keyframes`
-  when motion.id = new.parent_motion_id and motion.duration < new.time_index
-  begin
-    update motion set duration = new.time_index where motion.id = new.parent_motion_id;
-  end;
 
 create table `project_layers` (
   `id` integer not null primary key autoincrement,
@@ -356,13 +330,13 @@ create table `project_keyframes` (
   `id` integer not null primary key autoincrement,
   `parent_layer_id` integer not null,
   `time_index` integer not null,
-  `shadow_mode` integer not null,
-  `shadow_distance` float not null,
-  `shadow_depth` float not null,
-  `gravity_factor` float not null,
-  `gravity_direction_x` float not null,
-  `gravity_direction_y` float not null,
-  `gravity_direction_z` float not null,
+  `shadow_mode` integer not null default 0,
+  `shadow_distance` float not null default 100.0,
+  `shadow_depth` float not null default 10000.0,
+  `gravity_factor` float not null default -1.0,
+  `gravity_direction_x` float not null default 0.0,
+  `gravity_direction_y` float not null default 9.8,
+  `gravity_direction_z` float not null default 0.0,
   foreign key (`parent_layer_id`) references project_layers(`id`) on update restrict on delete cascade
 );
 create index `idx_project_keyframes_time_index` on `project_keyframes` (`time_index`);
@@ -372,16 +346,77 @@ create table `project_keyframe_interpolation_parameters` (
   `id` integer not null primary key autoincrement,
   `parent_keyframe_id` integer not null,
   `type` int not null,
-  `x1` float not null,
-  `x2` float not null,
-  `y1` float not null,
-  `y2` float not null,
+  `x1` float not null default 0.15748031496062992,
+  `x2` float not null default 0.84251968503937,
+  `y1` float not null default 0.15748031496062992,
+  `y2` float not null default 0.84251968503937,
   foreign key (`parent_keyframe_id`) references `project_keyframes` (`id`) on update restrict on delete cascade
 );
 create index `idx_project_keyframe_interpolation_parameters_fk_parent_keyframe_id` on `project_keyframe_interpolation_parameters` (`parent_keyframe_id`);
+
+create trigger `update_motion_duration_at_inserting_bone_keyframes` after insert on `bone_keyframes`
+  when motion.id = new.parent_motion_id and motion.duration < new.time_index
+  begin
+    update motion set duration = new.time_index where motion.id = new.parent_motion_id;
+  end;
+
+create trigger `update_motion_duration_at_inserting_camera_keyframes` after insert on `camera_keyframes`
+  when motion.id = new.parent_motion_id and motion.duration < new.time_index
+  begin
+    update motion set duration = new.time_index where motion.id = new.parent_motion_id;
+  end;
+
+create trigger `update_motion_duration_at_inserting_effect_keyframes` after insert on `effect_keyframes`
+  when motion.id = new.parent_motion_id and motion.duration < new.time_index
+  begin
+    update motion set duration = new.time_index where motion.id = new.parent_motion_id;
+  end;
+
+create trigger `update_motion_duration_at_inserting_light_keyframes` after insert on `light_keyframes`
+  when motion.id = new.parent_motion_id and motion.duration < new.time_index
+  begin
+    update motion set duration = new.time_index where motion.id = new.parent_motion_id;
+  end;
+
+create trigger `update_motion_duration_at_inserting_model_keyframes` after insert on `model_keyframes`
+  when motion.id = new.parent_motion_id and motion.duration < new.time_index
+  begin
+    update motion set duration = new.time_index where motion.id = new.parent_motion_id;
+  end;
+
+create trigger `update_motion_duration_at_inserting_morph_keyframes` after insert on `morph_keyframes`
+  when motion.id = new.parent_motion_id and motion.duration < new.time_index
+  begin
+    update motion set duration = new.time_index where motion.id = new.parent_motion_id;
+  end;
 
 create trigger `update_motion_duration_at_inserting_project_keyframes` after insert on `project_keyframes`
   when motion.id = new.parent_motion_id and motion.duration < new.time_index
   begin
     update motion set duration = new.time_index where motion.id = new.parent_motion_id;
   end;
+
+create trigger `create_interpolation_parameters_at_inserting_bone_keyframes` after insert on `bone_keyframes`
+  begin
+    insert into `bone_keyframe_interpolation_parameters` (`parent_keyframe_id`, `type`)
+      values (new.id, 0), (new.id, 1), (new.id, 2), (new.id, 3);
+  end;
+
+create trigger `create_interpolation_parameters_at_inserting_camera_keyframes` after insert on `camera_keyframes`
+  begin
+    insert into `camera_keyframe_interpolation_parameters` (`parent_keyframe_id`, `type`)
+      values (new.id, 0), (new.id, 1), (new.id, 2), (new.id, 3), (new.id, 4), (new.id, 5);
+  end;
+
+create trigger `create_interpolation_parameters_at_inserting_morph_keyframes` after insert on `morph_keyframes`
+  begin
+    insert into `morph_keyframe_interpolation_parameters` (`parent_keyframe_id`, `type`)
+      values (new.id, 0);
+  end;
+
+create trigger `create_ik_parameters_at_inserting_bone_track` after insert on `bone_tracks`
+  begin
+    insert into `model_keyframe_ik_parameters` (`parent_bone_track_id`) values (new.id);
+  end;
+
+pragma user_version = 1;
