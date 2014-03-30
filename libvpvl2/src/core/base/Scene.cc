@@ -915,14 +915,14 @@ void Scene::seekSeconds(const float64 &seconds, int flags)
         Camera &camera = m_context->camera;
         IMotion *cameraMotion = camera.motion();
         if (cameraMotion) {
-            cameraMotion->seekSceneSeconds(seconds, this);
+            cameraMotion->seekSceneSeconds(seconds, this, flags);
         }
     }
     if (internal::hasFlagBits(flags, kUpdateLight)) {
         Light &light = m_context->light;
         IMotion *lightMotion = light.motion();
         if (lightMotion) {
-            lightMotion->seekSceneSeconds(seconds, this);
+            lightMotion->seekSceneSeconds(seconds, this, flags);
         }
     }
     if (internal::hasFlagBits(flags, kUpdateModels)) {
@@ -942,14 +942,14 @@ void Scene::seekTimeIndex(const IKeyframe::TimeIndex &timeIndex, int flags)
         Camera &camera = m_context->camera;
         IMotion *cameraMotion = camera.motion();
         if (cameraMotion) {
-            cameraMotion->seekSceneTimeIndex(timeIndex, this);
+            cameraMotion->seekSceneTimeIndex(timeIndex, this, flags);
         }
     }
     if (internal::hasFlagBits(flags, kUpdateLight)) {
         Light &light = m_context->light;
         IMotion *lightMotion = light.motion();
         if (lightMotion) {
-            lightMotion->seekSceneTimeIndex(timeIndex, this);
+            lightMotion->seekSceneTimeIndex(timeIndex, this, flags);
         }
     }
     if (internal::hasFlagBits(flags, kUpdateModels)) {

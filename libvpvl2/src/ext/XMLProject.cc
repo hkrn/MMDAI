@@ -1101,12 +1101,12 @@ struct XMLProject::PrivateContext {
         if (!parentModel.empty()) {
             ModelMap::const_iterator it = modelRefs.find(parentModel);
             if (it != modelRefs.end()) {
-                currentMotion->setParentModelRef(it->second);
+                currentMotion = factoryRef->newMotion(currentMotionType, it->second);
             }
             else {
                 ModelMap::const_iterator it2 = assetRefs.find(parentModel);
                 if (it2 != assetRefs.end()) {
-                    currentMotion->setParentModelRef(it2->second);
+                    currentMotion = factoryRef->newMotion(currentMotionType, it2->second);
                 }
             }
         }
@@ -1596,12 +1596,6 @@ struct XMLProject::PrivateContext {
                     sceneRef->removeMotion(it->second);
                     internal::deleteObject(it->second);
                     motionRefs.erase(it);
-                }
-                if (!parentModel.empty()) {
-                    ModelMap::const_iterator it2 = modelRefs.find(parentModel);
-                    if (it2 != modelRefs.end()) {
-                        currentMotion->setParentModelRef(it2->second);
-                    }
                 }
                 motionRefs.insert(std::make_pair(uuid, currentMotion));
                 currentMotion->createFirstKeyframesUnlessFound();

@@ -70,8 +70,8 @@ struct Motion::PrivateContext {
           parentModelRef(modelRef),
           encodingRef(encodingRef),
           name(0),
-          boneMotion(encodingRef),
-          morphMotion(encodingRef),
+          boneMotion(modelRef, encodingRef),
+          morphMotion(modelRef, encodingRef),
           modelMotion(modelRef, encodingRef),
           error(kNoError),
           active(true)
@@ -375,17 +375,11 @@ void Motion::setParentSceneRef(Scene *value)
     m_context->parentSceneRef = value;
 }
 
-void Motion::setParentModelRef(IModel *value)
+void Motion::refresh()
 {
-    m_context->boneMotion.setParentModelRef(value);
-    m_context->morphMotion.setParentModelRef(value);
-    m_context->modelMotion.setParentModelRef(value);
-    m_context->parentModelRef = value;
-    if (value) {
-        if (const IString *name = value->name(IEncoding::kDefaultLanguage)) {
-            internal::setString(name, m_context->name);
-        }
-    }
+    m_context->boneMotion.setParentModelRef(m_context->parentModelRef);
+    m_context->morphMotion.setParentModelRef(m_context->parentModelRef);
+    m_context->modelMotion.setParentModelRef(m_context->parentModelRef);
 }
 
 void Motion::seekSeconds(const float64 &seconds)
@@ -393,9 +387,9 @@ void Motion::seekSeconds(const float64 &seconds)
     seekTimeIndex(uint64(seconds * kFPS));
 }
 
-void Motion::seekSceneSeconds(const float64 &seconds, Scene *scene)
+void Motion::seekSceneSeconds(const float64 &seconds, Scene *scene, int flags)
 {
-    seekSceneTimeIndex(uint64(seconds * kFPS), scene);
+    seekSceneTimeIndex(uint64(seconds * kFPS), scene, flags);
 }
 
 void Motion::seekTimeIndex(const IKeyframe::TimeIndex &timeIndex)
@@ -406,9 +400,9 @@ void Motion::seekTimeIndex(const IKeyframe::TimeIndex &timeIndex)
     m_context->active = durationTimeIndex() > timeIndex;
 }
 
-void Motion::seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *scene)
+void Motion::seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *scene, int flags)
 {
-    if (m_context->cameraMotion.countKeyframes() > 1) {
+    if (internal::hasFlagBits(flags, Scene::kUpdateCamera) && m_context->cameraMotion.countKeyframes() > 0) {
         m_context->cameraMotion.seek(timeIndex);
         ICamera *camera = scene->cameraRef();
         camera->setLookAt(m_context->cameraMotion.position());
@@ -416,7 +410,7 @@ void Motion::seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *sc
         camera->setFov(m_context->cameraMotion.fovy());
         camera->setDistance(m_context->cameraMotion.distance());
     }
-    if (m_context->lightMotion.countKeyframes() > 1) {
+    if (internal::hasFlagBits(flags, Scene::kUpdateLight) && m_context->lightMotion.countKeyframes() > 0) {
         m_context->lightMotion.seek(timeIndex);
         ILight *light = scene->lightRef();
         light->setColor(m_context->lightMotion.color());
@@ -468,17 +462,6 @@ bool Motion::isReachedTo(const IKeyframe::TimeIndex &atEnd) const
                 internal::MotionHelper::isReachedToDuration(m_context->projectMotion, atEnd);
     }
     return true;
-}
-
-bool Motion::isNullFrameEnabled() const
-{
-    return m_context->boneMotion.isNullFrameEnabled() && m_context->morphMotion.isNullFrameEnabled();
-}
-
-void Motion::setNullFrameEnable(bool value)
-{
-    m_context->boneMotion.setNullFrameEnable(value);
-    m_context->morphMotion.setNullFrameEnable(value);
 }
 
 IBoneKeyframe *Motion::createBoneKeyframe()

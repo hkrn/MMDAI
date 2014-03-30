@@ -861,7 +861,8 @@ void Bone::performTransform()
                 orientation *= parentBoneRef->m_context->localInherentOrientation;
             }
             else {
-                orientation *= parentBoneRef->localOrientation() * parentBoneRef->m_context->localMorphOrientation;
+                orientation *= parentBoneRef->localOrientation();
+                orientation *= parentBoneRef->m_context->localMorphOrientation;
             }
         }
         if (!btFuzzyZero(m_context->coefficient - 1.0f)) {
@@ -873,7 +874,9 @@ void Bone::performTransform()
         m_context->localInherentOrientation = orientation * m_context->localOrientation * m_context->localMorphOrientation;
         m_context->localInherentOrientation.normalize();
     }
-    orientation *= m_context->localOrientation * m_context->localMorphOrientation * m_context->jointOrientation;
+    orientation *= m_context->localOrientation;
+    orientation *= m_context->localMorphOrientation;
+    orientation *= m_context->jointOrientation;
     orientation.normalize();
     Vector3 translation(kZeroV3);
     if (isInherentTranslationEnabled()) {

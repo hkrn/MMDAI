@@ -55,21 +55,12 @@ struct MorphAnimation::PrivateContext {
     Array<MorphKeyframe *> keyframeRefs;
     IMorph::WeightPrecision weight;
     int lastIndex;
-
-    bool isNull() const {
-        if (keyframeRefs.count() == 1) {
-            const MorphKeyframe *keyframe = keyframeRefs[0];
-            return keyframe->weight() == 0.0f;
-        }
-        return false;
-    }
 };
 
-MorphAnimation::MorphAnimation(IEncoding *encoding)
+MorphAnimation::MorphAnimation(IModel *modelRef, IEncoding *encodingRef)
     : BaseAnimation(),
-      m_encodingRef(encoding),
-      m_modelRef(0),
-      m_enableNullFrame(false)
+      m_encodingRef(encodingRef),
+      m_modelRef(modelRef)
 {
 }
 
@@ -96,9 +87,6 @@ void MorphAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
         const int ncontexts = m_name2contexts.count();
         for (int i = 0; i < ncontexts; i++) {
             PrivateContext *context = *m_name2contexts.value(i);
-            if (m_enableNullFrame && context->isNull()) {
-                continue;
-            }
             calculateFrames(timeIndexAt, context);
             IMorph *morph = context->morph;
             morph->setWeight(context->weight);

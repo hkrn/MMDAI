@@ -70,7 +70,7 @@ class MorphKeyframe;
 class VPVL2_API MorphAnimation VPVL2_DECL_FINAL : public BaseAnimation
 {
 public:
-    MorphAnimation(IEncoding *encoding);
+    MorphAnimation(IModel *modelRef, IEncoding *encodingRef);
     ~MorphAnimation();
 
     void read(const uint8 *data, int size);
@@ -81,9 +81,6 @@ public:
     MorphKeyframe *findKeyframeAt(int i) const;
     MorphKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const;
 
-    bool isNullFrameEnabled() const { return m_enableNullFrame; }
-    void setNullFrameEnable(bool value) { m_enableNullFrame = value; }
-
 private:
     struct PrivateContext;
     void createPrivateContexts(const IModel *model);
@@ -92,7 +89,6 @@ private:
     IEncoding *m_encodingRef;
     PointerHash<HashString, PrivateContext> m_name2contexts;
     IModel *m_modelRef;
-    bool m_enableNullFrame;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(MorphAnimation)
 };

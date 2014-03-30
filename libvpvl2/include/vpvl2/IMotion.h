@@ -161,14 +161,9 @@ public:
     virtual IModel *parentModelRef() const = 0;
 
     /**
-     * モーションが依存するモデルを設定します.
      *
-     * null の設定も可能です。
-     *
-     * @param IModel
-     * @sa parentModel
      */
-    virtual void setParentModelRef(IModel *model) = 0;
+    virtual void refresh() = 0;
 
     /**
      * モーションを指定された秒数の位置に移動します.
@@ -188,8 +183,9 @@ public:
      * @brief seekScene
      * @param seconds
      * @param scene
+     * @param flags
      */
-    virtual void seekSceneSeconds(const float64 &seconds, Scene *scene) = 0;
+    virtual void seekSceneSeconds(const float64 &seconds, Scene *scene, int flags) = 0;
 
     /**
      * モーションを指定されたフレームの位置に移動します.
@@ -208,8 +204,9 @@ public:
      *
      * @param timeIndex
      * @param Scene
+     * @param flags
      */
-    virtual void seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *scene) = 0;
+    virtual void seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *scene, int flags) = 0;
 
     /**
      * モーションを最初の位置にリセットします.
@@ -539,22 +536,6 @@ public:
      * @return IMotion
      */
     virtual IMotion *clone() const = 0;
-
-    /**
-     * キーフレーム数が1つしかない場合でも反映させるかを指定します.
-     *
-     * @return bool
-     * @sa setNullFrameEnable
-     */
-    virtual bool isNullFrameEnabled() const = 0;
-
-    /**
-     * キーフレーム数が1つしかない場合でも反映させるかを設定します.
-     *
-     * @param bool
-     * @sa isNullFrameEnabled
-     */
-    virtual void setNullFrameEnable(bool value) = 0;
 
     /**
      * 親の場面インスタンスの参照を返します.

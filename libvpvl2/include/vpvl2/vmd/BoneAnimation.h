@@ -69,7 +69,7 @@ class BoneKeyframe;
 class VPVL2_API BoneAnimation VPVL2_DECL_FINAL : public BaseAnimation
 {
 public:
-    BoneAnimation(IEncoding *encoding);
+    BoneAnimation(IModel *modelRef, IEncoding *encodingRef);
     ~BoneAnimation();
 
     void read(const uint8 *data, int size);
@@ -79,9 +79,6 @@ public:
     void setParentModelRef(IModel *model);
     BoneKeyframe *findKeyframeAt(int i) const;
     BoneKeyframe *findKeyframe(const IKeyframe::TimeIndex &timeIndex, const IString *name) const;
-
-    bool isNullFrameEnabled() const { return m_enableNullFrame; }
-    void setNullFrameEnable(bool value) { m_enableNullFrame = value; }
 
 private:
     struct PrivateContext;
@@ -100,7 +97,6 @@ private:
     IEncoding *m_encodingRef;
     PointerHash<HashString, PrivateContext> m_name2contexts;
     IModel *m_modelRef;
-    bool m_enableNullFrame;
 
     VPVL2_DISABLE_COPY_AND_ASSIGN(BoneAnimation)
 };

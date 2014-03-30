@@ -168,18 +168,16 @@ public:
     void save(uint8 *data) const;
     vsize estimateSize() const;
     void setParentSceneRef(Scene *value);
-    void setParentModelRef(IModel *value);
+    void refresh();
     void seekSeconds(const float64 &seconds);
-    void seekSceneSeconds(const float64 &seconds, Scene *scene);
+    void seekSceneSeconds(const float64 &seconds, Scene *scene, int flags);
     void seekTimeIndex(const IKeyframe::TimeIndex &timeIndex);
-    void seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *scene);
+    void seekSceneTimeIndex(const IKeyframe::TimeIndex &timeIndex, Scene *scene, int flags);
     void reload();
     void reset();
     float64 durationSeconds() const;
     IKeyframe::TimeIndex durationTimeIndex() const;
     bool isReachedTo(const IKeyframe::TimeIndex &atEnd) const;
-    bool isNullFrameEnabled() const;
-    void setNullFrameEnable(bool value);
 
     IBoneKeyframe *createBoneKeyframe();
     ICameraKeyframe *createCameraKeyframe();

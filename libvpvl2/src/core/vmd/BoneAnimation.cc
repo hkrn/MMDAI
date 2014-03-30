@@ -57,12 +57,10 @@ struct BoneAnimation::PrivateContext {
     Vector3 position;
     Quaternion rotation;
     int lastIndex;
-
-    bool isNull() const {
+    bool isStatic() const {
         if (keyframeRefs.count() == 1) {
             const IBoneKeyframe *keyframe = keyframeRefs[0];
-            return keyframe->localTranslation() == kZeroV3 &&
-                    keyframe->localOrientation() == Quaternion::getIdentity();
+            return keyframe->localTranslation() == kZeroV3 && keyframe->localOrientation() == Quaternion::getIdentity();
         }
         return false;
     }
@@ -95,11 +93,10 @@ void BoneAnimation::lerpVector3(const BoneKeyframe *keyframe,
     }
 }
 
-BoneAnimation::BoneAnimation(IEncoding *encoding)
+BoneAnimation::BoneAnimation(IModel *modelRef, IEncoding *encodingRef)
     : BaseAnimation(),
-      m_encodingRef(encoding),
-      m_modelRef(0),
-      m_enableNullFrame(false)
+      m_encodingRef(encodingRef),
+      m_modelRef(modelRef)
 {
 }
 
@@ -125,14 +122,11 @@ void BoneAnimation::seek(const IKeyframe::TimeIndex &timeIndexAt)
     if (m_modelRef) {
         const int ncontexts = m_name2contexts.count();
         for (int i = 0; i < ncontexts; i++) {
-            PrivateContext *keyframes = *m_name2contexts.value(i);
-            if (m_enableNullFrame && keyframes->isNull()) {
-                continue;
-            }
-            calculateKeyframes(timeIndexAt, keyframes);
-            IBone *bone = keyframes->bone;
-            bone->setLocalTranslation(keyframes->position);
-            bone->setLocalOrientation(keyframes->rotation);
+            PrivateContext *context = *m_name2contexts.value(i);
+            calculateKeyframes(timeIndexAt, context);
+            IBone *bone = context->bone;
+            bone->setLocalTranslation(context->position);
+            bone->setLocalOrientation(context->rotation);
         }
         m_previousTimeIndex = m_currentTimeIndex;
         m_currentTimeIndex = timeIndexAt;
@@ -163,7 +157,7 @@ void BoneAnimation::createFirstKeyframeUnlessFound()
 
 void BoneAnimation::setParentModelRef(IModel *model)
 {
-    createPrivateContexts(model);
+    createPrivateContexts(m_modelRef);
     m_modelRef = model;
 }
 
