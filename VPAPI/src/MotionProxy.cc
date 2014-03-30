@@ -1099,13 +1099,6 @@ BaseKeyframeRefObject *MotionProxy::resolveKeyframeAt(const quint64 &timeIndex, 
     return 0;
 }
 
-void MotionProxy::applyParentModel()
-{
-    if (ModelProxy *modelProxy = m_projectRef->resolveModelProxy(m_motion->parentModelRef())) {
-        m_motion->setParentModelRef(modelProxy->data());
-    }
-}
-
 void MotionProxy::addKeyframe(QObject *opaque, const quint64 &timeIndex, QUndoCommand *parent)
 {
     BaseKeyframeRefObject *keyframeRef = 0;

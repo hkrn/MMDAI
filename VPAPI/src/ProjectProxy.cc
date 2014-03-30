@@ -484,9 +484,10 @@ void ProjectProxy::rewind()
 void ProjectProxy::refresh()
 {
     foreach (MotionProxy *motionProxy, m_motionProxies) {
-        motionProxy->applyParentModel();
+        motionProxy->refresh();
     }
     m_cameraRefObject->refresh();
+    m_lightRefObject->refresh();
 }
 
 void ProjectProxy::ray(qreal x, qreal y, int width, int height)
@@ -1051,7 +1052,6 @@ void ProjectProxy::deleteMotion(MotionProxy *value, bool fromDestructor)
         if (ModelProxy *modelProxy = value->parentModel()) {
             /* no signal should be emitted when fromDestructor is true */
             modelProxy->setChildMotion(0, !fromDestructor);
-            value->data()->setParentModelRef(0);
         }
         QUndoStack *undoStackRef = value->undoStack();
         m_undoGroup->removeStack(undoStackRef);

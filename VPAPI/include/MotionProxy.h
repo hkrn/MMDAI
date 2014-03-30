@@ -154,7 +154,6 @@ signals:
     void motionDidLoad(int numLoadedKeyframes, int numEstimatedKeyframes);
 
 public slots:
-    Q_INVOKABLE void applyParentModel();
     Q_INVOKABLE void addKeyframe(QObject *opaque, const quint64 &timeIndex, QUndoCommand *parent = 0);
     Q_INVOKABLE void updateKeyframe(QObject *opaque, const quint64 &timeIndex, QUndoCommand *parent = 0);
     Q_INVOKABLE void updateKeyframeInterpolation(QObject *opaque, const QVector4D &value, int type, QUndoCommand *parent = 0);

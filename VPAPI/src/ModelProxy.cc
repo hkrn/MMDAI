@@ -903,7 +903,7 @@ MotionProxy *ModelProxy::childMotion() const
 void ModelProxy::setChildMotion(MotionProxy *value, bool emitSignal)
 {
     if (value && m_childMotionRef != value) {
-        value->data()->setParentModelRef(m_model.data());
+        value->data()->refresh();
         m_childMotionRef = value;
         emit childMotionChanged();
     }
