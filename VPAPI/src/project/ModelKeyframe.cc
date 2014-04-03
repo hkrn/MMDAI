@@ -36,16 +36,12 @@
 */
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/vpdb/ModelKeyframe.h>
-#include <vpvl2/extensions/vpdb/Motion.h>
+#include <project/ModelKeyframe.h>
+#include <project/Motion.h>
 
-namespace vpvl2
-{
-namespace VPVL2_VERSION_NS
-{
-namespace extensions
-{
-namespace vpdb
+using namespace vpvl2;
+
+namespace project
 {
 
 struct ModelKeyframe::PrivateContext {
@@ -192,7 +188,4 @@ void ModelKeyframe::setInverseKinematicsEnable(IBone *bone, bool value)
 {
 }
 
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-} /* namespace vpvl2 */
+} /* namespace project */

@@ -35,47 +35,37 @@
 
 */
 
-#include <vpvl2/IMorphKeyframe.h>
+#include <vpvl2/ILightKeyframe.h>
 
-namespace vpvl2
+namespace project
 {
-namespace VPVL2_VERSION_NS
-{
-namespace extensions
-{
-namespace vpdb
-{
-
 class Motion;
 
-class VPVL2_API MorphKeyframe VPVL2_DECL_FINAL : public IMorphKeyframe {
+class LightKeyframe : public vpvl2::ILightKeyframe {
 public:
-    MorphKeyframe(Motion *parent);
-    ~MorphKeyframe();
+    LightKeyframe(Motion *parent);
+    ~LightKeyframe();
 
-    void read(const uint8 *data);
-    void write(uint8 *data) const;
-    vsize estimateSize() const;
-    const IString *name() const;
+    void read(const vpvl2::uint8 *data);
+    void write(vpvl2::uint8 *data) const;
+    vpvl2::vsize estimateSize() const;
+    const vpvl2::IString *name() const;
     TimeIndex timeIndex() const;
     LayerIndex layerIndex() const;
-    void setName(const IString *value);
+    void setName(const vpvl2::IString *value);
     void setTimeIndex(const TimeIndex &value);
     void setLayerIndex(const LayerIndex &value);
     Type type() const;
 
-    IMorphKeyframe *clone() const;
-    IMorph::WeightPrecision weight() const;
-    void setWeight(const IMorph::WeightPrecision &value);
+    ILightKeyframe *clone() const;
+    vpvl2::Vector3 color() const;
+    vpvl2::Vector3 direction() const;
+    void setColor(const vpvl2::Vector3 &value);
+    void setDirection(const vpvl2::Vector3 &value);
 
 private:
     struct PrivateContext;
     PrivateContext *m_context;
 };
 
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-using namespace VPVL2_VERSION_NS;
-
-} /* namespace vpvl2 */
+} /* namespace project */

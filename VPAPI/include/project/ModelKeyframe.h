@@ -35,59 +35,49 @@
 
 */
 
-#include <vpvl2/Common.h>
-#include <vpvl2/extensions/StringMap.h>
+#include <vpvl2/IModelKeyframe.h>
 
-namespace vpvl2
+namespace project
 {
-namespace VPVL2_VERSION_NS
-{
-class IModel;
-class IMotion;
-class IRenderEngine;
+class Motion;
 
-namespace extensions
-{
-namespace vpdb
-{
-
-class VPVL2_API Project VPVL2_DECL_FINAL : public Scene {
+class ModelKeyframe : public vpvl2::IModelKeyframe {
 public:
-    typedef std::string UUID;
-    typedef std::vector<UUID> UUIDList;
-    typedef std::map<UUID, StringMap> ModelSettings;
+    ModelKeyframe(Motion *parent);
+    ~ModelKeyframe();
 
-    Project(bool ownMemory);
-    ~Project();
+    void read(const vpvl2::uint8 *data);
+    void write(vpvl2::uint8 *data) const;
+    vpvl2::vsize estimateSize() const;
+    const vpvl2::IString *name() const;
+    TimeIndex timeIndex() const;
+    LayerIndex layerIndex() const;
+    void setName(const vpvl2::IString *value);
+    void setTimeIndex(const TimeIndex &value);
+    void setLayerIndex(const LayerIndex &value);
+    Type type() const;
 
-    bool load(const char *filename);
-    bool save(const char *filename);
-    void clear();
-
-    const UUIDList modelUUIDs() const;
-    const UUIDList motionUUIDs() const;
-    UUID modelUUID(const IModel *model) const;
-    UUID motionUUID(const IMotion *motion) const;
-    IModel *findModel(const UUID &uuid) const;
-    IMotion *findMotion(const UUID &uuid) const;
-    bool containsModel(const IModel *model) const;
-    bool containsMotion(const IMotion *motion) const;
-    bool isDirty() const;
-    void setDirty(bool value);
-
-    void addModel(IModel *model, IRenderEngine *engine, const UUID &uuid, int order);
-    void addMotion(IMotion *motion, const UUID &uuid);
-    void removeModel(IModel *model);
-    void removeMotion(IMotion *motion);
+    IModelKeyframe *clone() const;
+    bool isVisible() const;
+    bool isShadowEnabled() const;
+    bool isAddBlendEnabled() const;
+    bool isPhysicsEnabled() const;
+    bool isInverseKinematicsEnabled(const vpvl2::IBone *value) const;
+    vpvl2::uint8 physicsStillMode() const;
+    vpvl2::IVertex::EdgeSizePrecision edgeWidth() const;
+    vpvl2::Color edgeColor() const;
+    void setVisible(bool value);
+    void setShadowEnable(bool value);
+    void setAddBlendEnable(bool value);
+    void setPhysicsEnable(bool value);
+    void setPhysicsStillMode(vpvl2::uint8 value);
+    void setEdgeWidth(const vpvl2::IVertex::EdgeSizePrecision &value);
+    void setEdgeColor(const vpvl2::Color &value);
+    void setInverseKinematicsEnable(vpvl2::IBone *bone, bool value);
 
 private:
     struct PrivateContext;
     PrivateContext *m_context;
 };
 
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-using namespace VPVL2_VERSION_NS;
-
-} /* namespace vpvl2 */
+} /* namespace project */

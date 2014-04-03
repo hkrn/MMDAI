@@ -35,52 +35,46 @@
 
 */
 
-#include <vpvl2/IBoneKeyframe.h>
+#include <vpvl2/ICameraKeyframe.h>
 
-namespace vpvl2
+namespace project
 {
-namespace VPVL2_VERSION_NS
-{
-namespace extensions
-{
-namespace vpdb
-{
-
 class Motion;
 
-class VPVL2_API BoneKeyframe VPVL2_DECL_FINAL : public IBoneKeyframe {
+class CameraKeyframe : public vpvl2::ICameraKeyframe {
 public:
-    BoneKeyframe(Motion *parent);
-    ~BoneKeyframe();
+    CameraKeyframe(Motion *parent);
+    ~CameraKeyframe();
 
-    void read(const uint8 *data);
-    void write(uint8 *data) const;
-    vsize estimateSize() const;
-    const IString *name() const;
+    void read(const vpvl2::uint8 *data);
+    void write(vpvl2::uint8 *data) const;
+    vpvl2::vsize estimateSize() const;
+    const vpvl2::IString *name() const;
     TimeIndex timeIndex() const;
     LayerIndex layerIndex() const;
-    void setName(const IString *value);
+    void setName(const vpvl2::IString *value);
     void setTimeIndex(const TimeIndex &value);
     void setLayerIndex(const LayerIndex &value);
     Type type() const;
 
-    IBoneKeyframe *clone() const;
+    ICameraKeyframe *clone() const;
     void setDefaultInterpolationParameter();
-    void setInterpolationParameter(InterpolationType type, const QuadWord &value);
-    void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
-    Vector3 localTranslation() const;
-    Quaternion localOrientation() const;
-    void setLocalTranslation(const Vector3 &value);
-    void setLocalOrientation(const Quaternion &value);
+    void setInterpolationParameter(InterpolationType type, const vpvl2::QuadWord &value);
+    void getInterpolationParameter(InterpolationType type, vpvl2::QuadWord &value) const;
+    vpvl2::Vector3 lookAt() const;
+    vpvl2::Vector3 angle() const;
+    vpvl2::Scalar distance() const;
+    vpvl2::Scalar fov() const;
+    bool isPerspective() const;
+    void setLookAt(const vpvl2::Vector3 &value);
+    void setAngle(const vpvl2::Vector3 &value);
+    void setDistance(const vpvl2::Scalar &value);
+    void setFov(const vpvl2::Scalar &value);
+    void setPerspective(bool value);
 
 private:
     struct PrivateContext;
     PrivateContext *m_context;
 };
 
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-using namespace VPVL2_VERSION_NS;
-
-} /* namespace vpvl2 */
+} /* namespace project */

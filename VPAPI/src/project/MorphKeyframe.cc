@@ -35,59 +35,94 @@
 
 */
 
-#include <vpvl2/IEffectKeyframe.h>
+#include <vpvl2/vpvl2.h>
+#include <project/MorphKeyframe.h>
+#include <project/Motion.h>
 
-namespace vpvl2
-{
-namespace VPVL2_VERSION_NS
-{
-namespace extensions
-{
-namespace vpdb
+using namespace vpvl2;
+
+namespace project
 {
 
-class Motion;
+struct MorphKeyframe::PrivateContext {
+    PrivateContext(Motion *parent)
+        : m_parentMotionRef(parent)
+    {
+    }
+    ~PrivateContext() {
+        m_parentMotionRef = 0;
+    }
 
-class VPVL2_API EffectKeyframe VPVL2_DECL_FINAL : public IEffectKeyframe {
-public:
-    EffectKeyframe(Motion *parent);
-    ~EffectKeyframe();
-
-    void read(const uint8 *data);
-    void write(uint8 *data) const;
-    vsize estimateSize() const;
-    const IString *name() const;
-    TimeIndex timeIndex() const;
-    LayerIndex layerIndex() const;
-    void setName(const IString *value);
-    void setTimeIndex(const TimeIndex &value);
-    void setLayerIndex(const LayerIndex &value);
-    Type type() const;
-
-    IEffectKeyframe *clone() const;
-    bool isVisible() const;
-    bool isAddBlendEnabled() const;
-    bool isShadowEnabled() const;
-    float32 scaleFactor() const;
-    float32 opacity() const;
-    IModel *parentModelRef() const;
-    IBone *parentBoneRef() const;
-    void setVisible(bool value);
-    void setAddBlendEnable(bool value);
-    void setShadowEnable(bool value);
-    void setScaleFactor(float32 value);
-    void setOpacity(float32 value);
-    void setParentModelRef(IModel *value);
-    void setParentBoneRef(IBone *value);
-
-private:
-    struct PrivateContext;
-    PrivateContext *m_context;
+    Motion *m_parentMotionRef;
 };
 
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-using namespace VPVL2_VERSION_NS;
+MorphKeyframe::MorphKeyframe(Motion *parent)
+    : m_context(new PrivateContext(parent))
+{
+}
 
-} /* namespace vpvl2 */
+MorphKeyframe::~MorphKeyframe()
+{
+    delete m_context;
+    m_context = 0;
+}
+
+void MorphKeyframe::read(const uint8 *data)
+{
+}
+
+void MorphKeyframe::write(uint8 *data) const
+{
+}
+
+vsize MorphKeyframe::estimateSize() const
+{
+    return 0;
+}
+
+const IString *MorphKeyframe::name() const
+{
+    return 0;
+}
+
+IKeyframe::TimeIndex MorphKeyframe::timeIndex() const
+{
+    return 0;
+}
+
+IKeyframe::LayerIndex MorphKeyframe::layerIndex() const
+{
+    return 0;
+}
+void MorphKeyframe::setName(const IString *value)
+{
+}
+
+void MorphKeyframe::setTimeIndex(const TimeIndex &value)
+{
+}
+
+void MorphKeyframe::setLayerIndex(const LayerIndex &value)
+{
+}
+
+IKeyframe::Type MorphKeyframe::type() const
+{
+    return kMorphKeyframe;
+}
+
+IMorphKeyframe *MorphKeyframe::clone() const
+{
+    return 0;
+}
+
+IMorph::WeightPrecision MorphKeyframe::weight() const
+{
+    return 0;
+}
+
+void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)
+{
+}
+
+} /* namespace project */

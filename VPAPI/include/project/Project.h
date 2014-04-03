@@ -35,61 +35,59 @@
 
 */
 
-#include <vpvl2/IModelKeyframe.h>
+#include <vpvl2/Common.h>
+#include <vpvl2/extensions/StringMap.h>
 
-namespace vpvl2
-{
-namespace VPVL2_VERSION_NS
-{
-namespace extensions
-{
-namespace vpdb
+#include <QUuid>
+#include <QList>
+#include <QHash>
+#include <QSqlDatabase>
+
+namespace vpvl2 {
+namespace VPVL2_VERSION_NS {
+class IModel;
+class IMotion;
+class IRenderEngine;
+}
+}
+
+namespace project
 {
 
-class Motion;
-
-class VPVL2_API ModelKeyframe VPVL2_DECL_FINAL : public IModelKeyframe {
+class Project : public vpvl2::Scene {
 public:
-    ModelKeyframe(Motion *parent);
-    ~ModelKeyframe();
+    typedef QUuid UUID;
+    typedef QList<UUID> UUIDList;
+    typedef QHash<UUID, vpvl2::extensions::StringMap> ModelSettings;
 
-    void read(const uint8 *data);
-    void write(uint8 *data) const;
-    vsize estimateSize() const;
-    const IString *name() const;
-    TimeIndex timeIndex() const;
-    LayerIndex layerIndex() const;
-    void setName(const IString *value);
-    void setTimeIndex(const TimeIndex &value);
-    void setLayerIndex(const LayerIndex &value);
-    Type type() const;
+    Project(QSqlDatabase *database, bool ownMemory);
+    ~Project();
 
-    IModelKeyframe *clone() const;
-    bool isVisible() const;
-    bool isShadowEnabled() const;
-    bool isAddBlendEnabled() const;
-    bool isPhysicsEnabled() const;
-    bool isInverseKinematicsEnabled(const IBone *value) const;
-    uint8 physicsStillMode() const;
-    IVertex::EdgeSizePrecision edgeWidth() const;
-    Color edgeColor() const;
-    void setVisible(bool value);
-    void setShadowEnable(bool value);
-    void setAddBlendEnable(bool value);
-    void setPhysicsEnable(bool value);
-    void setPhysicsStillMode(uint8 value);
-    void setEdgeWidth(const IVertex::EdgeSizePrecision &value);
-    void setEdgeColor(const Color &value);
-    void setInverseKinematicsEnable(IBone *bone, bool value);
+    bool load(const char *filename);
+    bool save(const char *filename);
+    void clear();
+
+    const UUIDList modelUUIDs() const;
+    const UUIDList motionUUIDs() const;
+    UUID modelUUID(const vpvl2::IModel *model) const;
+    UUID motionUUID(const vpvl2::IMotion *motion) const;
+    vpvl2::IModel *findModel(const UUID &uuid) const;
+    vpvl2::IMotion *findMotion(const UUID &uuid) const;
+    bool containsModel(const vpvl2::IModel *model) const;
+    bool containsMotion(const vpvl2::IMotion *motion) const;
+    bool isDirty() const;
+    void setDirty(bool value);
+
+    void addModel(vpvl2::IModel *model, vpvl2::IRenderEngine *engine, const UUID &uuid, int order);
+    void addMotion(vpvl2::IMotion *motion, const UUID &uuid);
+    void removeModel(vpvl2::IModel *model);
+    void removeMotion(vpvl2::IMotion *motion);
+
+    QSqlDatabase *databaseHandle() const;
 
 private:
     struct PrivateContext;
     PrivateContext *m_context;
 };
 
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-using namespace VPVL2_VERSION_NS;
-
-} /* namespace vpvl2 */
+} /* namespace project */

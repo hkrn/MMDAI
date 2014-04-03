@@ -35,58 +35,36 @@
 
 */
 
-#include <vpvl2/ICameraKeyframe.h>
+#include <vpvl2/IMorphKeyframe.h>
 
-namespace vpvl2
-{
-namespace VPVL2_VERSION_NS
-{
-namespace extensions
-{
-namespace vpdb
+namespace project
 {
 
 class Motion;
 
-class VPVL2_API CameraKeyframe VPVL2_DECL_FINAL : public ICameraKeyframe {
+class MorphKeyframe : public vpvl2::IMorphKeyframe {
 public:
-    CameraKeyframe(Motion *parent);
-    ~CameraKeyframe();
+    MorphKeyframe(Motion *parent);
+    ~MorphKeyframe();
 
-    void read(const uint8 *data);
-    void write(uint8 *data) const;
-    vsize estimateSize() const;
-    const IString *name() const;
+    void read(const vpvl2::uint8 *data);
+    void write(vpvl2::uint8 *data) const;
+    vpvl2::vsize estimateSize() const;
+    const vpvl2::IString *name() const;
     TimeIndex timeIndex() const;
     LayerIndex layerIndex() const;
-    void setName(const IString *value);
+    void setName(const vpvl2::IString *value);
     void setTimeIndex(const TimeIndex &value);
     void setLayerIndex(const LayerIndex &value);
     Type type() const;
 
-    ICameraKeyframe *clone() const;
-    void setDefaultInterpolationParameter();
-    void setInterpolationParameter(InterpolationType type, const QuadWord &value);
-    void getInterpolationParameter(InterpolationType type, QuadWord &value) const;
-    Vector3 lookAt() const;
-    Vector3 angle() const;
-    Scalar distance() const;
-    Scalar fov() const;
-    bool isPerspective() const;
-    void setLookAt(const Vector3 &value);
-    void setAngle(const Vector3 &value);
-    void setDistance(const Scalar &value);
-    void setFov(const Scalar &value);
-    void setPerspective(bool value);
+    IMorphKeyframe *clone() const;
+    vpvl2::IMorph::WeightPrecision weight() const;
+    void setWeight(const vpvl2::IMorph::WeightPrecision &value);
 
 private:
     struct PrivateContext;
     PrivateContext *m_context;
 };
 
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-using namespace VPVL2_VERSION_NS;
-
-} /* namespace vpvl2 */
+} /* namespace project */

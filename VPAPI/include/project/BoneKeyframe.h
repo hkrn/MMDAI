@@ -35,49 +35,40 @@
 
 */
 
-#include <vpvl2/ILightKeyframe.h>
+#include <vpvl2/IBoneKeyframe.h>
 
-namespace vpvl2
+namespace project
 {
-namespace VPVL2_VERSION_NS
-{
-namespace extensions
-{
-namespace vpdb
-{
-
 class Motion;
 
-class VPVL2_API LightKeyframe VPVL2_DECL_FINAL : public ILightKeyframe {
+class BoneKeyframe : public vpvl2::IBoneKeyframe {
 public:
-    LightKeyframe(Motion *parent);
-    ~LightKeyframe();
+    BoneKeyframe(Motion *parent);
+    ~BoneKeyframe();
 
-    void read(const uint8 *data);
-    void write(uint8 *data) const;
-    vsize estimateSize() const;
-    const IString *name() const;
+    void read(const vpvl2::uint8 *data);
+    void write(vpvl2::uint8 *data) const;
+    vpvl2::vsize estimateSize() const;
+    const vpvl2::IString *name() const;
     TimeIndex timeIndex() const;
     LayerIndex layerIndex() const;
-    void setName(const IString *value);
+    void setName(const vpvl2::IString *value);
     void setTimeIndex(const TimeIndex &value);
     void setLayerIndex(const LayerIndex &value);
     Type type() const;
 
-    ILightKeyframe *clone() const;
-    Vector3 color() const;
-    Vector3 direction() const;
-    void setColor(const Vector3 &value);
-    void setDirection(const Vector3 &value);
+    IBoneKeyframe *clone() const;
+    void setDefaultInterpolationParameter();
+    void setInterpolationParameter(InterpolationType type, const vpvl2::QuadWord &value);
+    void getInterpolationParameter(InterpolationType type, vpvl2::QuadWord &value) const;
+    vpvl2::Vector3 localTranslation() const;
+    vpvl2::Quaternion localOrientation() const;
+    void setLocalTranslation(const vpvl2::Vector3 &value);
+    void setLocalOrientation(const vpvl2::Quaternion &value);
 
 private:
     struct PrivateContext;
     PrivateContext *m_context;
 };
 
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-using namespace VPVL2_VERSION_NS;
-
-} /* namespace vpvl2 */
+} /* namespace project */

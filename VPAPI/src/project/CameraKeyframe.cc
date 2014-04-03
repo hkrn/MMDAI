@@ -36,18 +36,15 @@
 */
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/vpdb/ProjectKeyframe.h>
+#include <project/CameraKeyframe.h>
+#include <project/Motion.h>
 
-namespace vpvl2
-{
-namespace VPVL2_VERSION_NS
-{
-namespace extensions
-{
-namespace vpdb
+using namespace vpvl2;
+
+namespace project
 {
 
-struct ProjectKeyframe::PrivateContext {
+struct CameraKeyframe::PrivateContext {
     PrivateContext(Motion *parent)
         : m_parentMotionRef(parent)
     {
@@ -59,112 +56,121 @@ struct ProjectKeyframe::PrivateContext {
     Motion *m_parentMotionRef;
 };
 
-ProjectKeyframe::ProjectKeyframe(Motion *parent)
+CameraKeyframe::CameraKeyframe(Motion *parent)
     : m_context(new PrivateContext(parent))
 {
 }
 
-ProjectKeyframe::~ProjectKeyframe()
+CameraKeyframe::~CameraKeyframe()
 {
     delete m_context;
     m_context = 0;
 }
 
-void ProjectKeyframe::read(const uint8 *data)
+void CameraKeyframe::read(const uint8 *data)
 {
 }
 
-void ProjectKeyframe::write(uint8 *data) const
+void CameraKeyframe::write(uint8 *data) const
 {
 }
 
-vsize ProjectKeyframe::estimateSize() const
+vsize CameraKeyframe::estimateSize() const
 {
     return 0;
 }
 
-const IString *ProjectKeyframe::name() const
+const IString *CameraKeyframe::name() const
 {
     return 0;
 }
 
-IKeyframe::TimeIndex ProjectKeyframe::timeIndex() const
+IKeyframe::TimeIndex CameraKeyframe::timeIndex() const
 {
     return 0;
 }
 
-IKeyframe::LayerIndex ProjectKeyframe::layerIndex() const
+IKeyframe::LayerIndex CameraKeyframe::layerIndex() const
 {
     return 0;
 }
-void ProjectKeyframe::setName(const IString *value)
+void CameraKeyframe::setName(const IString *value)
 {
 }
 
-void ProjectKeyframe::setTimeIndex(const TimeIndex &value)
+void CameraKeyframe::setTimeIndex(const TimeIndex &value)
 {
 }
 
-void ProjectKeyframe::setLayerIndex(const LayerIndex &value)
+void CameraKeyframe::setLayerIndex(const LayerIndex &value)
 {
 }
 
-IKeyframe::Type ProjectKeyframe::type() const
+IKeyframe::Type CameraKeyframe::type() const
 {
-    return kProjectKeyframe;
+    return kCameraKeyframe;
 }
 
-IProjectKeyframe *ProjectKeyframe::clone() const
-{
-    return 0;
-}
-
-float32 ProjectKeyframe::gravityFactor() const
+ICameraKeyframe *CameraKeyframe::clone() const
 {
     return 0;
 }
 
-Vector3 ProjectKeyframe::gravityDirection() const
+void CameraKeyframe::setDefaultInterpolationParameter()
 {
-    kZeroV3;
 }
 
-int ProjectKeyframe::shadowMode() const
+void CameraKeyframe::setInterpolationParameter(InterpolationType type, const QuadWord &value)
+{
+}
+
+void CameraKeyframe::getInterpolationParameter(InterpolationType type, QuadWord &value) const
+{
+}
+
+Vector3 CameraKeyframe::lookAt() const
+{
+    return kZeroV3;
+}
+
+Vector3 CameraKeyframe::angle() const
+{
+    return kZeroV3;
+}
+
+Scalar CameraKeyframe::distance() const
 {
     return 0;
 }
 
-float32 ProjectKeyframe::shadowDistance() const
+Scalar CameraKeyframe::fov() const
 {
     return 0;
 }
 
-float32 ProjectKeyframe::shadowDepth() const
+bool CameraKeyframe::isPerspective() const
 {
-    return 0;
+    return false;
 }
 
-void ProjectKeyframe::setGravityFactor(float32 value)
-{
-}
-
-void ProjectKeyframe::setGravityDirection(const Vector3 &value)
+void CameraKeyframe::setLookAt(const Vector3 &value)
 {
 }
 
-void ProjectKeyframe::setShadowMode(int value)
+void CameraKeyframe::setAngle(const Vector3 &value)
 {
 }
 
-void ProjectKeyframe::setShadowDistance(float32 value)
+void CameraKeyframe::setDistance(const Scalar &value)
 {
 }
 
-void ProjectKeyframe::setShadowDepth(float32 value)
+void CameraKeyframe::setFov(const Scalar &value)
 {
 }
 
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-} /* namespace vpvl2 */
+void CameraKeyframe::setPerspective(bool value)
+{
+}
+
+} /* namespace project */

@@ -36,19 +36,14 @@
 */
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/vpdb/EffectKeyframe.h>
-#include <vpvl2/extensions/vpdb/Motion.h>
+#include <project/LightKeyframe.h>
 
-namespace vpvl2
-{
-namespace VPVL2_VERSION_NS
-{
-namespace extensions
-{
-namespace vpdb
+using namespace vpvl2;
+
+namespace project
 {
 
-struct EffectKeyframe::PrivateContext {
+struct LightKeyframe::PrivateContext {
     PrivateContext(Motion *parent)
         : m_parentMotionRef(parent)
     {
@@ -60,130 +55,82 @@ struct EffectKeyframe::PrivateContext {
     Motion *m_parentMotionRef;
 };
 
-EffectKeyframe::EffectKeyframe(Motion *parent)
+LightKeyframe::LightKeyframe(Motion *parent)
     : m_context(new PrivateContext(parent))
 {
 }
 
-EffectKeyframe::~EffectKeyframe()
+LightKeyframe::~LightKeyframe()
 {
     delete m_context;
     m_context = 0;
 }
 
-void EffectKeyframe::read(const uint8 *data)
+void LightKeyframe::read(const uint8 *data)
 {
 }
 
-void EffectKeyframe::write(uint8 *data) const
+void LightKeyframe::write(uint8 *data) const
 {
 }
 
-vsize EffectKeyframe::estimateSize() const
+vsize LightKeyframe::estimateSize() const
 {
     return 0;
 }
 
-const IString *EffectKeyframe::name() const
+const IString *LightKeyframe::name() const
 {
     return 0;
 }
 
-IKeyframe::TimeIndex EffectKeyframe::timeIndex() const
+IKeyframe::TimeIndex LightKeyframe::timeIndex() const
 {
     return 0;
 }
 
-IKeyframe::LayerIndex EffectKeyframe::layerIndex() const
+IKeyframe::LayerIndex LightKeyframe::layerIndex() const
 {
     return 0;
 }
-void EffectKeyframe::setName(const IString *value)
+void LightKeyframe::setName(const IString *value)
 {
 }
 
-void EffectKeyframe::setTimeIndex(const TimeIndex &value)
+void LightKeyframe::setTimeIndex(const TimeIndex &value)
 {
 }
 
-void EffectKeyframe::setLayerIndex(const LayerIndex &value)
+void LightKeyframe::setLayerIndex(const LayerIndex &value)
 {
 }
 
-IKeyframe::Type EffectKeyframe::type() const
+IKeyframe::Type LightKeyframe::type() const
 {
-    return kEffectKeyframe;
+    return kLightKeyframe;
 }
 
-IEffectKeyframe *EffectKeyframe::clone() const
-{
-    return 0;
-}
-
-bool EffectKeyframe::isVisible() const
-{
-    return false;
-}
-
-bool EffectKeyframe::isAddBlendEnabled() const
-{
-    return false;
-}
-
-bool EffectKeyframe::isShadowEnabled() const
-{
-    return false;
-}
-
-float32 EffectKeyframe::scaleFactor() const
+ILightKeyframe *LightKeyframe::clone() const
 {
     return 0;
 }
 
-float32 EffectKeyframe::opacity() const
+Vector3 LightKeyframe::color() const
 {
-    return 0;
+    return kZeroV3;
 }
 
-IModel *EffectKeyframe::parentModelRef() const
+Vector3 LightKeyframe::direction() const
 {
-    return 0;
+    return kZeroV3;
 }
 
-IBone *EffectKeyframe::parentBoneRef() const
-{
-    return 0;
-}
-
-void EffectKeyframe::setVisible(bool value)
+void LightKeyframe::setColor(const Vector3 &value)
 {
 }
 
-void EffectKeyframe::setAddBlendEnable(bool value)
+void LightKeyframe::setDirection(const Vector3 &value)
 {
 }
 
-void EffectKeyframe::setShadowEnable(bool value)
-{
-}
-
-void EffectKeyframe::setScaleFactor(float32 value)
-{
-}
-
-void EffectKeyframe::setOpacity(float32 value)
-{
-}
-
-void EffectKeyframe::setParentModelRef(IModel *value)
-{
-}
-
-void EffectKeyframe::setParentBoneRef(IBone *value)
-{
-}
-
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-} /* namespace vpvl2 */
+} /* namespace project */

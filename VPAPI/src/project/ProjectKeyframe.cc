@@ -36,19 +36,14 @@
 */
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/vpdb/MorphKeyframe.h>
-#include <vpvl2/extensions/vpdb/Motion.h>
+#include <project/ProjectKeyframe.h>
 
-namespace vpvl2
-{
-namespace VPVL2_VERSION_NS
-{
-namespace extensions
-{
-namespace vpdb
+using namespace vpvl2;
+
+namespace project
 {
 
-struct MorphKeyframe::PrivateContext {
+struct ProjectKeyframe::PrivateContext {
     PrivateContext(Motion *parent)
         : m_parentMotionRef(parent)
     {
@@ -60,76 +55,109 @@ struct MorphKeyframe::PrivateContext {
     Motion *m_parentMotionRef;
 };
 
-MorphKeyframe::MorphKeyframe(Motion *parent)
+ProjectKeyframe::ProjectKeyframe(Motion *parent)
     : m_context(new PrivateContext(parent))
 {
 }
 
-MorphKeyframe::~MorphKeyframe()
+ProjectKeyframe::~ProjectKeyframe()
 {
     delete m_context;
     m_context = 0;
 }
 
-void MorphKeyframe::read(const uint8 *data)
+void ProjectKeyframe::read(const uint8 *data)
 {
 }
 
-void MorphKeyframe::write(uint8 *data) const
+void ProjectKeyframe::write(uint8 *data) const
 {
 }
 
-vsize MorphKeyframe::estimateSize() const
+vsize ProjectKeyframe::estimateSize() const
 {
     return 0;
 }
 
-const IString *MorphKeyframe::name() const
+const IString *ProjectKeyframe::name() const
 {
     return 0;
 }
 
-IKeyframe::TimeIndex MorphKeyframe::timeIndex() const
+IKeyframe::TimeIndex ProjectKeyframe::timeIndex() const
 {
     return 0;
 }
 
-IKeyframe::LayerIndex MorphKeyframe::layerIndex() const
+IKeyframe::LayerIndex ProjectKeyframe::layerIndex() const
 {
     return 0;
 }
-void MorphKeyframe::setName(const IString *value)
+void ProjectKeyframe::setName(const IString *value)
 {
 }
 
-void MorphKeyframe::setTimeIndex(const TimeIndex &value)
+void ProjectKeyframe::setTimeIndex(const TimeIndex &value)
 {
 }
 
-void MorphKeyframe::setLayerIndex(const LayerIndex &value)
+void ProjectKeyframe::setLayerIndex(const LayerIndex &value)
 {
 }
 
-IKeyframe::Type MorphKeyframe::type() const
+IKeyframe::Type ProjectKeyframe::type() const
 {
-    return kMorphKeyframe;
+    return kProjectKeyframe;
 }
 
-IMorphKeyframe *MorphKeyframe::clone() const
-{
-    return 0;
-}
-
-IMorph::WeightPrecision MorphKeyframe::weight() const
+IProjectKeyframe *ProjectKeyframe::clone() const
 {
     return 0;
 }
 
-void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)
+float32 ProjectKeyframe::gravityFactor() const
+{
+    return 0;
+}
+
+Vector3 ProjectKeyframe::gravityDirection() const
+{
+    kZeroV3;
+}
+
+int ProjectKeyframe::shadowMode() const
+{
+    return 0;
+}
+
+float32 ProjectKeyframe::shadowDistance() const
+{
+    return 0;
+}
+
+float32 ProjectKeyframe::shadowDepth() const
+{
+    return 0;
+}
+
+void ProjectKeyframe::setGravityFactor(float32 value)
 {
 }
 
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-} /* namespace vpvl2 */
+void ProjectKeyframe::setGravityDirection(const Vector3 &value)
+{
+}
+
+void ProjectKeyframe::setShadowMode(int value)
+{
+}
+
+void ProjectKeyframe::setShadowDistance(float32 value)
+{
+}
+
+void ProjectKeyframe::setShadowDepth(float32 value)
+{
+}
+
+} /* namespace project */

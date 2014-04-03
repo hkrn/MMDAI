@@ -1,4 +1,5 @@
 pragma auto_vacuum = 2;
+pragma application_id = 1448105549;
 
 create table `project_preferences` (
   `id` integer not null primary key autoincrement,
@@ -212,15 +213,6 @@ create table `light_keyframe_interpolation_parameters` (
 );
 create index `idx_light_keyframe_interpolation_parameters_fk_parent_keyframe_id` on `light_keyframe_interpolation_parameters` (`parent_keyframe_id`);
 
-create table `model_tracks` (
-  `id` integer not null primary key autoincrement,
-  `parent_motion_id` integer not null,
-  `name` text not null,
-  foreign key (parent_motion_id) references motions (id) on update restrict
-);
-create index `idx_model_tracks_name` on `model_tracks` (`name`);
-create index `idx_model_tracks_fk_parent_motion_id` on `model_tracks` (`parent_motion_id`);
-
 create table `model_layers` (
   `id` integer not null primary key autoincrement,
   `parent_motion_id` integer not null,
@@ -233,7 +225,6 @@ create index `idx_model_layers_fk_parent_motion_id` on `model_layers` (`parent_m
 
 create table `model_keyframes` (
   `id` integer not null primary key autoincrement,
-  `parent_track_id` integer not null,
   `parent_layer_id` integer not null,
   `time_index` integer not null,
   `edge_width` float not null default 1.0,
@@ -245,11 +236,9 @@ create table `model_keyframes` (
   `is_shadow_enabled` integer not null default 1,
   `is_add_blend_enabled` integer not null default 0,
   `is_physics_enabled` integer not null default 1,
-  foreign key (parent_track_id) references model_tracks (id) on update restrict,
   foreign key (parent_layer_id) references model_layers (id) on update restrict
 );
 create index `idx_model_keyframes_time_index` on `model_keyframes` (`time_index`);
-create index `idx_model_keyframes_fk_parent_track_id` on `model_keyframes` (`parent_track_id`);
 create index `idx_model_keyframes_fk_parent_layer_id` on `model_keyframes` (`parent_layer_id`);
 
 create table `model_keyframe_interpolation_parameters` (
@@ -486,17 +475,12 @@ create trigger `delete_model_keyframes_at_deleting_model_layer` before delete on
     delete from `model_keyframes` where `parent_layer_id` = old.id;
   end;
 
-create trigger `delete_model_keyframes_at_deleting_model_tracks` before delete on `model_tracks`
-  begin
-    delete from `model_keyframes` where `parent_track_id` = old.id;
-  end;
-
 create trigger `delete_morph_keyframes_at_deleting_model_layer` before delete on `morph_layers`
   begin
     delete from `morph_keyframes` where `parent_layer_id` = old.id;
   end;
 
-create trigger `delete_morph_keyframes_at_deleting_model_tracks` before delete on `morph_tracks`
+create trigger `delete_morph_keyframes_at_deleting_morph_tracks` before delete on `morph_tracks`
   begin
     delete from `morph_keyframes` where `parent_track_id` = old.id;
   end;
@@ -515,7 +499,6 @@ create trigger `delete_motion_layers_and_keyframes` before delete on `motions`
     delete from `effect_tracks` where `parent_motion_id` = old.id;
     delete from `light_layers` where `parent_motion_id` = old.id;
     delete from `model_layers` where `parent_motion_id` = old.id;
-    delete from `model_tracks` where `parent_motion_id` = old.id;
     delete from `morph_layers` where `parent_motion_id` = old.id;
     delete from `morph_tracks` where `parent_motion_id` = old.id;
     delete from `project_layers` where `parent_motion_id` = old.id;
@@ -527,3 +510,4 @@ insert into motions (`parent_model_id`) select models.id from models where model
 insert into motions (`parent_model_id`) select models.id from models where models.uuid = '{00000000-0000-0000-0000-000000000000}';
 
 pragma user_version = 1;
+

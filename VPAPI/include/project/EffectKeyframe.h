@@ -35,55 +35,48 @@
 
 */
 
-#include <vpvl2/IProjectKeyframe.h>
+#include <vpvl2/IEffectKeyframe.h>
 
-namespace vpvl2
+namespace project
 {
-namespace VPVL2_VERSION_NS
-{
-namespace extensions
-{
-namespace vpdb
-{
-
 class Motion;
 
-class VPVL2_API ProjectKeyframe VPVL2_DECL_FINAL : public IProjectKeyframe {
+class EffectKeyframe : public vpvl2::IEffectKeyframe {
 public:
-    ProjectKeyframe(Motion *parent);
-    ~ProjectKeyframe();
+    EffectKeyframe(Motion *parent);
+    ~EffectKeyframe();
 
-    void read(const uint8 *data);
-    void write(uint8 *data) const;
-    vsize estimateSize() const;
-    const IString *name() const;
+    void read(const vpvl2::uint8 *data);
+    void write(vpvl2::uint8 *data) const;
+    vpvl2::vsize estimateSize() const;
+    const vpvl2::IString *name() const;
     TimeIndex timeIndex() const;
     LayerIndex layerIndex() const;
-    void setName(const IString *value);
+    void setName(const vpvl2::IString *value);
     void setTimeIndex(const TimeIndex &value);
     void setLayerIndex(const LayerIndex &value);
     Type type() const;
 
-    IProjectKeyframe *clone() const;
-    float32 gravityFactor() const;
-    Vector3 gravityDirection() const;
-    int shadowMode() const;
-    float32 shadowDistance() const;
-    float32 shadowDepth() const;
-    void setGravityFactor(float32 value);
-    void setGravityDirection(const Vector3 &value);
-    void setShadowMode(int value);
-    void setShadowDistance(float32 value);
-    void setShadowDepth(float32 value);
+    IEffectKeyframe *clone() const;
+    bool isVisible() const;
+    bool isAddBlendEnabled() const;
+    bool isShadowEnabled() const;
+    vpvl2::float32 scaleFactor() const;
+    vpvl2::float32 opacity() const;
+    vpvl2::IModel *parentModelRef() const;
+    vpvl2::IBone *parentBoneRef() const;
+    void setVisible(bool value);
+    void setAddBlendEnable(bool value);
+    void setShadowEnable(bool value);
+    void setScaleFactor(vpvl2::float32 value);
+    void setOpacity(vpvl2::float32 value);
+    void setParentModelRef(vpvl2::IModel *value);
+    void setParentBoneRef(vpvl2::IBone *value);
 
 private:
     struct PrivateContext;
     PrivateContext *m_context;
 };
 
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-using namespace VPVL2_VERSION_NS;
+} /* namespace project */
 
-} /* namespace vpvl2 */

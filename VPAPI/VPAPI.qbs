@@ -44,8 +44,8 @@ StaticLibrary {
     readonly property string libraryInstallDirectory: libraryBuildDirectory + "/install-root"
     name: "VPAPI"
     files: [
-        "src/*.cc",
-        "include/*.h"
+        "src/**/*.cc",
+        "include/**/*.h"
     ].map(function(path){ return FileInfo.joinPaths(sourceDirectory, path) })
     cpp.includePaths: [ buildDirectory ].concat([
         "include",
@@ -72,5 +72,5 @@ StaticLibrary {
     }
     Depends { name: "cpp" }
     Depends { name: "vpvl2" }
-    Depends { name: "Qt"; submodules: [ "core", "gui", "qml", "quick" ] }
+    Depends { name: "Qt"; submodules: [ "core", "gui", "qml", "quick", "sql" ] }
 }

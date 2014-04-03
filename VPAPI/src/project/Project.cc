@@ -36,10 +36,10 @@
 */
 
 #include <vpvl2/vpvl2.h>
-#include <vpvl2/extensions/vpdb/Motion.h>
-#include <vpvl2/extensions/vpdb/Project.h>
+#include <project/Motion.h>
+#include <project/Project.h>
 
-#include "sqlite3.h"
+#include <QtSql>
 
 namespace {
 
@@ -48,13 +48,7 @@ namespace {
 
 }
 
-namespace vpvl2
-{
-namespace VPVL2_VERSION_NS
-{
-namespace extensions
-{
-namespace vpdb
+namespace project
 {
 
 struct Project::PrivateContext {
@@ -64,87 +58,56 @@ struct Project::PrivateContext {
         void (*downgrade)(PrivateContext *ctx);
     };
 
-    PrivateContext()
-        : db(0)
+    PrivateContext(QSqlDatabase *db)
+        : databaseHandle(db)
     {
+        Q_ASSERT(databaseHandle);
     }
     ~PrivateContext() {
-        sqlite3_close(db);
-        db = 0;
+        databaseHandle->close();
     }
 
-    static int handleVersion(void *self, int /* argc */, char **argv, char ** /* columns */) {
-        PrivateContext *ctx = static_cast<PrivateContext *>(self);
-        ctx->version = int(strtol(argv[0], 0, 10));
-        return 0;
-    }
     static void createProjectTables(PrivateContext *ctx) {
-        ctx->executeQuery(reinterpret_cast<const char *>(g_create_project_tables_sql), 0);
+        QSqlQuery query(*ctx->databaseHandle);
+        query.exec(reinterpret_cast<const char *>(g_create_project_tables_sql));
     }
     static void dropProjectTables(PrivateContext *ctx) {
-        ctx->executeQuery(reinterpret_cast<const char *>(g_drop_project_tables_sql), 0);
+        QSqlQuery query(*ctx->databaseHandle);
+        query.exec(reinterpret_cast<const char *>(g_drop_project_tables_sql));
     }
 
-    bool executeQuery(const char *query, sqlite3_callback callback) {
-        char *errmsg = 0;
-        int rc = sqlite3_exec(db, query, callback, this, &errmsg);
-        if (rc != SQLITE_OK) {
-            VPVL2_LOG(WARNING, "Cannot execute query: " << errmsg);
-            sqlite3_free(errmsg);
-            return false;
-        }
-        return true;
-    }
-    bool beginTransaction() {
-        return executeQuery("begin transaction;", 0);
-    }
-    bool commitTransaction() {
-        return executeQuery("commit transaction;", 0);
-    }
-    bool open(const char *filename) {
-        int rc = sqlite3_open_v2(filename, &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_PRIVATECACHE, 0);
-        if (rc != SQLITE_OK) {
-            VPVL2_LOG(WARNING, "Cannot open database: " << sqlite3_errmsg(db));
-            return false;
-        }
-        if (!executeQuery("pragma user_version;", &PrivateContext::handleVersion)) {
-            return false;
-        }
-        upgrade(kLatestSchemaVersion);
-        return true;
-    }
     void upgrade(int versionTo) {
         static Migration migrations[] = {
             { &PrivateContext::createProjectTables, &PrivateContext::dropProjectTables }
         };
         const int destination = std::min(versionTo, int(sizeof(migrations) / sizeof(migrations[0])));
-        beginTransaction();
+        databaseHandle->transaction();
         for (int i = version; i < destination; i++) {
             const Migration &m = migrations[i];
             m.upgrade(this);
         }
-        commitTransaction();
+        databaseHandle->commit();
     }
     void downgrade(int versionTo) {
         static Migration migrations[] = {
             { &PrivateContext::createProjectTables, &PrivateContext::dropProjectTables }
         };
         const int destination = std::max(versionTo, 0);
-        beginTransaction();
+        databaseHandle->transaction();
         for (int i = version - 1; i >= destination; i--) {
             const Migration &m = migrations[i];
             m.downgrade(this);
         }
-        commitTransaction();
+        databaseHandle->commit();
     }
 
-    sqlite3 *db;
+    QSqlDatabase *databaseHandle;
     int version;
 };
 
-Project::Project(bool ownMemory)
+Project::Project(QSqlDatabase *database, bool ownMemory)
     : Scene(ownMemory),
-      m_context(new PrivateContext())
+      m_context(new PrivateContext(database))
 {
 }
 
@@ -156,7 +119,15 @@ Project::~Project()
 
 bool Project::load(const char *filename)
 {
-    return m_context->open(filename);
+    m_context->databaseHandle->setDatabaseName(filename);
+    if (m_context->databaseHandle->open()) {
+        m_context->upgrade(PrivateContext::kLatestSchemaVersion);
+        QSqlQuery query(*m_context->databaseHandle);
+        query.exec("pragma user_version;");
+        m_context->version = query.value(0).toInt();
+        return true;
+    }
+    return false;
 }
 
 bool Project::save(const char * /* filename */)
@@ -168,7 +139,9 @@ void Project::clear()
 {
 }
 
-} /* namespace vpdb */
-} /* namespace extensions */
-} /* namespace VPVL2_VERSION_NS */
-} /* namespace vpvl2 */
+QSqlDatabase *Project::databaseHandle() const
+{
+    return m_context->databaseHandle;
+}
+
+} /* namespace project */
