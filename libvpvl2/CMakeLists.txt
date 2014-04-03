@@ -5,7 +5,7 @@ project(libvpvl2)
 
 # library version setting
 set(VPVL2_VERSION_MAJOR 0)
-set(VPVL2_VERSION_COMPAT 34)
+set(VPVL2_VERSION_COMPAT 35)
 set(VPVL2_VERSION_MINOR 0)
 set(VPVL2_COMMIT_REVISION_ID "$Id$")
 set(VPVL2_PROJECT_NAME "vpvl2")
