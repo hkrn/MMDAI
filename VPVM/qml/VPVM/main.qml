@@ -65,7 +65,7 @@ ApplicationWindow {
     function __handleRequestedFileUrlChange() {
         var fileUrl = applicationBootstrapOption.requestedFileUrl, fileUrlString = fileUrl.toString()
         if (/\.(?:pm[xd]|x)$/i.test(fileUrlString)) {
-            scene.project.loadModel(fileUrl)
+            scene.project.loadModelFromFile(fileUrl)
         }
         else if (/\.(?:vmd|mvd)$/.test(fileUrlString)) {
             scene.project.loadMotion(fileUrl, scene.currentModel, VPVM.Project.ModelMotion)
@@ -291,7 +291,7 @@ ApplicationWindow {
             qsTr("DirectX Model File (*.x)")
         ]
         selectExisting: true
-        onAccepted: scene.project.loadModel(addModelDialog.fileUrl)
+        onAccepted: scene.project.loadModelFromFile(addModelDialog.fileUrl)
         onRejected: motionCreateablesList.currentIndex = 0
     }
     Action {
@@ -307,7 +307,7 @@ ApplicationWindow {
             qsTr("Effect File (*.glslfx)")
         ]
         selectExisting: true
-        onAccepted: scene.project.loadEffect(addEffectDialog.fileUrl)
+        onAccepted: scene.project.loadEffectFromFile(addEffectDialog.fileUrl)
         onRejected: motionCreateablesList.currentIndex = 0
     }
     Action {

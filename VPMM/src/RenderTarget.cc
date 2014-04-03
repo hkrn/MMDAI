@@ -821,7 +821,7 @@ void RenderTarget::loadJson(const QUrl &fileUrl)
                     const QJsonObject &item = v.toObject();
                     fileInfo.setFile(item.value("path").toString());
                     if (fileInfo.exists() && fileInfo.isFile()) {
-                        m_projectProxyRef->loadEffect(QUrl::fromLocalFile(fileInfo.absoluteFilePath()));
+                        m_projectProxyRef->loadEffectFromFile(QUrl::fromLocalFile(fileInfo.absoluteFilePath()));
                     }
                 }
             }

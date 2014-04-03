@@ -496,7 +496,7 @@ Item {
                 if (drop.hasUrls) {
                     for (var i in drop.urls) {
                         var url = drop.urls[i]
-                        project.loadModel(url)
+                        project.loadModelFromFile(url)
                     }
                 }
             }

@@ -61,6 +61,9 @@ public:
 
     QStringList nameFilters() const;
 
+signals:
+    void modelBufferDidGenerate(const QByteArray &bytes);
+
 private slots:
     void internalLoadModel(vpvl2::IModel *model, const QUrl &fileUrl, const QString errorString);
 

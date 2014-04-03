@@ -230,8 +230,9 @@ public:
 public slots:
     Q_INVOKABLE ModelProxy *findModel(const QUuid &uuid);
     Q_INVOKABLE MotionProxy *findMotion(const QUuid &uuid);
-    Q_INVOKABLE void loadModel(const QUrl &fileUrl);
-    Q_INVOKABLE void loadEffect(const QUrl &fileUrl);
+    Q_INVOKABLE void loadModelFromFile(const QUrl &fileUrl);
+    Q_INVOKABLE void loadEffectFromFile(const QUrl &fileUrl);
+    Q_INVOKABLE void loadModelFromBuffer(const QByteArray &bytes);
     Q_INVOKABLE void addModel(ModelProxy *value);
     Q_INVOKABLE void deleteModel(ModelProxy *value);
     Q_INVOKABLE void initializeMotion(ModelProxy *modelProxy, MotionType type, MotionProxy::FormatType format = MotionProxy::VMDFormat);

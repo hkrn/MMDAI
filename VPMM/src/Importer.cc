@@ -74,28 +74,33 @@ private:
         Assimp::Importer importer;
         QScopedPointer<IModel> model(m_factoryRef->newModel(IModel::kPMXModel));
         const QByteArray path = m_fileUrl.toLocalFile().toUtf8();
-        if (const aiScene *scene = importer.ReadFile(path.constData(), aiProcessPreset_TargetRealtime_Quality)) {
-            QHash<int, int> material2Indices;
-            Array<int> indices;
-            int numIndices = 0;
+        if (const aiScene *scene = importer.ReadFile(path.constData(), aiProcessPreset_TargetRealtime_MaxQuality)) {
             const int nmeshes = scene->mNumMeshes;
+            typedef QMultiHash<int, const aiMesh *> Material2MeshesHash;
+            Material2MeshesHash material2Meshes;
             for (int i = 0; i < nmeshes; i++) {
                 const aiMesh *mesh = scene->mMeshes[i];
                 convertBones(mesh, model);
-                convertIndices(mesh, numIndices, indices);
                 convertVertices(mesh, model);
-                if (!material2Indices.contains(mesh->mMaterialIndex)) {
-                    material2Indices.insert(mesh->mMaterialIndex, numIndices);
-                }
+                material2Meshes.insert(mesh->mMaterialIndex, mesh);
             }
-            model->setIndices(indices);
-            IMaterial::IndexRange range;
             const int nmaterials = scene->mNumMaterials;
+            IMaterial::IndexRange range;
+            Array<int> allIndices;
+            int numMeshIndices = 0;
+            Material2MeshesHash::ConstIterator end = material2Meshes.end();
             for (int i = 0; i < nmaterials; i++) {
                 const aiMaterial *material = scene->mMaterials[i];
-                range.count = material2Indices.value(i);
-                convertMaterial(material, range, model);
+                Material2MeshesHash::ConstIterator it = material2Meshes.find(i);
+                while (it != end && it.key() == i) {
+                    const aiMesh *mesh = it.value();
+                    convertIndices(mesh, numMeshIndices, allIndices);
+                    range.count += numMeshIndices;
+                    convertMaterial(material, range, model);
+                    ++it;
+                }
             }
+            model->setIndices(allIndices);
             setModelInfo(model);
             emit modelDidLoad(model.take(), m_fileUrl, QString());
         }
@@ -133,18 +138,18 @@ private:
             }
         }
     }
-    void convertIndices(const aiMesh *mesh, int &numIndices, Array<int> &indices) {
+    void convertIndices(const aiMesh *mesh, int &numMeshIndices, Array<int> &allIndices) {
+        numMeshIndices = 0;
         if (mesh->HasFaces()) {
             const int nfaces = mesh->mNumFaces;
-            numIndices = 0;
             for (int i = 0; i < nfaces; i++) {
                 const aiFace &face = mesh->mFaces[i];
                 const int nindices = face.mNumIndices;
                 for (int j = 0; j < nindices; j++) {
                     int index = face.mIndices[j];
-                    indices.append(index);
+                    allIndices.append(index);
                 }
-                numIndices += nindices;
+                numMeshIndices += nindices;
             }
         }
     }
@@ -161,7 +166,8 @@ private:
                     vertex->setNormal(Vector3(normal.x, normal.y, normal.z));
                 }
                 if (mesh->HasTangentsAndBitangents()) {
-                    //const aiVector3D &tangent = mesh->mTangents[i];
+                    // const aiVector3D &tangent = mesh->mTangents[i];
+                    // const aiVector3D &bitangent = mesh->mBitangents[i];
                 }
                 if (mesh->HasTextureCoords(0)) {
                     const aiVector3D &texcoord = mesh->mTextureCoords[0][i];
@@ -199,13 +205,24 @@ private:
         material->setShininess(shininess);
         sourceMaterial->Get(AI_MATKEY_TWOSIDED, twoside);
         material->setCullingDisabled(twoside != 0);
-        sourceMaterial->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath);
-        string.reset(String::create(texturePath.C_Str()));
-        material->setMainTexture(string.data());
+        const int ntextures = sourceMaterial->GetTextureCount(aiTextureType_DIFFUSE);
+        for (int i = 0; i < ntextures; i++) {
+            aiTextureMapping mapping;
+            sourceMaterial->GetTexture(aiTextureType_DIFFUSE, i, &texturePath, &mapping);
+            if (mapping == aiTextureMapping_SPHERE) {
+                string.reset(String::create(texturePath.C_Str()));
+                material->setSphereTexture(string.data());
+            }
+            else if (mapping == aiTextureMapping_UV) {
+                string.reset(String::create(texturePath.C_Str()));
+                material->setMainTexture(string.data());
+            }
+        }
         range.end = range.start + range.count;
-        material->setIndexRange(range);
         range.start += range.count;
+        material->setIndexRange(range);
         model->addMaterial(material.take());
+        range.count = 0;
     }
 
     const Factory *m_factoryRef;
@@ -230,6 +247,7 @@ Importer::~Importer()
 
 void Importer::importModel(const QUrl &url)
 {
+    connect(this, &Importer::modelBufferDidGenerate, m_projectRef, &ProjectProxy::loadModelFromBuffer);
     Worker *worker = new Worker(m_projectRef->factoryInstanceRef(), url, this);
     connect(worker, &Worker::modelDidLoad, this, &Importer::internalLoadModel);
     QThreadPool::globalInstance()->start(worker);
@@ -240,21 +258,15 @@ QStringList Importer::nameFilters() const
     return m_nameFilters;
 }
 
-void Importer::internalLoadModel(IModel *model, const QUrl &fileUrl, const QString errorString)
+void Importer::internalLoadModel(IModel *model, const QUrl & /* fileUrl */, const QString errorString)
 {
-    if (model) {
+    QScopedPointer<IModel> modelPtr(model);
+    if (modelPtr) {
         QByteArray bytes;
-        vsize written;
-        bytes.reserve(model->estimateSize());
-        model->save(reinterpret_cast<uint8 *>(bytes.data()), written);
-        QDir dir(fileUrl.toLocalFile());
-        dir.cdUp();
-        QFile file(dir.absoluteFilePath("test.pmx"));
-        qDebug() << file.fileName();
-        file.open(QFile::WriteOnly);
-        file.write(bytes.constData(), written);
-        file.close();
-        delete model;
+        vsize size = modelPtr->estimateSize();
+        bytes.resize(size);
+        modelPtr->save(reinterpret_cast<uint8 *>(bytes.data()), size);
+        emit modelBufferDidGenerate(bytes);
     }
     else {
         VPVL2_LOG(WARNING, "Failed importing the model: " << errorString.toStdString());

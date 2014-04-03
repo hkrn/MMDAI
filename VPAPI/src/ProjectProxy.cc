@@ -381,12 +381,21 @@ MotionProxy *ProjectProxy::findMotion(const QUuid &uuid)
     return m_uuid2MotionProxyRefs.value(uuid);
 }
 
-void ProjectProxy::loadModel(const QUrl &fileUrl)
+void ProjectProxy::loadModelFromFile(const QUrl &fileUrl)
 {
     ModelLoader *loader = new ModelLoader(m_factory.data(), fileUrl, false, this);
     connect(loader, &ModelLoader::modelDidLoad, this, &ProjectProxy::internalLoadModelAsync);
     QThreadPool::globalInstance()->start(loader);
     emit modelDidStartLoading();
+}
+
+void ProjectProxy::loadModelFromBuffer(const QByteArray &bytes)
+{
+    bool ok = false;
+    QScopedPointer<IModel> model(m_factory->createModel(reinterpret_cast<const uint8 *>(bytes.data()), bytes.size(), ok));
+    if (ok) {
+        internalLoadModelAsync(model.take(), QUrl(), true, QString());
+    }
 }
 
 void ProjectProxy::addModel(ModelProxy *value)
@@ -972,7 +981,7 @@ void ProjectProxy::updateParentBindingModel()
     emit parentBindingDidUpdate();
 }
 
-void ProjectProxy::loadEffect(const QUrl &fileUrl)
+void ProjectProxy::loadEffectFromFile(const QUrl &fileUrl)
 {
     QUndoStack *stack = new QUndoStack(m_undoGroup.data());
     ModelProxy *modelProxy = new ModelProxy(this, m_factory->newModel(IModel::kPMXModel), QUuid::createUuid(), fileUrl, QUrl(), stack);
