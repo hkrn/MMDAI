@@ -43,7 +43,7 @@ class Motion;
 
 class ProjectKeyframe : public vpvl2::IProjectKeyframe {
 public:
-    ProjectKeyframe(Motion *parent);
+    ProjectKeyframe(Motion *parent, int rowID);
     ~ProjectKeyframe();
 
     void read(const vpvl2::uint8 *data);
@@ -68,6 +68,9 @@ public:
     void setShadowMode(int value);
     void setShadowDistance(vpvl2::float32 value);
     void setShadowDepth(vpvl2::float32 value);
+
+    int rowID() const;
+    void setRowID(int value);
 
 private:
     struct PrivateContext;

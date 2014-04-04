@@ -43,7 +43,7 @@ class Motion;
 
 class BoneKeyframe : public vpvl2::IBoneKeyframe {
 public:
-    BoneKeyframe(Motion *parent);
+    BoneKeyframe(Motion *parent, int rowID);
     ~BoneKeyframe();
 
     void read(const vpvl2::uint8 *data);
@@ -65,6 +65,9 @@ public:
     vpvl2::Quaternion localOrientation() const;
     void setLocalTranslation(const vpvl2::Vector3 &value);
     void setLocalOrientation(const vpvl2::Quaternion &value);
+
+    int rowID() const;
+    void setRowID(int value);
 
 private:
     struct PrivateContext;

@@ -43,7 +43,7 @@ class Motion;
 
 class ModelKeyframe : public vpvl2::IModelKeyframe {
 public:
-    ModelKeyframe(Motion *parent);
+    ModelKeyframe(Motion *parent, int rowID);
     ~ModelKeyframe();
 
     void read(const vpvl2::uint8 *data);
@@ -74,6 +74,9 @@ public:
     void setEdgeWidth(const vpvl2::IVertex::EdgeSizePrecision &value);
     void setEdgeColor(const vpvl2::Color &value);
     void setInverseKinematicsEnable(vpvl2::IBone *bone, bool value);
+
+    int rowID() const;
+    void setRowID(int value);
 
 private:
     struct PrivateContext;

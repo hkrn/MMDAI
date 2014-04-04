@@ -44,19 +44,22 @@ namespace project
 {
 
 struct LightKeyframe::PrivateContext {
-    PrivateContext(Motion *parent)
-        : m_parentMotionRef(parent)
+    PrivateContext(Motion *parent, int id)
+        : parentMotionRef(parent),
+          rowID(id)
     {
     }
     ~PrivateContext() {
-        m_parentMotionRef = 0;
+        parentMotionRef = 0;
+        rowID = -1;
     }
 
-    Motion *m_parentMotionRef;
+    Motion *parentMotionRef;
+    int rowID;
 };
 
-LightKeyframe::LightKeyframe(Motion *parent)
-    : m_context(new PrivateContext(parent))
+LightKeyframe::LightKeyframe(Motion *parent, int rowID)
+    : m_context(new PrivateContext(parent, rowID))
 {
 }
 
@@ -131,6 +134,16 @@ void LightKeyframe::setColor(const Vector3 &value)
 
 void LightKeyframe::setDirection(const Vector3 &value)
 {
+}
+
+int LightKeyframe::rowID() const
+{
+    return m_context->rowID;
+}
+
+void LightKeyframe::setRowID(int value)
+{
+    m_context->rowID = value;
 }
 
 } /* namespace project */

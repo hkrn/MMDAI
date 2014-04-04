@@ -43,7 +43,7 @@ class Motion;
 
 class LightKeyframe : public vpvl2::ILightKeyframe {
 public:
-    LightKeyframe(Motion *parent);
+    LightKeyframe(Motion *parent, int rowID);
     ~LightKeyframe();
 
     void read(const vpvl2::uint8 *data);
@@ -62,6 +62,9 @@ public:
     vpvl2::Vector3 direction() const;
     void setColor(const vpvl2::Vector3 &value);
     void setDirection(const vpvl2::Vector3 &value);
+
+    int rowID() const;
+    void setRowID(int value);
 
 private:
     struct PrivateContext;

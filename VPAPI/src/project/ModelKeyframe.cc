@@ -45,19 +45,22 @@ namespace project
 {
 
 struct ModelKeyframe::PrivateContext {
-    PrivateContext(Motion *parent)
-        : m_parentMotionRef(parent)
+    PrivateContext(Motion *parent, int id)
+        : parentMotionRef(parent),
+          rowID(id)
     {
     }
     ~PrivateContext() {
-        m_parentMotionRef = 0;
+        parentMotionRef = 0;
+        rowID = -1;
     }
 
-    Motion *m_parentMotionRef;
+    Motion *parentMotionRef;
+    int rowID;
 };
 
-ModelKeyframe::ModelKeyframe(Motion *parent)
-    : m_context(new PrivateContext(parent))
+ModelKeyframe::ModelKeyframe(Motion *parent, int rowID)
+    : m_context(new PrivateContext(parent, rowID))
 {
 }
 
@@ -186,6 +189,16 @@ void ModelKeyframe::setEdgeColor(const Color &value)
 
 void ModelKeyframe::setInverseKinematicsEnable(IBone *bone, bool value)
 {
+}
+
+int ModelKeyframe::rowID() const
+{
+    return m_context->rowID;
+}
+
+void ModelKeyframe::setRowID(int value)
+{
+    m_context->rowID = value;
 }
 
 } /* namespace project */

@@ -44,7 +44,7 @@ class Motion;
 
 class MorphKeyframe : public vpvl2::IMorphKeyframe {
 public:
-    MorphKeyframe(Motion *parent);
+    MorphKeyframe(Motion *paren, int rowID);
     ~MorphKeyframe();
 
     void read(const vpvl2::uint8 *data);
@@ -61,6 +61,9 @@ public:
     IMorphKeyframe *clone() const;
     vpvl2::IMorph::WeightPrecision weight() const;
     void setWeight(const vpvl2::IMorph::WeightPrecision &value);
+
+    int rowID() const;
+    void setRowID(int value);
 
 private:
     struct PrivateContext;

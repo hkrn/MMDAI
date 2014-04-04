@@ -45,19 +45,22 @@ namespace project
 {
 
 struct CameraKeyframe::PrivateContext {
-    PrivateContext(Motion *parent)
-        : m_parentMotionRef(parent)
+    PrivateContext(Motion *parent, int id)
+        : parentMotionRef(parent),
+          rowID(id)
     {
     }
     ~PrivateContext() {
-        m_parentMotionRef = 0;
+        parentMotionRef = 0;
+        rowID = -1;
     }
 
-    Motion *m_parentMotionRef;
+    Motion *parentMotionRef;
+    int rowID;
 };
 
-CameraKeyframe::CameraKeyframe(Motion *parent)
-    : m_context(new PrivateContext(parent))
+CameraKeyframe::CameraKeyframe(Motion *parent, int rowID)
+    : m_context(new PrivateContext(parent, rowID))
 {
 }
 
@@ -171,6 +174,16 @@ void CameraKeyframe::setFov(const Scalar &value)
 
 void CameraKeyframe::setPerspective(bool value)
 {
+}
+
+int CameraKeyframe::rowID() const
+{
+    return m_context->rowID;
+}
+
+void CameraKeyframe::setRowID(int value)
+{
+    m_context->rowID = value;
 }
 
 } /* namespace project */

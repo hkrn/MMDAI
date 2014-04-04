@@ -44,19 +44,22 @@ namespace project
 {
 
 struct ProjectKeyframe::PrivateContext {
-    PrivateContext(Motion *parent)
-        : m_parentMotionRef(parent)
+    PrivateContext(Motion *parent, int id)
+        : parentMotionRef(parent),
+          rowID(id)
     {
     }
     ~PrivateContext() {
-        m_parentMotionRef = 0;
+        parentMotionRef = 0;
+        rowID = -1;
     }
 
-    Motion *m_parentMotionRef;
+    Motion *parentMotionRef;
+    int rowID;
 };
 
-ProjectKeyframe::ProjectKeyframe(Motion *parent)
-    : m_context(new PrivateContext(parent))
+ProjectKeyframe::ProjectKeyframe(Motion *parent, int rowID)
+    : m_context(new PrivateContext(parent, rowID))
 {
 }
 
@@ -158,6 +161,16 @@ void ProjectKeyframe::setShadowDistance(float32 value)
 
 void ProjectKeyframe::setShadowDepth(float32 value)
 {
+}
+
+int ProjectKeyframe::rowID() const
+{
+    return m_context->rowID;
+}
+
+void ProjectKeyframe::setRowID(int value)
+{
+    m_context->rowID = value;
 }
 
 } /* namespace project */

@@ -43,7 +43,7 @@ class Project;
 
 class Motion : public vpvl2::IMotion {
 public:
-    Motion(Project *parent);
+    Motion(Project *parent, int rowID);
     ~Motion();
 
     bool load(const vpvl2::uint8 *data, vpvl2::vsize size);
@@ -111,6 +111,8 @@ public:
     vpvl2::Scene *parentSceneRef() const;
     const vpvl2::IString *name() const;
     vpvl2::IMotion::FormatType type() const;
+
+    int rowID() const;
 
 private:
     struct PrivateContext;

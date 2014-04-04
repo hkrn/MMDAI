@@ -43,7 +43,7 @@ class Motion;
 
 class CameraKeyframe : public vpvl2::ICameraKeyframe {
 public:
-    CameraKeyframe(Motion *parent);
+    CameraKeyframe(Motion *parent, int rowID);
     ~CameraKeyframe();
 
     void read(const vpvl2::uint8 *data);
@@ -71,6 +71,9 @@ public:
     void setDistance(const vpvl2::Scalar &value);
     void setFov(const vpvl2::Scalar &value);
     void setPerspective(bool value);
+
+    int rowID() const;
+    void setRowID(int value);
 
 private:
     struct PrivateContext;

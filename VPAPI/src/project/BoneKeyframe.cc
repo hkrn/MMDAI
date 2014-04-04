@@ -45,19 +45,22 @@ namespace project
 {
 
 struct BoneKeyframe::PrivateContext {
-    PrivateContext(Motion *parent)
-        : m_parentMotionRef(parent)
+    PrivateContext(Motion *parent, int id)
+        : parentMotionRef(parent),
+          rowID(id)
     {
     }
     ~PrivateContext() {
-        m_parentMotionRef = 0;
+        parentMotionRef = 0;
+        rowID = -1;
     }
 
-    Motion *m_parentMotionRef;
+    Motion *parentMotionRef;
+    int rowID;
 };
 
-BoneKeyframe::BoneKeyframe(Motion *parent)
-    : m_context(new PrivateContext(parent))
+BoneKeyframe::BoneKeyframe(Motion *parent, int rowID)
+    : m_context(new PrivateContext(parent, rowID))
 {
 }
 
@@ -144,6 +147,16 @@ void BoneKeyframe::setLocalTranslation(const Vector3 &value)
 
 void BoneKeyframe::setLocalOrientation(const Quaternion &value)
 {
+}
+
+int BoneKeyframe::rowID() const
+{
+    return m_context->rowID;
+}
+
+void BoneKeyframe::setRowID(int value)
+{
+    m_context->rowID = value;
 }
 
 } /* namespace project */

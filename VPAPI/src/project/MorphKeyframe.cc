@@ -45,19 +45,22 @@ namespace project
 {
 
 struct MorphKeyframe::PrivateContext {
-    PrivateContext(Motion *parent)
-        : m_parentMotionRef(parent)
+    PrivateContext(Motion *parent, int id)
+        : parentMotionRef(parent),
+          rowID(id)
     {
     }
     ~PrivateContext() {
-        m_parentMotionRef = 0;
+        parentMotionRef = 0;
+        rowID = -1;
     }
 
-    Motion *m_parentMotionRef;
+    Motion *parentMotionRef;
+    int rowID;
 };
 
-MorphKeyframe::MorphKeyframe(Motion *parent)
-    : m_context(new PrivateContext(parent))
+MorphKeyframe::MorphKeyframe(Motion *parent, int rowID)
+    : m_context(new PrivateContext(parent, rowID))
 {
 }
 
@@ -123,6 +126,16 @@ IMorph::WeightPrecision MorphKeyframe::weight() const
 
 void MorphKeyframe::setWeight(const IMorph::WeightPrecision &value)
 {
+}
+
+int MorphKeyframe::rowID() const
+{
+    return m_context->rowID;
+}
+
+void MorphKeyframe::setRowID(int value)
+{
+    m_context->rowID = value;
 }
 
 } /* namespace project */

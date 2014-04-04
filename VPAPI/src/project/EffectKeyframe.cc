@@ -45,19 +45,22 @@ namespace project
 {
 
 struct EffectKeyframe::PrivateContext {
-    PrivateContext(Motion *parent)
-        : m_parentMotionRef(parent)
+    PrivateContext(Motion *parent, int id)
+        : parentMotionRef(parent),
+          rowID(id)
     {
     }
     ~PrivateContext() {
-        m_parentMotionRef = 0;
+        parentMotionRef = 0;
+        rowID = -1;
     }
 
-    Motion *m_parentMotionRef;
+    Motion *parentMotionRef;
+    int rowID;
 };
 
-EffectKeyframe::EffectKeyframe(Motion *parent)
-    : m_context(new PrivateContext(parent))
+EffectKeyframe::EffectKeyframe(Motion *parent, int rowID)
+    : m_context(new PrivateContext(parent, rowID))
 {
 }
 
@@ -177,6 +180,16 @@ void EffectKeyframe::setParentModelRef(IModel *value)
 
 void EffectKeyframe::setParentBoneRef(IBone *value)
 {
+}
+
+int EffectKeyframe::rowID() const
+{
+    return m_context->rowID;
+}
+
+void EffectKeyframe::setRowID(int value)
+{
+    m_context->rowID = value;
 }
 
 } /* namespace project */

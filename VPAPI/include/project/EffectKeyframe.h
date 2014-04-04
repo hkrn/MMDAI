@@ -43,7 +43,7 @@ class Motion;
 
 class EffectKeyframe : public vpvl2::IEffectKeyframe {
 public:
-    EffectKeyframe(Motion *parent);
+    EffectKeyframe(Motion *parent, int rowID);
     ~EffectKeyframe();
 
     void read(const vpvl2::uint8 *data);
@@ -72,6 +72,9 @@ public:
     void setOpacity(vpvl2::float32 value);
     void setParentModelRef(vpvl2::IModel *value);
     void setParentBoneRef(vpvl2::IBone *value);
+
+    int rowID() const;
+    void setRowID(int value);
 
 private:
     struct PrivateContext;
