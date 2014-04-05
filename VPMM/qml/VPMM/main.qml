@@ -84,6 +84,18 @@ ApplicationWindow {
         applicationPreference.sync()
         Qt.quit()
     }
+    MessageDialog {
+        id: confirmSavingModelBeforeClosingDialog
+        title: qsTr("The model has been modified.")
+        text: qsTr("Do you want to save your changes of %1?").arg(scene.currentModel.name)
+        icon: StandardIcon.Question
+        standardButtons: StandardButton.Save | StandardButton.Discard | StandardButton.Cancel
+        onAccepted: {
+            saveModelAction.trigger()
+            exitApplication()
+        }
+        onDiscard: exitApplication()
+    }
     Component.onCompleted: {
         scene.project.initializeOnce(true)
         updateWindowRect()
@@ -263,7 +275,7 @@ ApplicationWindow {
         shortcut: "Ctrl+Q"
         onTriggered: {
             if (scene.project.dirty) {
-                confirmSavingProjectBeforeClosingDialog.open()
+                confirmSavingModelBeforeClosingDialog.open()
             }
             else {
                 exitApplication()

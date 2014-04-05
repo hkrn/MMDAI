@@ -145,12 +145,13 @@ extern void installCrashReporter(const Preference &preference);
 
 int main(int argc, char *argv[])
 {
+    static const QString kApplicationName = QStringLiteral("VPMM");
     QCommandLineParser parser;
-    parser.setApplicationDescription(QApplication::tr("VPMM (a.k.a MMDAI2) is an application to import/edit model like PMXEditor (PMXE)"));
+    parser.setApplicationDescription(QApplication::tr("%1 is an application to import/edit model like PMXEditor (PMXE)").arg(kApplicationName));
     Application application(&parser, argc, argv);
     setApplicationDescription("VPMM", application);
     QTranslator translator;
-    translator.load(QLocale::system(), "VPMM", ".", Util::resourcePath("translations"), ".qm");
+    translator.load(QLocale::system(), kApplicationName, ".", Util::resourcePath("translations"), ".qm");
     application.installTranslator(&translator);
 
     Preference applicationPreference;
@@ -172,9 +173,9 @@ int main(int argc, char *argv[])
     g_loggingThread.setDirectory(loggingDirectory);
     QThreadPool::globalInstance()->start(&g_loggingThread);
 #ifdef QT_NO_DEBUG
-    engine.load(QUrl("qrc:///qml/VPMM/main.qml"));
+    engine.load(QUrl(QStringLiteral("qrc:///qml/%1/main.qml").arg(kApplicationName)));
 #else
-    engine.load(Util::resourcePath("qml/VPMM/main.qml"));
+    engine.load(Util::resourcePath(QStringLiteral("qml/%1/main.qml").arg(kApplicationName)));
 #endif
     displayApplicationWindow(engine.rootObjects().value(0), applicationPreference.samples());
 

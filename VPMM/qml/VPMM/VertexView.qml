@@ -253,7 +253,7 @@ Item {
             }
         }
         GroupBox {
-            title: qsTr("Weight")
+            title: qsTr("Bone Weight Mapping")
             Layout.fillWidth: true
             ColumnLayout {
                 RowLayout {

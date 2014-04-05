@@ -138,12 +138,13 @@ extern void installCrashReporter(const Preference &preference);
 
 int main(int argc, char *argv[])
 {
+    static const QString kApplicationName = QStringLiteral("VPVM");
     QCommandLineParser parser;
-    parser.setApplicationDescription(QApplication::tr("VPVM (a.k.a MMDAI2) is an application to create/edit motion like MikuMikuDance (MMD)"));
+    parser.setApplicationDescription(QApplication::tr("%1 (a.k.a MMDAI2) is an application to create/edit motion like MikuMikuDance (MMD)").arg(kApplicationName));
     Application application(&parser, argc, argv);
-    setApplicationDescription("VPVM", application);
+    setApplicationDescription(kApplicationName, application);
     QTranslator translator;
-    translator.load(QLocale::system(), "VPVM", ".", Util::resourcePath("translations"), ".qm");
+    translator.load(QLocale::system(), kApplicationName, ".", Util::resourcePath("translations"), ".qm");
     application.installTranslator(&translator);
 
     Preference applicationPreference;
@@ -166,9 +167,9 @@ int main(int argc, char *argv[])
     g_loggingThread.setDirectory(loggingDirectory);
     QThreadPool::globalInstance()->start(&g_loggingThread);
 #ifdef QT_NO_DEBUG
-    engine.load(QUrl("qrc:///qml/VPVM/main.qml"));
+    engine.load(QUrl(QStringLiteral("qrc:///qml/%1/main.qml").arg(kApplicationName)));
 #else
-    engine.load(Util::resourcePath("qml/VPVM/main.qml"));
+    engine.load(Util::resourcePath(QStringLiteral("qml/%1/main.qml").arg(kApplicationName)));
 #endif
     displayApplicationWindow(engine.rootObjects().value(0), applicationPreference.samples());
 
