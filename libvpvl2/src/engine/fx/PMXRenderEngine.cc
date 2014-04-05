@@ -544,6 +544,7 @@ void PMXRenderEngine::renderModel(IEffect::Pass *overridePass)
     getDrawPrimitivesCommand(command);
     for (int i = 0; i < nmaterials; i++) {
         const IMaterial *material = materials[i];
+        const int nindices = material->indexRange().count;
         if (material->isVisible()) {
             const MaterialContext &materialContext = m_materialContexts[i];
             const ITexture *mainTextureRef = materialContext.mainTextureRef, *sphereTextureRef = materialContext.sphereTextureRef;
@@ -570,7 +571,7 @@ void PMXRenderEngine::renderModel(IEffect::Pass *overridePass)
                 }
             }
         }
-        command.offset += command.count;
+        command.offset += nindices;
     }
     unbindVertexBundle();
     if (!m_cullFaceState) {
