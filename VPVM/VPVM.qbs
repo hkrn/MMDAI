@@ -50,6 +50,7 @@ CppApplication {
     readonly property string assimpLibrarySuffix: qbs.toolchain.contains("msvc") ? "" : debugLibrarySuffix.toUpperCase()
     readonly property string nvFXLibrarySuffix: (cpp.architecture === "x86_64" ? "64" : "") + debugLibrarySuffix.toUpperCase()
     readonly property string sparkleFrameworkBasePath: sourceDirectory + "/../Sparkle-src/build/Release"
+    readonly property string plcrashreporterBasePath: sourceDirectory + "/../plcrashreporter-src"
     readonly property var commonLibraries: [
         "assimp" + assimpLibrarySuffix,
         "FxParser" + nvFXLibrarySuffix,
@@ -60,6 +61,15 @@ CppApplication {
         "BulletCollision",
         "LinearMath"
     ]
+    readonly property var commonLibraryPaths: [ FileInfo.joinPaths(sourceDirectory, "../tbb-src/lib") ].concat([
+        "../bullet-src",
+        "../assimp-src",
+        "../nvFX-src",
+        "../alure-src",
+        "../openal-soft-src",
+        "../icu4c-src",
+        "../zlib-src"
+    ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x, libraryInstallDirectory, "lib") }))
     readonly property var commonIncludePaths: [ buildDirectory ].concat([
         "include",
         "../VPAPI/include",
@@ -100,15 +110,7 @@ CppApplication {
     files: commonFiles
     cpp.defines: commonDefiles
     cpp.includePaths: commonIncludePaths
-    cpp.libraryPaths: [ FileInfo.joinPaths(sourceDirectory, "../tbb-src/lib") ].concat([
-        "../bullet-src",
-        "../assimp-src",
-        "../nvFX-src",
-        "../alure-src",
-        "../openal-soft-src",
-        "../icu4c-src",
-        "../zlib-src"
-    ].map(function(x){ return FileInfo.joinPaths(sourceDirectory, x, libraryInstallDirectory, "lib") }))
+    cpp.libraryPaths: commonLibraryPaths
     Qt.quick.qmlDebugging: qbs.enableDebugCode
     Group {
         name: "Application"
@@ -169,13 +171,12 @@ CppApplication {
             }
             return frameworks
         }
-        cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z" ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z", "CrashReporter-MacOSX-Static" ])
         cpp.minimumOsxVersion: "10.6"
-        cpp.infoPlistFile: "qt/osx/Info.plist"
-        cpp.infoPlist: ({
-                            "CFBundleVersion": version,
-                            "CFBundleShortVersionString": version
-                        })
+        cpp.infoPlistFile: FileInfo.joinPaths(sourceDirectory, "/qt/osx/Info.plist")
+        cpp.infoPlist: ({ "CFBundleVersion": version, "CFBundleShortVersionString": version })
+        cpp.includePaths: commonIncludePaths.concat([ plcrashreporterBasePath + "/Source" ])
+        cpp.libraryPaths: commonLibraryPaths.concat([ plcrashreporterBasePath + "/build/Release-MacOSX" ])
     }
     Properties {
         condition: qbs.targetOS.contains("unix") && !qbs.targetOS.contains("osx")

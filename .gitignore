@@ -44,7 +44,8 @@ nvFX-*
 nvtt-*
 open_jtalk-*
 openal-soft-*
-portaudio-src
+plcrashreporter-*
+portaudio-*
 regal-*
 SDLMain.*
 SDL2-*
