@@ -59,7 +59,7 @@ ApplicationWindow {
     function __handleRequestedFileUrlChange() {
         var fileUrl = applicationBootstrapOption.requestedFileUrl, fileUrlString = fileUrl.toString()
         if (/\.(?:pm[xd]|x)$/i.test(fileUrlString)) {
-            scene.project.loadModel(fileUrl)
+            scene.project.loadModelFromFile(fileUrl)
         }
         else if (/\.(?:vmd|mvd)$/.test(fileUrlString)) {
             scene.project.loadMotion(fileUrl, scene.currentModel, VPVM.Project.ModelMotion)
@@ -125,7 +125,7 @@ ApplicationWindow {
             qsTr("MikuMikuDance Model File (*.pmd *.pmx)")
         ]
         selectExisting: true
-        onAccepted: scene.project.loadModel(loadModelDialog.fileUrl)
+        onAccepted: scene.project.loadModelFromFile(loadModelDialog.fileUrl)
     }
     Action {
         id: loadModelAction
