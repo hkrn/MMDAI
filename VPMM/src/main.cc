@@ -139,6 +139,10 @@ static void registerQmlTypes()
 
 }
 
+#ifdef Q_OS_MAC
+extern void installCrashReporter(const Preference &preference);
+#endif
+
 int main(int argc, char *argv[])
 {
     QCommandLineParser parser;
@@ -156,6 +160,7 @@ int main(int argc, char *argv[])
     if (applicationPreference.isFontFamilyToGUIShared()) {
         application.setFont(applicationPreference.fontFamily());
     }
+    installCrashReporter(applicationPreference);
     prepareRegal();
     registerQmlTypes();
 

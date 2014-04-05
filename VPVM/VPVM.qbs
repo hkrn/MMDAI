@@ -171,7 +171,7 @@ CppApplication {
             }
             return frameworks
         }
-        cpp.dynamicLibraries: commonLibraries.concat([ "alure-static", "openal", "tbb", "z", "CrashReporter-MacOSX-Static" ])
+        cpp.dynamicLibraries: commonLibraries.concat([ "CrashReporter-MacOSX-Static", "alure-static", "openal", "tbb", "z" ])
         cpp.minimumOsxVersion: "10.6"
         cpp.infoPlistFile: FileInfo.joinPaths(sourceDirectory, "/qt/osx/Info.plist")
         cpp.infoPlist: ({ "CFBundleVersion": version, "CFBundleShortVersionString": version })
