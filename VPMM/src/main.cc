@@ -141,6 +141,8 @@ static void registerQmlTypes()
 
 #ifdef Q_OS_MAC
 extern void installCrashReporter(const Preference &preference);
+#else
+#define installCrashReporter(preference)
 #endif
 
 int main(int argc, char *argv[])
