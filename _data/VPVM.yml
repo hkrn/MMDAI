@@ -1,10 +1,10 @@
-version: 0.34.1
+version: 0.34.2
 release:
-  date: 2014/3/16
+  date: 2014/4/6
   article: ar484157
 effect:
   date: 2014/3/14
-  article: ar482612
+  article: ar503498
 location: http://www8092ui.sakura.ne.jp/projects/VPVM/binaries
 blog: http://ch.nicovideo.jp/MMDAI
 bowlroll: http://bowlroll.net
