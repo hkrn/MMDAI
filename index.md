@@ -26,9 +26,11 @@ MMDAI/VPVM (a.k.a MMDAI2) のダウンロードが可能です。
    - [MMDAI2 0.30.0 のチュートリアルもあります](manual/tutorial/)
  - もっとざっくりとした、しかしあまり期待のできない説明は「["MMDAI2 使い方"]({{ site.data.VPVM.blog }}/blomaga/ar37961)」を参照。
 
-### [コミュニティ]({{ site.data.VPVM.community }})
+### コミュニティ
 
-MMDAI/VPVM のニコニコ動画上でのコミュニティです。「[MMDAI/VPVM コミュのブロマガ]({{ site.data.VPVM.blog }}/)」の「[はじめまして＆コミュのご案内]({{ site.data.VPVM.blog }}/blomaga/ar31371)」と「[掲示板]({{ site.data.VPVM.bbs }})」もよろしくお願いします。
+[コミュニティ]({{ site.data.VPVM.community }}) は 6/1 をもって閉鎖予定。ブロマガと掲示板は現時点で維持。
 
-<iframe width="312" height="176" src="http://ext.nicovideo.jp/thumb_community/co1393234" scrolling="no" style="border:solid 1px #CCC;" frameborder="0"><a href="{{ site.data.VPVM.community }}">【ニコニコ動画】MMDAI/MMDAI2 のコミュ(仮)</a></iframe>
+ - 「[MMDAI/VPVM コミュのブロマガ]({{ site.data.VPVM.blog }}/)」
+   - 「[はじめまして＆コミュのご案内]({{ site.data.VPVM.blog }}/blomaga/ar31371)」
+ - 「[掲示板]({{ site.data.VPVM.bbs }})」
 
