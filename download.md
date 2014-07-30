@@ -36,6 +36,16 @@ VPVM {{ site.data.VPVM.version }}
 
 VPVM 専用のエフェクト詰め合わせです。中身と説明はダウンロードして解凍して readme/README.html を参照して下さい
 
+VPMM {{ site.data.VPVM.version }}
+-------------
+
+モデルの簡易編集が可能なアプリケーションです
+
+### [OSX 版をダウンロード]({{ site.data.VPVM.location }}/{{ site.data.VPVM.version }}/VPMM-osx-{{ site.data.VPVM.version }}.zip)
+
+ - OSX 10\.7 以上が必要です
+ - 64bit 版のみ
+
 MMDAI2 0.30.0
 -------------
 
