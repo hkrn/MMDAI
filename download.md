@@ -6,6 +6,12 @@ group: navigation
 ---
 {% include JB/setup %}
 
+>
+> ##【重要】
+> MMDAI/MMDAI2/VPVM のダウンロードは 2014 年いっぱいは可能ですが 2015 年から非公開となり承認制になります。<br>
+> 詳細は 「[MMDAI/VPVM 関連のバイナリ配布停止予定のお知らせ]({{ site.data.VPVM.blog }}/blomaga/ar632891)」を参照してください。
+>
+
 ざっくりとした使い方は「["MMDAI2 使い方"]({{ site.data.VPVM.blog }}/blomaga/ar37961)」を見るとよいかもしれません。ヘルプが必要な場合は「[互助会の発足]({{ site.data.VPVM.blog }}/blomaga/ar140129)」を参照。
 
 VPVM {{ site.data.VPVM.version }}
