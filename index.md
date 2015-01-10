@@ -8,16 +8,8 @@ title: MMDAI Project Portal2
 
 >
 > ##【重要】
-> MMDAI/MMDAI2/VPVM のダウンロードは 2014 年いっぱいは可能ですが 2015 年から非公開となり承認制になります。
-> 詳細は 「[MMDAI/VPVM 関連のバイナリ配布停止予定のお知らせ]({{ site.data.VPVM.blog }}/blomaga/ar632891)」を参照してください。
+> 現在 MMDAI2/VPVM は公開配布終了しており、承認制で配布しています。[「MMDAI2/VPVM の承認依頼のルール #MMDAI2info」]({{site.data.VPVM.blog}}/blomaga/ar656371)を参照して下さい。
 >
-> 12/1-12/28 の間ダウンロードを停止し、2014/12/29-2015/1/2 を最後の公開期間とします。
-> どうしても必要な場合 [github](https://github.com/hkrn/) 上の左中央下にあるメールアドレスに理由つけて承認依頼を出して下さい。
->
-
-> - [VPVM {{ site.data.VPVM.version }} 配布開始 ({{ site.data.VPVM.release.date }})]({{ site.data.VPVM.blog }}/blomaga/{{ site.data.VPVM.release.article }})
-> - [VPVM エフェクト詰め合わせ配布開始 ({{ site.data.VPVM.effect.date }})]({{ site.data.VPVM.blog }}/blomaga/{{ site.data.VPVM.effect.article }})
-> - [MMDAI2 0.30.0 リリース (2013/6/8)]({{ site.data.VPVM.bowlroll }}/up/sc?tab=MMDAI2)
 
 ここは MMDAI Project Portal2（の建設地）です。上のタブからでも移動出来ます。
 

@@ -8,16 +8,12 @@ group: navigation
 
 >
 > ##【重要】
-> MMDAI/MMDAI2/VPVM のダウンロードは 2014 年いっぱいは可能ですが 2015 年から非公開となり承認制になります。
-> 詳細は 「[MMDAI/VPVM 関連のバイナリ配布停止予定のお知らせ]({{ site.data.VPVM.blog }}/blomaga/ar632891)」を参照してください。
->
-> 12/1-12/28 の間ダウンロードを停止し、2014/12/29-2015/1/2 を最後の公開期間とします。
-> どうしても必要な場合 [github](https://github.com/hkrn/) 上の左中央下にあるメールアドレスに理由つけて承認依頼を出して下さい。
+> 現在 MMDAI2/VPVM は公開配布終了しており、承認制で配布しています。[「MMDAI2/VPVM の承認依頼のルール #MMDAI2info」]({{site.data.VPVM.blog}}/blomaga/ar656371)を参照して下さい。
 >
 
 ざっくりとした使い方は「["MMDAI2 使い方"]({{ site.data.VPVM.blog }}/blomaga/ar37961)」を見るとよいかもしれません。ヘルプが必要な場合は「[互助会の発足]({{ site.data.VPVM.blog }}/blomaga/ar140129)」を参照。
 
-VPVM {{ site.data.VPVM.version }} ※配布停止中
+VPVM {{ site.data.VPVM.version }} ※配布終了
 -------------
 
  - [ふつうのマニュアルっぽいものは今のところ github 上にあります]({{ site.data.VPVM.github }}/wiki/VPVM)
@@ -45,7 +41,7 @@ VPVM {{ site.data.VPVM.version }} ※配布停止中
 
 VPVM 専用のエフェクト詰め合わせです。中身と説明はダウンロードして解凍して readme/README.html を参照して下さい
 
-VPMM {{ site.data.VPVM.version }} ※配布停止中
+VPMM {{ site.data.VPVM.version }} ※配布終了
 -------------
 
 モデルの簡易編集が可能なアプリケーションです
@@ -55,7 +51,7 @@ VPMM {{ site.data.VPVM.version }} ※配布停止中
  - OSX 10\.7 以上が必要です
  - 64bit 版のみ
 
-MMDAI2 0.30.0 ※配布停止中
+MMDAI2 0.30.0 ※配布終了
 -------------
 
 旧版と呼ばれるものです。開発停止。
@@ -66,13 +62,13 @@ MMDAI2 0.30.0 ※配布停止中
 
 Linux 版は Ubuntu Linux 12.04.x 上でビルドされています。どちらを使えばわからないときはまず 64bit 版で動かしてみて、動作しない場合は 32bit 版で動かしてください
 
-### Effect (CgFX) ※配布停止中
+### Effect (CgFX) ※配布終了
 
 MMDAI2 に移植した MMDAI2 専用のエフェクトです。MMDAI2 0.30.0 の開発停止に伴いこちらも開発停止。
 
  - エフェクト詰め合わせをダウンロード（box.com に移動します）
 
-MMDAI 3.1.0 ※配布停止中
+MMDAI 3.1.0 ※配布終了
 -----------
 
 無印版と呼ばれるもの。MMDAgent から派生したもの。開発停止。
