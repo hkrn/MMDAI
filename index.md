@@ -10,6 +10,8 @@ title: MMDAI Project Portal2
 > ##【重要】
 > 現在 MMDAI2/VPVM は公開配布終了しており、承認制で配布しています。[「MMDAI2/VPVM の承認依頼のルール #MMDAI2info」]({{site.data.VPVM.blog}}/blomaga/ar656371)を参照して下さい。
 >
+> また、[nanoem という後継っぽいものを開発中](http://blog.hikarin.jp/2015/02/nanoem.html) で現在クローズドテスト中ですが [現在も応募受け付けています](http://goo.gl/forms/ByShRkf5KS)。
+>
 
 ここは MMDAI Project Portal2（の建設地）です。上のタブからでも移動出来ます。
 
