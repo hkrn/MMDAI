@@ -8,7 +8,10 @@ title: MMDAI Project Portal2
 
 >
 > ##【重要】
-> 現在 MMDAI2/VPVM は公開配布終了しており、承認制で配布しています。[「MMDAI2/VPVM の承認依頼のルール #MMDAI2info」]({{site.data.VPVM.blog}}/blomaga/ar656371)を参照して下さい。
+> 現在 MMDAI2/VPVM は公開配布終了しており、承認制※で配布しています。[「MMDAI2/VPVM の承認依頼のルール #MMDAI2info」]({{site.data.VPVM.blog}}/blomaga/ar656371)を参照して下さい。
+>
+> ※ 2015/4/26 をもって終了、4/27 以降に送信した承認依頼は無効とさせていただきます。
+> ただし 4/26 以前に承認依頼を出している場合は 4/27 以降も承認あるいは却下されるまで有効です。
 >
 
 ここは MMDAI Project Portal2（の建設地）です。上のタブからでも移動出来ます。
@@ -34,4 +37,3 @@ MMDAI/VPVM (a.k.a MMDAI2) のダウンロードが可能です。
  - 「[MMDAI/VPVM コミュのブロマガ]({{ site.data.VPVM.blog }}/)」
    - 「[はじめまして＆コミュのご案内]({{ site.data.VPVM.blog }}/blomaga/ar31371)」
  - 「[掲示板]({{ site.data.VPVM.bbs }})」
-

@@ -8,7 +8,10 @@ group: navigation
 
 >
 > ##【重要】
-> 現在 MMDAI2/VPVM は公開配布終了しており、承認制で配布しています。[「MMDAI2/VPVM の承認依頼のルール #MMDAI2info」]({{site.data.VPVM.blog}}/blomaga/ar656371)を参照して下さい。
+> 現在 MMDAI2/VPVM は公開配布終了しており、承認制※で配布しています。[「MMDAI2/VPVM の承認依頼のルール #MMDAI2info」]({{site.data.VPVM.blog}}/blomaga/ar656371)を参照して下さい。
+>
+> ※ 2015/4/26 をもって終了、4/27 以降に送信した承認依頼は無効とさせていただきます。
+> ただし 4/26 以前に承認依頼を出している場合は 4/27 以降も承認あるいは却下されるまで有効です。
 >
 
 ざっくりとした使い方は「["MMDAI2 使い方"]({{ site.data.VPVM.blog }}/blomaga/ar37961)」を見るとよいかもしれません。ヘルプが必要な場合は「[互助会の発足]({{ site.data.VPVM.blog }}/blomaga/ar140129)」を参照。
